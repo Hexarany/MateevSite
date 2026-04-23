@@ -1,0 +1,19 @@
+# Environment
+.env
+.env.local
+
+# Data & backups (contain real client info — never commit)
+data/
+backups/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

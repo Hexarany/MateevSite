@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Отмена записи — Mateev Spa Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a href="/" class="brand">
+        <span class="brand__eyebrow">Студия массажа в Кишиневе</span>
+        <span class="brand__name">Mateev Spa Studio</span>
+      </a>
+      <a href="/#booking" class="button button--ghost" style="font-size:0.875rem">Записаться снова</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" style="min-height: calc(100vh - 140px); display:flex; align-items:center;">
+      <div class="container" style="max-width: 480px; margin: 0 auto; padding: 48px 0;">
+
+        <div id="formView">
+          <p class="section-kicker">Отмена визита</p>
+          <h1 style="font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; margin:0 0 12px; color:var(--ink);">
+            Отменить запись
+          </h1>
+          <p style="color:var(--muted); margin:0 0 32px; line-height:1.6;">
+            Введите номер записи из подтверждения и телефон, указанный при бронировании.
+          </p>
+
+          <form id="cancelForm" style="display:flex; flex-direction:column; gap:16px;">
+            <label class="field">
+              <span>Номер записи</span>
+              <input
+                type="text"
+                id="referenceInput"
+                placeholder="MS-XXXXXX"
+                autocomplete="off"
+                style="text-transform:uppercase;"
+              >
+            </label>
+
+            <label class="field">
+              <span>Телефон</span>
+              <input
+                type="tel"
+                id="phoneInput"
+                placeholder="+373..."
+                autocomplete="tel"
+              >
+            </label>
+
+            <p id="formError" style="color:var(--danger); font-size:0.875rem; margin:0; display:none;"></p>
+
+            <div style="display:flex; gap:12px; margin-top:8px;">
+              <button type="submit" class="button button--secondary" id="submitBtn" style="flex:1;">
+                Отменить визит
+              </button>
+              <a href="/" class="button button--ghost">На главную</a>
+            </div>
+          </form>
+        </div>
+
+        <div id="successView" hidden style="text-align:center; padding:40px 0;">
+          <div style="font-size:2.5rem; margin-bottom:16px;">✓</div>
+          <h2 style="font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:600; margin:0 0 12px; color:var(--ink);">
+            Запись отменена
+          </h2>
+          <p id="successRef" style="color:var(--muted); margin:0 0 32px; line-height:1.6;"></p>
+          <a href="/#booking" class="button button--secondary">Записаться снова</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("cancelForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const formError = document.getElementById("formError");
+    const formView = document.getElementById("formView");
+    const successView = document.getElementById("successView");
+    const successRef = document.getElementById("successRef");
+
+    // Pre-fill from URL params: /cancel?ref=MS-553307
+    const params = new URLSearchParams(location.search);
+    if (params.get("ref")) {
+      document.getElementById("referenceInput").value = params.get("ref").toUpperCase();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      formError.style.display = "none";
+
+      const reference = document.getElementById("referenceInput").value.trim().toUpperCase();
+      const phone = document.getElementById("phoneInput").value.trim();
+
+      if (!reference || !phone) {
+        showError("Заполните оба поля.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Отменяем…";
+
+      try {
+        const res = await fetch("/api/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference, phone })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.message || "Не удалось отменить запись.");
+          return;
+        }
+
+        formView.hidden = true;
+        successView.hidden = false;
+        successRef.textContent =
+          `Запись ${data.reference} успешно отменена. Будем рады видеть вас снова.`;
+
+      } catch {
+        showError("Ошибка соединения. Попробуйте ещё раз.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Отменить визит";
+      }
+    });
+
+    function showError(msg) {
+      formError.textContent = msg;
+      formError.style.display = "block";
+    }
+  </script>
+</body>
+</html>

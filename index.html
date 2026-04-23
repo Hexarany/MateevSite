@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    id="metaDescription"
+    name="description"
+    content="Mateev Spa Studio — массаж и телесная терапия в Кишиневе. Онлайн-запись, комфортная атмосфера и программы для восстановления, расслабления и легкости в теле."
+  >
+  <title>Mateev Spa Studio | Массаж и онлайн-запись</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a href="#home" class="brand" id="superUserTrigger">
+        <span class="brand__eyebrow" id="brandEyebrow">Студия массажа в Кишиневе</span>
+        <span class="brand__name" id="brandName">Mateev Spa Studio</span>
+      </a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Открыть навигацию" aria-expanded="false">
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="nav" id="siteNav">
+        <a href="#platform" class="nav__link" id="navOverviewLink">Почему мы</a>
+        <a href="#services" class="nav__link" id="navServicesLink">Процедуры</a>
+        <a href="#specialists" class="nav__link" id="navSpecialistsLink">Специалисты</a>
+        <a href="#booking" class="nav__link" id="navBookingLink">Запись</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="container hero__grid">
+        <div class="hero__content reveal">
+          <div class="pill-row" id="heroBadges"></div>
+          <p class="section-kicker" id="heroKicker">Пространство восстановления и заботы о теле</p>
+          <h1 class="hero__title" id="heroTitle">
+            Массаж и телесная терапия в Кишиневе, чтобы выдохнуть, восстановиться и вернуться в ресурс
+          </h1>
+          <p class="hero__subtitle" id="heroSubtitle">
+            Выберите программу под свой запрос и запишитесь на удобное время онлайн.
+          </p>
+
+          <div class="hero__actions">
+            <a href="#booking" class="button button--primary" id="heroPrimaryCta">Записаться онлайн</a>
+            <a href="#services" class="button button--ghost" id="heroSecondaryCta">Посмотреть каталог</a>
+          </div>
+
+          <div class="stat-grid" id="heroStats"></div>
+        </div>
+
+        <aside class="hero-card reveal">
+          <p class="hero-card__eyebrow" id="heroAsideEyebrow">Почему выбирают нас</p>
+          <h2 id="heroAsideTitle">Бережная работа с телом, спокойная атмосфера и запись без лишних звонков</h2>
+          <div class="hero-card__list" id="heroHighlights"></div>
+          <div class="hero-card__footer" id="heroAsideFooter"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="platform">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="overviewSectionKicker">Почему мы</p>
+          <h2 id="overviewSectionTitle">Все, что нужно для спокойного и комфортного визита в студию</h2>
+          <p class="section-copy" id="overviewSectionCopy">
+            От первого знакомства со студией до выбора удобного времени все устроено так, чтобы вам было легко принять решение и просто записаться.
+          </p>
+        </div>
+
+        <div class="feature-grid" id="featureGrid"></div>
+      </div>
+    </section>
+
+    <section class="section section--contrast" id="services">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="servicesSectionKicker">Процедуры</p>
+          <h2 id="servicesSectionTitle">Программы массажа и ухода с понятным эффектом и прозрачной стоимостью</h2>
+          <p class="section-copy" id="servicesSectionCopy">
+            Выбирайте то, что нужно именно сейчас: расслабление, восстановление после нагрузки, работа со спиной или мягкая SPA-пауза для себя.
+          </p>
+        </div>
+
+        <div class="service-grid" id="servicesGrid"></div>
+      </div>
+    </section>
+
+    <section class="section" id="specialists">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="specialistsSectionKicker">Команда</p>
+          <h2 id="specialistsSectionTitle">Специалисты, которые работают бережно и действительно слышат ваш запрос</h2>
+          <p class="section-copy" id="specialistsSectionCopy">
+            У каждого мастера свой акцент и специализация, поэтому вы можете выбрать подход, который ближе именно вам.
+          </p>
+        </div>
+
+        <div class="specialist-grid" id="specialistsGrid"></div>
+      </div>
+    </section>
+
+    <section class="section section--accent" id="process">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="processSectionKicker">Как это работает</p>
+          <h2 id="processSectionTitle">Путь от выбора программы до спокойного визита в студию</h2>
+          <p class="section-copy" id="processSectionCopy">
+            Мы сделали запись простой и понятной, чтобы вы могли выбрать нужную процедуру без долгих переписок и ожидания ответа.
+          </p>
+        </div>
+
+        <div class="process-grid" id="processGrid"></div>
+      </div>
+    </section>
+
+    <section class="section booking-section" id="booking">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="bookingSectionKicker">Онлайн-запись</p>
+          <h2 id="bookingSectionTitle">Выберите программу, специалиста и удобное время для визита</h2>
+          <p class="section-copy" id="bookingSectionCopy">
+            Заполните короткую форму, чтобы оставить заявку на удобный слот. После отправки вы сразу увидите номер записи.
+          </p>
+        </div>
+
+        <div class="booking-layout">
+          <form class="booking-form card reveal" id="bookingForm">
+            <div class="field-grid">
+              <label class="field">
+                <span id="serviceLabel">Процедура</span>
+                <select id="serviceSelect" required></select>
+              </label>
+
+              <label class="field">
+                <span id="specialistLabel">Специалист</span>
+                <select id="specialistSelect" required></select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span id="dateLabel">Дата</span>
+              <input type="date" id="dateInput" required>
+            </label>
+
+            <div class="field">
+              <div class="field__head">
+                <span id="slotsLabel">Свободные слоты</span>
+                <span class="helper-text" id="slotStatus">Сначала выбери процедуру, специалиста и дату.</span>
+              </div>
+              <div class="slot-grid" id="slotGrid"></div>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span id="clientNameLabel">Имя клиента</span>
+                <input type="text" id="clientName" placeholder="Например, Анна" required>
+              </label>
+
+              <label class="field">
+                <span id="clientPhoneLabel">Телефон</span>
+                <input type="tel" id="clientPhone" placeholder="+373..." required>
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span id="clientEmailLabel">Email</span>
+                <input type="email" id="clientEmail" placeholder="name@example.com" required autocomplete="email">
+              </label>
+
+              <label class="field">
+                <span id="clientNotesLabel">Комментарий</span>
+                <input type="text" id="clientNotes" placeholder="Например, акцент на спину">
+              </label>
+            </div>
+
+            <label class="field field--trap" aria-hidden="true">
+              <span>Website</span>
+              <input type="text" id="clientWebsite" tabindex="-1" autocomplete="off">
+            </label>
+            <input type="hidden" id="formStartedAt">
+
+            <button type="submit" class="button button--primary button--full" id="submitBookingBtn">
+              Подтвердить запись
+            </button>
+            <p class="helper-text helper-text--strong" id="bookingFormNote">
+              Если у вас есть пожелания по самочувствию или зонам проработки, укажите их в комментарии к записи.
+            </p>
+          </form>
+
+          <aside class="booking-sidebar reveal">
+            <div class="card summary-card">
+              <p class="section-kicker" id="bookingSummaryKicker">Резюме записи</p>
+              <div id="bookingSummary"></div>
+            </div>
+
+            <div class="card contact-card">
+              <p class="section-kicker" id="contactCardKicker">Контакты студии</p>
+              <div id="contactInfo"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--contrast" id="reviews">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="reviewsSectionKicker">Доверие</p>
+          <h2 id="reviewsSectionTitle">Отзывы гостей и ответы на вопросы перед первым визитом</h2>
+          <p class="section-copy" id="reviewsSectionCopy">
+            Собрали то, что чаще всего важно знать до записи: ощущения после сеанса, формат визита и организационные детали.
+          </p>
+        </div>
+
+        <div class="dual-grid">
+          <div class="review-grid" id="reviewsGrid"></div>
+          <div class="faq-list" id="faqList"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div>
+        <p class="footer__eyebrow" id="footerEyebrow">Mateev Spa Studio</p>
+        <h3 class="footer__title" id="footerBrandTitle">Массаж и телесная терапия для восстановления и глубокого отдыха</h3>
+        <p class="footer__copy" id="footerCopy">
+          Студия для тех, кто хочет снять напряжение, почувствовать легкость в теле и выделить время на себя без спешки и суеты.
+        </p>
+      </div>
+
+      <div id="footerContacts"></div>
+
+      <div class="footer__nav">
+        <a href="#platform" id="footerOverviewLink">Почему мы</a>
+        <a href="#services" id="footerServicesLink">Процедуры</a>
+        <a href="#specialists" id="footerSpecialistsLink">Специалисты</a>
+        <a href="#booking" id="footerBookingLink">Запись</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="admin-access-modal" id="adminAccessModal" hidden>
+    <div class="admin-access-modal__backdrop" data-close-admin-modal></div>
+    <div class="admin-access-modal__card">
+      <p class="section-kicker">Служебный вход</p>
+      <h2 class="admin-access-modal__title">Вход в кабинет управления</h2>
+      <p class="admin-access-modal__copy">
+        Введите служебный PIN, чтобы открыть закрытый кабинет управления студией.
+      </p>
+
+      <form id="superUserForm" class="admin-access-modal__form">
+        <label class="field">
+          <span>PIN доступа</span>
+          <input type="password" id="superUserPin" placeholder="Введите PIN" autocomplete="current-password" required>
+        </label>
+        <div class="admin-access-modal__actions">
+          <button type="button" class="button button--ghost" id="superUserCancelBtn">Отмена</button>
+          <button type="submit" class="button button--secondary" id="superUserSubmitBtn">Открыть кабинет</button>
+        </div>
+      </form>
+
+      <p class="helper-text" id="superUserHint">
+        Скрытый вход: нажмите на логотип 5 раз подряд или используйте сочетание <code>Ctrl + Shift + A</code>.
+      </p>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[Unit]
+Description=Mateev Spa Studio
+After=network.target
+
+[Service]
+Type=simple
+User=mateev
+WorkingDirectory=/home/mateev/app
+EnvironmentFile=/home/mateev/app/.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mateev
+
+# Graceful shutdown timeout — должен совпадать с timeout в server.js
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

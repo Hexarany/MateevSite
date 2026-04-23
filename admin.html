@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta
+    name="description"
+    content="Отдельная админ-панель студии для управления заявками, аналитикой, специалистами и загрузкой процедур."
+  >
+  <title>Mateev Spa Studio | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-page">
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar reveal">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__eyebrow">Admin Panel</span>
+        <h1 class="admin-sidebar__title" id="adminBrandName">Mateev Spa Studio</h1>
+        <p class="admin-sidebar__copy">
+          Отдельный внутренний кабинет для команды студии. Клиентская витрина и администрирование больше не смешаны.
+        </p>
+      </div>
+
+      <nav class="admin-sidebar__nav">
+        <a href="#clients">Клиенты</a>
+        <a href="#schedule">Расписание</a>
+        <a href="#content">Контент</a>
+        <a href="#overview">Обзор</a>
+        <a href="#operations">Операции</a>
+        <a href="#team">Команда</a>
+        <a href="#services">Услуги</a>
+        <a href="#requests">Журнал заявок</a>
+      </nav>
+
+      <div class="admin-sidebar__meta" id="adminStudioMeta"></div>
+
+      <div class="admin-sidebar__summary" id="adminSidebarSummary"></div>
+
+      <a class="button button--ghost admin-sidebar__link" href="index.html">Вернуться на сайт</a>
+    </aside>
+
+    <div class="admin-workspace">
+      <header class="admin-topbar reveal">
+        <div>
+          <p class="section-kicker">Workspace</p>
+          <h2 class="admin-topbar__title">Внутренний контур управления студией</h2>
+        </div>
+        <div class="admin-topbar__meta">
+          <div id="adminCurrentDate"></div>
+          <button type="button" class="button button--ghost" id="adminLogoutBtn">Выйти</button>
+        </div>
+      </header>
+
+      <main class="admin-content">
+        <section class="admin-banner reveal" id="overview">
+          <div class="admin-banner__copy">
+            <p class="section-kicker">Админ-панель</p>
+            <h2 class="admin-banner__title">Кабинет для заявок, загрузки мастеров и базовой аналитики по салону</h2>
+            <p class="admin-banner__text">
+              Ниже не просто таблица. Это рабочая панель, где администратор видит поток записей, ближайшие визиты, эффективность услуг и загрузку команды.
+            </p>
+            <div class="admin-banner__chips" id="adminHeroMeta"></div>
+          </div>
+
+          <div class="admin-access-card">
+            <p class="admin-access-card__eyebrow">Доступ</p>
+            <label class="field">
+              <span>PIN доступа</span>
+              <div class="admin-login__row">
+                <input type="password" id="adminPin" placeholder="Введите PIN">
+                <button type="button" class="button button--secondary" id="adminLoginBtn">Открыть</button>
+              </div>
+            </label>
+            <p class="helper-text" id="adminGateMessage">
+              Введите PIN для доступа к панели управления.
+            </p>
+          </div>
+        </section>
+
+        <div class="admin-panel" id="adminPanel" hidden>
+          <section class="admin-section-block reveal" id="content">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Контент</p>
+                <h2 class="admin-section-block__title">Редактирование витрины, каталога и команды</h2>
+              </div>
+            </div>
+
+            <div class="admin-cms-stack">
+              <article class="admin-widget admin-widget--editor">
+                <div class="admin-widget__head admin-widget__head--toolbar">
+                  <div>
+                    <p class="section-kicker">Витрина</p>
+                    <h3 class="admin-widget__title">Тексты, блоки, отзывы и FAQ</h3>
+                  </div>
+                  <button type="button" class="button button--secondary" id="saveSiteContentBtn">Сохранить витрину</button>
+                </div>
+                <div id="siteContentEditor"></div>
+              </article>
+
+              <div class="admin-two-column admin-two-column--editor">
+                <article class="admin-widget admin-widget--editor">
+                  <div class="admin-widget__head admin-widget__head--toolbar">
+                    <div>
+                      <p class="section-kicker">Каталог</p>
+                      <h3 class="admin-widget__title">Услуги</h3>
+                    </div>
+                    <div class="admin-inline-actions">
+                      <button type="button" class="button button--ghost" id="addServiceBtn">Добавить услугу</button>
+                      <button type="button" class="button button--secondary" id="saveServicesBtn">Сохранить услуги</button>
+                    </div>
+                  </div>
+                  <div id="servicesEditor"></div>
+                </article>
+
+                <article class="admin-widget admin-widget--editor">
+                  <div class="admin-widget__head admin-widget__head--toolbar">
+                    <div>
+                      <p class="section-kicker">Команда</p>
+                      <h3 class="admin-widget__title">Специалисты</h3>
+                    </div>
+                    <div class="admin-inline-actions">
+                      <button type="button" class="button button--ghost" id="addSpecialistBtn">Добавить специалиста</button>
+                      <button type="button" class="button button--secondary" id="saveSpecialistsBtn">Сохранить специалистов</button>
+                    </div>
+                  </div>
+                  <div id="specialistsEditor"></div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="schedule">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Расписание</p>
+                <h2 class="admin-section-block__title">Календарь дня, ручная запись, переносы и блокировки</h2>
+              </div>
+            </div>
+
+            <div class="admin-schedule-layout">
+              <article class="admin-widget admin-widget--schedule">
+                <div class="admin-widget__head admin-widget__head--toolbar">
+                  <div>
+                    <p class="section-kicker">День</p>
+                    <h3 class="admin-widget__title">Живое расписание по специалистам</h3>
+                  </div>
+                  <div class="admin-inline-actions admin-inline-actions--calendar">
+                    <button type="button" class="button button--ghost" id="schedulePrevBtn">←</button>
+                    <label class="field field--compact">
+                      <span>Дата</span>
+                      <input type="date" id="scheduleDateInput">
+                    </label>
+                    <button type="button" class="button button--ghost" id="scheduleTodayBtn">Сегодня</button>
+                    <button type="button" class="button button--ghost" id="scheduleNextBtn">→</button>
+                    <button type="button" class="button button--secondary" id="scheduleRefreshBtn">Обновить</button>
+                  </div>
+                </div>
+
+                <div class="admin-kpi-grid admin-kpi-grid--compact" id="scheduleSummary"></div>
+                <div id="scheduleBoard"></div>
+              </article>
+
+              <div class="admin-schedule-sidebar">
+                <article class="admin-widget">
+                  <div class="admin-widget__head">
+                    <div>
+                      <p class="section-kicker">Запись</p>
+                      <h3 class="admin-widget__title" id="bookingFormMode">Ручное создание</h3>
+                    </div>
+                    <span class="meta-chip" id="bookingReference">Новая запись</span>
+                  </div>
+
+                  <form id="adminBookingForm" class="admin-form-stack">
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Услуга</span>
+                        <select id="adminBookingService"></select>
+                      </label>
+                      <label class="field">
+                        <span>Специалист</span>
+                        <select id="adminBookingSpecialist"></select>
+                      </label>
+                    </div>
+
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Дата</span>
+                        <input type="date" id="adminBookingDate">
+                      </label>
+                      <label class="field">
+                        <span>Время</span>
+                        <select id="adminBookingSlot"></select>
+                      </label>
+                    </div>
+
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Статус</span>
+                        <select id="adminBookingStatus">
+                          <option value="new">Новая</option>
+                          <option value="confirmed" selected>Подтверждена</option>
+                          <option value="completed">Завершена</option>
+                          <option value="cancelled">Отменена</option>
+                        </select>
+                      </label>
+                      <label class="field">
+                        <span>Клиент</span>
+                        <input type="text" id="adminBookingClientName" placeholder="Имя клиента">
+                      </label>
+                    </div>
+
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Телефон</span>
+                        <input type="tel" id="adminBookingPhone" placeholder="+373...">
+                      </label>
+                      <label class="field">
+                        <span>Email</span>
+                        <input type="email" id="adminBookingEmail" placeholder="name@example.com">
+                      </label>
+                    </div>
+
+                    <label class="field field--full">
+                      <span>Комментарий</span>
+                      <textarea rows="4" id="adminBookingNotes" placeholder="Детали по клиенту или визиту"></textarea>
+                    </label>
+
+                    <div class="admin-form-actions">
+                      <button type="submit" class="button button--secondary">Сохранить запись</button>
+                      <button type="button" class="button button--ghost" id="adminBookingResetBtn">Очистить</button>
+                      <button type="button" class="button button--ghost" id="adminBookingCancelBtn">Отменить визит</button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="admin-widget">
+                  <div class="admin-widget__head">
+                    <div>
+                      <p class="section-kicker">Блокировка</p>
+                      <h3 class="admin-widget__title">Закрыть время в календаре</h3>
+                    </div>
+                  </div>
+
+                  <form id="adminBlockForm" class="admin-form-stack">
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Специалист</span>
+                        <select id="adminBlockSpecialist"></select>
+                      </label>
+                      <label class="field">
+                        <span>Дата</span>
+                        <input type="date" id="adminBlockDate">
+                      </label>
+                    </div>
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Начало</span>
+                        <input type="time" id="adminBlockStart">
+                      </label>
+                      <label class="field">
+                        <span>Конец</span>
+                        <input type="time" id="adminBlockEnd">
+                      </label>
+                    </div>
+                    <label class="field field--full">
+                      <span>Причина</span>
+                      <input type="text" id="adminBlockReason" placeholder="Например, перерыв, отпуск, обучение">
+                    </label>
+                    <button type="submit" class="button button--secondary">Добавить блокировку</button>
+                  </form>
+                </article>
+
+                <article class="admin-widget">
+                  <div class="admin-widget__head admin-widget__head--toolbar">
+                    <div>
+                      <p class="section-kicker">График мастера</p>
+                      <h3 class="admin-widget__title">Выходные, смена и перерывы</h3>
+                    </div>
+                    <button type="button" class="button button--ghost" id="addBreakBtn">Добавить перерыв</button>
+                  </div>
+
+                  <form id="specialistScheduleForm" class="admin-form-stack">
+                    <label class="field">
+                      <span>Специалист</span>
+                      <select id="scheduleSpecialistSelect"></select>
+                    </label>
+
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Начало смены</span>
+                        <input type="time" id="scheduleWorkStart">
+                      </label>
+                      <label class="field">
+                        <span>Конец смены</span>
+                        <input type="time" id="scheduleWorkEnd">
+                      </label>
+                    </div>
+
+                    <div class="field field--full">
+                      <span>Рабочие дни</span>
+                      <div class="admin-check-grid admin-check-grid--days" id="scheduleWorkDays"></div>
+                    </div>
+
+                    <div class="admin-breaks-stack" id="scheduleBreaks"></div>
+
+                    <button type="submit" class="button button--secondary">Сохранить график</button>
+                  </form>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="clients">
+              <div class="admin-section-block__head">
+                <div>
+                  <p class="section-kicker">Клиенты</p>
+                  <h2 class="admin-section-block__title">Карточки клиентов, история визитов и заметки администратора</h2>
+                </div>
+              </div>
+
+              <div class="admin-clients-layout">
+                <article class="admin-widget">
+                  <div class="admin-widget__head admin-widget__head--toolbar">
+                    <div>
+                      <p class="section-kicker">База клиентов</p>
+                      <h3 class="admin-widget__title">Живая CRM по контактам и истории</h3>
+                    </div>
+                    <label class="field field--compact">
+                      <span>Поиск</span>
+                      <input type="search" id="clientSearch" placeholder="Имя, телефон, email">
+                    </label>
+                  </div>
+                  <div id="clientsList"></div>
+                </article>
+
+                <article class="admin-widget">
+                  <div id="clientDetail"></div>
+                </article>
+              </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="operations">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Операции</p>
+                <h2 class="admin-section-block__title">Быстрый срез по заявкам и выручке</h2>
+              </div>
+            </div>
+            <div class="admin-kpi-grid" id="adminStats"></div>
+          </section>
+
+          <section class="admin-section-block reveal">
+            <div class="admin-two-column">
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Сегодня</p>
+                    <h3 class="admin-widget__title">Таймлайн на текущий день</h3>
+                  </div>
+                </div>
+                <div id="todayTimeline"></div>
+              </article>
+
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Ближайшие визиты</p>
+                    <h3 class="admin-widget__title">Следующие подтвержденные и новые записи</h3>
+                  </div>
+                </div>
+                <div id="upcomingQueue"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="team">
+            <div class="admin-two-column admin-two-column--balanced">
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Команда</p>
+                    <h3 class="admin-widget__title">Загрузка специалистов</h3>
+                  </div>
+                </div>
+                <div id="specialistLoad"></div>
+              </article>
+
+              <article class="admin-widget" id="services">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Услуги</p>
+                    <h3 class="admin-widget__title">Эффективность процедур</h3>
+                  </div>
+                </div>
+                <div id="serviceBoard"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal">
+            <div class="admin-two-column admin-two-column--balanced">
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Pipeline</p>
+                    <h3 class="admin-widget__title">Воронка статусов</h3>
+                  </div>
+                </div>
+                <div id="pipelineBoard"></div>
+              </article>
+
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Внимание</p>
+                    <h3 class="admin-widget__title">Что требует реакции администратора</h3>
+                  </div>
+                </div>
+                <div id="attentionBoard"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="requests">
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head admin-widget__head--toolbar">
+                <div>
+                  <p class="section-kicker">Журнал заявок</p>
+                  <h3 class="admin-widget__title">Поиск, фильтрация и смена статусов</h3>
+                </div>
+
+                <div class="admin-table-controls">
+                  <label class="field field--compact">
+                    <span>Статус</span>
+                    <select id="statusFilter">
+                      <option value="all">Все заявки</option>
+                      <option value="new">Новые</option>
+                      <option value="confirmed">Подтвержденные</option>
+                      <option value="completed">Завершенные</option>
+                      <option value="cancelled">Отмененные</option>
+                    </select>
+                  </label>
+
+                  <label class="field field--compact">
+                    <span>Поиск</span>
+                    <input type="search" id="bookingSearch" placeholder="Имя, телефон, услуга, номер">
+                  </label>
+
+                  <button type="button" class="button button--ghost" id="exportCsvBtn">Скачать CSV</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="booking-table">
+                  <thead>
+                    <tr>
+                      <th>Заявка</th>
+                      <th>Клиент</th>
+                      <th>Услуга</th>
+                      <th>Время</th>
+                      <th>Статус</th>
+                      <th>Комментарий</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="admin-footer reveal">
+        <div class="admin-footer__contacts" id="adminFooterContacts"></div>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>
