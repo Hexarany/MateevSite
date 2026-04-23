@@ -1445,22 +1445,6 @@ function assertPublicBookingProtection(payload, request) {
     throw error;
   }
 
-  const startedAt = Number(payload.formStartedAt);
-  if (Number.isFinite(startedAt)) {
-    const ageMs = Date.now() - startedAt;
-
-    if (ageMs < FORM_MIN_SUBMIT_MS) {
-      const error = new Error("Форма отправлена слишком быстро. Проверьте данные и попробуйте ещё раз.");
-      error.statusCode = 400;
-      throw error;
-    }
-
-    if (ageMs > FORM_MAX_AGE_MS) {
-      const error = new Error("Сессия формы устарела. Обновите страницу и отправьте заявку ещё раз.");
-      error.statusCode = 400;
-      throw error;
-    }
-  }
 }
 
 function assertAdminPin(request) {
