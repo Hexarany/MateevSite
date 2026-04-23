@@ -1189,7 +1189,7 @@ async function sendClientConfirmationEmail(booking) {
     : null;
 
   const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
-  const dateLabel = ru.format(new Date(`${booking.date}T12:00:00`));
+  const dateLabel = ru.format(new Date(`${booking.date}T12:00:00`)).replace(" г.", "");
 
   const brandColor = "#b36d2c";
   const bg = "#f7f0e6";
