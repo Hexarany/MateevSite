@@ -112,7 +112,7 @@ textarea {
 .section {
   position: relative;
   z-index: 1;
-  padding: 96px 0;
+  padding: 72px 0;
 }
 
 .section--contrast {
@@ -154,11 +154,16 @@ p {
   margin: 0;
 }
 
-.section-heading h2,
 .hero__title,
 .admin-banner__title,
 .admin-topbar__title {
   font-size: clamp(2.4rem, 5vw, 5.6rem);
+}
+
+.section-heading h2 {
+  font-size: clamp(1.75rem, 3.2vw, 2.6rem);
+  line-height: 1.15;
+  text-wrap: balance;
 }
 
 .section-copy,
