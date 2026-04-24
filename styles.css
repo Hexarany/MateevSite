@@ -265,6 +265,7 @@ p {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  align-items: center;
 }
 
 .meta-chip,
@@ -1260,6 +1261,22 @@ p {
   gap: 18px;
 }
 
+.admin-date-input {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.admin-date-input:focus {
+  border-color: rgba(179, 109, 44, 0.4);
+  box-shadow: 0 0 0 4px rgba(179, 109, 44, 0.1);
+}
+
 .admin-field-group {
   display: grid;
   gap: 10px;
@@ -1287,9 +1304,10 @@ p {
 .admin-page .admin-editor-card .field textarea,
 .admin-page .admin-entry-card .field textarea,
 .admin-page .admin-widget--editor .field textarea {
-  min-height: 80px;
-  padding: 10px 13px;
+  min-height: 64px;
+  padding: 8px 13px;
   font-size: 0.875rem;
+  resize: vertical;
 }
 
 .admin-status-row {
