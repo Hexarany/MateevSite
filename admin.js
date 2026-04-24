@@ -2730,14 +2730,16 @@ function renderScheduleSettingsForm() {
     .map(
       (entry, index) => `
         <div class="admin-break-row">
-          <label class="field">
-            <span>Начало</span>
-            <input type="time" data-break-index="${index}" data-break-field="start" value="${escapeHtml(entry.start)}">
-          </label>
-          <label class="field">
-            <span>Конец</span>
-            <input type="time" data-break-index="${index}" data-break-field="end" value="${escapeHtml(entry.end)}">
-          </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>Начало</span>
+              <input type="time" data-break-index="${index}" data-break-field="start" value="${escapeHtml(entry.start)}">
+            </label>
+            <label class="field">
+              <span>Конец</span>
+              <input type="time" data-break-index="${index}" data-break-field="end" value="${escapeHtml(entry.end)}">
+            </label>
+          </div>
           <label class="field field--full">
             <span>Подпись</span>
             <input type="text" data-break-index="${index}" data-break-field="label" value="${escapeHtml(entry.label)}">
