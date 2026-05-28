@@ -473,6 +473,16 @@ p {
   margin: 0;
 }
 
+.hero__content .pill-row,
+.hero__content .stat-grid {
+  display: none;
+}
+
+.hero-card__list,
+.hero-card__footer {
+  display: none;
+}
+
 .hero__title {
   max-width: 15.4ch;
   line-height: 0.92;
@@ -642,13 +652,31 @@ p {
   gap: 10px;
 }
 
-.service-card__benefits span,
+.service-card__benefits {
+  gap: 6px;
+}
+
 .summary-row,
 .contact-item {
   padding: 14px 16px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.56);
   border: 1px solid var(--line);
+}
+
+.service-card__benefits span {
+  color: var(--muted);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.service-card__benefits span::before {
+  content: "—";
+  color: var(--brand);
+  flex-shrink: 0;
 }
 
 .service-card__actions,

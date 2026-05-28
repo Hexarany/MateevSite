@@ -393,7 +393,7 @@ function renderStaticContent() {
     .map(
       (item, index) => `
         <article class="feature-card reveal">
-          <span class="feature-card__index">${escapeHtml(ui.featurePrefix || "Преимущество")} ${String(index + 1).padStart(2, "0")}</span>
+          <span class="feature-card__index">${String(index + 1).padStart(2, "0")}</span>
           <div>
             <h3>${escapeHtml(item.title)}</h3>
             <p>${escapeHtml(item.text)}</p>
