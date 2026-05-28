@@ -2020,6 +2020,92 @@ p {
   }
 }
 
+/* ─── Admin mobile ───────────────────────────────────────────────────────── */
+
+@media (max-width: 980px) {
+  /* Sidebar → compact horizontal nav on mobile */
+  .admin-sidebar {
+    max-height: none;
+    overflow-y: visible;
+    padding: 16px;
+  }
+
+  .admin-sidebar__brand {
+    display: none;
+  }
+
+  .admin-sidebar__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 12px;
+  }
+
+  .admin-sidebar__nav a {
+    padding: 8px 14px;
+    min-height: auto;
+    font-size: 0.8rem;
+  }
+
+  .admin-sidebar__divider {
+    display: none;
+  }
+
+  .admin-sidebar__meta,
+  .admin-sidebar__summary,
+  .admin-sidebar__link {
+    display: none;
+  }
+
+  /* Tables — horizontal scroll */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .booking-table {
+    min-width: 600px;
+  }
+
+  /* Calendar controls — wrap */
+  .admin-inline-actions--calendar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* KPI grid — 2 columns */
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Day checkboxes — show label */
+  .admin-check-grid--days {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Section block padding */
+  .admin-section-block {
+    padding: 16px;
+  }
+
+  /* Widget head toolbar — stack on mobile */
+  .admin-widget__head--toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-table-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .admin-table-controls .field--compact {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
 /* ─── Confirm dialog ─────────────────────────────────────────────────────── */
 
 .confirm-backdrop {
