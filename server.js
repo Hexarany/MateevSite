@@ -3210,8 +3210,7 @@ async function handleSchoolEnroll(request, response) {
       if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
         const text = `🎓 Новая заявка на обучение\n\nКурс: ${enrollment.courseName}\nИмя: ${enrollment.name}\nТелефон: ${enrollment.phone}\nEmail: ${enrollment.email}${enrollment.notes ? `\nКомментарий: ${enrollment.notes}` : ""}\nНомер: ${enrollment.reference}`;
         await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: "HTML" })
+          body: { chat_id: TELEGRAM_CHAT_ID, text }
         });
       }
     } catch {}
