@@ -54,6 +54,9 @@ const STATIC_FILES = {
   "/cancel.html": "cancel.html",
   "/success": "success.html",
   "/success.html": "success.html",
+  "/school": "school.html",
+  "/school.html": "school.html",
+  "/school.js": "school.js",
   "/styles.css": "styles.css",
   "/script.js": "script.js",
   "/admin.js": "admin.js"
@@ -672,7 +675,20 @@ async function ensureDataFiles() {
     ["site.json", `${JSON.stringify(DEFAULT_SITE_CONTENT, null, 2)}\n`],
     ["bookings.json", "[]"],
     ["schedule.json", `${JSON.stringify({ blocks: [] }, null, 2)}\n`],
-    ["clients.json", "[]"]
+    ["clients.json", "[]"],
+    ["courses.json", JSON.stringify([
+      { id: "classic-massage-group", direction: "massage", name: "Классический массаж", subtitle: "Базовый курс классического массажа с нуля", level: "beginner", format: "group", duration: "3 недели", price: 300, currency: "EUR", description: "Полный курс классического массажа для начинающих. Вы освоите анатомию и физиологию, технику основных приёмов, постановку рук и работу с разными зонами тела.", benefits: ["Анатомия и физиология для практика", "Основные техники: поглаживание, разминание, вибрация", "Работа со спиной, шеей, конечностями", "Практика на реальных клиентах под контролем преподавателя", "Сертификат об окончании курса"], teacherId: "denis-mateev", groupSize: "до 6 человек", certificate: true },
+      { id: "advanced-massage-group", direction: "massage", name: "Продвинутый курс массажа", subtitle: "Триггерные точки, терапевтический и спортивный массаж", level: "advanced", format: "group", duration: "4 недели", price: 400, currency: "EUR", description: "Углублённый курс для тех, кто уже знаком с базовой техникой. Фокус на работе с триггерными точками, терапевтическом подходе и специфике спортивного массажа.", benefits: ["Работа с триггерными точками и миофасциальными паттернами", "Терапевтический массаж: протоколы для боли и восстановления", "Спортивный массаж: разминка, восстановление, профилактика", "Индивидуальный разбор техники с преподавателем", "Сертификат об окончании курса"], teacherId: "denis-mateev", groupSize: "до 4 человек", certificate: true },
+      { id: "thai-massage-group", direction: "massage", name: "Тайский массаж", subtitle: "Традиционная техника тайского массажа", level: "intermediate", format: "group", duration: "3 недели", price: 500, currency: "EUR", description: "Курс традиционного тайского массажа для тех, кто имеет базовый опыт в телесных практиках. Работа с энергетическими линиями, растяжения, акупрессура.", benefits: ["Философия и принципы традиционного тайского массажа", "Работа с сенами — энергетическими линиями тела", "Техники растяжения и акупрессуры", "Полный протокол сеанса на коврике", "Сертификат об окончании курса"], teacherId: "denis-mateev", groupSize: "до 4 человек", certificate: true },
+      { id: "individual-massage", direction: "massage", name: "Индивидуальные занятия", subtitle: "Персональное обучение под ваш запрос и уровень", level: "any", format: "individual", duration: "Гибкий график", price: 500, currency: "EUR", description: "Индивидуальный формат обучения: программа выстраивается под ваш уровень, цели и удобное расписание. Максимум практики и внимания преподавателя.", benefits: ["Программа составляется под ваш запрос и уровень", "Гибкий график — занятия в удобное для вас время", "Максимум внимания и разбор вашей техники", "Быстрый прогресс благодаря персональному подходу", "Сертификат об окончании курса"], teacherId: "denis-mateev", groupSize: "1 человек", certificate: true },
+      { id: "basic-cosmetology-group", direction: "cosmetology", name: "Базовый курс косметологии", subtitle: "Введение в косметологию с медицинской базой", level: "beginner", format: "group", duration: "4 недели", price: 0, currency: "EUR", description: "Базовый курс для начинающих косметологов. Анатомия кожи, типы кожи, основные уходовые процедуры и работа с клиентом — всё с опорой на медицинские знания.", benefits: ["Анатомия и физиология кожи", "Типы кожи и подбор ухода", "Базовые косметологические процедуры", "Работа с клиентом: анамнез, противопоказания, протокол", "Сертификат об окончании курса"], teacherId: "vera-mateeva", groupSize: "до 6 человек", certificate: true },
+      { id: "facial-skincare-group", direction: "cosmetology", name: "Уход за кожей лица", subtitle: "Профессиональные техники ухода за кожей лица", level: "intermediate", format: "group", duration: "3 недели", price: 0, currency: "EUR", description: "Курс для тех, кто хочет освоить профессиональные уходовые техники для лица: массаж, маски, аппаратные методики и подбор домашнего ухода для клиента.", benefits: ["Массаж лица: классический и лимфодренажный", "Профессиональные маски и пилинги", "Введение в аппаратные методики", "Составление протокола ухода для клиента", "Сертификат об окончании курса"], teacherId: "vera-mateeva", groupSize: "до 6 человек", certificate: true }
+    ], null, 2)],
+    ["teachers.json", JSON.stringify([
+      { id: "denis-mateev", name: "Денис Матеев", role: "Преподаватель массажа", experience: "9 лет практики", bio: "Практикующий массажист и телесный терапевт с 9-летним опытом. Основатель Mateev Spa Studio. Ведёт обучение классическому, терапевтическому и тайскому массажу — от базовой техники до работы с триггерными точками.", directions: ["massage"], initials: "ДМ", photo: null },
+      { id: "vera-mateeva", name: "Вера Матеева", role: "Преподаватель косметологии", experience: "6 лет в косметологии", bio: "Медицинское образование — врач-терапевт. 6 лет в практической косметологии. Ведёт обучение уходу за кожей, косметологическим процедурам и работе с клиентом.", directions: ["cosmetology"], initials: "ВМ", photo: null }
+    ], null, 2)],
+    ["enrollments.json", "[]"]
   ];
 
   await Promise.all(
@@ -3146,6 +3162,61 @@ async function handleAdminClientUpdate(request, response, clientId) {
   });
 }
 
+async function handleSchoolEnroll(request, response) {
+  const payload = await parseJsonBody(request);
+
+  const courseId = sanitizeText(payload.courseId || "");
+  const name = sanitizeText(payload.name || "");
+  const phone = sanitizeText(payload.phone || "");
+  const email = sanitizeText(payload.email || "");
+  const notes = sanitizeText(payload.notes || "");
+
+  if (!courseId || !name || !phone || !email) {
+    sendJson(response, 400, { message: "Заполните все обязательные поля." });
+    return;
+  }
+
+  const courses = await readJson("courses.json");
+  const course = courses.find((c) => c.id === courseId);
+  if (!course) {
+    sendJson(response, 400, { message: "Курс не найден." });
+    return;
+  }
+
+  const enrollment = {
+    id: crypto.randomUUID(),
+    reference: `SCH-${Date.now().toString().slice(-6)}`,
+    status: "new",
+    courseId,
+    courseName: course.name,
+    direction: course.direction,
+    name,
+    phone,
+    email,
+    notes,
+    createdAt: new Date().toISOString()
+  };
+
+  const enrollments = await readJson("enrollments.json");
+  enrollments.push(enrollment);
+  await writeJson("enrollments.json", enrollments);
+
+  // Telegram notification (fire and forget)
+  void (async () => {
+    try {
+      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+        const text = `🎓 Новая заявка на обучение\n\nКурс: ${enrollment.courseName}\nИмя: ${enrollment.name}\nТелефон: ${enrollment.phone}\nEmail: ${enrollment.email}${enrollment.notes ? `\nКомментарий: ${enrollment.notes}` : ""}\nНомер: ${enrollment.reference}`;
+        await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: "HTML" })
+        });
+      }
+    } catch {}
+  })();
+
+  sendJson(response, 201, { ok: true, reference: enrollment.reference, enrollment });
+}
+
 async function handleSpecialistPhotoUpload(request, response, specialistId) {
   assertAdminPin(request);
 
@@ -3298,6 +3369,28 @@ async function routeApi(request, response, urlObject) {
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/clients/")) {
     const clientId = urlObject.pathname.replace("/api/admin/clients/", "");
     await handleAdminClientUpdate(request, response, clientId);
+    return;
+  }
+
+  // GET /api/school/data - public
+  if (request.method === "GET" && urlObject.pathname === "/api/school/data") {
+    const courses = await readJson("courses.json");
+    const teachers = await readJson("teachers.json");
+    sendJson(response, 200, { courses, teachers });
+    return;
+  }
+
+  // POST /api/school/enroll - public enrollment
+  if (request.method === "POST" && urlObject.pathname === "/api/school/enroll") {
+    await handleSchoolEnroll(request, response);
+    return;
+  }
+
+  // GET /api/admin/enrollments - admin
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/enrollments") {
+    assertAdminPin(request);
+    const enrollments = await readJson("enrollments.json");
+    sendJson(response, 200, { enrollments });
     return;
   }
 

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Школа массажа и косметологии Mateev Spa — профессиональное обучение в Кишиневе. Малые группы, практикующие преподаватели, сертификат."
+  >
+  <title>Школа Mateev Spa — Обучение массажу и косметологии в Кишиневе</title>
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mateev Spa Studio">
+  <meta property="og:title" content="Школа Mateev Spa — Обучение массажу и косметологии">
+  <meta property="og:description" content="Профессиональное обучение массажу и косметологии в Кишиневе. Малые группы, практикующие специалисты, сертификат по окончании.">
+  <meta property="og:url" content="https://mateevspa.md/school">
+  <meta property="og:locale" content="ru_RU">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Школа Mateev Spa — Обучение массажу и косметологии">
+  <meta name="twitter:description" content="Профессиональное обучение массажу и косметологии в Кишиневе. Малые группы, практикующие специалисты, сертификат по окончании.">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a href="/" class="brand">
+        <span class="brand__eyebrow">Студия массажа в Кишиневе</span>
+        <span class="brand__name">Mateev Spa Studio</span>
+      </a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Открыть навигацию" aria-expanded="false">
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="nav" id="siteNav">
+        <a href="/" class="nav__link">Студия</a>
+        <a href="#courses" class="nav__link">Курсы</a>
+        <a href="#teachers" class="nav__link">Преподаватели</a>
+        <a href="#enroll" class="nav__link">Записаться</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+      <div class="container hero__grid" style="grid-template-columns:1fr;">
+        <div class="hero__content reveal">
+          <p class="section-kicker">Школа Mateev Spa</p>
+          <h1 class="hero__title">Обучение массажу и косметологии в Кишиневе</h1>
+          <p class="hero__subtitle">Профессиональное обучение от практикующих специалистов с медицинским образованием. Малые группы, живая практика и сертификат.</p>
+          <div class="hero__actions">
+            <a href="#courses" class="button button--primary">Смотреть курсы</a>
+            <a href="#enroll" class="button button--ghost">Оставить заявку</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COURSES -->
+    <section class="section section--contrast" id="courses">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker">Программы</p>
+          <h2>Курсы массажа и косметологии с сертификатом</h2>
+          <p class="section-copy">Выберите направление и формат обучения — от базового курса для начинающих до продвинутых техник для практикующих специалистов.</p>
+        </div>
+
+        <div class="school-filters" id="courseFilters">
+          <button class="school-filter-btn is-active" data-direction="all">Все курсы</button>
+          <button class="school-filter-btn" data-direction="massage">Массаж</button>
+          <button class="school-filter-btn" data-direction="cosmetology">Косметология</button>
+        </div>
+
+        <div class="school-courses-grid" id="coursesGrid">
+          <p style="color:var(--muted);grid-column:1/-1;">Загружаем курсы…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEACHERS -->
+    <section class="section" id="teachers">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker">Преподаватели</p>
+          <h2>Обучение у практикующих специалистов</h2>
+          <p class="section-copy">Каждый преподаватель ведёт активную практику — вы учитесь у людей, которые работают в профессии каждый день.</p>
+        </div>
+
+        <div class="school-teachers-grid" id="teachersGrid">
+          <p style="color:var(--muted);grid-column:1/-1;">Загружаем преподавателей…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENROLLMENT FORM -->
+    <section class="section section--accent" id="enroll">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker">Заявка</p>
+          <h2>Оставьте заявку на обучение</h2>
+          <p class="section-copy">Заполните форму — мы свяжемся с вами в течение дня, ответим на вопросы и уточним даты ближайшей группы.</p>
+        </div>
+
+        <div class="school-enroll-layout">
+          <form class="school-enroll-form card reveal" id="enrollForm">
+            <label class="field">
+              <span>Курс</span>
+              <select id="enrollCourse" required>
+                <option value="">Выберите курс</option>
+              </select>
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Имя</span>
+                <input type="text" id="enrollName" placeholder="Ваше имя" required>
+              </label>
+              <label class="field">
+                <span>Телефон</span>
+                <input type="tel" id="enrollPhone" placeholder="+373..." required>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Email</span>
+              <input type="email" id="enrollEmail" placeholder="name@example.com" required autocomplete="email">
+            </label>
+
+            <label class="field">
+              <span>Комментарий</span>
+              <textarea id="enrollNotes" rows="3" placeholder="Ваш уровень подготовки, вопросы или пожелания"></textarea>
+            </label>
+
+            <button type="submit" class="button button--primary button--full" id="enrollSubmitBtn">Отправить заявку</button>
+            <p class="helper-text">Отправляя заявку, вы соглашаетесь на обработку контактных данных для связи по вопросам обучения.</p>
+          </form>
+
+          <aside class="school-enroll-sidebar reveal">
+            <div class="card" style="padding:24px;">
+              <p class="section-kicker">Почему мы</p>
+              <div class="school-why-list">
+                <div class="school-why-item">
+                  <strong>Малые группы</strong>
+                  <span>До 6 человек — больше практики и внимания</span>
+                </div>
+                <div class="school-why-item">
+                  <strong>Практикующие педагоги</strong>
+                  <span>Обучают люди с реальной клиентской практикой</span>
+                </div>
+                <div class="school-why-item">
+                  <strong>Медицинская база</strong>
+                  <span>Анатомия, физиология и безопасность в основе</span>
+                </div>
+                <div class="school-why-item">
+                  <strong>Сертификат</strong>
+                  <span>Официальный документ по окончании курса</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div>
+        <p class="footer__eyebrow">Школа Mateev Spa</p>
+        <h3 class="footer__title">Обучение массажу и косметологии</h3>
+        <p class="footer__copy">Профессиональное обучение в малых группах с сертификатом.</p>
+      </div>
+
+      <div>
+        <div class="footer-contact"><strong>Телефон</strong><span>+373 69 158 475</span></div>
+        <div class="footer-contact"><strong>Email</strong><span>hello@mateevspa.md</span></div>
+      </div>
+
+      <nav class="footer__nav">
+        <a href="/">Студия</a>
+        <a href="#courses">Курсы</a>
+        <a href="#teachers">Преподаватели</a>
+        <a href="#enroll">Записаться</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="school.js" defer></script>
+</body>
+</html>
