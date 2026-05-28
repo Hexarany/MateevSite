@@ -1,6 +1,7 @@
 const state = {
   adminPin: "",
   adminData: null,
+  enrollments: [],
   daySchedule: null,
   clients: [],
   selectedClientId: "",
@@ -190,6 +191,24 @@ function bindEvents() {
     renderClientsWorkspace();
   });
   elements.adminTableBody.addEventListener("change", handleAdminStatusChange);
+
+  document.addEventListener("change", async (event) => {
+    const select = event.target.closest(".enrollment-status-select");
+    if (!select) return;
+    try {
+      await fetchJson(`/api/admin/enrollments/${select.dataset.enrollmentId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: select.value })
+      });
+      const idx = state.enrollments.findIndex((e) => e.id === select.dataset.enrollmentId);
+      if (idx !== -1) state.enrollments[idx].status = select.value;
+    } catch {
+      showToast("Не удалось обновить статус.", "error");
+    }
+  });
+
+  document.getElementById("enrollmentStatusFilter")?.addEventListener("change", renderEnrollmentsTable);
+  document.getElementById("enrollmentSearch")?.addEventListener("input", renderEnrollmentsTable);
   elements.clientsList.addEventListener("click", handleClientListClick);
   elements.clientDetail.addEventListener("submit", handleClientProfileSubmit);
   elements.saveSiteContentBtn.addEventListener("click", () => handleContentSave("site"));
@@ -965,8 +984,16 @@ async function loadAdminData() {
 
   state.adminData = payload;
   state.currency = payload.currency || state.currency;
-  await Promise.all([loadDaySchedule(), loadClientsData()]);
+  await Promise.all([loadDaySchedule(), loadClientsData(), loadEnrollments()]);
   renderDashboard();
+}
+
+async function loadEnrollments() {
+  try {
+    const payload = await fetchJson("/api/admin/enrollments");
+    state.enrollments = payload.enrollments || [];
+    renderEnrollmentsTable();
+  } catch {}
 }
 
 async function tryAutoLoginFromSession() {
@@ -3072,4 +3099,52 @@ function renderAdminTable() {
       `
     )
     .join("");
+}
+
+function renderEnrollmentsTable() {
+  const tbody = document.getElementById("enrollmentsTableBody");
+  const searchInput = document.getElementById("enrollmentSearch");
+  const statusSelect = document.getElementById("enrollmentStatusFilter");
+  if (!tbody) return;
+
+  const statusFilter = statusSelect?.value || "all";
+  const search = (searchInput?.value || "").trim().toLowerCase();
+  const statusLabels = { new: "Новая", contacted: "Связались", confirmed: "Записан", cancelled: "Отменена" };
+
+  const filtered = state.enrollments.filter((e) => {
+    if (statusFilter !== "all" && e.status !== statusFilter) return false;
+    if (!search) return true;
+    return [e.reference, e.name, e.phone, e.email, e.courseName, e.notes]
+      .filter(Boolean).join(" ").toLowerCase().includes(search);
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Заявок пока нет.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((e) => `
+    <tr>
+      <td>
+        <span class="table-main">${escapeHtml(e.reference)}</span>
+        <span class="table-sub">${escapeHtml(formatDateTime(e.createdAt))}</span>
+      </td>
+      <td>
+        <span class="table-main">${escapeHtml(e.name)}</span>
+        <span class="table-sub">${escapeHtml(e.phone)}${e.email ? `<br>${escapeHtml(e.email)}` : ""}</span>
+      </td>
+      <td>
+        <span class="table-main">${escapeHtml(e.courseName)}</span>
+        <span class="table-sub">${e.direction === "massage" ? "Массаж" : "Косметология"}</span>
+      </td>
+      <td><span class="table-main">${e.notes ? escapeHtml(e.notes) : "—"}</span></td>
+      <td>
+        <select class="enrollment-status-select" data-enrollment-id="${escapeHtml(e.id)}">
+          ${["new","contacted","confirmed","cancelled"].map((s) =>
+            `<option value="${s}"${e.status === s ? " selected" : ""}>${statusLabels[s]}</option>`
+          ).join("")}
+        </select>
+      </td>
+    </tr>
+  `).join("");
 }

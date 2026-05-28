@@ -40,6 +40,7 @@
         <a href="#operations">Операции</a>
         <a href="#team">Команда</a>
         <a href="#services">Услуги</a>
+        <a href="#school-enrollments">Заявки на курсы</a>
         <hr class="admin-sidebar__divider">
         <a href="#content">Контент</a>
       </nav>
@@ -434,6 +435,47 @@
                 </div>
                 <div id="attentionBoard"></div>
               </article>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="school-enrollments">
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head admin-widget__head--toolbar">
+                <div>
+                  <p class="section-kicker">Школа</p>
+                  <h3 class="admin-widget__title">Заявки на обучение</h3>
+                </div>
+                <div class="admin-table-controls">
+                  <label class="field field--compact">
+                    <span>Статус</span>
+                    <select id="enrollmentStatusFilter">
+                      <option value="all">Все заявки</option>
+                      <option value="new">Новые</option>
+                      <option value="contacted">Связались</option>
+                      <option value="confirmed">Записан</option>
+                      <option value="cancelled">Отменена</option>
+                    </select>
+                  </label>
+                  <label class="field field--compact">
+                    <span>Поиск</span>
+                    <input type="search" id="enrollmentSearch" placeholder="Имя, телефон, курс">
+                  </label>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="booking-table">
+                  <thead>
+                    <tr>
+                      <th>Заявка</th>
+                      <th>Контакт</th>
+                      <th>Курс</th>
+                      <th>Комментарий</th>
+                      <th>Статус</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enrollmentsTableBody"></tbody>
+                </table>
+              </div>
             </div>
           </section>
 

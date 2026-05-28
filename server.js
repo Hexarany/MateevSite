@@ -3394,6 +3394,25 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // PATCH /api/admin/enrollments/:id - admin
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/enrollments/")) {
+    assertAdminPin(request);
+    const enrollmentId = urlObject.pathname.replace("/api/admin/enrollments/", "");
+    const payload = await parseJsonBody(request);
+    const enrollments = await readJson("enrollments.json");
+    const idx = enrollments.findIndex((e) => e.id === enrollmentId);
+    if (idx === -1) {
+      sendJson(response, 404, { message: "Заявка не найдена." });
+      return;
+    }
+    const allowed = ["new", "contacted", "confirmed", "cancelled"];
+    const status = allowed.includes(payload.status) ? payload.status : enrollments[idx].status;
+    enrollments[idx] = { ...enrollments[idx], status, updatedAt: new Date().toISOString() };
+    await writeJson("enrollments.json", enrollments);
+    sendJson(response, 200, { ok: true, enrollment: enrollments[idx] });
+    return;
+  }
+
   if (request.method === "GET" && urlObject.pathname === "/api/health") {
     sendJson(response, 200, {
       ok: true,
