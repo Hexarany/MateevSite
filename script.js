@@ -787,6 +787,30 @@ function initRevealObserver() {
   );
 
   syncRevealTargets();
+  initFabObserver();
+}
+
+function initFabObserver() {
+  const fab = document.getElementById("fabBooking");
+  const bookingSection = document.getElementById("booking");
+  const heroSection = document.getElementById("home");
+  if (!fab || !bookingSection) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const bookingVisible = entries.some(
+        (e) => e.target === bookingSection && e.isIntersecting
+      );
+      const heroVisible = entries.some(
+        (e) => e.target === heroSection && e.isIntersecting
+      );
+      fab.classList.toggle("is-visible", !bookingVisible && !heroVisible);
+    },
+    { threshold: 0.15 }
+  );
+
+  observer.observe(bookingSection);
+  if (heroSection) observer.observe(heroSection);
 }
 
 function syncRevealTargets() {

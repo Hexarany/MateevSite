@@ -866,6 +866,39 @@ p {
   padding: 42px 0 58px;
 }
 
+.fab-booking {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  z-index: 50;
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0 32px;
+  min-height: 52px;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(141, 83, 32, 0.36);
+  white-space: nowrap;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+
+.fab-booking.is-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 980px) {
+  .fab-booking {
+    display: inline-flex;
+  }
+}
+
 .footer__grid {
   display: grid;
   grid-template-columns: 1.06fr 0.86fr 0.62fr;
