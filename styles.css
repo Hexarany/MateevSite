@@ -1156,6 +1156,30 @@ p {
   color: var(--muted);
 }
 
+.footer-social {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0 0;
+}
+
+.social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.social-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+}
+
 .admin-sidebar__link {
   width: 100%;
   margin-top: 18px;

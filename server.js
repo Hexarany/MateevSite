@@ -104,6 +104,7 @@ const DEFAULT_SITE_CONTENT = {
     phone: "+373 69 555 210",
     email: "hello@mateevspa.md",
     telegram: "@mateevspa",
+    instagram: "_mateevspa_",
     hours: "Пн-Сб 09:00-20:00, Вс 10:00-17:00",
     currency: "MDL"
   },
