@@ -25,61 +25,98 @@
   </header>
 
   <main>
-    <section class="section" style="min-height:calc(100vh - 140px); display:flex; align-items:center;">
-      <div class="container" style="max-width:520px; margin:0 auto; padding:48px 0;">
-
-        <div style="display:inline-flex; align-items:center; justify-content:center;">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <circle cx="20" cy="20" r="20" fill="rgba(49,113,79,0.12)"/>
-            <path d="M12 20.5L17.5 26L28 15" stroke="#31714f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Hero -->
+    <section style="background:linear-gradient(135deg,rgba(179,109,44,0.92),rgba(141,83,32,0.96)); color:#fffaf4; padding:56px 0;">
+      <div class="container" style="max-width:860px;">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="24" fill="rgba(255,255,255,0.12)"/>
+            <circle cx="24" cy="24" r="18" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <path d="M15 24.5L21 30.5L33 18" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+          <p style="margin:0; font-size:0.78rem; font-weight:700; letter-spacing:0.26em; text-transform:uppercase; color:rgba(255,250,244,0.7);">Заявка принята</p>
         </div>
+        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,5vw,4rem); font-weight:600; margin:0 0 16px; line-height:1.05; color:#fff;">Мы скоро свяжемся с вами</h1>
+        <p style="margin:0; color:rgba(255,250,244,0.8); font-size:1.05rem; line-height:1.65; max-width:52ch;">Ваша заявка получена. Ответим в течение рабочего дня — уточним детали, расскажем о ближайшей группе и ответим на все вопросы.</p>
+      </div>
+    </section>
 
-        <p class="section-kicker" style="margin-top:20px;">Заявка принята</p>
-        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:600; margin:0 0 12px; color:var(--ink); line-height:1.1;">
-          Мы скоро свяжемся с вами
-        </h1>
-        <p style="color:var(--muted); margin:0 0 32px; line-height:1.6;">
-          Ваша заявка на обучение получена. Мы ответим в течение рабочего дня — уточним детали, даты ближайшей группы и ответим на все вопросы.
-        </p>
+    <!-- Content -->
+    <section class="section" style="padding-top:48px; padding-bottom:72px;">
+      <div class="container" style="max-width:860px;">
+        <div id="schoolSuccessLayout" style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
 
-        <div class="card" style="padding:24px; margin-bottom:28px;">
-          <div class="summary-list" id="enrollDetails"></div>
+          <!-- Details -->
+          <div>
+            <div class="card" style="padding:28px;">
+              <p class="section-kicker">Детали заявки</p>
+              <div class="summary-row-list" id="enrollDetails"></div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
+              <a href="/school" class="button button--secondary">К курсам</a>
+              <a href="/" class="button button--ghost">На главную</a>
+            </div>
+          </div>
+
+          <!-- What's next -->
+          <div style="display:grid; gap:16px;">
+            <div class="card" style="padding:24px;">
+              <p class="section-kicker">Что дальше</p>
+              <div style="display:grid; gap:14px; margin-top:4px;">
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                  <span style="width:28px; height:28px; border-radius:50%; background:rgba(179,109,44,0.12); border:1px solid rgba(179,109,44,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; font-weight:800; color:var(--brand);">1</span>
+                  <div><strong style="display:block; font-size:0.9rem;">Ждите звонка</strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Мы свяжемся с вами по телефону или email в течение рабочего дня.</span></div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                  <span style="width:28px; height:28px; border-radius:50%; background:rgba(179,109,44,0.12); border:1px solid rgba(179,109,44,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; font-weight:800; color:var(--brand);">2</span>
+                  <div><strong style="display:block; font-size:0.9rem;">Уточним детали</strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Расскажем о программе, расписании и дате старта ближайшей группы.</span></div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                  <span style="width:28px; height:28px; border-radius:50%; background:rgba(179,109,44,0.12); border:1px solid rgba(179,109,44,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; font-weight:800; color:var(--brand);">3</span>
+                  <div><strong style="display:block; font-size:0.9rem;">Начнём обучение</strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Обучение проходит очно в студии Mateev Spa в центре Кишинева.</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="padding:24px;">
+              <p class="section-kicker" style="margin-bottom:12px;">Есть вопросы?</p>
+              <div style="display:grid; gap:10px; font-size:0.875rem;">
+                <div><span style="display:block; font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:2px;">Телефон</span>+373 69 158 475</div>
+                <div><span style="display:block; font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:2px;">Telegram</span>@mateevspa</div>
+                <div><span style="display:block; font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:2px;">Адрес</span>бул. Штефан чел Маре, 145, Кишинев</div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <a href="/school" class="button button--secondary">Вернуться к курсам</a>
-          <a href="/" class="button button--ghost">На главную</a>
-        </div>
-
       </div>
     </section>
   </main>
 
   <style>
-    .summary-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+    .summary-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
     .summary-row:last-child { border-bottom:none; padding-bottom:0; }
     .summary-row:first-child { padding-top:0; }
-    .summary-row span { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
+    .summary-row span { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
     .summary-row strong { font-family:"Manrope",sans-serif; font-weight:600; color:var(--ink); text-align:right; }
+    @media (max-width: 700px) { #schoolSuccessLayout { grid-template-columns:1fr !important; } }
   </style>
 
   <script>
     const p = new URLSearchParams(location.search);
-    const ref = p.get("ref") || "";
+    const ref    = p.get("ref") || "";
     const course = p.get("course") || "";
-    const name = p.get("name") || "";
+    const name   = p.get("name") || "";
 
     if (!ref) location.replace("/school");
 
     const rows = [
       { label: "Номер заявки", value: ref },
-      course && { label: "Курс", value: course },
-      name   && { label: "Имя", value: name },
+      course && { label: "Курс",  value: course },
+      name   && { label: "Имя",   value: name },
     ].filter(Boolean);
 
     document.getElementById("enrollDetails").innerHTML = rows
-      .map(r => `<div class="summary-row"><span>${r.label}</span><strong>${r.value}</strong></div>`)
+      .map(r => '<div class="summary-row"><span>'+r.label+'</span><strong>'+r.value+'</strong></div>')
       .join("");
   </script>
 </body>
