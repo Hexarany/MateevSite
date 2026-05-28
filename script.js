@@ -506,7 +506,26 @@ function renderStaticContent() {
     )
     .join("");
 
+  const mapQuery = encodeURIComponent(`${site.brand.address}, ${site.brand.city}`);
+  const mapEmbedUrl = `https://maps.google.com/maps?q=${mapQuery}&output=embed&z=16&hl=ru`;
+  const mapOpenUrl  = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
   elements.contactInfo.innerHTML = `
+    <div class="contact-map">
+      <iframe
+        src="${mapEmbedUrl}"
+        width="100%"
+        height="180"
+        style="border:0; border-radius:12px; display:block;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="Расположение студии на карте"
+      ></iframe>
+      <a href="${mapOpenUrl}" target="_blank" rel="noopener" class="contact-map__link">
+        Открыть на Google Maps →
+      </a>
+    </div>
     <div class="contact-list">
       <div class="contact-item">
         <strong>${escapeHtml(ui.contactAddressLabel || "Адрес")}</strong>

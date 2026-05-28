@@ -853,6 +853,23 @@ p {
   font-weight: 700;
 }
 
+.contact-map {
+  margin-bottom: 4px;
+}
+
+.contact-map__link {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brand);
+  text-align: right;
+}
+
+.contact-map__link:hover {
+  color: var(--brand-deep);
+}
+
 .summary-empty {
   color: var(--muted);
   font-size: 0.9rem;
