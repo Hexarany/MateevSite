@@ -52,6 +52,8 @@ const STATIC_FILES = {
   "/admin.html": "admin.html",
   "/cancel": "cancel.html",
   "/cancel.html": "cancel.html",
+  "/success": "success.html",
+  "/success.html": "success.html",
   "/styles.css": "styles.css",
   "/script.js": "script.js",
   "/admin.js": "admin.js"

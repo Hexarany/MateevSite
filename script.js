@@ -900,16 +900,16 @@ function showToast(message, tone = "info") {
 }
 
 function showBookingSuccess(booking) {
-  const cancelUrl = `/cancel?ref=${encodeURIComponent(booking.reference)}`;
-  const toast = document.createElement("div");
-  toast.className = "toast toast--success";
-  toast.style.cssText = "max-width:360px; line-height:1.5;";
-  toast.innerHTML =
-    `Запись создана. Номер: <strong>${booking.reference}</strong><br>` +
-    `<a href="${cancelUrl}" style="color:inherit; opacity:0.8; font-size:0.8125rem;">Отменить запись</a>`;
-  elements.toastStack.appendChild(toast);
-
-  window.setTimeout(() => toast.remove(), 7000);
+  const p = new URLSearchParams({
+    ref:        booking.reference || "",
+    service:    booking.serviceName || "",
+    specialist: booking.specialistName || "",
+    date:       booking.date || "",
+    time:       booking.slot ? `${booking.slot} — ${booking.endsAt || ""}` : "",
+    price:      booking.totalPrice ? `${booking.totalPrice} MDL` : "",
+    name:       booking.clientName || ""
+  });
+  location.href = `/success?${p.toString()}`;
 }
 
 async function fetchJson(url, options = {}) {

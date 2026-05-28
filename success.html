@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Запись подтверждена — Mateev Spa Studio</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a href="/" class="brand">
+        <span class="brand__eyebrow">Студия массажа в Кишиневе</span>
+        <span class="brand__name">Mateev Spa Studio</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" style="min-height: calc(100vh - 140px); display:flex; align-items:center;">
+      <div class="container" style="max-width: 520px; margin: 0 auto; padding: 48px 0;">
+
+        <div class="success-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="20" fill="rgba(49,113,79,0.12)"/>
+            <path d="M12 20.5L17.5 26L28 15" stroke="#31714f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <p class="section-kicker" style="margin-top: 20px;">Запись подтверждена</p>
+        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:600; margin:0 0 12px; color:var(--ink); line-height:1.1;">
+          Ждём вас в студии
+        </h1>
+        <p style="color:var(--muted); margin:0 0 32px; line-height:1.6;">
+          Детали записи отправлены на ваш email. Если планы изменятся — вы можете отменить визит по ссылке ниже.
+        </p>
+
+        <div class="card" style="padding: 24px; margin-bottom: 28px;">
+          <div class="summary-list" id="bookingDetails"></div>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <a href="/" class="button button--secondary">На главную</a>
+          <a href="#" class="button button--ghost" id="cancelLink">Отменить запись</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <style>
+    .success-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .summary-row:first-child {
+      padding-top: 0;
+    }
+
+    .summary-row span {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .summary-row strong {
+      font-family: "Manrope", sans-serif;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: right;
+    }
+  </style>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+
+    const ref       = params.get("ref") || "";
+    const service   = params.get("service") || "";
+    const specialist = params.get("specialist") || "";
+    const date      = params.get("date") || "";
+    const time      = params.get("time") || "";
+    const price     = params.get("price") || "";
+    const name      = params.get("name") || "";
+
+    if (!ref) {
+      location.replace("/");
+    }
+
+    const cancelLink = document.getElementById("cancelLink");
+    cancelLink.href = `/cancel?ref=${encodeURIComponent(ref)}`;
+
+    function formatDate(str) {
+      if (!str) return "";
+      const [y, m, d] = str.split("-");
+      const months = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+      return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
+    }
+
+    const rows = [
+      { label: "Номер записи", value: ref },
+      service     && { label: "Процедура",   value: service },
+      specialist  && { label: "Специалист",  value: specialist },
+      date        && { label: "Дата",        value: formatDate(date) },
+      time        && { label: "Время",       value: time },
+      price       && { label: "Стоимость",   value: price },
+      name        && { label: "Клиент",      value: name },
+    ].filter(Boolean);
+
+    document.getElementById("bookingDetails").innerHTML = rows
+      .map(r => `<div class="summary-row"><span>${r.label}</span><strong>${r.value}</strong></div>`)
+      .join("");
+  </script>
+</body>
+</html>
