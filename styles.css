@@ -941,6 +941,8 @@ p {
   position: sticky;
   top: 18px;
   padding: 26px;
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
 }
 
 .admin-sidebar__title {
