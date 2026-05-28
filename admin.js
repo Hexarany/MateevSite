@@ -511,7 +511,7 @@ function renderSiteContentEditor() {
         ].join("")
       )}
     </div>
-    <div class="admin-editor-stack">
+    <div class="admin-list-grid">
       ${renderStringListEditor("Бейджи hero", "hero.badges", site.hero?.badges || [], "Добавить бейдж", "Новый бейдж")}
       ${renderObjectListEditor(
         "Статистика hero",
@@ -634,6 +634,7 @@ function renderSpecialistsEditor() {
                 </label>
               </div>
               <div class="admin-entry-card__grid">
+                ${renderCollectionField("ID (slug)", index, "id", specialist.id || "", "specialist")}
                 ${renderCollectionField("Имя", index, "name", specialist.name || "", "specialist")}
                 ${renderCollectionField("Роль", index, "role", specialist.role || "", "specialist")}
                 ${renderCollectionField("Опыт", index, "experience", specialist.experience || "", "specialist")}

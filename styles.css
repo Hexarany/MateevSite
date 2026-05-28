@@ -1406,6 +1406,13 @@ p {
   gap: 18px;
 }
 
+.admin-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
 .admin-date-input {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
