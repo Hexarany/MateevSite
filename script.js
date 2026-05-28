@@ -666,17 +666,19 @@ function refreshBookingSummary() {
   const slot = state.availability.find((item) => item.time === state.selectedSlot);
   const ui = state.site?.ui || {};
 
-  elements.bookingSummary.innerHTML = `
-    <div class="summary-list">
-      ${summaryRow(ui.summaryServiceLabel || "Процедура", service ? service.name : "Не выбрана")}
-      ${summaryRow(ui.summarySpecialistLabel || "Специалист", specialist ? specialist.name : "Не выбран")}
-      ${summaryRow(ui.summaryDateLabel || "Дата", elements.dateInput.value ? formatDate(elements.dateInput.value) : "Не выбрана")}
-      ${summaryRow(ui.summaryTimeLabel || "Время", state.selectedSlot ? `${state.selectedSlot} - ${slot?.endsAt || ""}` : "Слот не выбран")}
-      ${summaryRow(ui.summaryPriceLabel || "Стоимость", service ? formatCurrency(service.price) : "Будет показана после выбора")}
-      ${summaryRow(ui.summaryClientLabel || "Клиент", elements.clientName.value.trim() || "Имя еще не заполнено")}
-      ${summaryRow(ui.summaryContactLabel || "Контакт", elements.clientPhone.value.trim() || "Телефон еще не заполнен")}
-    </div>
-  `;
+  const rows = [
+    summaryRow(ui.summaryServiceLabel || "Процедура", service?.name),
+    summaryRow(ui.summarySpecialistLabel || "Специалист", specialist?.name),
+    summaryRow(ui.summaryDateLabel || "Дата", elements.dateInput.value ? formatDate(elements.dateInput.value) : ""),
+    summaryRow(ui.summaryTimeLabel || "Время", state.selectedSlot ? `${state.selectedSlot} — ${slot?.endsAt || ""}` : ""),
+    summaryRow(ui.summaryPriceLabel || "Стоимость", service ? formatCurrency(service.price) : ""),
+    summaryRow(ui.summaryClientLabel || "Клиент", elements.clientName.value.trim()),
+    summaryRow(ui.summaryContactLabel || "Контакт", elements.clientPhone.value.trim()),
+  ].join("");
+
+  elements.bookingSummary.innerHTML = rows
+    ? `<div class="summary-list">${rows}</div>`
+    : `<p class="summary-empty">Выберите процедуру, специалиста и дату — резюме появится здесь.</p>`;
 }
 
 async function handleBookingSubmit(event) {
@@ -817,6 +819,7 @@ function findSpecialist(specialistId) {
 }
 
 function summaryRow(label, value) {
+  if (!value) return "";
   return `
     <div class="summary-row">
       <span>${escapeHtml(label)}</span>

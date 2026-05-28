@@ -474,7 +474,8 @@ p {
 }
 
 .hero__content .pill-row,
-.hero__content .stat-grid {
+.hero__content .stat-grid,
+.hero__content .section-kicker {
   display: none;
 }
 
@@ -800,6 +801,13 @@ p {
 .contact-item span {
   text-align: right;
   font-weight: 700;
+}
+
+.summary-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .footer {
