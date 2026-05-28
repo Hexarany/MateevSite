@@ -883,6 +883,36 @@ p {
   padding: 42px 0 58px;
 }
 
+.messenger-btns {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.messenger-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.messenger-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.messenger-btn--wa  { background: #25d366; }
+.messenger-btn--viber { background: #7360f2; }
+.messenger-btn--tg  { background: #229ed9; }
+
 .fab-booking {
   display: none;
   position: fixed;
