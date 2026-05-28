@@ -34,13 +34,14 @@
 
       <nav class="admin-sidebar__nav">
         <a href="#overview">Обзор</a>
-        <a href="#content">Контент</a>
         <a href="#schedule">Расписание</a>
+        <a href="#requests">Журнал заявок</a>
         <a href="#clients">Клиенты</a>
         <a href="#operations">Операции</a>
         <a href="#team">Команда</a>
         <a href="#services">Услуги</a>
-        <a href="#requests">Журнал заявок</a>
+        <hr class="admin-sidebar__divider">
+        <a href="#content">Контент</a>
       </nav>
 
       <div class="admin-sidebar__meta" id="adminStudioMeta"></div>
@@ -89,58 +90,6 @@
         </section>
 
         <div class="admin-panel" id="adminPanel" hidden>
-          <section class="admin-section-block reveal" id="content">
-            <div class="admin-section-block__head">
-              <div>
-                <p class="section-kicker">Контент</p>
-                <h2 class="admin-section-block__title">Редактирование витрины, каталога и команды</h2>
-              </div>
-            </div>
-
-            <div class="admin-cms-stack">
-              <article class="admin-widget admin-widget--editor">
-                <div class="admin-widget__head admin-widget__head--toolbar">
-                  <div>
-                    <p class="section-kicker">Витрина</p>
-                    <h3 class="admin-widget__title">Тексты, блоки, отзывы и FAQ</h3>
-                  </div>
-                  <button type="button" class="button button--secondary" id="saveSiteContentBtn">Сохранить витрину</button>
-                </div>
-                <div id="siteContentEditor"></div>
-              </article>
-
-              <div class="admin-two-column admin-two-column--editor">
-                <article class="admin-widget admin-widget--editor">
-                  <div class="admin-widget__head admin-widget__head--toolbar">
-                    <div>
-                      <p class="section-kicker">Каталог</p>
-                      <h3 class="admin-widget__title">Услуги</h3>
-                    </div>
-                    <div class="admin-inline-actions">
-                      <button type="button" class="button button--ghost" id="addServiceBtn">Добавить услугу</button>
-                      <button type="button" class="button button--secondary" id="saveServicesBtn">Сохранить услуги</button>
-                    </div>
-                  </div>
-                  <div id="servicesEditor"></div>
-                </article>
-
-                <article class="admin-widget admin-widget--editor">
-                  <div class="admin-widget__head admin-widget__head--toolbar">
-                    <div>
-                      <p class="section-kicker">Команда</p>
-                      <h3 class="admin-widget__title">Специалисты</h3>
-                    </div>
-                    <div class="admin-inline-actions">
-                      <button type="button" class="button button--ghost" id="addSpecialistBtn">Добавить специалиста</button>
-                      <button type="button" class="button button--secondary" id="saveSpecialistsBtn">Сохранить специалистов</button>
-                    </div>
-                  </div>
-                  <div id="specialistsEditor"></div>
-                </article>
-              </div>
-            </div>
-          </section>
-
           <section class="admin-section-block reveal" id="schedule">
             <div class="admin-section-block__head">
               <div>
@@ -319,6 +268,53 @@
             </div>
           </section>
 
+          <section class="admin-section-block reveal" id="requests">
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head admin-widget__head--toolbar">
+                <div>
+                  <p class="section-kicker">Журнал заявок</p>
+                  <h3 class="admin-widget__title">Поиск, фильтрация и смена статусов</h3>
+                </div>
+
+                <div class="admin-table-controls">
+                  <label class="field field--compact">
+                    <span>Статус</span>
+                    <select id="statusFilter">
+                      <option value="all">Все заявки</option>
+                      <option value="new">Новые</option>
+                      <option value="confirmed">Подтвержденные</option>
+                      <option value="completed">Завершенные</option>
+                      <option value="cancelled">Отмененные</option>
+                    </select>
+                  </label>
+
+                  <label class="field field--compact">
+                    <span>Поиск</span>
+                    <input type="search" id="bookingSearch" placeholder="Имя, телефон, услуга, номер">
+                  </label>
+
+                  <button type="button" class="button button--ghost" id="exportCsvBtn">Скачать CSV</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="booking-table">
+                  <thead>
+                    <tr>
+                      <th>Заявка</th>
+                      <th>Клиент</th>
+                      <th>Услуга</th>
+                      <th>Время</th>
+                      <th>Статус</th>
+                      <th>Комментарий</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
           <section class="admin-section-block reveal" id="clients">
               <div class="admin-section-block__head">
                 <div>
@@ -430,49 +426,54 @@
             </div>
           </section>
 
-          <section class="admin-section-block reveal" id="requests">
-            <div class="admin-widget admin-widget--table">
-              <div class="admin-widget__head admin-widget__head--toolbar">
-                <div>
-                  <p class="section-kicker">Журнал заявок</p>
-                  <h3 class="admin-widget__title">Поиск, фильтрация и смена статусов</h3>
-                </div>
-
-                <div class="admin-table-controls">
-                  <label class="field field--compact">
-                    <span>Статус</span>
-                    <select id="statusFilter">
-                      <option value="all">Все заявки</option>
-                      <option value="new">Новые</option>
-                      <option value="confirmed">Подтвержденные</option>
-                      <option value="completed">Завершенные</option>
-                      <option value="cancelled">Отмененные</option>
-                    </select>
-                  </label>
-
-                  <label class="field field--compact">
-                    <span>Поиск</span>
-                    <input type="search" id="bookingSearch" placeholder="Имя, телефон, услуга, номер">
-                  </label>
-
-                  <button type="button" class="button button--ghost" id="exportCsvBtn">Скачать CSV</button>
-                </div>
+          <section class="admin-section-block reveal" id="content">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Контент</p>
+                <h2 class="admin-section-block__title">Редактирование витрины, каталога и команды</h2>
               </div>
+            </div>
 
-              <div class="table-wrap">
-                <table class="booking-table">
-                  <thead>
-                    <tr>
-                      <th>Заявка</th>
-                      <th>Клиент</th>
-                      <th>Услуга</th>
-                      <th>Время</th>
-                      <th>Статус</th>
-                      <th>Комментарий</th>
-                    </tr>
-                  </thead>
-                  <tbody id="adminTableBody"></tbody>
-                </table>
+            <div class="admin-cms-stack">
+              <article class="admin-widget admin-widget--editor">
+                <div class="admin-widget__head admin-widget__head--toolbar">
+                  <div>
+                    <p class="section-kicker">Витрина</p>
+                    <h3 class="admin-widget__title">Тексты, блоки, отзывы и FAQ</h3>
+                  </div>
+                  <button type="button" class="button button--secondary" id="saveSiteContentBtn">Сохранить витрину</button>
+                </div>
+                <div id="siteContentEditor"></div>
+              </article>
+
+              <div class="admin-two-column admin-two-column--editor">
+                <article class="admin-widget admin-widget--editor">
+                  <div class="admin-widget__head admin-widget__head--toolbar">
+                    <div>
+                      <p class="section-kicker">Каталог</p>
+                      <h3 class="admin-widget__title">Услуги</h3>
+                    </div>
+                    <div class="admin-inline-actions">
+                      <button type="button" class="button button--ghost" id="addServiceBtn">Добавить услугу</button>
+                      <button type="button" class="button button--secondary" id="saveServicesBtn">Сохранить услуги</button>
+                    </div>
+                  </div>
+                  <div id="servicesEditor"></div>
+                </article>
+
+                <article class="admin-widget admin-widget--editor">
+                  <div class="admin-widget__head admin-widget__head--toolbar">
+                    <div>
+                      <p class="section-kicker">Команда</p>
+                      <h3 class="admin-widget__title">Специалисты</h3>
+                    </div>
+                    <div class="admin-inline-actions">
+                      <button type="button" class="button button--ghost" id="addSpecialistBtn">Добавить специалиста</button>
+                      <button type="button" class="button button--secondary" id="saveSpecialistsBtn">Сохранить специалистов</button>
+                    </div>
+                  </div>
+                  <div id="specialistsEditor"></div>
+                </article>
               </div>
             </div>
           </section>
