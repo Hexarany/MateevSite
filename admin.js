@@ -1015,6 +1015,7 @@ function renderDashboard() {
   renderOperationsWorkspace();
   renderClientsWorkspace();
   renderAdminStats(model.statCards);
+  renderRevenueChart(state.adminData?.bookings || []);
   renderTodayTimeline(model.todayBookings);
   renderUpcomingQueue(model.upcomingBookings);
   renderSpecialistLoad(model.specialistRows);
@@ -1193,6 +1194,74 @@ function renderAdminStats(cards) {
       `
     )
     .join("");
+}
+
+function renderRevenueChart(bookings) {
+  const chartEl = document.getElementById("revenueChart");
+  const totalEl = document.getElementById("revenueChartTotal");
+  if (!chartEl) return;
+
+  const days = 30;
+  const today = new Date();
+  const data = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const dayRevenue = bookings
+      .filter((b) => b.date === dateStr && (b.status === "confirmed" || b.status === "completed"))
+      .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
+    data.push({ date: dateStr, revenue: dayRevenue, d });
+  }
+
+  const maxRevenue = Math.max(1, ...data.map((item) => item.revenue));
+  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+
+  if (totalEl) {
+    totalEl.textContent = totalRevenue > 0 ? formatCurrency(totalRevenue) : "—";
+  }
+
+  const barWidth = 14;
+  const gap = 4;
+  const chartH = 120;
+  const svgW = days * (barWidth + gap) - gap;
+  const monthNames = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+
+  const bars = data.map((item, i) => {
+    const barH = item.revenue > 0 ? Math.max(4, Math.round((item.revenue / maxRevenue) * chartH)) : 2;
+    const x = i * (barWidth + gap);
+    const y = chartH - barH;
+    const isToday = item.dateStr === today.toISOString().slice(0, 10);
+    const label = item.revenue > 0
+      ? `${item.d.getDate()} ${monthNames[item.d.getMonth()]}: ${formatCurrency(item.revenue)}`
+      : `${item.d.getDate()} ${monthNames[item.d.getMonth()]}: нет записей`;
+
+    return `<rect
+      x="${x}" y="${y}" width="${barWidth}" height="${barH}"
+      rx="4"
+      fill="${item.revenue > 0 ? "var(--brand)" : "var(--line-strong)"}"
+      opacity="${item.revenue > 0 ? "0.85" : "1"}"
+    >
+      <title>${label}</title>
+    </rect>`;
+  }).join("");
+
+  const labelStep = 7;
+  const labels = data
+    .filter((_, i) => i % labelStep === 0 || i === days - 1)
+    .map((item, _, arr) => {
+      const i = data.indexOf(item);
+      const x = i * (barWidth + gap) + barWidth / 2;
+      return `<text x="${x}" y="${chartH + 16}" text-anchor="middle" font-size="10" fill="var(--muted)">${item.d.getDate()} ${monthNames[item.d.getMonth()]}</text>`;
+    }).join("");
+
+  chartEl.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${svgW} ${chartH + 24}" preserveAspectRatio="none" style="display:block; overflow:visible;">
+      ${bars}
+      ${labels}
+    </svg>
+  `;
 }
 
 function renderTodayTimeline(bookings) {
