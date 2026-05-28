@@ -1521,16 +1521,14 @@ function renderStringListEditor(title, path, items, addLabel, placeholder) {
                       <span class="admin-editor-item__index">Элемент ${index + 1}</span>
                       <button type="button" class="button button--ghost" data-remove-site-list-item="${escapeHtml(path)}" data-index="${index}">Удалить</button>
                     </div>
-                    <label class="field">
-                      <span>${escapeHtml(title)}</span>
-                      <input
-                        type="text"
-                        value="${escapeHtml(item)}"
-                        placeholder="${escapeHtml(placeholder)}"
-                        data-site-list-path="${escapeHtml(path)}"
-                        data-index="${index}"
-                      >
-                    </label>
+                    <input
+                      type="text"
+                      class="admin-inline-input"
+                      value="${escapeHtml(item)}"
+                      placeholder="${escapeHtml(placeholder)}"
+                      data-site-list-path="${escapeHtml(path)}"
+                      data-index="${index}"
+                    >
                   </div>
                 `
               )

@@ -1400,7 +1400,7 @@ p {
   justify-content: space-between;
   gap: 14px;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .admin-editor-card__title,
@@ -1423,11 +1423,28 @@ p {
 }
 
 .admin-editor-item {
-  padding: 16px 18px;
+  padding: 10px 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.52);
   border: 1px solid var(--line);
   border-left: 3px solid var(--brand);
+}
+
+.admin-inline-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+.admin-inline-input:focus {
+  outline: none;
+  border-color: var(--brand);
 }
 
 .admin-empty-editor {
