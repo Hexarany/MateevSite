@@ -861,7 +861,7 @@ async function serveStaticFile(requestPath, response) {
   }
 }
 
-function parseJsonBody(request) {
+function parseJsonBody(request, maxBytes = 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -869,7 +869,7 @@ function parseJsonBody(request) {
     request.on("data", (chunk) => {
       size += chunk.length;
 
-      if (size > 1024 * 1024) {
+      if (size > maxBytes) {
         reject(new Error("Payload too large"));
         request.destroy();
         return;
@@ -3222,7 +3222,7 @@ async function handleSchoolEnroll(request, response) {
 async function handleSpecialistPhotoUpload(request, response, specialistId) {
   assertAdminPin(request);
 
-  const payload = await parseJsonBody(request);
+  const payload = await parseJsonBody(request, 8 * 1024 * 1024);
   const { photo } = payload;
 
   if (!photo || typeof photo !== "string") {
