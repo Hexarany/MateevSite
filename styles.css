@@ -1423,11 +1423,24 @@ p {
 }
 
 .admin-editor-item {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.52);
   border: 1px solid var(--line);
   border-left: 3px solid var(--brand);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-editor-item .admin-editor-item__toolbar {
+  display: contents;
+}
+
+.admin-editor-item .admin-inline-input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
 .admin-inline-input {
