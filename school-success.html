@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Заявка принята — Школа Mateev Spa</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a href="/school" class="brand">
+        <span class="brand__eyebrow">Школа Mateev Spa</span>
+        <span class="brand__name">Mateev Spa Studio</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" style="min-height:calc(100vh - 140px); display:flex; align-items:center;">
+      <div class="container" style="max-width:520px; margin:0 auto; padding:48px 0;">
+
+        <div style="display:inline-flex; align-items:center; justify-content:center;">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="20" fill="rgba(49,113,79,0.12)"/>
+            <path d="M12 20.5L17.5 26L28 15" stroke="#31714f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <p class="section-kicker" style="margin-top:20px;">Заявка принята</p>
+        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:600; margin:0 0 12px; color:var(--ink); line-height:1.1;">
+          Мы скоро свяжемся с вами
+        </h1>
+        <p style="color:var(--muted); margin:0 0 32px; line-height:1.6;">
+          Ваша заявка на обучение получена. Мы ответим в течение рабочего дня — уточним детали, даты ближайшей группы и ответим на все вопросы.
+        </p>
+
+        <div class="card" style="padding:24px; margin-bottom:28px;">
+          <div class="summary-list" id="enrollDetails"></div>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <a href="/school" class="button button--secondary">Вернуться к курсам</a>
+          <a href="/" class="button button--ghost">На главную</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <style>
+    .summary-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+    .summary-row:last-child { border-bottom:none; padding-bottom:0; }
+    .summary-row:first-child { padding-top:0; }
+    .summary-row span { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
+    .summary-row strong { font-family:"Manrope",sans-serif; font-weight:600; color:var(--ink); text-align:right; }
+  </style>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    const ref = p.get("ref") || "";
+    const course = p.get("course") || "";
+    const name = p.get("name") || "";
+
+    if (!ref) location.replace("/school");
+
+    const rows = [
+      { label: "Номер заявки", value: ref },
+      course && { label: "Курс", value: course },
+      name   && { label: "Имя", value: name },
+    ].filter(Boolean);
+
+    document.getElementById("enrollDetails").innerHTML = rows
+      .map(r => `<div class="summary-row"><span>${r.label}</span><strong>${r.value}</strong></div>`)
+      .join("");
+  </script>
+</body>
+</html>

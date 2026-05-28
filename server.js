@@ -54,6 +54,9 @@ const STATIC_FILES = {
   "/cancel.html": "cancel.html",
   "/success": "success.html",
   "/success.html": "success.html",
+  "/school-success": "school-success.html",
+  "/school-success.html": "school-success.html",
+  "/og-image.svg": "og-image.svg",
   "/school": "school.html",
   "/school.html": "school.html",
   "/school.js": "school.js",
@@ -3439,6 +3442,27 @@ function createServer() {
 
       if (urlObject.pathname.startsWith("/api/")) {
         await routeApi(request, response, urlObject);
+        return;
+      }
+
+      if (urlObject.pathname === "/sitemap.xml") {
+        const site = await readJson("site.json").catch(() => ({}));
+        const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+        const now = new Date().toISOString().slice(0, 10);
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${base}/</loc><lastmod>${now}</lastmod><priority>1.0</priority></url>
+  <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
+</urlset>`;
+        response.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" });
+        response.end(xml);
+        return;
+      }
+
+      if (urlObject.pathname === "/robots.txt") {
+        const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+        response.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+        response.end(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`);
         return;
       }
 

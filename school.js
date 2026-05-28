@@ -313,20 +313,10 @@
           throw new Error(data.message || "Ошибка при отправке заявки.");
         }
 
-        var formWrapper = form.parentNode;
-        var successHtml =
-          '<div class="school-enroll-success card" style="padding:32px;text-align:center;">' +
-          '<p class="section-kicker">Заявка принята</p>' +
-          '<h3 style="margin:8px 0 16px;">Спасибо, ' +
-          esc(name) +
-          "!</h3>" +
-          "<p>Мы свяжемся с вами в течение дня, чтобы ответить на вопросы и уточнить детали.</p>" +
-          '<p style="margin-top:16px;font-size:0.875rem;color:var(--muted);">Номер заявки: <strong>' +
-          esc(data.reference) +
-          "</strong></p>" +
-          "</div>";
-
-        formWrapper.innerHTML = successHtml;
+        var courseSelect = document.getElementById("enrollCourse");
+        var courseName = courseSelect ? courseSelect.options[courseSelect.selectedIndex]?.text || "" : "";
+        var params = new URLSearchParams({ ref: data.reference, course: courseName, name: name });
+        location.href = "/school-success?" + params.toString();
       } catch (err) {
         showToast(err.message || "Не удалось отправить заявку. Попробуйте ещё раз.", "error");
 
