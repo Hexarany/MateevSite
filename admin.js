@@ -268,7 +268,7 @@ function bindEvents() {
       try {
         const res = await fetchJson(`/api/admin/specialists/${encodeURIComponent(specialistId)}/photo`, {
           method: "POST",
-          body: { photo: base64 }
+          body: JSON.stringify({ photo: base64 })
         });
         if (uploadBlock) {
           const preview = uploadBlock.querySelector(".admin-photo-upload__preview");
