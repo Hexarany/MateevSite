@@ -716,9 +716,41 @@ p {
   font-size: 1.15rem;
 }
 
+.specialist-card__photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 .specialist-card__role {
   color: var(--brand);
   font-weight: 700;
+}
+
+.admin-photo-upload {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.admin-photo-upload__preview .specialist-card__avatar,
+.admin-photo-upload__preview .admin-photo-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  font-size: 0.9rem;
+}
+
+.admin-photo-upload__btn {
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .review-card {

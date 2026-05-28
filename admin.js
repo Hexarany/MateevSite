@@ -232,6 +232,38 @@ function bindEvents() {
   });
 
   elements.exportCsvBtn.addEventListener("click", handleExportCsv);
+
+  document.addEventListener("change", async (event) => {
+    const input = event.target.closest(".admin-photo-input");
+    if (!input) return;
+
+    const file = input.files[0];
+    if (!file) return;
+
+    const specialistId = input.dataset.specialistId;
+    const uploadBlock = document.querySelector(`.admin-photo-upload[data-specialist-id="${specialistId}"]`);
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target.result;
+      try {
+        const res = await fetchJson(`/api/admin/specialists/${encodeURIComponent(specialistId)}/photo`, {
+          method: "POST",
+          body: { photo: base64 }
+        });
+        if (uploadBlock) {
+          const preview = uploadBlock.querySelector(".admin-photo-upload__preview");
+          preview.innerHTML = `<img class="admin-photo-img" src="${res.photo}?t=${Date.now()}" alt="">`;
+          const btn = uploadBlock.querySelector(".admin-photo-upload__btn");
+          btn.childNodes[0].textContent = "Заменить фото";
+        }
+        showToast("Фото загружено.", "success");
+      } catch (err) {
+        showToast("Ошибка загрузки фото.", "error");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 async function loadBootstrap() {
@@ -569,6 +601,18 @@ function renderSpecialistsEditor() {
                   <p class="admin-entry-card__copy">ID: ${escapeHtml(specialist.id)}</p>
                 </div>
                 <button type="button" class="button button--ghost" data-remove-specialist-index="${index}">Удалить</button>
+              </div>
+              <div class="admin-photo-upload" data-specialist-id="${escapeHtml(specialist.id)}">
+                <div class="admin-photo-upload__preview">
+                  ${specialist.photo
+                    ? `<img class="admin-photo-img" src="${escapeHtml(specialist.photo)}?t=${Date.now()}" alt="${escapeHtml(specialist.name)}">`
+                    : `<div class="specialist-card__avatar">${escapeHtml(specialist.initials)}</div>`
+                  }
+                </div>
+                <label class="button button--ghost admin-photo-upload__btn">
+                  ${specialist.photo ? "Заменить фото" : "Загрузить фото"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" class="admin-photo-input" hidden data-specialist-id="${escapeHtml(specialist.id)}">
+                </label>
               </div>
               <div class="admin-entry-card__grid">
                 ${renderCollectionField("Имя", index, "name", specialist.name || "", "specialist")}

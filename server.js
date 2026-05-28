@@ -14,6 +14,7 @@ if (!ADMIN_PIN) {
 const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const BACKUP_DIR = path.join(ROOT_DIR, "backups");
+const UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "specialists");
 const ADMIN_SESSION_COOKIE_NAME = "mateev_admin_session";
 const ADMIN_SESSION_TTL_HOURS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_HOURS) || 12);
 const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000;
@@ -60,7 +61,11 @@ const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8"
+  ".json": "application/json; charset=utf-8",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp"
 };
 
 const BOOKING_STATUSES = ["new", "confirmed", "completed", "cancelled"];
@@ -648,7 +653,8 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         bio,
         specialties,
         workDays: workDays.length ? workDays : [1, 2, 3, 4, 5],
-        initials: sanitizeText(specialist?.initials) || buildInitials(name)
+        initials: sanitizeText(specialist?.initials) || buildInitials(name),
+        photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null
       };
     })
     .filter(Boolean);
@@ -656,6 +662,7 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
 
 async function ensureDataFiles() {
   await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
 
   const requiredFiles = [
     ["services.json", "[]"],
@@ -794,6 +801,23 @@ function sendText(response, statusCode, message) {
 }
 
 async function serveStaticFile(requestPath, response) {
+  if (requestPath.startsWith("/uploads/")) {
+    const safeName = path.basename(requestPath);
+    const fullPath = path.join(ROOT_DIR, "uploads", "specialists", safeName);
+    try {
+      const fileBuffer = await fs.readFile(fullPath);
+      const extension = path.extname(fullPath).toLowerCase();
+      response.writeHead(200, {
+        "Content-Type": MIME_TYPES[extension] || "application/octet-stream",
+        "Cache-Control": "public, max-age=86400"
+      });
+      response.end(fileBuffer);
+    } catch {
+      sendText(response, 404, "Not found");
+    }
+    return;
+  }
+
   const fileName = STATIC_FILES[requestPath];
 
   if (!fileName) {
@@ -1713,7 +1737,8 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         workDays: workDays.length ? workDays : [1, 2, 3, 4, 5],
         workHours,
         breaks: normalizeBreaks(specialist?.breaks),
-        initials: sanitizeText(specialist?.initials) || buildInitials(name)
+        initials: sanitizeText(specialist?.initials) || buildInitials(name),
+        photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null
       };
     })
     .filter(Boolean);
@@ -3119,6 +3144,52 @@ async function handleAdminClientUpdate(request, response, clientId) {
   });
 }
 
+async function handleSpecialistPhotoUpload(request, response, specialistId) {
+  assertAdminPin(request);
+
+  const payload = await parseJsonBody(request);
+  const { photo } = payload;
+
+  if (!photo || typeof photo !== "string") {
+    sendJson(response, 400, { message: "Поле photo обязательно." });
+    return;
+  }
+
+  const match = photo.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/);
+  if (!match) {
+    sendJson(response, 400, { message: "Неверный формат. Поддерживаются: JPEG, PNG, WebP." });
+    return;
+  }
+
+  const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+  const base64Data = match[3];
+  const buffer = Buffer.from(base64Data, "base64");
+
+  if (buffer.length > 5 * 1024 * 1024) {
+    sendJson(response, 400, { message: "Файл слишком большой. Максимум 5MB." });
+    return;
+  }
+
+  const specialists = await readJson("specialists.json");
+  const idx = specialists.findIndex((s) => s.id === specialistId);
+
+  if (idx === -1) {
+    sendJson(response, 404, { message: "Специалист не найден." });
+    return;
+  }
+
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
+
+  const filename = `${specialistId}.${ext}`;
+  await fs.writeFile(path.join(UPLOADS_DIR, filename), buffer);
+
+  const photoUrl = `/uploads/specialists/${filename}`;
+  specialists[idx] = { ...specialists[idx], photo: photoUrl };
+  await writeJson("specialists.json", specialists);
+
+  sendJson(response, 200, { ok: true, photo: photoUrl });
+}
+
 async function routeApi(request, response, urlObject) {
   if (request.method === "GET" && urlObject.pathname === "/api/bootstrap") {
     await handleBootstrap(response);
@@ -3196,6 +3267,18 @@ async function routeApi(request, response, urlObject) {
       .replace("/schedule", "")
       .replace(/\/$/, "");
     await handleSpecialistScheduleUpdate(request, response, specialistId);
+    return;
+  }
+
+  if (
+    request.method === "POST" &&
+    urlObject.pathname.startsWith("/api/admin/specialists/") &&
+    urlObject.pathname.endsWith("/photo")
+  ) {
+    const specialistId = urlObject.pathname
+      .replace("/api/admin/specialists/", "")
+      .replace("/photo", "");
+    await handleSpecialistPhotoUpload(request, response, specialistId);
     return;
   }
 

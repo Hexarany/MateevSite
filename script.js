@@ -443,7 +443,10 @@ function renderStaticContent() {
 
       return `
         <article class="specialist-card reveal">
-          <div class="specialist-card__avatar">${escapeHtml(specialist.initials)}</div>
+          ${specialist.photo
+            ? `<img class="specialist-card__photo" src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(specialist.name)}" loading="lazy">`
+            : `<div class="specialist-card__avatar">${escapeHtml(specialist.initials)}</div>`
+          }
           <div class="specialist-card__role">${escapeHtml(specialist.role)}</div>
           <h3>${escapeHtml(specialist.name)}</h3>
           <p>${escapeHtml(specialist.bio)}</p>
