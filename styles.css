@@ -1240,30 +1240,33 @@ p {
 }
 
 .admin-kpi-grid--compact {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   margin-bottom: 18px;
 }
 
 .admin-kpi-card {
-  padding: 18px 20px;
+  padding: 14px 16px;
 }
 
 .admin-kpi-card span {
   display: block;
   color: var(--muted);
-  font-size: 0.84rem;
-  margin-bottom: 10px;
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .admin-kpi-card strong {
   display: block;
-  font-size: 1.9rem;
+  font-size: 1.6rem;
 }
 
 .admin-kpi-card small {
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 
 .admin-two-column {
@@ -1535,6 +1538,7 @@ p {
   gap: 10px;
 }
 
+/* Single-field items (badges, tags) — inline flex row */
 .admin-editor-item .admin-editor-item__toolbar {
   display: contents;
 }
@@ -1543,6 +1547,20 @@ p {
   flex: 1;
   min-width: 0;
   margin: 0;
+}
+
+/* Multi-field items (FAQ, reviews, steps) — block layout */
+.admin-editor-item:has(.admin-editor-item__grid) {
+  display: block;
+  padding: 12px 14px;
+}
+
+.admin-editor-item:has(.admin-editor-item__grid) .admin-editor-item__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
 }
 
 .admin-inline-input {
