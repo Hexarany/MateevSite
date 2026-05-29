@@ -1621,9 +1621,20 @@ function calculateAvailability({ date, service, specialist, bookings }) {
 
   const slots = [];
 
+  // For today: skip slots that have already started
+  const todayString = new Date().toISOString().slice(0, 10);
+  const nowMinutes = date === todayString
+    ? new Date().getHours() * 60 + new Date().getMinutes()
+    : 0;
+
   for (let current = open; current + service.duration <= close; current += 30) {
     const candidateStart = current;
     const candidateEnd = current + service.duration;
+
+    // Skip past slots for today
+    if (candidateStart <= nowMinutes) {
+      continue;
+    }
 
     const hasConflict = specialistBookings.some((booking) => {
       const bookingStart = toMinutes(booking.slot);
@@ -1998,9 +2009,20 @@ function calculateAvailability({ date, service, specialist, bookings, schedule =
   const close = toMinutes(daySchedule.workHours.end);
   const slots = [];
 
+  // Skip past slots for today
+  const todayString = new Date().toISOString().slice(0, 10);
+  const nowMinutes = date === todayString
+    ? new Date().getHours() * 60 + new Date().getMinutes()
+    : 0;
+
   for (let current = open; current + service.duration <= close; current += SLOT_STEP_MINUTES) {
     const candidateStart = current;
     const candidateEnd = current + service.duration;
+
+    if (candidateStart <= nowMinutes) {
+      continue;
+    }
+
     const hasConflict = daySchedule.intervals.some((entry) =>
       timeRangesOverlap(
         candidateStart,
