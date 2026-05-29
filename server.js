@@ -2097,16 +2097,18 @@ function validateBookingPayload(payload, services, specialists, options = {}) {
     throw new Error("Имя клиента слишком короткое.");
   }
 
-  if (trimmedPhone.replace(/\D/g, "").length < 8) {
-    throw new Error("Укажите корректный номер телефона.");
-  }
+  if (!options.adminMode) {
+    if (trimmedPhone.replace(/\D/g, "").length < 8) {
+      throw new Error("Укажите корректный номер телефона.");
+    }
 
-  if (!trimmedEmail) {
-    throw new Error("Укажите email — он нужен для отправки подтверждения записи.");
-  }
+    if (!trimmedEmail) {
+      throw new Error("Укажите email — он нужен для отправки подтверждения записи.");
+    }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-    throw new Error("Email указан в неверном формате.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      throw new Error("Email указан в неверном формате.");
+    }
   }
 
   return {
