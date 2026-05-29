@@ -272,6 +272,7 @@ function bindEvents() {
   elements.adminBookingResetBtn.addEventListener("click", resetAdminBookingForm);
   elements.adminBookingCancelBtn.addEventListener("click", handleAdminBookingCancel);
   elements.adminBookingService.addEventListener("change", handleBookingServiceOrSpecialistChange);
+  document.getElementById("adminBookingDuration")?.addEventListener("change", () => refreshBookingSlots(false));
   elements.adminBookingSpecialist.addEventListener("change", handleBookingServiceOrSpecialistChange);
   elements.adminBookingDate.addEventListener("change", handleBookingServiceOrSpecialistChange);
   elements.scheduleBoard.addEventListener("click", handleScheduleBoardClick);
@@ -2856,7 +2857,8 @@ function readBookingFormState() {
     clientName: elements.adminBookingClientName.value.trim(),
     phone: elements.adminBookingPhone.value.trim(),
     email: elements.adminBookingEmail.value.trim(),
-    notes: elements.adminBookingNotes.value.trim()
+    notes: elements.adminBookingNotes.value.trim(),
+    customDuration: parseInt(document.getElementById("adminBookingDuration")?.value || "0", 10) || 0
   };
 
   return state.operations.bookingForm;
@@ -2870,11 +2872,16 @@ async function refreshBookingSlots(preserveCurrent = false) {
     return;
   }
 
+  const durationInput = document.getElementById("adminBookingDuration");
+  const customDuration = durationInput ? parseInt(durationInput.value, 10) || 0 : 0;
+
   const query = new URLSearchParams({
     serviceId: bookingForm.serviceId,
     specialistId: bookingForm.specialistId,
     date: bookingForm.date
   });
+
+  if (customDuration > 0) query.set("customDuration", String(customDuration));
 
   if (bookingForm.mode === "edit" && bookingForm.id) {
     query.set("excludeBookingId", bookingForm.id);
@@ -2911,6 +2918,13 @@ function handleBookingServiceOrSpecialistChange() {
 
   if (!compatibleSpecialists.some((specialist) => specialist.id === bookingForm.specialistId)) {
     bookingForm.specialistId = compatibleSpecialists[0]?.id || "";
+  }
+
+  // Auto-fill duration from selected service
+  const durationInput = document.getElementById("adminBookingDuration");
+  if (durationInput && bookingForm.serviceId) {
+    const svc = state.services.find(s => s.id === bookingForm.serviceId);
+    if (svc?.duration) durationInput.value = svc.duration;
   }
 
   renderOperationsSelects();

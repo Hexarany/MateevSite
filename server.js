@@ -2787,6 +2787,7 @@ async function handleAvailability(urlObject, response) {
   const specialistId = urlObject.searchParams.get("specialistId");
   const date = urlObject.searchParams.get("date");
   const excludeBookingId = sanitizeText(urlObject.searchParams.get("excludeBookingId"));
+  const customDuration = parseInt(urlObject.searchParams.get("customDuration") || "0", 10) || 0;
 
   if (!serviceId || !specialistId || !date) {
     sendJson(response, 400, {
@@ -2820,9 +2821,13 @@ async function handleAvailability(urlObject, response) {
     return;
   }
 
+  const effectiveService = customDuration > 0
+    ? { ...service, duration: customDuration }
+    : service;
+
   const availability = calculateAvailability({
     date,
-    service,
+    service: effectiveService,
     specialist,
     bookings,
     schedule,
@@ -2947,13 +2952,21 @@ async function handleAdminBookingCreate(request, response) {
       adminMode: true
     }
   );
-  const safePayload = {
-    ...payload,
-    slot
-  };
+
+  // Apply custom duration if provided
+  const customDuration = parseInt(payload.customDuration || "0", 10) || 0;
+  const effectiveService = customDuration > 0 && customDuration !== service.duration
+    ? {
+        ...service,
+        duration: customDuration,
+        price: Math.round((service.price / service.duration) * customDuration / 50) * 50
+      }
+    : service;
+
+  const safePayload = { ...payload, slot };
   const availability = calculateAvailability({
     date: safePayload.date,
-    service,
+    service: effectiveService,
     specialist,
     bookings,
     schedule
@@ -2969,7 +2982,7 @@ async function handleAdminBookingCreate(request, response) {
   const booking = createBookingRecord({
     payload: safePayload,
     cleanPayload,
-    service,
+    service: effectiveService,
     specialist,
     meta: {
       source: "admin"
