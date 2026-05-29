@@ -3060,7 +3060,8 @@ async function handleBookingStatusUpdate(request, response, bookingId) {
     services,
     specialists,
     {
-      defaultStatus: currentBooking.status
+      defaultStatus: currentBooking.status,
+      adminMode: true
     }
   );
   const safePayload = {
@@ -3083,10 +3084,15 @@ async function handleBookingStatusUpdate(request, response, bookingId) {
     return;
   }
 
+  const customDur = parseInt(payload.customDuration || "0", 10) || 0;
+  const effectiveSvc = customDur > 0 && customDur !== service.duration
+    ? { ...service, duration: customDur, price: Math.round((service.price / service.duration) * customDur / 50) * 50 }
+    : service;
+
   bookings[bookingIndex] = applyBookingUpdate(currentBooking, {
     payload: safePayload,
     cleanPayload,
-    service,
+    service: effectiveSvc,
     specialist
   });
 
