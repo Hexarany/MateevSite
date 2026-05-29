@@ -2050,7 +2050,9 @@ function calculateAvailability({ date, service, specialist, bookings, schedule =
 }
 
 function validateBookingPayload(payload, services, specialists, options = {}) {
-  const requiredFields = ["serviceId", "specialistId", "date", "slot", "clientName", "phone"];
+  const requiredFields = options.adminMode
+    ? ["serviceId", "specialistId", "date", "slot", "clientName"]
+    : ["serviceId", "specialistId", "date", "slot", "clientName", "phone"];
 
   for (const field of requiredFields) {
     if (!payload[field] || typeof payload[field] !== "string") {
@@ -2941,7 +2943,8 @@ async function handleAdminBookingCreate(request, response) {
     services,
     specialists,
     {
-      defaultStatus: "confirmed"
+      defaultStatus: "confirmed",
+      adminMode: true
     }
   );
   const safePayload = {
