@@ -3009,7 +3009,8 @@ async function handleAdminBookingSubmit(event) {
         clientName: bookingForm.clientName,
         phone: bookingForm.phone,
         email: bookingForm.email,
-        notes: bookingForm.notes
+        notes: bookingForm.notes,
+        ...(bookingForm.customDuration > 0 ? { customDuration: bookingForm.customDuration } : {})
       })
     });
 
