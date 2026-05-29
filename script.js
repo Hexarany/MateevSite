@@ -29,6 +29,12 @@ function trSite(path, fallback) {
   return val || fallback || '';
 }
 
+function applyStaticTranslations() {
+  document.querySelectorAll("[data-ru]").forEach(el => {
+    el.textContent = tr(el.dataset.ru, el.dataset.ro);
+  });
+}
+
 function trArr(key) {
   if (state.lang === 'ro') {
     const ro = state.site?.translations?.ro?.[key];
@@ -135,6 +141,7 @@ async function init() {
   setDateConstraints();
   initRevealObserver();
   document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
+  applyStaticTranslations();
 
   try {
     await loadBootstrap();
@@ -207,6 +214,7 @@ function bindEvents() {
       document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
       if (state.site) {
         renderStaticContent();
+        applyStaticTranslations();
         document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
       }
     }

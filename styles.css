@@ -905,6 +905,122 @@ p {
   margin: 0;
 }
 
+/* ─── Founder section ────────────────────────────────────────────────────── */
+
+.founder-section {
+  position: relative;
+  z-index: 1;
+  padding: 72px 0;
+  background: linear-gradient(135deg, rgba(40,72,56,0.96), rgba(33,61,47,0.92));
+  color: #f5efe8;
+}
+
+.founder__inner {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+}
+
+.founder__photo-wrap {
+  position: relative;
+}
+
+.founder__photo {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  object-position: top;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+}
+
+.founder__content .section-kicker {
+  color: rgba(179,109,44,0.9);
+  margin-bottom: 10px;
+}
+
+.founder__name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 8px;
+  line-height: 1.05;
+}
+
+.founder__title {
+  color: rgba(245,239,232,0.65);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0 0 28px;
+}
+
+.founder__credo {
+  margin: 0 0 24px;
+  padding: 20px 24px;
+  border-left: 3px solid rgba(179,109,44,0.7);
+  background: rgba(255,255,255,0.06);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-weight: 600;
+  font-style: italic;
+  color: rgba(245,239,232,0.95);
+  line-height: 1.4;
+}
+
+.founder__bio {
+  color: rgba(245,239,232,0.72);
+  line-height: 1.75;
+  font-size: 0.95rem;
+  margin: 0 0 24px;
+}
+
+.founder__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.founder-section .meta-chip {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.18);
+  color: rgba(245,239,232,0.8);
+}
+
+.founder__cta {
+  align-self: flex-start;
+}
+
+@media (max-width: 980px) {
+  .founder__inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .founder__photo-wrap {
+    max-width: 220px;
+    margin: 0 auto;
+  }
+
+  .founder__credo {
+    text-align: left;
+  }
+
+  .founder__chips {
+    justify-content: center;
+  }
+
+  .founder__cta {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .footer {
   position: relative;
   z-index: 1;
