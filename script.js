@@ -8,8 +8,26 @@ const state = {
   bookingProtectionToken: "",
   bookingFormStartedAt: 0,
   superUserTapCount: 0,
-  superUserTapTimer: null
+  superUserTapTimer: null,
+  lang: localStorage.getItem('lang') || 'ru'
 };
+
+function tr(ruValue, roValue) {
+  if (state.lang === 'ro' && roValue != null) return roValue;
+  return ruValue;
+}
+
+function trSite(path, fallback) {
+  const keys = path.split('.');
+  if (state.lang === 'ro') {
+    let ro = state.site?.translations?.ro;
+    for (const k of keys) { ro = ro?.[k]; }
+    if (ro) return ro;
+  }
+  let val = state.site;
+  for (const k of keys) { val = val?.[k]; }
+  return val || fallback || '';
+}
 
 let revealObserver;
 let availabilityRequestToken = 0;
@@ -108,6 +126,7 @@ async function init() {
   bindEvents();
   setDateConstraints();
   initRevealObserver();
+  document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
 
   try {
     await loadBootstrap();
@@ -169,6 +188,16 @@ function bindEvents() {
       event.target.closest("[data-close-admin-modal]")
     ) {
       closeAdminAccessModal();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    const langBtn = event.target.closest(".lang-btn");
+    if (langBtn && langBtn.dataset.lang) {
+      state.lang = langBtn.dataset.lang;
+      localStorage.setItem('lang', state.lang);
+      document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
+      if (state.site) renderStaticContent();
     }
   });
 
@@ -301,63 +330,63 @@ function renderStaticContent() {
     );
   }
 
-  elements.brandEyebrow.textContent = site.brand.eyebrow || "";
+  elements.brandEyebrow.textContent = trSite('brand.eyebrow') || "";
   elements.brandName.textContent = site.brand.name;
-  elements.navOverviewLink.textContent = navigation.overview || "";
-  elements.navServicesLink.textContent = navigation.services || "";
-  elements.navSpecialistsLink.textContent = navigation.specialists || "";
-  elements.navBookingLink.textContent = navigation.booking || "";
-  elements.heroKicker.textContent = site.hero.kicker || "";
-  elements.heroTitle.textContent = site.hero.title;
-  elements.heroSubtitle.textContent = site.hero.subtitle;
-  elements.heroPrimaryCta.textContent = site.hero.primaryCta || "";
-  elements.heroSecondaryCta.textContent = site.hero.secondaryCta || "";
-  elements.heroAsideEyebrow.textContent = site.hero.asideEyebrow || "";
-  elements.heroAsideTitle.textContent = site.hero.asideTitle || "";
-  elements.footerEyebrow.textContent = sections.footer?.eyebrow || site.brand.name;
-  elements.footerBrandTitle.textContent = site.brand.tagline;
-  elements.footerCopy.textContent = sections.footer?.copy || "";
-  elements.footerOverviewLink.textContent = navigation.overview || "";
-  elements.footerServicesLink.textContent = navigation.services || "";
-  elements.footerSpecialistsLink.textContent = navigation.specialists || "";
-  elements.footerBookingLink.textContent = navigation.booking || "";
+  elements.navOverviewLink.textContent = trSite('navigation.overview') || "";
+  elements.navServicesLink.textContent = trSite('navigation.services') || "";
+  elements.navSpecialistsLink.textContent = trSite('navigation.specialists') || "";
+  elements.navBookingLink.textContent = trSite('navigation.booking') || "";
+  elements.heroKicker.textContent = trSite('hero.kicker') || "";
+  elements.heroTitle.textContent = trSite('hero.title') || "";
+  elements.heroSubtitle.textContent = trSite('hero.subtitle') || "";
+  elements.heroPrimaryCta.textContent = trSite('hero.primaryCta') || "";
+  elements.heroSecondaryCta.textContent = trSite('hero.secondaryCta') || "";
+  elements.heroAsideEyebrow.textContent = trSite('hero.asideEyebrow') || "";
+  elements.heroAsideTitle.textContent = trSite('hero.asideTitle') || "";
+  elements.footerEyebrow.textContent = trSite('sections.footer.eyebrow') || site.brand.name;
+  elements.footerBrandTitle.textContent = trSite('brand.tagline') || "";
+  elements.footerCopy.textContent = trSite('sections.footer.copy') || "";
+  elements.footerOverviewLink.textContent = trSite('navigation.overview') || "";
+  elements.footerServicesLink.textContent = trSite('navigation.services') || "";
+  elements.footerSpecialistsLink.textContent = trSite('navigation.specialists') || "";
+  elements.footerBookingLink.textContent = trSite('navigation.booking') || "";
 
-  elements.overviewSectionKicker.textContent = sections.overview?.kicker || "";
-  elements.overviewSectionTitle.textContent = sections.overview?.title || "";
-  elements.overviewSectionCopy.textContent = sections.overview?.copy || "";
-  elements.servicesSectionKicker.textContent = sections.services?.kicker || "";
-  elements.servicesSectionTitle.textContent = sections.services?.title || "";
-  elements.servicesSectionCopy.textContent = sections.services?.copy || "";
-  elements.specialistsSectionKicker.textContent = sections.specialists?.kicker || "";
-  elements.specialistsSectionTitle.textContent = sections.specialists?.title || "";
-  elements.specialistsSectionCopy.textContent = sections.specialists?.copy || "";
-  elements.processSectionKicker.textContent = sections.process?.kicker || "";
-  elements.processSectionTitle.textContent = sections.process?.title || "";
-  elements.processSectionCopy.textContent = sections.process?.copy || "";
-  elements.bookingSectionKicker.textContent = bookingSection.kicker || "";
-  elements.bookingSectionTitle.textContent = bookingSection.title || "";
-  elements.bookingSectionCopy.textContent = bookingSection.copy || "";
-  elements.reviewsSectionKicker.textContent = sections.reviews?.kicker || "";
-  elements.reviewsSectionTitle.textContent = sections.reviews?.title || "";
-  elements.reviewsSectionCopy.textContent = sections.reviews?.copy || "";
+  elements.overviewSectionKicker.textContent = trSite('sections.overview.kicker') || "";
+  elements.overviewSectionTitle.textContent = trSite('sections.overview.title') || "";
+  elements.overviewSectionCopy.textContent = trSite('sections.overview.copy') || "";
+  elements.servicesSectionKicker.textContent = trSite('sections.services.kicker') || "";
+  elements.servicesSectionTitle.textContent = trSite('sections.services.title') || "";
+  elements.servicesSectionCopy.textContent = trSite('sections.services.copy') || "";
+  elements.specialistsSectionKicker.textContent = trSite('sections.specialists.kicker') || "";
+  elements.specialistsSectionTitle.textContent = trSite('sections.specialists.title') || "";
+  elements.specialistsSectionCopy.textContent = trSite('sections.specialists.copy') || "";
+  elements.processSectionKicker.textContent = trSite('sections.process.kicker') || "";
+  elements.processSectionTitle.textContent = trSite('sections.process.title') || "";
+  elements.processSectionCopy.textContent = trSite('sections.process.copy') || "";
+  elements.bookingSectionKicker.textContent = trSite('sections.booking.kicker') || "";
+  elements.bookingSectionTitle.textContent = trSite('sections.booking.title') || "";
+  elements.bookingSectionCopy.textContent = trSite('sections.booking.copy') || "";
+  elements.reviewsSectionKicker.textContent = trSite('sections.reviews.kicker') || "";
+  elements.reviewsSectionTitle.textContent = trSite('sections.reviews.title') || "";
+  elements.reviewsSectionCopy.textContent = trSite('sections.reviews.copy') || "";
 
-  elements.serviceLabel.textContent = bookingForm.serviceLabel || "";
-  elements.specialistLabel.textContent = bookingForm.specialistLabel || "";
-  elements.dateLabel.textContent = bookingForm.dateLabel || "";
-  elements.slotsLabel.textContent = bookingForm.slotsLabel || "";
-  elements.slotStatus.textContent = bookingSection.slotHint || "";
-  elements.clientNameLabel.textContent = bookingForm.nameLabel || "";
-  elements.clientName.placeholder = bookingForm.namePlaceholder || "";
-  elements.clientPhoneLabel.textContent = bookingForm.phoneLabel || "";
-  elements.clientPhone.placeholder = bookingForm.phonePlaceholder || "";
-  elements.clientEmailLabel.textContent = bookingForm.emailLabel || "";
-  elements.clientEmail.placeholder = bookingForm.emailPlaceholder || "";
-  elements.clientNotesLabel.textContent = bookingForm.notesLabel || "";
-  elements.clientNotes.placeholder = bookingForm.notesPlaceholder || "";
-  elements.submitBookingBtn.textContent = bookingForm.submitLabel || "";
-  elements.bookingFormNote.textContent = bookingSection.note || "";
-  elements.bookingSummaryKicker.textContent = bookingSection.summaryKicker || "";
-  elements.contactCardKicker.textContent = bookingSection.contactsKicker || "";
+  elements.serviceLabel.textContent = trSite('bookingForm.serviceLabel') || "";
+  elements.specialistLabel.textContent = trSite('bookingForm.specialistLabel') || "";
+  elements.dateLabel.textContent = trSite('bookingForm.dateLabel') || "";
+  elements.slotsLabel.textContent = trSite('bookingForm.slotsLabel') || "";
+  elements.slotStatus.textContent = trSite('sections.booking.slotHint') || "";
+  elements.clientNameLabel.textContent = trSite('bookingForm.nameLabel') || "";
+  elements.clientName.placeholder = trSite('bookingForm.namePlaceholder') || "";
+  elements.clientPhoneLabel.textContent = trSite('bookingForm.phoneLabel') || "";
+  elements.clientPhone.placeholder = trSite('bookingForm.phonePlaceholder') || "";
+  elements.clientEmailLabel.textContent = trSite('bookingForm.emailLabel') || "";
+  elements.clientEmail.placeholder = trSite('bookingForm.emailPlaceholder') || "";
+  elements.clientNotesLabel.textContent = trSite('bookingForm.notesLabel') || "";
+  elements.clientNotes.placeholder = trSite('bookingForm.notesPlaceholder') || "";
+  elements.submitBookingBtn.textContent = trSite('bookingForm.submitLabel') || "";
+  elements.bookingFormNote.textContent = trSite('sections.booking.note') || "";
+  elements.bookingSummaryKicker.textContent = trSite('sections.booking.summaryKicker') || "";
+  elements.contactCardKicker.textContent = trSite('sections.booking.contactsKicker') || "";
 
   elements.heroBadges.innerHTML = site.hero.badges
     .map((badge) => `<span class="pill">${escapeHtml(badge)}</span>`)
@@ -422,7 +451,7 @@ function renderStaticContent() {
 
           <div class="service-card__actions">
             <button type="button" class="button button--primary" data-prefill-service="${escapeHtml(service.id)}">
-              ${escapeHtml(ui.serviceCardCta || "Выбрать")}
+              ${escapeHtml(trSite('ui.serviceCardCta') || "Выбрать")}
             </button>
           </div>
         </article>
@@ -463,7 +492,7 @@ function renderStaticContent() {
               data-prefill-specialist="${escapeHtml(specialist.id)}"
               data-prefill-service="${escapeHtml(preferredService)}"
             >
-              ${escapeHtml(ui.specialistCardCta || "Выбрать мастера")}
+              ${escapeHtml(trSite('ui.specialistCardCta') || "Выбрать мастера")}
             </button>
           </div>
         </article>
@@ -528,19 +557,19 @@ function renderStaticContent() {
     </div>
     <div class="contact-list">
       <div class="contact-item">
-        <strong>${escapeHtml(ui.contactAddressLabel || "Адрес")}</strong>
+        <strong>${escapeHtml(trSite('ui.contactAddressLabel') || "Адрес")}</strong>
         <span>${escapeHtml(site.brand.city)}, ${escapeHtml(site.brand.address)}</span>
       </div>
       <div class="contact-item">
-        <strong>${escapeHtml(ui.contactPhoneLabel || "Телефон")}</strong>
+        <strong>${escapeHtml(trSite('ui.contactPhoneLabel') || "Телефон")}</strong>
         <span>${escapeHtml(site.brand.phone)}</span>
       </div>
       <div class="contact-item">
-        <strong>${escapeHtml(ui.contactEmailLabel || "Email")}</strong>
+        <strong>${escapeHtml(trSite('ui.contactEmailLabel') || "Email")}</strong>
         <span>${escapeHtml(site.brand.email)}</span>
       </div>
       <div class="contact-item">
-        <strong>${escapeHtml(ui.contactHoursLabel || "График")}</strong>
+        <strong>${escapeHtml(trSite('ui.contactHoursLabel') || "График")}</strong>
         <span>${escapeHtml(site.brand.hours)}</span>
       </div>
     </div>
@@ -548,19 +577,19 @@ function renderStaticContent() {
 
   elements.footerContacts.innerHTML = `
     <div class="footer-contact">
-      <strong>${escapeHtml(ui.footerPhoneLabel || "Телефон")}</strong>
+      <strong>${escapeHtml(trSite('ui.contactPhoneLabel') || "Телефон")}</strong>
       <span>${escapeHtml(site.brand.phone)}</span>
     </div>
     <div class="footer-contact">
-      <strong>${escapeHtml(ui.footerEmailLabel || "Email")}</strong>
+      <strong>${escapeHtml(trSite('ui.contactEmailLabel') || "Email")}</strong>
       <span>${escapeHtml(site.brand.email)}</span>
     </div>
     <div class="footer-contact">
-      <strong>${escapeHtml(ui.footerAddressLabel || "Адрес")}</strong>
+      <strong>${escapeHtml(trSite('ui.contactAddressLabel') || "Адрес")}</strong>
       <span>${escapeHtml(site.brand.city)}, ${escapeHtml(site.brand.address)}</span>
     </div>
     <div class="footer-contact">
-      <strong>${escapeHtml(ui.footerTelegramLabel || "Telegram")}</strong>
+      <strong>Telegram</strong>
       <span>${escapeHtml(site.brand.telegram)}</span>
     </div>
     ${site.brand.instagram ? `
@@ -632,7 +661,7 @@ async function refreshAvailability() {
     state.selectedSlot = null;
     elements.slotGrid.innerHTML = "";
     elements.slotStatus.textContent =
-      state.site?.sections?.booking?.slotHint || "Сначала выберите процедуру, специалиста и дату.";
+      trSite('sections.booking.slotHint') || "Сначала выберите процедуру, специалиста и дату.";
     return;
   }
 
@@ -699,13 +728,13 @@ function refreshBookingSummary() {
   const ui = state.site?.ui || {};
 
   const rows = [
-    summaryRow(ui.summaryServiceLabel || "Процедура", service?.name),
-    summaryRow(ui.summarySpecialistLabel || "Специалист", specialist?.name),
-    summaryRow(ui.summaryDateLabel || "Дата", elements.dateInput.value ? formatDate(elements.dateInput.value) : ""),
-    summaryRow(ui.summaryTimeLabel || "Время", state.selectedSlot ? `${state.selectedSlot} — ${slot?.endsAt || ""}` : ""),
-    summaryRow(ui.summaryPriceLabel || "Стоимость", service ? formatCurrency(service.price) : ""),
-    summaryRow(ui.summaryClientLabel || "Клиент", elements.clientName.value.trim()),
-    summaryRow(ui.summaryContactLabel || "Контакт", elements.clientPhone.value.trim()),
+    summaryRow(trSite('ui.summaryServiceLabel') || "Процедура", service?.name),
+    summaryRow(trSite('ui.summarySpecialistLabel') || "Специалист", specialist?.name),
+    summaryRow(trSite('ui.summaryDateLabel') || "Дата", elements.dateInput.value ? formatDate(elements.dateInput.value) : ""),
+    summaryRow(trSite('ui.summaryTimeLabel') || "Время", state.selectedSlot ? `${state.selectedSlot} — ${slot?.endsAt || ""}` : ""),
+    summaryRow(trSite('ui.summaryPriceLabel') || "Стоимость", service ? formatCurrency(service.price) : ""),
+    summaryRow(trSite('ui.summaryClientLabel') || "Клиент", elements.clientName.value.trim()),
+    summaryRow(trSite('ui.summaryContactLabel') || "Контакт", elements.clientPhone.value.trim()),
   ].join("");
 
   elements.bookingSummary.innerHTML = rows

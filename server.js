@@ -216,6 +216,100 @@ const DEFAULT_SITE_CONTENT = {
     summaryClientLabel: "Клиент",
     summaryContactLabel: "Контакт"
   },
+  translations: {
+    ro: {
+      navigation: {
+        overview: "De ce noi",
+        services: "Proceduri",
+        specialists: "Specialiști",
+        booking: "Programare",
+        school: "Școală"
+      },
+      hero: {
+        kicker: "Spațiu de recuperare și îngrijire a corpului",
+        title: "Masaj și terapie corporală în Chișinău pentru recuperare, relaxare și resurse interioare",
+        subtitle: "Alegeți programul potrivit nevoilor dumneavoastră: relaxare, recuperare după efort, îngrijire a spatelui sau o pauză de calitate pentru sine. Programare online în mai puțin de un minut.",
+        primaryCta: "Programare online",
+        secondaryCta: "Vezi catalogul",
+        asideEyebrow: "De ce ne aleg",
+        asideTitle: "Lucru atent cu corpul, atmosferă liniștită și servicii fără complicații"
+      },
+      sections: {
+        overview: {
+          kicker: "De ce noi",
+          title: "Tot ce este necesar pentru o vizită confortabilă la studio",
+          copy: "De la prima cunoaștere cu studioul până la alegerea unui timp convenabil, totul este organizat pentru a fi ușor să luați o decizie și să vă programați."
+        },
+        services: {
+          kicker: "Proceduri",
+          title: "Programe de masaj cu efect clar și prețuri transparente",
+          copy: "Alegeți ce aveți nevoie acum: relaxare, recuperare după efort, lucru cu spatele sau o pauză SPA pentru dumneavoastră."
+        },
+        specialists: {
+          kicker: "Echipa",
+          title: "Specialiști care lucrează atent și ascultă cu adevărat cererea dumneavoastră",
+          copy: "Fiecare maestru are propriul accent și specializare, astfel încât puteți alege abordarea care vi se potrivește."
+        },
+        process: {
+          kicker: "Cum funcționează",
+          title: "Calea de la alegerea programului până la vizita liniștită la studio",
+          copy: "Am făcut programarea simplă și clară, pentru a putea alege procedura necesară fără corespondență îndelungată."
+        },
+        booking: {
+          kicker: "Programare online",
+          title: "Alegeți procedura, specialistul și ora convenabilă pentru vizită",
+          copy: "Completați formularul scurt pentru a lăsa o cerere. După trimitere veți vedea imediat numărul programării.",
+          slotHint: "Mai întâi selectați procedura, specialistul și data.",
+          summaryKicker: "Rezumatul programării",
+          contactsKicker: "Contactele studioului",
+          note: "Dacă aveți preferințe privind starea de sănătate sau zonele de lucru, indicați-le în comentariul la programare."
+        },
+        reviews: {
+          kicker: "Încredere",
+          title: "Recenzii ale oaspeților și răspunsuri la întrebări înainte de prima vizită",
+          copy: "Am adunat ce este mai important de știut înainte de programare: senzații după ședință, formatul vizitei și detalii organizatorice."
+        },
+        footer: {
+          eyebrow: "Mateev Spa Studio",
+          copy: "Studio pentru cei care doresc să elimine tensiunea, să simtă ușurință în corp și să dedice timp pentru sine fără grabă."
+        }
+      },
+      bookingForm: {
+        serviceLabel: "Procedură",
+        specialistLabel: "Specialist",
+        dateLabel: "Data",
+        slotsLabel: "Intervale disponibile",
+        nameLabel: "Numele clientului",
+        namePlaceholder: "De exemplu, Ana",
+        phoneLabel: "Telefon",
+        phonePlaceholder: "+373...",
+        emailLabel: "Email",
+        emailPlaceholder: "name@example.com",
+        notesLabel: "Comentariu",
+        notesPlaceholder: "De exemplu, accent pe spate",
+        submitLabel: "Confirmă programarea"
+      },
+      ui: {
+        serviceCardCta: "Alege",
+        specialistCardCta: "Alege specialistul",
+        contactAddressLabel: "Adresă",
+        contactPhoneLabel: "Telefon",
+        contactEmailLabel: "Email",
+        contactHoursLabel: "Program",
+        summaryServiceLabel: "Procedură",
+        summarySpecialistLabel: "Specialist",
+        summaryDateLabel: "Data",
+        summaryTimeLabel: "Ora",
+        summaryPriceLabel: "Cost",
+        summaryClientLabel: "Client",
+        summaryContactLabel: "Contact"
+      },
+      brand: {
+        tagline: "Masaj și terapie corporală pentru recuperare și odihnă profundă",
+        eyebrow: "Studio de masaj în Chișinău"
+      }
+    }
+  },
   overview: [
     {
       title: "Индивидуальный подход",
@@ -575,7 +669,8 @@ function normalizeSiteContent(siteInput = {}) {
         question: sanitizeText(item?.question, defaults.faq[index]?.question || ""),
         answer: sanitizeText(item?.answer, defaults.faq[index]?.answer || "")
       }))
-      .filter((item) => item.question || item.answer)
+      .filter((item) => item.question || item.answer),
+    translations: input.translations || defaults.translations || {}
   };
 }
 
