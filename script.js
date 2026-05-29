@@ -629,7 +629,7 @@ function populateServiceOptions() {
   const serviceLabel = state.site?.bookingForm?.serviceLabel || "Процедура";
 
   elements.serviceSelect.innerHTML = [
-    `<option value="">Выберите ${escapeHtml(serviceLabel).toLowerCase()}</option>`,
+    `<option value="">${tr("Выберите процедуру", "Selectați procedura")}</option>`,
     ...state.services.map(
       (service) =>
         `<option value="${escapeHtml(service.id)}">${escapeHtml(service.name)} · ${service.duration} мин · ${formatCurrency(service.price)}</option>`
@@ -652,8 +652,8 @@ function updateSpecialistOptions() {
     : state.specialists;
 
   const placeholder = serviceId
-    ? `Выберите ${specialistLabel.toLowerCase()}`
-    : `Сначала выберите ${serviceLabel.toLowerCase()}`;
+    ? tr("Выберите специалиста", "Selectați specialistul")
+    : tr("Сначала выберите процедуру", "Mai întâi selectați procedura");
 
   elements.specialistSelect.innerHTML = [
     `<option value="">${placeholder}</option>`,
