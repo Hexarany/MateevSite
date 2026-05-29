@@ -29,6 +29,14 @@ function trSite(path, fallback) {
   return val || fallback || '';
 }
 
+function trArr(key) {
+  if (state.lang === 'ro') {
+    const ro = state.site?.translations?.ro?.[key];
+    if (Array.isArray(ro) && ro.length) return ro;
+  }
+  return state.site?.[key] || [];
+}
+
 let revealObserver;
 let availabilityRequestToken = 0;
 
@@ -406,7 +414,7 @@ function renderStaticContent() {
     )
     .join("");
 
-  elements.heroHighlights.innerHTML = site.overview
+  elements.heroHighlights.innerHTML = trArr("overview")
     .map(
       (item) => `
         <div class="hero-card__item">
@@ -421,7 +429,7 @@ function renderStaticContent() {
     .map((tag) => `<span>${escapeHtml(tag)}</span>`)
     .join("");
 
-  elements.featureGrid.innerHTML = site.overview
+  elements.featureGrid.innerHTML = trArr("overview")
     .map(
       (item, index) => `
         <article class="feature-card reveal">
@@ -503,7 +511,7 @@ function renderStaticContent() {
     })
     .join("");
 
-  elements.processGrid.innerHTML = site.process
+  elements.processGrid.innerHTML = trArr("process")
     .map(
       (item, index) => `
         <article class="process-card reveal">
@@ -515,7 +523,7 @@ function renderStaticContent() {
     )
     .join("");
 
-  elements.reviewsGrid.innerHTML = site.reviews
+  elements.reviewsGrid.innerHTML = trArr("reviews")
     .map(
       (review) => `
         <article class="review-card reveal">
@@ -527,7 +535,7 @@ function renderStaticContent() {
     )
     .join("");
 
-  elements.faqList.innerHTML = site.faq
+  elements.faqList.innerHTML = trArr("faq")
     .map(
       (item) => `
         <details class="faq-item reveal">
