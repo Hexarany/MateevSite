@@ -3361,6 +3361,28 @@ async function handleSpecialistPhotoUpload(request, response, specialistId) {
   sendJson(response, 200, { ok: true, photo: photoUrl });
 }
 
+async function handleTeacherPhotoUpload(request, response, teacherId) {
+  assertAdminPin(request);
+  const payload = await parseJsonBody(request, 8 * 1024 * 1024);
+  const { photo } = payload;
+  if (!photo || typeof photo !== "string") { sendJson(response, 400, { message: "Поле photo обязательно." }); return; }
+  const match = photo.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/);
+  if (!match) { sendJson(response, 400, { message: "Неверный формат." }); return; }
+  const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+  const buffer = Buffer.from(match[3], "base64");
+  if (buffer.length > 5 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой. Максимум 5MB." }); return; }
+  const teachers = await readJson("teachers.json");
+  const idx = teachers.findIndex((t) => t.id === teacherId);
+  if (idx === -1) { sendJson(response, 404, { message: "Преподаватель не найден." }); return; }
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  const filename = `teacher-${teacherId}.${ext}`;
+  await fs.writeFile(path.join(UPLOADS_DIR, filename), buffer);
+  const photoUrl = `/uploads/specialists/${filename}`;
+  teachers[idx] = { ...teachers[idx], photo: photoUrl };
+  await writeJson("teachers.json", teachers);
+  sendJson(response, 200, { ok: true, photo: photoUrl });
+}
+
 async function routeApi(request, response, urlObject) {
   if (request.method === "GET" && urlObject.pathname === "/api/bootstrap") {
     await handleBootstrap(response);
@@ -3467,6 +3489,16 @@ async function routeApi(request, response, urlObject) {
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/clients/")) {
     const clientId = urlObject.pathname.replace("/api/admin/clients/", "");
     await handleAdminClientUpdate(request, response, clientId);
+    return;
+  }
+
+  if (
+    request.method === "POST" &&
+    urlObject.pathname.startsWith("/api/admin/teachers/") &&
+    urlObject.pathname.endsWith("/photo")
+  ) {
+    const teacherId = urlObject.pathname.replace("/api/admin/teachers/", "").replace("/photo", "");
+    await handleTeacherPhotoUpload(request, response, teacherId);
     return;
   }
 

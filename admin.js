@@ -278,6 +278,33 @@ function bindEvents() {
   elements.exportCsvBtn.addEventListener("click", handleExportCsv);
 
   document.addEventListener("change", async (event) => {
+    const teacherInput = event.target.closest(".admin-teacher-photo-input");
+    if (teacherInput) {
+      const file = teacherInput.files[0];
+      if (!file) return;
+      const teacherId = teacherInput.dataset.teacherId;
+      const uploadBlock = document.querySelector(`.admin-photo-upload[data-teacher-id="${teacherId}"]`);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const res = await fetchJson(`/api/admin/teachers/${encodeURIComponent(teacherId)}/photo`, {
+            method: "POST",
+            body: JSON.stringify({ photo: e.target.result })
+          });
+          if (uploadBlock) {
+            uploadBlock.querySelector(".admin-photo-upload__preview").innerHTML =
+              `<img class="admin-photo-img" src="${res.photo}?t=${Date.now()}" alt="">`;
+            uploadBlock.querySelector(".admin-photo-upload__btn").childNodes[0].textContent = "Заменить фото";
+          }
+          const idx = state.teachers.findIndex(t => t.id === teacherId);
+          if (idx !== -1) state.teachers[idx].photo = res.photo;
+          showToast("Фото преподавателя загружено.", "success");
+        } catch { showToast("Ошибка загрузки фото.", "error"); }
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const input = event.target.closest(".admin-photo-input");
     if (!input) return;
 
@@ -470,6 +497,18 @@ function renderTeachersEditor() {
         </div>
         <button type="button" class="button button--ghost" data-remove-teacher-index="${i}">Удалить</button>
       </div>
+              <div class="admin-photo-upload" data-teacher-id="${escapeHtml(t.id)}">
+                <div class="admin-photo-upload__preview">
+                  ${t.photo
+                    ? `<img class="admin-photo-img" src="${escapeHtml(t.photo)}?t=${Date.now()}" alt="${escapeHtml(t.name)}">`
+                    : `<div class="specialist-card__avatar" style="width:56px;height:56px;font-size:0.9rem;">${escapeHtml(t.initials||"?")}</div>`
+                  }
+                </div>
+                <label class="button button--ghost admin-photo-upload__btn">
+                  ${t.photo ? "Заменить фото" : "Загрузить фото"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" class="admin-teacher-photo-input" hidden data-teacher-id="${escapeHtml(t.id)}">
+                </label>
+              </div>
       <div class="admin-entry-card__grid">
         <label class="field"><span>Имя</span><input type="text" value="${escapeHtml(t.name||"")}" data-teacher-index="${i}" data-teacher-field="name"></label>
         <label class="field"><span>ID (slug)</span><input type="text" value="${escapeHtml(t.id||"")}" data-teacher-index="${i}" data-teacher-field="id"></label>

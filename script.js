@@ -197,7 +197,10 @@ function bindEvents() {
       state.lang = langBtn.dataset.lang;
       localStorage.setItem('lang', state.lang);
       document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
-      if (state.site) renderStaticContent();
+      if (state.site) {
+        renderStaticContent();
+        document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
+      }
     }
   });
 
