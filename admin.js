@@ -2962,11 +2962,21 @@ function populateBookingForm(booking) {
     clientName: booking.clientName,
     phone: booking.phone,
     email: booking.email || "",
-    notes: booking.notes || ""
+    notes: booking.notes || "",
+    customDuration: booking.durationMins || 0
   };
 
   state.operations.date = booking.date;
   renderOperationsWorkspace();
+
+  // Fill duration field after render
+  setTimeout(() => {
+    const durationInput = document.getElementById("adminBookingDuration");
+    if (durationInput && booking.durationMins) {
+      durationInput.value = booking.durationMins;
+    }
+  }, 50);
+
   void loadDaySchedule();
 }
 
