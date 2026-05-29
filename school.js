@@ -26,8 +26,12 @@
 
   /* ── Label maps ──────────────────────────────────────────────────────────── */
   const DIRECTION_LABELS = {
-    massage: tr("Массаж", "Masaj"),
-    cosmetology: tr("Косметология", "Cosmetologie")
+    massage:     tr("Массаж",            "Masaj"),
+    cosmetology: tr("Косметология",      "Cosmetologie"),
+    styling:     tr("Стилисты",          "Stilist"),
+    manicure:    tr("Маникюр",           "Manichiură"),
+    brows:       tr("Брови",             "Sprâncene"),
+    sugaring:    tr("Шугаринг/Эпиляция", "Epilare")
   };
 
   const LEVEL_LABELS = {

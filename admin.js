@@ -241,6 +241,20 @@ function bindEvents() {
       state.teachers[+ti] = { ...state.teachers[+ti], [e.target.dataset.teacherField]: e.target.value };
     }
   });
+
+  document.addEventListener("change", (e) => {
+    const dirInput = e.target.closest("[data-teacher-direction]");
+    if (!dirInput) return;
+    const ti = +dirInput.dataset.teacherIndex;
+    const dir = dirInput.dataset.teacherDirection;
+    const current = state.teachers[ti]?.directions || [];
+    state.teachers[ti] = {
+      ...state.teachers[ti],
+      directions: dirInput.checked
+        ? [...new Set([...current, dir])]
+        : current.filter(d => d !== dir)
+    };
+  });
   elements.siteContentEditor.addEventListener("input", handleSiteEditorInput);
   elements.siteContentEditor.addEventListener("click", handleSiteEditorClick);
   elements.servicesEditor.addEventListener("input", handleServiceEditorInput);
@@ -516,6 +530,28 @@ function renderTeachersEditor() {
         <label class="field"><span>Опыт</span><input type="text" value="${escapeHtml(t.experience||"")}" data-teacher-index="${i}" data-teacher-field="experience"></label>
         <label class="field"><span>Инициалы</span><input type="text" value="${escapeHtml(t.initials||"")}" data-teacher-index="${i}" data-teacher-field="initials"></label>
         <label class="field field--full"><span>Биография</span><textarea rows="4" data-teacher-index="${i}" data-teacher-field="bio">${escapeHtml(t.bio||"")}</textarea></label>
+        <div class="field field--full">
+          <span>Направления</span>
+          <div class="admin-check-grid admin-check-grid--services" style="margin-top:8px;">
+            ${[
+              { value: "massage", label: "Массаж" },
+              { value: "cosmetology", label: "Косметология" },
+              { value: "styling", label: "Стилисты" },
+              { value: "manicure", label: "Маникюр" },
+              { value: "brows", label: "Брови" },
+              { value: "sugaring", label: "Шугаринг / Эпиляция" }
+            ].map(dir => `
+              <label class="admin-check-option">
+                <input type="checkbox"
+                  data-teacher-direction="${escapeHtml(dir.value)}"
+                  data-teacher-index="${i}"
+                  value="${escapeHtml(dir.value)}"
+                  ${(t.directions||[]).includes(dir.value) ? "checked" : ""}>
+                <span>${escapeHtml(dir.label)}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
       </div>
     </article>`).join("")}</div>`;
 }
