@@ -7,6 +7,8 @@ const state = {
   selectedClientId: "",
   services: [],
   specialists: [],
+  courses: [],
+  teachers: [],
   site: null,
   currency: "MDL",
   filters: {
@@ -216,6 +218,29 @@ function bindEvents() {
   elements.saveSpecialistsBtn.addEventListener("click", () => handleContentSave("specialists"));
   elements.addServiceBtn.addEventListener("click", handleAddService);
   elements.addSpecialistBtn.addEventListener("click", handleAddSpecialist);
+
+  document.getElementById("saveCoursesBtn")?.addEventListener("click", handleSaveSchool);
+  document.getElementById("saveTeachersBtn")?.addEventListener("click", handleSaveSchool);
+  document.getElementById("addCourseBtn")?.addEventListener("click", handleAddCourse);
+  document.getElementById("addTeacherBtn")?.addEventListener("click", handleAddTeacher);
+
+  document.addEventListener("click", (e) => {
+    const rmCourse = e.target.closest("[data-remove-course-index]");
+    if (rmCourse) { state.courses.splice(+rmCourse.dataset.removeCourseIndex, 1); renderSchoolEditors(); }
+    const rmTeacher = e.target.closest("[data-remove-teacher-index]");
+    if (rmTeacher) { state.teachers.splice(+rmTeacher.dataset.removeTeacherIndex, 1); renderSchoolEditors(); }
+  });
+
+  document.addEventListener("input", (e) => {
+    const ci = e.target.dataset.courseIndex;
+    if (ci !== undefined && e.target.dataset.courseField) {
+      state.courses[+ci] = { ...state.courses[+ci], [e.target.dataset.courseField]: e.target.value };
+    }
+    const ti = e.target.dataset.teacherIndex;
+    if (ti !== undefined && e.target.dataset.teacherField) {
+      state.teachers[+ti] = { ...state.teachers[+ti], [e.target.dataset.teacherField]: e.target.value };
+    }
+  });
   elements.siteContentEditor.addEventListener("input", handleSiteEditorInput);
   elements.siteContentEditor.addEventListener("click", handleSiteEditorClick);
   elements.servicesEditor.addEventListener("input", handleServiceEditorInput);
@@ -291,6 +316,13 @@ async function loadBootstrap() {
   state.specialists = payload.specialists;
   state.site = payload.site;
   state.currency = payload.site?.brand?.currency || "MDL";
+
+  // Load school data
+  try {
+    const school = await fetchJson("/api/school/data");
+    state.courses = school.courses || [];
+    state.teachers = school.teachers || [];
+  } catch {}
 
   renderStudioShell(payload.meta?.existingBookings || 0);
   renderContentManagement();
@@ -378,6 +410,104 @@ function renderContentManagement() {
   elements.siteContentEditor.innerHTML = renderSiteContentEditor();
   elements.servicesEditor.innerHTML = renderServicesEditor();
   elements.specialistsEditor.innerHTML = renderSpecialistsEditor();
+  renderSchoolEditors();
+}
+
+function renderSchoolEditors() {
+  const coursesEl  = document.getElementById("coursesEditor");
+  const teachersEl = document.getElementById("teachersEditor");
+  if (coursesEl)  coursesEl.innerHTML  = renderCoursesEditor();
+  if (teachersEl) teachersEl.innerHTML = renderTeachersEditor();
+}
+
+function renderCoursesEditor() {
+  if (!state.courses.length) return '<div class="admin-empty-editor">Курсов пока нет. Добавьте первый.</div>';
+  const directions = { massage: "Массаж", cosmetology: "Косметология" };
+  const levels = { beginner: "С нуля", intermediate: "Средний", advanced: "Продвинутый", any: "Любой" };
+  return `<div class="admin-editor-stack">${state.courses.map((c, i) => `
+    <article class="admin-entry-card">
+      <div class="admin-entry-card__head">
+        <div>
+          <h4 class="admin-entry-card__title">${escapeHtml(c.name || `Курс ${i+1}`)}</h4>
+          <p class="admin-entry-card__copy">${directions[c.direction] || c.direction} · ${levels[c.level] || c.level}</p>
+        </div>
+        <button type="button" class="button button--ghost" data-remove-course-index="${i}">Удалить</button>
+      </div>
+      <div class="admin-entry-card__grid">
+        <label class="field"><span>Название</span><input type="text" value="${escapeHtml(c.name||"")}" data-course-index="${i}" data-course-field="name"></label>
+        <label class="field"><span>Направление</span><select data-course-index="${i}" data-course-field="direction">
+          <option value="massage"${c.direction==="massage"?" selected":""}>Массаж</option>
+          <option value="cosmetology"${c.direction==="cosmetology"?" selected":""}>Косметология</option>
+        </select></label>
+        <label class="field"><span>Подзаголовок</span><input type="text" value="${escapeHtml(c.subtitle||"")}" data-course-index="${i}" data-course-field="subtitle"></label>
+        <label class="field"><span>Уровень</span><select data-course-index="${i}" data-course-field="level">
+          <option value="beginner"${c.level==="beginner"?" selected":""}>С нуля</option>
+          <option value="intermediate"${c.level==="intermediate"?" selected":""}>Средний</option>
+          <option value="advanced"${c.level==="advanced"?" selected":""}>Продвинутый</option>
+          <option value="any"${c.level==="any"?" selected":""}>Любой</option>
+        </select></label>
+        <label class="field"><span>Формат</span><select data-course-index="${i}" data-course-field="format">
+          <option value="group"${c.format==="group"?" selected":""}>Групповой</option>
+          <option value="individual"${c.format==="individual"?" selected":""}>Индивидуальный</option>
+        </select></label>
+        <label class="field"><span>Длительность</span><input type="text" value="${escapeHtml(c.duration||"")}" data-course-index="${i}" data-course-field="duration" placeholder="3 недели"></label>
+        <label class="field"><span>Цена (EUR)</span><input type="number" value="${c.price||0}" data-course-index="${i}" data-course-field="price" min="0"></label>
+        <label class="field"><span>Размер группы</span><input type="text" value="${escapeHtml(c.groupSize||"")}" data-course-index="${i}" data-course-field="groupSize" placeholder="до 6 человек"></label>
+        <label class="field field--full"><span>Описание</span><textarea rows="3" data-course-index="${i}" data-course-field="description">${escapeHtml(c.description||"")}</textarea></label>
+        <label class="field field--full"><span>Что входит (по одному на строку)</span><textarea rows="4" data-course-index="${i}" data-course-field="benefits">${escapeHtml((c.benefits||[]).join("\n"))}</textarea></label>
+      </div>
+    </article>`).join("")}</div>`;
+}
+
+function renderTeachersEditor() {
+  if (!state.teachers.length) return '<div class="admin-empty-editor">Преподавателей пока нет. Добавьте первого.</div>';
+  return `<div class="admin-editor-stack">${state.teachers.map((t, i) => `
+    <article class="admin-entry-card">
+      <div class="admin-entry-card__head">
+        <div>
+          <h4 class="admin-entry-card__title">${escapeHtml(t.name || `Преподаватель ${i+1}`)}</h4>
+          <p class="admin-entry-card__copy">ID: ${escapeHtml(t.id||"")}</p>
+        </div>
+        <button type="button" class="button button--ghost" data-remove-teacher-index="${i}">Удалить</button>
+      </div>
+      <div class="admin-entry-card__grid">
+        <label class="field"><span>Имя</span><input type="text" value="${escapeHtml(t.name||"")}" data-teacher-index="${i}" data-teacher-field="name"></label>
+        <label class="field"><span>ID (slug)</span><input type="text" value="${escapeHtml(t.id||"")}" data-teacher-index="${i}" data-teacher-field="id"></label>
+        <label class="field"><span>Роль</span><input type="text" value="${escapeHtml(t.role||"")}" data-teacher-index="${i}" data-teacher-field="role"></label>
+        <label class="field"><span>Опыт</span><input type="text" value="${escapeHtml(t.experience||"")}" data-teacher-index="${i}" data-teacher-field="experience"></label>
+        <label class="field"><span>Инициалы</span><input type="text" value="${escapeHtml(t.initials||"")}" data-teacher-index="${i}" data-teacher-field="initials"></label>
+        <label class="field field--full"><span>Биография</span><textarea rows="4" data-teacher-index="${i}" data-teacher-field="bio">${escapeHtml(t.bio||"")}</textarea></label>
+      </div>
+    </article>`).join("")}</div>`;
+}
+
+async function handleSaveSchool() {
+  try {
+    const processed = state.courses.map(c => ({
+      ...c,
+      price: Number(c.price) || 0,
+      benefits: typeof c.benefits === "string" ? c.benefits.split("\n").map(s => s.trim()).filter(Boolean) : (c.benefits || [])
+    }));
+    await fetchJson("/api/admin/school", {
+      method: "PUT",
+      body: JSON.stringify({ courses: processed, teachers: state.teachers })
+    });
+    state.courses = processed;
+    renderSchoolEditors();
+    showToast("Данные школы сохранены.", "success");
+  } catch {
+    showToast("Ошибка сохранения.", "error");
+  }
+}
+
+function handleAddCourse() {
+  state.courses.push({ id: `course-${Date.now()}`, direction: "massage", name: "", subtitle: "", level: "beginner", format: "group", duration: "", price: 0, currency: "EUR", description: "", benefits: [], groupSize: "", certificate: true });
+  renderSchoolEditors();
+}
+
+function handleAddTeacher() {
+  state.teachers.push({ id: `teacher-${Date.now()}`, name: "", role: "", experience: "", bio: "", directions: [], initials: "", photo: null });
+  renderSchoolEditors();
 }
 
 function renderSiteContentEditor() {

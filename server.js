@@ -3375,6 +3375,16 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // PUT /api/admin/school - save courses and teachers
+  if (request.method === "PUT" && urlObject.pathname === "/api/admin/school") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    if (Array.isArray(payload.courses)) await writeJson("courses.json", payload.courses);
+    if (Array.isArray(payload.teachers)) await writeJson("teachers.json", payload.teachers);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // GET /api/school/data - public
   if (request.method === "GET" && urlObject.pathname === "/api/school/data") {
     const courses = await readJson("courses.json");
