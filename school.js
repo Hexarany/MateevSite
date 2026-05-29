@@ -1,23 +1,93 @@
 (function () {
   "use strict";
 
+  /* ── Language ────────────────────────────────────────────────────────────── */
+  var lang = localStorage.getItem('lang') || 'ru';
+
+  function tr(ru, ro) { return lang === 'ro' && ro ? ro : ru; }
+
+  function applyLang() {
+    document.querySelectorAll('[data-ru]').forEach(function(el) {
+      el.textContent = tr(el.dataset.ru, el.dataset.ro);
+    });
+    document.querySelectorAll('.lang-btn').forEach(function(b) {
+      b.classList.toggle('is-active', b.dataset.lang === lang);
+    });
+  }
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.lang-btn');
+    if (!btn || !btn.dataset.lang) return;
+    lang = btn.dataset.lang;
+    localStorage.setItem('lang', lang);
+    applyLang();
+    renderAll();
+  });
+
   /* ── Label maps ──────────────────────────────────────────────────────────── */
   const DIRECTION_LABELS = {
-    massage: "Массаж",
-    cosmetology: "Косметология"
+    massage: tr("Массаж", "Masaj"),
+    cosmetology: tr("Косметология", "Cosmetologie")
   };
 
   const LEVEL_LABELS = {
-    beginner: "С нуля",
-    intermediate: "Средний уровень",
-    advanced: "Продвинутый",
-    any: "Любой уровень"
+    beginner: tr("С нуля", "De la zero"),
+    intermediate: tr("Средний уровень", "Nivel mediu"),
+    advanced: tr("Продвинутый", "Avansat"),
+    any: tr("Любой уровень", "Orice nivel")
   };
 
   const FORMAT_LABELS = {
-    group: "Групповой",
-    individual: "Индивидуальный"
+    group: tr("Групповой", "De grup"),
+    individual: tr("Individual", "Individual")
   };
+
+  function getLabels() {
+    return {
+      direction: { massage: tr("Массаж","Masaj"), cosmetology: tr("Косметология","Cosmetologie") },
+      level: { beginner: tr("С нуля","De la zero"), intermediate: tr("Средний уровень","Nivel mediu"), advanced: tr("Продвинутый","Avansat"), any: tr("Любой уровень","Orice nivel") },
+      format: { group: tr("Групповой","De grup"), individual: tr("Индивидуальный","Individual") },
+      certificate: tr("Да","Da"),
+      duration: tr("Длительность","Durată"),
+      groupSize: tr("Группа","Grupă"),
+      format_label: tr("Формат","Format"),
+      cert_label: tr("Сертификат","Certificat"),
+      enroll_btn: tr("Записаться на курс","Înscrie-te la curs"),
+      price_on_request: tr("Уточняется","La cerere"),
+      filter_all: tr("Все курсы","Toate cursurile"),
+      enroll_course: tr("Курс","Curs"),
+      enroll_name: tr("Имя","Nume"),
+      enroll_phone: tr("Телефон","Telefon"),
+      enroll_email: "Email",
+      enroll_notes: tr("Комментарий","Comentariu"),
+      enroll_submit: tr("Отправить заявку","Trimite cererea"),
+      enroll_placeholder_course: tr("Выберите курс","Selectați cursul"),
+      enroll_placeholder_name: tr("Ваше имя","Numele dumneavoastră"),
+      enroll_placeholder_notes: tr("Ваш уровень подготовки, вопросы или пожелания","Nivelul dvs., întrebări sau preferințe"),
+    };
+  }
+
+  function renderAll() {
+    applyLang();
+    if (window._schoolData) {
+      renderCourses(window._schoolData.courses);
+      renderTeachers(window._schoolData.teachers);
+      populateEnrollSelect(window._schoolData.courses);
+    }
+    updateFormLabels();
+  }
+
+  function updateFormLabels() {
+    var L = getLabels();
+    var sel = document.getElementById('enrollCourse');
+    if (sel && sel.options[0]) sel.options[0].text = L.enroll_placeholder_course;
+    var nameLabel = document.querySelector('label[for-enroll-name] span, #enrollForm label:nth-child(2) span');
+    ['enrollName','enrollPhone','enrollEmail','enrollNotes','enrollSubmitBtn'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (id === 'enrollSubmitBtn') { el.textContent = L.enroll_submit; return; }
+    });
+  }
 
   /* ── State ───────────────────────────────────────────────────────────────── */
   let allCourses = [];
@@ -66,13 +136,14 @@
 
   /* ── Render course card ──────────────────────────────────────────────────── */
   function renderCourseCard(course) {
-    var directionLabel = DIRECTION_LABELS[course.direction] || course.direction;
-    var levelLabel = LEVEL_LABELS[course.level] || course.level;
-    var formatLabel = FORMAT_LABELS[course.format] || course.format;
+    var L = getLabels();
+    var directionLabel = L.direction[course.direction] || course.direction;
+    var levelLabel = L.level[course.level] || course.level;
+    var formatLabel = L.format[course.format] || course.format;
 
     var priceHtml;
     if (course.price === 0) {
-      priceHtml = '<span class="school-course-card__price">Уточняется</span>';
+      priceHtml = '<span class="school-course-card__price">' + L.price_on_request + '</span>';
     } else {
       priceHtml =
         '<span class="school-course-card__price">' +
@@ -90,7 +161,7 @@
 
     var groupSizeHtml =
       course.groupSize
-        ? '<div class="school-meta-item"><span>Группа</span><strong>' +
+        ? '<div class="school-meta-item"><span>' + L.groupSize + '</span><strong>' +
           esc(course.groupSize) +
           "</strong></div>"
         : "";
@@ -120,14 +191,14 @@
       benefitsHtml +
       "</ul>" +
       '<div class="school-course-card__meta">' +
-      '<div class="school-meta-item"><span>Формат</span><strong>' +
+      '<div class="school-meta-item"><span>' + L.format_label + '</span><strong>' +
       esc(formatLabel) +
       "</strong></div>" +
-      '<div class="school-meta-item"><span>Длительность</span><strong>' +
+      '<div class="school-meta-item"><span>' + L.duration + '</span><strong>' +
       esc(course.duration) +
       "</strong></div>" +
       groupSizeHtml +
-      '<div class="school-meta-item"><span>Сертификат</span><strong>Да</strong></div>' +
+      '<div class="school-meta-item"><span>' + L.cert_label + '</span><strong>' + L.certificate + '</strong></div>' +
       "</div>" +
       '<div class="school-course-card__footer">' +
       priceHtml +
@@ -135,7 +206,7 @@
       esc(course.id) +
       '" data-course-name="' +
       esc(course.name) +
-      '">Записаться на курс</button>' +
+      '">' + L.enroll_btn + '</button>' +
       "</div>" +
       "</article>"
     );
@@ -227,7 +298,7 @@
 
     if (!filtered.length) {
       grid.innerHTML =
-        '<p style="color:var(--muted);grid-column:1/-1;">Курсы по этому направлению скоро появятся.</p>';
+        '<p style="color:var(--muted);grid-column:1/-1;">' + tr("Курсы по этому направлению скоро появятся.", "Cursuri pentru această direcție vor apărea în curând.") + '</p>';
       return;
     }
 
@@ -390,7 +461,9 @@
 
       var data = await res.json();
       allCourses = data.courses || [];
+      window._schoolData = data;
 
+      applyLang();
       populateCourseSelect(allCourses);
       renderCourses(activeDirection);
 

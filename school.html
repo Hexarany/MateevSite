@@ -46,10 +46,14 @@
       </button>
 
       <nav class="nav" id="siteNav">
-        <a href="/" class="nav__link">Студия</a>
-        <a href="#courses" class="nav__link">Курсы</a>
-        <a href="#teachers" class="nav__link">Преподаватели</a>
-        <a href="#enroll" class="nav__link">Записаться</a>
+        <a href="/" class="nav__link" data-ru="Студия" data-ro="Studio">Студия</a>
+        <a href="#courses" class="nav__link" data-ru="Курсы" data-ro="Cursuri">Курсы</a>
+        <a href="#teachers" class="nav__link" data-ru="Преподаватели" data-ro="Profesori">Преподаватели</a>
+        <a href="#enroll" class="nav__link" data-ru="Записаться" data-ro="Înscrie-te">Записаться</a>
+        <div class="lang-toggle">
+          <button type="button" class="lang-btn" data-lang="ru">RU</button>
+          <button type="button" class="lang-btn" data-lang="ro">RO</button>
+        </div>
       </nav>
     </div>
   </header>
@@ -60,12 +64,12 @@
     <section class="hero" id="home">
       <div class="container hero__grid" style="grid-template-columns:1fr;">
         <div class="hero__content reveal">
-          <p class="section-kicker">Школа Mateev Spa</p>
-          <h1 class="hero__title">Обучение массажу и косметологии в Кишиневе</h1>
-          <p class="hero__subtitle">Профессиональное обучение от практикующих специалистов с медицинским образованием. Малые группы, живая практика и сертификат.</p>
+          <p class="section-kicker" data-ru="Школа Mateev Spa" data-ro="Școala Mateev Spa">Школа Mateev Spa</p>
+          <h1 class="hero__title" data-ru="Обучение массажу и косметологии в Кишиневе" data-ro="Formare în masaj și cosmetologie în Chișinău">Обучение массажу и косметологии в Кишиневе</h1>
+          <p class="hero__subtitle" data-ru="Профессиональное обучение от практикующих специалистов с медицинским образованием. Малые группы, живая практика и сертификат." data-ro="Formare profesională de la specialiști practicanți cu educație medicală. Grupe mici, practică reală și certificat.">Профессиональное обучение от практикующих специалистов с медицинским образованием. Малые группы, живая практика и сертификат.</p>
           <div class="hero__actions">
-            <a href="#courses" class="button button--primary">Смотреть курсы</a>
-            <a href="#enroll" class="button button--ghost">Оставить заявку</a>
+            <a href="#courses" class="button button--primary" data-ru="Смотреть курсы" data-ro="Vezi cursurile">Смотреть курсы</a>
+            <a href="#enroll" class="button button--ghost" data-ru="Оставить заявку" data-ro="Trimite cerere">Оставить заявку</a>
           </div>
         </div>
       </div>
@@ -75,15 +79,15 @@
     <section class="section section--contrast" id="courses">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker">Программы</p>
-          <h2>Курсы массажа и косметологии с сертификатом</h2>
-          <p class="section-copy">Выберите направление и формат обучения — от базового курса для начинающих до продвинутых техник для практикующих специалистов.</p>
+          <p class="section-kicker" data-ru="Программы" data-ro="Programe">Программы</p>
+          <h2 data-ru="Курсы массажа и косметологии с сертификатом" data-ro="Cursuri de masaj și cosmetologie cu certificat">Курсы массажа и косметологии с сертификатом</h2>
+          <p class="section-copy" data-ru="Выберите направление и формат обучения — от базового курса для начинающих до продвинутых техник для практикующих специалистов." data-ro="Alegeți direcția și formatul de formare — de la cursul de bază pentru începători până la tehnici avansate.">Выберите направление и формат обучения — от базового курса для начинающих до продвинутых техник для практикующих специалистов.</p>
         </div>
 
         <div class="school-filters" id="courseFilters">
-          <button class="school-filter-btn is-active" data-direction="all">Все курсы</button>
-          <button class="school-filter-btn" data-direction="massage">Массаж</button>
-          <button class="school-filter-btn" data-direction="cosmetology">Косметология</button>
+          <button class="school-filter-btn is-active" data-direction="all" data-ru="Все курсы" data-ro="Toate cursurile">Все курсы</button>
+          <button class="school-filter-btn" data-direction="massage" data-ru="Массаж" data-ro="Masaj">Массаж</button>
+          <button class="school-filter-btn" data-direction="cosmetology" data-ru="Косметология" data-ro="Cosmetologie">Косметология</button>
         </div>
 
         <div class="school-courses-grid" id="coursesGrid">
@@ -96,9 +100,9 @@
     <section class="section" id="teachers">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker">Преподаватели</p>
-          <h2>Обучение у практикующих специалистов</h2>
-          <p class="section-copy">Каждый преподаватель ведёт активную практику — вы учитесь у людей, которые работают в профессии каждый день.</p>
+          <p class="section-kicker" data-ru="Преподаватели" data-ro="Profesori">Преподаватели</p>
+          <h2 data-ru="Обучение у практикующих специалистов" data-ro="Formare cu specialiști practicanți">Обучение у практикующих специалистов</h2>
+          <p class="section-copy" data-ru="Каждый преподаватель ведёт активную практику — вы учитесь у людей, которые работают в профессии каждый день." data-ro="Fiecare profesor practică activ — învățați de la oameni care lucrează în profesie în fiecare zi.">Каждый преподаватель ведёт активную практику — вы учитесь у людей, которые работают в профессии каждый день.</p>
         </div>
 
         <div class="school-teachers-grid" id="teachersGrid">
@@ -111,9 +115,9 @@
     <section class="section section--accent" id="enroll">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker">Заявка</p>
-          <h2>Оставьте заявку на обучение</h2>
-          <p class="section-copy">Заполните форму — мы свяжемся с вами в течение дня, ответим на вопросы и уточним даты ближайшей группы.</p>
+          <p class="section-kicker" data-ru="Заявка" data-ro="Cerere">Заявка</p>
+          <h2 data-ru="Оставьте заявку на обучение" data-ro="Trimiteți cererea de înscriere">Оставьте заявку на обучение</h2>
+          <p class="section-copy" data-ru="Заполните форму — мы свяжемся с вами в течение дня, ответим на вопросы и уточним даты ближайшей группы." data-ro="Completați formularul — vă vom contacta în cursul zilei, vom răspunde la întrebări și vom clarifica datele grupei.">Заполните форму — мы свяжемся с вами в течение дня, ответим на вопросы и уточним даты ближайшей группы.</p>
         </div>
 
         <div class="school-enroll-layout">
