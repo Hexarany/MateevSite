@@ -224,11 +224,13 @@
       })
       .join("");
 
+    var avatarHtml = teacher.photo
+      ? '<img class="specialist-card__photo" src="' + esc(teacher.photo) + '" alt="' + esc(teacher.name) + '" loading="lazy">'
+      : '<div class="specialist-card__avatar">' + esc(teacher.initials) + '</div>';
+
     return (
       '<article class="school-teacher-card">' +
-      '<div class="specialist-card__avatar">' +
-      esc(teacher.initials) +
-      "</div>" +
+      avatarHtml +
       '<div class="school-teacher-card__role">' +
       esc(teacher.role) +
       "</div>" +
