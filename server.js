@@ -3395,15 +3395,19 @@ async function handleTeacherPhotoUpload(request, response, teacherId) {
   const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
   const buffer = Buffer.from(match[3], "base64");
   if (buffer.length > 5 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой. Максимум 5MB." }); return; }
-  const teachers = await readJson("teachers.json");
-  const idx = teachers.findIndex((t) => t.id === teacherId);
-  if (idx === -1) { sendJson(response, 404, { message: "Преподаватель не найден." }); return; }
   await fs.mkdir(UPLOADS_DIR, { recursive: true });
   const filename = `teacher-${teacherId}.${ext}`;
   await fs.writeFile(path.join(UPLOADS_DIR, filename), buffer);
   const photoUrl = `/uploads/specialists/${filename}`;
-  teachers[idx] = { ...teachers[idx], photo: photoUrl };
-  await writeJson("teachers.json", teachers);
+
+  // Update teachers.json if teacher already saved; otherwise photo URL is returned for admin to use
+  const teachers = await readJson("teachers.json");
+  const idx = teachers.findIndex((t) => t.id === teacherId);
+  if (idx !== -1) {
+    teachers[idx] = { ...teachers[idx], photo: photoUrl };
+    await writeJson("teachers.json", teachers);
+  }
+
   sendJson(response, 200, { ok: true, photo: photoUrl });
 }
 
