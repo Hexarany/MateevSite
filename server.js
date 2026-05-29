@@ -2009,10 +2009,11 @@ function calculateAvailability({ date, service, specialist, bookings, schedule =
   const close = toMinutes(daySchedule.workHours.end);
   const slots = [];
 
-  // Skip past slots for today
-  const todayString = new Date().toISOString().slice(0, 10);
+  // Skip past slots for today (timezone-aware: Moldova = Europe/Chisinau)
+  const nowLocal = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }));
+  const todayString = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth()+1).padStart(2,"0")}-${String(nowLocal.getDate()).padStart(2,"0")}`;
   const nowMinutes = date === todayString
-    ? new Date().getHours() * 60 + new Date().getMinutes()
+    ? nowLocal.getHours() * 60 + nowLocal.getMinutes()
     : 0;
 
   for (let current = open; current + service.duration <= close; current += SLOT_STEP_MINUTES) {
