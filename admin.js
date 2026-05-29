@@ -2969,12 +2969,14 @@ function populateBookingForm(booking) {
   state.operations.date = booking.date;
   renderOperationsWorkspace();
 
-  // Fill duration field after render
+  // Fill duration field and scroll to form after render
   setTimeout(() => {
     const durationInput = document.getElementById("adminBookingDuration");
     if (durationInput && booking.durationMins) {
       durationInput.value = booking.durationMins;
     }
+    const form = document.getElementById("adminBookingForm");
+    if (form) form.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 50);
 
   void loadDaySchedule();
