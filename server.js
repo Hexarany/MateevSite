@@ -2958,13 +2958,14 @@ async function handleAdminBookingCreate(request, response) {
     }
   );
 
-  // Apply custom duration if provided
+  // Apply custom duration and/or price if provided
   const customDuration = parseInt(payload.customDuration || "0", 10) || 0;
-  const effectiveService = customDuration > 0 && customDuration !== service.duration
+  const customPrice = parseInt(payload.customPrice || "0", 10) || 0;
+  const effectiveService = (customDuration > 0 && customDuration !== service.duration) || customPrice > 0
     ? {
         ...service,
-        duration: customDuration,
-        price: Math.round((service.price / service.duration) * customDuration / 50) * 50
+        duration: customDuration > 0 ? customDuration : service.duration,
+        price: customPrice > 0 ? customPrice : Math.round((service.price / service.duration) * (customDuration || service.duration) / 50) * 50
       }
     : service;
 
@@ -3085,8 +3086,13 @@ async function handleBookingStatusUpdate(request, response, bookingId) {
   }
 
   const customDur = parseInt(payload.customDuration || "0", 10) || 0;
-  const effectiveSvc = customDur > 0 && customDur !== service.duration
-    ? { ...service, duration: customDur, price: Math.round((service.price / service.duration) * customDur / 50) * 50 }
+  const customPrc = parseInt(payload.customPrice || "0", 10) || 0;
+  const effectiveSvc = (customDur > 0 && customDur !== service.duration) || customPrc > 0
+    ? {
+        ...service,
+        duration: customDur > 0 ? customDur : service.duration,
+        price: customPrc > 0 ? customPrc : Math.round((service.price / service.duration) * (customDur || service.duration) / 50) * 50
+      }
     : service;
 
   bookings[bookingIndex] = applyBookingUpdate(currentBooking, {

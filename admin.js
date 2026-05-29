@@ -2858,7 +2858,8 @@ function readBookingFormState() {
     phone: elements.adminBookingPhone.value.trim(),
     email: elements.adminBookingEmail.value.trim(),
     notes: elements.adminBookingNotes.value.trim(),
-    customDuration: parseInt(document.getElementById("adminBookingDuration")?.value || "0", 10) || 0
+    customDuration: parseInt(document.getElementById("adminBookingDuration")?.value || "0", 10) || 0,
+    customPrice: parseInt(document.getElementById("adminBookingPrice")?.value || "0", 10) || 0
   };
 
   return state.operations.bookingForm;
@@ -2975,6 +2976,8 @@ function populateBookingForm(booking) {
     if (durationInput && booking.durationMins) {
       durationInput.value = booking.durationMins;
     }
+    const priceInput = document.getElementById("adminBookingPrice");
+    if (priceInput) priceInput.value = booking.totalPrice || 0;
     const form = document.getElementById("adminBookingForm");
     if (form) form.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 50);
@@ -3010,7 +3013,8 @@ async function handleAdminBookingSubmit(event) {
         phone: bookingForm.phone,
         email: bookingForm.email,
         notes: bookingForm.notes,
-        ...(bookingForm.customDuration > 0 ? { customDuration: bookingForm.customDuration } : {})
+        ...(bookingForm.customDuration > 0 ? { customDuration: bookingForm.customDuration } : {}),
+        ...(bookingForm.customPrice > 0 ? { customPrice: bookingForm.customPrice } : {})
       })
     });
 
