@@ -9,7 +9,8 @@ const state = {
   bookingFormStartedAt: 0,
   superUserTapCount: 0,
   superUserTapTimer: null,
-  lang: localStorage.getItem('lang') || 'ru'
+  lang: localStorage.getItem('lang') || 'ru',
+  bookingDuration: 0
 };
 
 function tr(ruValue, roValue) {
@@ -224,12 +225,36 @@ function bindEvents() {
     control.addEventListener("change", async (event) => {
       if (event.target === elements.serviceSelect) {
         updateSpecialistOptions();
+        updateDurationCalc();
       }
 
       state.selectedSlot = null;
       await refreshAvailability();
       refreshBookingSummary();
     });
+  });
+
+  document.getElementById("durationMinus")?.addEventListener("click", async () => {
+    const svc = findService(elements.serviceSelect.value);
+    if (!svc) return;
+    const min = svc.duration;
+    if (state.bookingDuration - 30 >= min) {
+      state.bookingDuration -= 30;
+      updateDurationCalc();
+      state.selectedSlot = null;
+      await refreshAvailability();
+      refreshBookingSummary();
+    }
+  });
+
+  document.getElementById("durationPlus")?.addEventListener("click", async () => {
+    const svc = findService(elements.serviceSelect.value);
+    if (!svc) return;
+    state.bookingDuration += 30;
+    updateDurationCalc();
+    state.selectedSlot = null;
+    await refreshAvailability();
+    refreshBookingSummary();
   });
 
   [elements.clientName, elements.clientPhone, elements.clientEmail, elements.clientNotes].forEach((input) => {
@@ -689,11 +714,11 @@ async function refreshAvailability() {
   elements.slotGrid.innerHTML = '<div class="empty-state">Загружаю доступные слоты...</div>';
 
   try {
-    const params = new URLSearchParams({
-      serviceId,
-      specialistId,
-      date
-    });
+    const params = new URLSearchParams({ serviceId, specialistId, date });
+    const svc = findService(serviceId);
+    if (state.bookingDuration > 0 && svc && state.bookingDuration !== svc.duration) {
+      params.set("customDuration", String(state.bookingDuration));
+    }
 
     const payload = await fetchJson(`/api/availability?${params.toString()}`);
 
@@ -751,7 +776,13 @@ function refreshBookingSummary() {
     summaryRow(trSite('ui.summarySpecialistLabel') || "Специалист", specialist?.name),
     summaryRow(trSite('ui.summaryDateLabel') || "Дата", elements.dateInput.value ? formatDate(elements.dateInput.value) : ""),
     summaryRow(trSite('ui.summaryTimeLabel') || "Время", state.selectedSlot ? `${state.selectedSlot} — ${slot?.endsAt || ""}` : ""),
-    summaryRow(trSite('ui.summaryPriceLabel') || "Стоимость", service ? formatCurrency(service.price) : ""),
+    summaryRow(trSite('ui.summaryPriceLabel') || "Стоимость", service ? (() => {
+      if (state.bookingDuration > 0 && state.bookingDuration !== service.duration) {
+        const p = Math.round((service.price / service.duration) * state.bookingDuration / 50) * 50;
+        return `${formatCurrency(p)} (${state.bookingDuration} мин)`;
+      }
+      return formatCurrency(service.price);
+    })() : ""),
     summaryRow(trSite('ui.summaryClientLabel') || "Клиент", elements.clientName.value.trim()),
     summaryRow(trSite('ui.summaryContactLabel') || "Контакт", elements.clientPhone.value.trim()),
   ].join("");
@@ -786,6 +817,7 @@ async function handleBookingSubmit(event) {
     return;
   }
 
+  const svcForPayload = findService(elements.serviceSelect.value);
   const payload = {
     serviceId: elements.serviceSelect.value,
     specialistId: elements.specialistSelect.value,
@@ -797,7 +829,10 @@ async function handleBookingSubmit(event) {
     notes: elements.clientNotes.value.trim(),
     website: elements.clientWebsite?.value?.trim() || "",
     formToken: state.bookingProtectionToken,
-    formStartedAt: Number(elements.formStartedAt?.value || state.bookingFormStartedAt)
+    formStartedAt: Number(elements.formStartedAt?.value || state.bookingFormStartedAt),
+    ...(state.bookingDuration > 0 && svcForPayload && state.bookingDuration !== svcForPayload.duration
+      ? { customDuration: state.bookingDuration }
+      : {})
   };
 
   elements.submitBookingBtn.disabled = true;
@@ -812,6 +847,9 @@ async function handleBookingSubmit(event) {
     showBookingSuccess(result.booking);
     state.bookingProtectionToken = result.meta?.bookingProtectionToken || state.bookingProtectionToken;
     elements.bookingForm.reset();
+    state.bookingDuration = 0;
+    const calc = document.getElementById("durationCalc");
+    if (calc) calc.hidden = true;
     resetBookingFormProtection();
     setDateConstraints();
     state.selectedSlot = null;
@@ -916,6 +954,25 @@ function closeMobileNav() {
 
 function findService(serviceId) {
   return state.services.find((service) => service.id === serviceId);
+}
+
+function updateDurationCalc() {
+  const calc = document.getElementById("durationCalc");
+  const svc = findService(elements.serviceSelect.value);
+  if (!svc || !calc) { if (calc) calc.hidden = true; return; }
+
+  if (state.bookingDuration === 0 || state.bookingDuration < svc.duration) {
+    state.bookingDuration = svc.duration;
+  }
+
+  const price = Math.round((svc.price / svc.duration) * state.bookingDuration / 50) * 50;
+  const minusBtn = document.getElementById("durationMinus");
+
+  document.getElementById("durationValue").textContent = `${state.bookingDuration} мин`;
+  document.getElementById("durationPrice").textContent = formatCurrency(price);
+  if (minusBtn) minusBtn.disabled = state.bookingDuration <= svc.duration;
+
+  calc.hidden = false;
 }
 
 function findSpecialist(specialistId) {

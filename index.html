@@ -220,6 +220,18 @@
               </label>
             </div>
 
+            <div class="duration-calc" id="durationCalc" hidden>
+              <div class="duration-calc__head">
+                <span id="durationLabel">Длительность</span>
+                <span class="duration-calc__price" id="durationPrice"></span>
+              </div>
+              <div class="duration-calc__controls">
+                <button type="button" class="duration-btn" id="durationMinus">−30 мин</button>
+                <span class="duration-calc__value" id="durationValue">60 мин</span>
+                <button type="button" class="duration-btn" id="durationPlus">+30 мин</button>
+              </div>
+            </div>
+
             <label class="field">
               <span id="dateLabel">Дата</span>
               <input type="date" id="dateInput" required>

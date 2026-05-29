@@ -2846,13 +2846,16 @@ async function handleBookingCreate(request, response) {
     services,
     specialists
   );
-  const safePayload = {
-    ...payload,
-    slot
-  };
+
+  const customDuration = parseInt(payload.customDuration || "0", 10) || 0;
+  const effectiveService = customDuration > 0 && customDuration !== service.duration
+    ? { ...service, duration: customDuration, price: Math.round((service.price / service.duration) * customDuration / 50) * 50 }
+    : service;
+
+  const safePayload = { ...payload, slot };
   const availability = calculateAvailability({
     date: safePayload.date,
-    service,
+    service: effectiveService,
     specialist,
     bookings,
     schedule
@@ -2868,7 +2871,7 @@ async function handleBookingCreate(request, response) {
   const booking = createBookingRecord({
     payload: safePayload,
     cleanPayload,
-    service,
+    service: effectiveService,
     specialist,
     meta: {
       source: "public"
