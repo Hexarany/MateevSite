@@ -351,12 +351,17 @@
       display: block;
       margin: 0 auto;
       object-fit: contain;
-      mix-blend-mode: multiply; /* removes white background on ivory theme */
     }
 
+    /* Dark theme: screen removes black background perfectly */
     .cert-canvas--dark .cert-logo-img {
-      mix-blend-mode: screen; /* works on dark background */
-      opacity: 0.9;
+      mix-blend-mode: screen;
+    }
+
+    /* Ivory theme: multiply darkens over light bg — black areas blend away */
+    .cert-canvas--ivory .cert-logo-img {
+      mix-blend-mode: multiply;
+      opacity: 0.85;
     }
 
     /* Gift certificate badge */
@@ -700,7 +705,7 @@
       <!-- Left panel -->
       <div class="cert-left">
         <!-- Logo image -->
-        <img src="/mateev_logo.png" alt="Mateev Spa Studio" class="cert-logo-img" id="certLogoImg">
+        <img src="/mateev_logo.jpg" alt="Mateev Spa Studio" class="cert-logo-img" id="certLogoImg">
 
         <div class="cert-badge">
           <p class="cert-badge__text">Подарочный сертификат</p>
