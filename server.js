@@ -3547,6 +3547,17 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/bookings/")) {
+    assertAdminPin(request);
+    const bookingId = urlObject.pathname.replace("/api/admin/bookings/", "");
+    const { bookings } = await loadStudioData();
+    const next = bookings.filter(b => b.id !== bookingId);
+    if (next.length === bookings.length) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+    await writeJson("bookings.json", next);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/clients/")) {
     const clientId = urlObject.pathname.replace("/api/admin/clients/", "");
     await handleAdminClientUpdate(request, response, clientId);

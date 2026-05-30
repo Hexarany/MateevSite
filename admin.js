@@ -794,6 +794,7 @@ function renderServicesEditor() {
                 <button type="button" class="button button--ghost" data-remove-service-index="${index}">Удалить</button>
               </div>
               <div class="admin-entry-card__grid">
+                ${renderCollectionField("ID (slug)", index, "id", service.id || "", "service")}
                 ${renderCollectionField("Название", index, "name", service.name || "", "service")}
                 ${renderCollectionField("Категория", index, "category", service.category || "", "service")}
                 ${renderCollectionField("Длительность, мин", index, "duration", service.duration || 60, "service", { type: "number", min: "30", step: "15" })}
@@ -3217,6 +3218,18 @@ function handleAdminTableClick(event) {
     return;
   }
 
+  const deleteBookingBtn = event.target.closest("[data-delete-booking-id]");
+  if (deleteBookingBtn) {
+    const id = deleteBookingBtn.dataset.deleteBookingId;
+    if (!confirm("Удалить запись навсегда? Это действие нельзя отменить.")) return;
+    try {
+      await fetchJson(`/api/admin/bookings/${id}`, { method: "DELETE" });
+      await loadAdminData();
+      showToast("Запись удалена.", "success");
+    } catch { showToast("Не удалось удалить запись.", "error"); }
+    return;
+  }
+
   const cancelButton = event.target.closest("[data-cancel-booking-id]");
   if (cancelButton) {
     state.operations.bookingForm.id = cancelButton.dataset.cancelBookingId;
@@ -3330,6 +3343,7 @@ function renderAdminTable() {
             <div class="table-actions">
               <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Редактировать</button>
               <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(booking.id)}">Отменить</button>
+              <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(booking.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Удалить</button>
             </div>
           </td>
         </tr>
