@@ -63,7 +63,9 @@ const STATIC_FILES = {
   "/school.js": "school.js",
   "/styles.css": "styles.css",
   "/script.js": "script.js",
-  "/admin.js": "admin.js"
+  "/admin.js": "admin.js",
+  "/certificate": "certificate.html",
+  "/certificate.html": "certificate.html"
 };
 
 const MIME_TYPES = {
@@ -788,7 +790,8 @@ async function ensureDataFiles() {
       { id: "denis-mateev", name: "Денис Матеев", role: "Преподаватель массажа", experience: "9 лет практики", bio: "Практикующий массажист и телесный терапевт с 9-летним опытом. Основатель Mateev Spa Studio. Ведёт обучение классическому, терапевтическому и тайскому массажу — от базовой техники до работы с триггерными точками.", directions: ["massage"], initials: "ДМ", photo: null },
       { id: "vera-mateeva", name: "Вера Матеева", role: "Преподаватель косметологии", experience: "6 лет в косметологии", bio: "Медицинское образование — врач-терапевт. 6 лет в практической косметологии. Ведёт обучение уходу за кожей, косметологическим процедурам и работе с клиентом.", directions: ["cosmetology"], initials: "ВМ", photo: null }
     ], null, 2)],
-    ["enrollments.json", "[]"]
+    ["enrollments.json", "[]"],
+    ["certificates.json", "[]"]
   ];
 
   await Promise.all(
@@ -3658,6 +3661,66 @@ async function routeApi(request, response, urlObject) {
     enrollments[idx] = { ...enrollments[idx], status, updatedAt: new Date().toISOString() };
     await writeJson("enrollments.json", enrollments);
     sendJson(response, 200, { ok: true, enrollment: enrollments[idx] });
+    return;
+  }
+
+  // GET /api/admin/certificates
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/certificates") {
+    assertAdminPin(request);
+    const certs = await readJson("certificates.json");
+    sendJson(response, 200, { certificates: certs });
+    return;
+  }
+
+  // POST /api/admin/certificates - create new certificate
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/certificates") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const cert = {
+      id: crypto.randomUUID(),
+      code: sanitizeText(payload.code || `GC-${Date.now().toString().slice(-6)}`),
+      recipient: sanitizeText(payload.recipient || ""),
+      procedure: sanitizeText(payload.procedure || ""),
+      amount: Math.max(0, parseInt(payload.amount || "0", 10)),
+      validityMonths: Math.max(1, parseInt(payload.validityMonths || "12", 10)),
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + parseInt(payload.validityMonths || "12", 10) * 30 * 24 * 3600 * 1000).toISOString(),
+      status: "active",
+      usedAt: null,
+      usedInBooking: null
+    };
+    const certs = await readJson("certificates.json");
+    certs.push(cert);
+    await writeJson("certificates.json", certs);
+    sendJson(response, 201, { ok: true, certificate: cert });
+    return;
+  }
+
+  // GET /api/certificates/validate?code=GC-... - public validation
+  if (request.method === "GET" && urlObject.pathname === "/api/certificates/validate") {
+    const code = sanitizeText(urlObject.searchParams.get("code") || "");
+    if (!code) { sendJson(response, 400, { message: "Укажите код сертификата." }); return; }
+    const certs = await readJson("certificates.json");
+    const cert = certs.find(c => c.code.toUpperCase() === code.toUpperCase());
+    if (!cert) { sendJson(response, 404, { message: "Сертификат не найден." }); return; }
+    if (cert.status !== "active") { sendJson(response, 409, { message: "Сертификат уже использован." }); return; }
+    if (new Date(cert.expiresAt) < new Date()) { sendJson(response, 409, { message: "Срок действия сертификата истёк." }); return; }
+    sendJson(response, 200, { valid: true, certificate: { code: cert.code, amount: cert.amount, recipient: cert.recipient, procedure: cert.procedure } });
+    return;
+  }
+
+  // PATCH /api/admin/certificates/:id - update status
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/certificates/")) {
+    assertAdminPin(request);
+    const certId = urlObject.pathname.replace("/api/admin/certificates/", "");
+    const payload = await parseJsonBody(request);
+    const certs = await readJson("certificates.json");
+    const idx = certs.findIndex(c => c.id === certId);
+    if (idx === -1) { sendJson(response, 404, { message: "Сертификат не найден." }); return; }
+    const allowed = ["active", "used", "cancelled"];
+    if (allowed.includes(payload.status)) certs[idx].status = payload.status;
+    await writeJson("certificates.json", certs);
+    sendJson(response, 200, { ok: true, certificate: certs[idx] });
     return;
   }
 

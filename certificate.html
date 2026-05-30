@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Подарочный сертификат — Mateev Spa Studio</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400;1,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #1a1a1a;
+      --muted: #6b7280;
+      --line: rgba(0,0,0,0.10);
+      --surface: #ffffff;
+      --brand: #b36d2c;
+      --success: #3d7a47;
+      --danger: #c0392b;
+      --radius: 12px;
+      --sidebar-w: 320px;
+
+      /* Certificate dark theme */
+      --cert-dark-bg: #121c18;
+      --cert-dark-panel: #0d1612;
+      --cert-dark-accent: #c49e5a;
+      --cert-dark-text: #e8dcc8;
+      --cert-dark-muted: rgba(196,158,90,0.55);
+      --cert-dark-rule: rgba(196,158,90,0.30);
+
+      /* Certificate ivory theme */
+      --cert-ivory-bg: #faf6ee;
+      --cert-ivory-panel: #f0e8d8;
+      --cert-ivory-accent: #587254;
+      --cert-ivory-text: #2a2018;
+      --cert-ivory-muted: rgba(88,114,84,0.55);
+      --cert-ivory-rule: rgba(88,114,84,0.30);
+    }
+
+    body {
+      font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0ebe3;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── Sidebar ─────────────────────────────────── */
+    .cert-sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: #fff;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .cert-sidebar__brand {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .cert-sidebar__eyebrow {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .cert-sidebar__title {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-top: 4px;
+    }
+
+    .cert-sidebar__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      margin-top: 8px;
+    }
+
+    .cert-sidebar__back:hover { color: var(--ink); }
+
+    .cert-sidebar__body {
+      padding: 20px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .cert-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cert-field-group__label {
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .cert-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cert-field label {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .cert-field input,
+    .cert-field select {
+      padding: 8px 10px;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-family: inherit;
+      color: var(--ink);
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .cert-field input:focus,
+    .cert-field select:focus {
+      border-color: var(--brand);
+      background: #fff;
+    }
+
+    .cert-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .cert-btn {
+      padding: 7px 13px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(0,0,0,0.14);
+      background: #fafafa;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--ink);
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .cert-btn:hover { border-color: var(--brand); background: #fff3e8; }
+    .cert-btn.is-active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+    /* Toggle switch */
+    .cert-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.86rem;
+      color: var(--ink);
+    }
+
+    .cert-toggle input[type="checkbox"] {
+      width: 36px;
+      height: 20px;
+      appearance: none;
+      background: rgba(0,0,0,0.18);
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .cert-toggle input[type="checkbox"]:checked {
+      background: var(--brand);
+    }
+
+    .cert-toggle input[type="checkbox"]::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: left 0.2s;
+    }
+
+    .cert-toggle input[type="checkbox"]:checked::after {
+      left: 18px;
+    }
+
+    /* Sidebar footer actions */
+    .cert-sidebar__footer {
+      padding: 16px 24px 24px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cert-action-btn {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.88rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .cert-action-btn--primary {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .cert-action-btn--primary:hover {
+      background: #9a5c22;
+    }
+
+    .cert-action-btn--ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1.5px solid rgba(0,0,0,0.14);
+    }
+
+    .cert-action-btn--ghost:hover {
+      border-color: var(--ink);
+    }
+
+    .cert-action-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* ── Main area ───────────────────────────────── */
+    .cert-main {
+      flex: 1;
+      padding: 48px 40px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .cert-main__eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+      align-self: flex-start;
+    }
+
+    /* ── Certificate canvas ──────────────────────── */
+    .cert-canvas {
+      width: 900px;
+      height: 450px;
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.22);
+      flex-shrink: 0;
+    }
+
+    /* Theme: dark */
+    .cert-canvas--dark {
+      background: var(--cert-dark-bg);
+    }
+
+    /* Theme: ivory */
+    .cert-canvas--ivory {
+      background: var(--cert-ivory-bg);
+    }
+
+    /* ── Diamond decorations ─────────────────────── */
+    .cert-diamond {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      transform: rotate(45deg);
+    }
+
+    .cert-canvas--dark .cert-diamond { background: var(--cert-dark-accent); }
+    .cert-canvas--ivory .cert-diamond { background: var(--cert-ivory-accent); }
+
+    .cert-diamond--tl { top: 20px; left: 20px; }
+    .cert-diamond--tr { top: 20px; right: 20px; }
+    .cert-diamond--bl { bottom: 20px; left: 20px; }
+    .cert-diamond--br { bottom: 20px; right: 20px; }
+
+    /* Edge center diamonds */
+    .cert-diamond--tc { top: 20px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+    .cert-diamond--bc { bottom: 20px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+    .cert-diamond--ml { top: 50%; left: 20px; transform: translateY(-50%) rotate(45deg); }
+    .cert-diamond--mr { top: 50%; right: 20px; transform: translateY(-50%) rotate(45deg); }
+
+    /* ── Left panel ──────────────────────────────── */
+    .cert-left {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 16px;
+    }
+
+    .cert-canvas--dark .cert-left {
+      border-right: 1px solid var(--cert-dark-rule);
+    }
+
+    .cert-canvas--ivory .cert-left {
+      border-right: 1px solid var(--cert-ivory-rule);
+    }
+
+    /* Logo */
+    .cert-logo {
+      font-family: 'Italiana', Georgia, serif;
+      font-size: 1.9rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .cert-canvas--dark .cert-logo { color: var(--cert-dark-accent); }
+    .cert-canvas--ivory .cert-logo { color: var(--cert-ivory-accent); }
+
+    /* Botanical SVG */
+    .cert-botanical {
+      opacity: 0.55;
+    }
+
+    /* Gift certificate badge */
+    .cert-badge {
+      padding: 6px 14px;
+      border-radius: 2px;
+      text-align: center;
+    }
+
+    .cert-canvas--dark .cert-badge {
+      border: 1px solid var(--cert-dark-accent);
+    }
+
+    .cert-canvas--ivory .cert-badge {
+      border: 1px solid var(--cert-ivory-accent);
+    }
+
+    .cert-badge__text {
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .cert-canvas--dark .cert-badge__text { color: var(--cert-dark-accent); }
+    .cert-canvas--ivory .cert-badge__text { color: var(--cert-ivory-accent); }
+
+    /* Validity text */
+    .cert-validity {
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .cert-canvas--dark .cert-validity { color: var(--cert-dark-muted); }
+    .cert-canvas--ivory .cert-validity { color: var(--cert-ivory-muted); }
+
+    /* Stamp */
+    .cert-stamp {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .cert-canvas--dark .cert-stamp {
+      border: 2px solid var(--cert-dark-accent);
+    }
+
+    .cert-canvas--ivory .cert-stamp {
+      border: 2px solid var(--cert-ivory-accent);
+    }
+
+    .cert-stamp__inner {
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .cert-canvas--dark .cert-stamp__inner { color: var(--cert-dark-accent); }
+    .cert-canvas--ivory .cert-stamp__inner { color: var(--cert-ivory-accent); }
+
+    /* ── Right panel ─────────────────────────────── */
+    .cert-right {
+      position: absolute;
+      top: 0;
+      left: 280px;
+      right: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 40px 28px;
+      justify-content: space-between;
+    }
+
+    /* Tagline */
+    .cert-tagline {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .cert-canvas--dark .cert-tagline { color: var(--cert-dark-text); }
+    .cert-canvas--ivory .cert-tagline { color: var(--cert-ivory-text); }
+
+    /* Top rule */
+    .cert-rule {
+      height: 1px;
+      margin: 8px 0;
+    }
+
+    .cert-canvas--dark .cert-rule { background: var(--cert-dark-rule); }
+    .cert-canvas--ivory .cert-rule { background: var(--cert-ivory-rule); }
+
+    /* Recipient row */
+    .cert-recipient-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cert-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .cert-canvas--dark .cert-label { color: var(--cert-dark-muted); }
+    .cert-canvas--ivory .cert-label { color: var(--cert-ivory-muted); }
+
+    .cert-recipient-name {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-style: italic;
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+
+    .cert-canvas--dark .cert-recipient-name { color: var(--cert-dark-text); }
+    .cert-canvas--ivory .cert-recipient-name { color: var(--cert-ivory-text); }
+
+    /* Price */
+    .cert-price {
+      font-family: 'Italiana', Georgia, serif;
+      font-size: 4.2rem;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+
+    .cert-canvas--dark .cert-price { color: var(--cert-dark-accent); }
+    .cert-canvas--ivory .cert-price { color: var(--cert-ivory-accent); }
+
+    .cert-currency {
+      font-size: 1.6rem;
+      vertical-align: super;
+    }
+
+    /* Procedure */
+    .cert-procedure {
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-align: center;
+      font-family: 'Instrument Sans', sans-serif;
+    }
+
+    .cert-canvas--dark .cert-procedure { color: var(--cert-dark-text); opacity: 0.8; }
+    .cert-canvas--ivory .cert-procedure { color: var(--cert-ivory-text); opacity: 0.8; }
+
+    /* Bottom fields row */
+    .cert-bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .cert-bottom-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cert-bottom-field__line {
+      height: 1px;
+      margin-bottom: 4px;
+    }
+
+    .cert-canvas--dark .cert-bottom-field__line { background: var(--cert-dark-rule); }
+    .cert-canvas--ivory .cert-bottom-field__line { background: var(--cert-ivory-rule); }
+
+    .cert-bottom-field__val {
+      font-size: 0.68rem;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.02em;
+    }
+
+    .cert-canvas--dark .cert-bottom-field__val { color: var(--cert-dark-text); opacity: 0.75; }
+    .cert-canvas--ivory .cert-bottom-field__val { color: var(--cert-ivory-text); opacity: 0.75; }
+
+    /* ── Toast ───────────────────────────────────── */
+    .toast-stack {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 9999;
+    }
+
+    .toast {
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      animation: toast-in 0.2s ease;
+      max-width: 320px;
+    }
+
+    .toast--success { background: #1c3d22; color: #aee6b8; }
+    .toast--error   { background: #3d1c1c; color: #f0a0a0; }
+    .toast--info    { background: #1c2a3d; color: #a0c4f0; }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Print styles ────────────────────────────── */
+    @media print {
+      body { background: white; }
+      .cert-sidebar, .cert-main__eyebrow { display: none !important; }
+      .cert-main { padding: 0; }
+      .cert-canvas {
+        box-shadow: none;
+        page-break-inside: avoid;
+        width: 900px !important;
+        height: 450px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="cert-sidebar">
+    <div class="cert-sidebar__brand">
+      <p class="cert-sidebar__eyebrow">Редактор</p>
+      <h1 class="cert-sidebar__title">Подарочный сертификат</h1>
+      <a href="/admin" class="cert-sidebar__back">← Вернуться в admin</a>
+    </div>
+
+    <div class="cert-sidebar__body">
+
+      <!-- Theme -->
+      <div class="cert-field-group">
+        <p class="cert-field-group__label">Тема оформления</p>
+        <div class="cert-btn-row">
+          <button class="cert-btn is-active" data-theme="dark">Тёмный</button>
+          <button class="cert-btn" data-theme="ivory">Слоновая кость</button>
+        </div>
+      </div>
+
+      <!-- Amount -->
+      <div class="cert-field-group">
+        <p class="cert-field-group__label">Номинал (MDL)</p>
+        <div class="cert-btn-row">
+          <button class="cert-btn" data-amount="500">500</button>
+          <button class="cert-btn" data-amount="1000">1000</button>
+          <button class="cert-btn" data-amount="1500">1500</button>
+          <button class="cert-btn" data-amount="2000">2000</button>
+        </div>
+        <div class="cert-field">
+          <label for="customAmount">Другая сумма</label>
+          <input type="number" id="customAmount" min="1" step="50" placeholder="Введите сумму">
+        </div>
+      </div>
+
+      <!-- Recipient -->
+      <div class="cert-field-group">
+        <div class="cert-field">
+          <label for="recipientName">Имя получателя</label>
+          <input type="text" id="recipientName" placeholder="Например, Анна">
+        </div>
+      </div>
+
+      <!-- Procedure -->
+      <div class="cert-field-group">
+        <div class="cert-field">
+          <label for="procedureName">Процедура</label>
+          <input type="text" id="procedureName" placeholder="Любая процедура студии">
+        </div>
+      </div>
+
+      <!-- Dates -->
+      <div class="cert-field-group">
+        <div class="cert-field">
+          <label for="issueDate">Дата выдачи</label>
+          <input type="date" id="issueDate">
+        </div>
+      </div>
+
+      <!-- Cert number -->
+      <div class="cert-field-group">
+        <div class="cert-field">
+          <label for="certCode">Номер сертификата</label>
+          <input type="text" id="certCode" placeholder="GC-202605-001" readonly style="font-family: 'DM Mono', monospace; font-size:0.8rem;">
+        </div>
+      </div>
+
+      <!-- Validity -->
+      <div class="cert-field-group">
+        <p class="cert-field-group__label">Срок действия</p>
+        <div class="cert-btn-row">
+          <button class="cert-btn" data-validity="3">3 мес.</button>
+          <button class="cert-btn is-active" data-validity="6">6 мес.</button>
+          <button class="cert-btn" data-validity="12">12 мес.</button>
+        </div>
+        <div class="cert-field">
+          <label for="customValidity">Другой срок (месяцев)</label>
+          <input type="number" id="customValidity" min="1" max="60" placeholder="Число месяцев">
+        </div>
+      </div>
+
+      <!-- Stamp -->
+      <div class="cert-field-group">
+        <label class="cert-toggle">
+          <span>Печать студии</span>
+          <input type="checkbox" id="showStamp" checked>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="cert-sidebar__footer">
+      <button class="cert-action-btn cert-action-btn--primary" id="saveCertBtn">
+        Сохранить сертификат
+      </button>
+      <button class="cert-action-btn cert-action-btn--ghost" id="printCertBtn">
+        Распечатать
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main preview area -->
+  <main class="cert-main">
+    <p class="cert-main__eyebrow">Предпросмотр · 900 × 450 px</p>
+
+    <!-- Certificate canvas -->
+    <div class="cert-canvas cert-canvas--dark" id="certCanvas">
+
+      <!-- Corner / edge diamonds -->
+      <div class="cert-diamond cert-diamond--tl"></div>
+      <div class="cert-diamond cert-diamond--tr"></div>
+      <div class="cert-diamond cert-diamond--bl"></div>
+      <div class="cert-diamond cert-diamond--br"></div>
+      <div class="cert-diamond cert-diamond--tc"></div>
+      <div class="cert-diamond cert-diamond--bc"></div>
+      <div class="cert-diamond cert-diamond--ml"></div>
+      <div class="cert-diamond cert-diamond--mr"></div>
+
+      <!-- Left panel -->
+      <div class="cert-left">
+        <div class="cert-logo">MateevSpa</div>
+
+        <!-- Botanical SVG -->
+        <svg class="cert-botanical" width="56" height="72" viewBox="0 0 56 72" fill="none" xmlns="http://www.w3.org/2000/svg" id="certBotanical">
+          <path d="M28 70 C28 70 28 40 28 10" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <path d="M28 50 C18 44 12 34 14 24 C20 28 26 38 28 50Z" fill="currentColor" opacity="0.55"/>
+          <path d="M28 50 C38 44 44 34 42 24 C36 28 30 38 28 50Z" fill="currentColor" opacity="0.55"/>
+          <path d="M28 36 C20 30 16 20 20 12 C24 16 28 26 28 36Z" fill="currentColor" opacity="0.35"/>
+          <path d="M28 36 C36 30 40 20 36 12 C32 16 28 26 28 36Z" fill="currentColor" opacity="0.35"/>
+          <circle cx="28" cy="70" r="2" fill="currentColor" opacity="0.5"/>
+        </svg>
+
+        <div class="cert-badge">
+          <p class="cert-badge__text">Подарочный сертификат</p>
+        </div>
+
+        <p class="cert-validity" id="certValidityText">Действителен 6 месяцев</p>
+
+        <div class="cert-stamp" id="certStamp">
+          <div class="cert-stamp__inner">Mateev<br>Spa</div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="cert-right">
+        <div>
+          <p class="cert-tagline">A moment of pure serenity,</p>
+          <p class="cert-tagline" style="text-align:center; font-size:0.88rem; opacity:0.7;">gifted with care.</p>
+          <div class="cert-rule"></div>
+
+          <div class="cert-recipient-row">
+            <span class="cert-label">Для</span>
+            <span class="cert-recipient-name" id="certRecipientDisplay">Получатель</span>
+          </div>
+        </div>
+
+        <div style="text-align:center;">
+          <div class="cert-price" id="certPriceDisplay">
+            <span class="cert-currency">MDL</span> —
+          </div>
+          <p class="cert-procedure" id="certProcedureDisplay">Любая процедура студии</p>
+        </div>
+
+        <div>
+          <div class="cert-bottom-row">
+            <div class="cert-bottom-field">
+              <div class="cert-bottom-field__line"></div>
+              <span class="cert-label">Дата выдачи</span>
+              <span class="cert-bottom-field__val" id="certDateDisplay">—</span>
+            </div>
+            <div class="cert-bottom-field">
+              <div class="cert-bottom-field__line"></div>
+              <span class="cert-label">Подпись</span>
+              <span class="cert-bottom-field__val" style="opacity:0.3;">____________</span>
+            </div>
+            <div class="cert-bottom-field">
+              <div class="cert-bottom-field__line"></div>
+              <span class="cert-label">Номер</span>
+              <span class="cert-bottom-field__val" id="certCodeDisplay" style="font-family:'DM Mono',monospace; font-size:0.6rem;">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    // ── State ─────────────────────────────────────────
+    const state = {
+      theme: "dark",
+      amount: 0,
+      validityMonths: 6,
+      recipient: "",
+      procedure: "",
+      issueDate: "",
+      code: ""
+    };
+
+    // ── DOM refs ──────────────────────────────────────
+    const canvas         = document.getElementById("certCanvas");
+    const recipientDisp  = document.getElementById("certRecipientDisplay");
+    const priceDisp      = document.getElementById("certPriceDisplay");
+    const procedureDisp  = document.getElementById("certProcedureDisplay");
+    const dateDisp       = document.getElementById("certDateDisplay");
+    const codeDisp       = document.getElementById("certCodeDisplay");
+    const validityText   = document.getElementById("certValidityText");
+    const stampEl        = document.getElementById("certStamp");
+    const botanicalEl    = document.getElementById("certBotanical");
+    const certCodeInput  = document.getElementById("certCode");
+    const toastStack     = document.getElementById("toastStack");
+
+    // ── Init ──────────────────────────────────────────
+    function init() {
+      // Auto-fill issue date
+      const today = new Date();
+      const iso = today.toISOString().slice(0, 10);
+      document.getElementById("issueDate").value = iso;
+      state.issueDate = iso;
+
+      // Auto-generate cert code
+      const ym = today.toISOString().slice(0, 7).replace("-", "");
+      const rand = Math.floor(100 + Math.random() * 900);
+      state.code = `GC-${ym}-${rand}`;
+      certCodeInput.value = state.code;
+
+      updateDisplay();
+      bindEvents();
+    }
+
+    // ── Events ────────────────────────────────────────
+    function bindEvents() {
+      // Theme buttons
+      document.querySelectorAll("[data-theme]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.theme = btn.dataset.theme;
+          document.querySelectorAll("[data-theme]").forEach(b => b.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          updateTheme();
+        });
+      });
+
+      // Amount buttons
+      document.querySelectorAll("[data-amount]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.amount = parseInt(btn.dataset.amount, 10);
+          document.querySelectorAll("[data-amount]").forEach(b => b.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          document.getElementById("customAmount").value = "";
+          updateDisplay();
+        });
+      });
+
+      // Custom amount
+      document.getElementById("customAmount").addEventListener("input", e => {
+        const v = parseInt(e.target.value, 10);
+        if (v > 0) {
+          state.amount = v;
+          document.querySelectorAll("[data-amount]").forEach(b => b.classList.remove("is-active"));
+          updateDisplay();
+        }
+      });
+
+      // Recipient
+      document.getElementById("recipientName").addEventListener("input", e => {
+        state.recipient = e.target.value;
+        updateDisplay();
+      });
+
+      // Procedure
+      document.getElementById("procedureName").addEventListener("input", e => {
+        state.procedure = e.target.value;
+        updateDisplay();
+      });
+
+      // Issue date
+      document.getElementById("issueDate").addEventListener("input", e => {
+        state.issueDate = e.target.value;
+        updateDisplay();
+      });
+
+      // Validity buttons
+      document.querySelectorAll("[data-validity]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.validityMonths = parseInt(btn.dataset.validity, 10);
+          document.querySelectorAll("[data-validity]").forEach(b => b.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          document.getElementById("customValidity").value = "";
+          updateDisplay();
+        });
+      });
+
+      // Custom validity
+      document.getElementById("customValidity").addEventListener("input", e => {
+        const v = parseInt(e.target.value, 10);
+        if (v > 0) {
+          state.validityMonths = v;
+          document.querySelectorAll("[data-validity]").forEach(b => b.classList.remove("is-active"));
+          updateDisplay();
+        }
+      });
+
+      // Stamp toggle
+      document.getElementById("showStamp").addEventListener("change", e => {
+        stampEl.style.display = e.target.checked ? "" : "none";
+      });
+
+      // Save button
+      document.getElementById("saveCertBtn").addEventListener("click", handleSave);
+
+      // Print button
+      document.getElementById("printCertBtn").addEventListener("click", () => window.print());
+    }
+
+    // ── Update theme ──────────────────────────────────
+    function updateTheme() {
+      canvas.className = `cert-canvas cert-canvas--${state.theme}`;
+
+      // Update botanical color
+      const color = state.theme === "dark" ? "#c49e5a" : "#587254";
+      botanicalEl.style.color = color;
+    }
+
+    // ── Update display ────────────────────────────────
+    function updateDisplay() {
+      // Recipient
+      recipientDisp.textContent = state.recipient || "Получатель";
+
+      // Price
+      if (state.amount > 0) {
+        priceDisp.innerHTML = `<span class="cert-currency">MDL</span> ${state.amount.toLocaleString("ru-RU")}`;
+      } else {
+        priceDisp.innerHTML = `<span class="cert-currency">MDL</span> —`;
+      }
+
+      // Procedure
+      procedureDisp.textContent = state.procedure || "Любая процедура студии";
+
+      // Date
+      if (state.issueDate) {
+        const d = new Date(state.issueDate + "T12:00:00");
+        dateDisp.textContent = d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+      } else {
+        dateDisp.textContent = "—";
+      }
+
+      // Code
+      codeDisp.textContent = state.code || "—";
+
+      // Validity text
+      const m = state.validityMonths;
+      let validityLabel;
+      if (m === 1) validityLabel = "1 месяц";
+      else if (m >= 2 && m <= 4) validityLabel = `${m} месяца`;
+      else validityLabel = `${m} месяцев`;
+      validityText.textContent = `Действителен ${validityLabel}`;
+
+      updateTheme();
+    }
+
+    // ── Save ──────────────────────────────────────────
+    async function handleSave() {
+      if (!state.amount || state.amount < 1) {
+        showToast("Укажите номинал сертификата.", "error");
+        return;
+      }
+
+      const btn = document.getElementById("saveCertBtn");
+      btn.disabled = true;
+      btn.textContent = "Сохраняю...";
+
+      try {
+        const res = await fetch("/api/admin/certificates", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: state.code,
+            recipient: state.recipient,
+            procedure: state.procedure,
+            amount: state.amount,
+            validityMonths: state.validityMonths
+          })
+        });
+
+        if (res.status === 401) {
+          showToast("Требуется авторизация. Войдите в admin-панель.", "error");
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.message || "Ошибка при сохранении.", "error");
+          return;
+        }
+
+        showToast("Сертификат сохранён.", "success");
+
+        // Generate new code for next certificate
+        const today = new Date();
+        const ym = today.toISOString().slice(0, 7).replace("-", "");
+        const rand = Math.floor(100 + Math.random() * 900);
+        state.code = `GC-${ym}-${rand}`;
+        certCodeInput.value = state.code;
+        updateDisplay();
+
+      } catch (err) {
+        showToast("Не удалось сохранить сертификат.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Сохранить сертификат";
+      }
+    }
+
+    // ── Toast ─────────────────────────────────────────
+    function showToast(message, tone = "info") {
+      const toast = document.createElement("div");
+      toast.className = `toast toast--${tone}`;
+      toast.textContent = message;
+      toastStack.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
+
+    // ── Start ─────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>

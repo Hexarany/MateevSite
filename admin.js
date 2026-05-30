@@ -2,6 +2,7 @@ const state = {
   adminPin: "",
   adminData: null,
   enrollments: [],
+  certificates: [],
   daySchedule: null,
   clients: [],
   selectedClientId: "",
@@ -237,6 +238,19 @@ function bindEvents() {
     } catch {
       showToast("Не удалось обновить статус.", "error");
     }
+  });
+
+  document.addEventListener("change", async (e) => {
+    const sel = e.target.closest(".cert-status-select");
+    if (!sel) return;
+    try {
+      await fetchJson(`/api/admin/certificates/${sel.dataset.certId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: sel.value })
+      });
+      const idx = state.certificates.findIndex(c => c.id === sel.dataset.certId);
+      if (idx !== -1) state.certificates[idx].status = sel.value;
+    } catch { showToast("Не удалось обновить статус.", "error"); }
   });
 
   document.getElementById("enrollmentStatusFilter")?.addEventListener("change", renderEnrollmentsTable);
@@ -1239,6 +1253,11 @@ async function loadAdminData() {
   state.adminData = payload;
   state.currency = payload.currency || state.currency;
   await Promise.all([loadDaySchedule(), loadClientsData(), loadEnrollments()]);
+  try {
+    const certData = await fetchJson("/api/admin/certificates");
+    state.certificates = certData.certificates || [];
+    renderCertificatesTable();
+  } catch {}
   renderDashboard();
 }
 
@@ -1248,6 +1267,35 @@ async function loadEnrollments() {
     state.enrollments = payload.enrollments || [];
     renderEnrollmentsTable();
   } catch {}
+}
+
+function renderCertificatesTable() {
+  const tbody = document.getElementById("certificatesTableBody");
+  if (!tbody) return;
+  if (!state.certificates.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Сертификатов пока нет. Нажмите «Создать сертификат».</div></td></tr>';
+    return;
+  }
+  const statusLabels = { active: "Активен", used: "Использован", cancelled: "Отменён" };
+  const statusColors = { active: "var(--success)", used: "var(--muted)", cancelled: "var(--danger)" };
+  tbody.innerHTML = state.certificates
+    .slice().reverse()
+    .map(c => {
+      const expires = new Date(c.expiresAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+      const isExpired = new Date(c.expiresAt) < new Date() && c.status === "active";
+      return `<tr>
+        <td><span class="table-main" style="font-family:monospace;">${escapeHtml(c.code)}</span></td>
+        <td><span class="table-main">${escapeHtml(c.recipient || "—")}</span></td>
+        <td><span class="table-main">${escapeHtml(c.procedure || "Любая процедура")}</span></td>
+        <td><span class="table-main">${escapeHtml(String(c.amount))} MDL</span></td>
+        <td><span class="table-main${isExpired ? '" style="color:var(--danger)' : ''}">${expires}</span></td>
+        <td>
+          <select class="cert-status-select" data-cert-id="${escapeHtml(c.id)}" style="font-size:0.82rem;color:${statusColors[c.status]||''};">
+            ${["active","used","cancelled"].map(s => `<option value="${s}"${c.status===s?" selected":""}>${statusLabels[s]}</option>`).join("")}
+          </select>
+        </td>
+      </tr>`;
+    }).join("");
 }
 
 async function tryAutoLoginFromSession() {
