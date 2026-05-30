@@ -3634,6 +3634,29 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/waitlist - public waitlist signup
+  if (request.method === "POST" && urlObject.pathname === "/api/waitlist") {
+    const payload = await parseJsonBody(request);
+    const name       = sanitizeText(payload.name || "");
+    const phone      = sanitizeText(payload.phone || "");
+    const service    = sanitizeText(payload.service || "");
+    const specialist = sanitizeText(payload.specialist || "");
+    const date       = sanitizeText(payload.date || "");
+    if (!name || !phone) { sendJson(response, 400, { message: "Укажите имя и телефон." }); return; }
+    void (async () => {
+      try {
+        if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+          const text = `⏳ Лист ожидания\n\nИмя: ${name}\nТелефон: ${phone}${service ? `\nУслуга: ${service}` : ""}${specialist ? `\nСпециалист: ${specialist}` : ""}${date ? `\nДата: ${date}` : ""}`;
+          await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            body: { chat_id: TELEGRAM_CHAT_ID, text }
+          });
+        }
+      } catch {}
+    })();
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // POST /api/school/enroll - public enrollment
   if (request.method === "POST" && urlObject.pathname === "/api/school/enroll") {
     await handleSchoolEnroll(request, response);

@@ -833,6 +833,46 @@ p {
   gap: 18px;
 }
 
+.waitlist-block {
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(40,72,56,0.04);
+  border: 1px dashed rgba(40,72,56,0.2);
+  display: grid;
+  gap: 12px;
+}
+
+.waitlist-block__text {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.waitlist-block__form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.waitlist-block__form input {
+  min-width: 120px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.8);
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+  flex: 1;
+}
+
+.waitlist-block__form input:focus {
+  border-color: rgba(179,109,44,0.4);
+  box-shadow: 0 0 0 3px rgba(179,109,44,0.08);
+}
+
 .cert-field {
   display: grid;
   gap: 8px;

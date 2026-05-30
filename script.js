@@ -252,6 +252,28 @@ function bindEvents() {
   });
 
   document.getElementById("certApplyBtn")?.addEventListener("click", handleCertApply);
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".waitlist-submit");
+    if (!btn) return;
+    const block = btn.closest(".waitlist-block");
+    const name  = block.querySelector(".waitlist-name").value.trim();
+    const phone = block.querySelector(".waitlist-phone").value.trim();
+    if (!name || !phone) { showToast(tr("Введите имя и телефон","Introduceți numele și telefonul"), "error"); return; }
+    btn.disabled = true;
+    btn.textContent = tr("Отправляю…","Trimit…");
+    try {
+      await fetchJson("/api/waitlist", {
+        method: "POST",
+        body: JSON.stringify({ name, phone, service: btn.dataset.service, specialist: btn.dataset.specialist, date: btn.dataset.date })
+      });
+      block.innerHTML = `<p class="waitlist-block__text" style="color:var(--success);font-weight:600;">✓ ${tr("Записали! Сообщим как только появится место.","V-am înregistrat! Vă vom anunța când apare un loc.")}</p>`;
+    } catch {
+      btn.disabled = false;
+      btn.textContent = tr("Уведомить меня","Anunță-mă");
+      showToast(tr("Ошибка. Попробуйте ещё раз.","Eroare. Încercați din nou."), "error");
+    }
+  });
   document.getElementById("certCode")?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); handleCertApply(); }
   });
@@ -766,8 +788,26 @@ async function refreshAvailability() {
 
 function renderSlotButtons() {
   if (!state.availability.length) {
-    elements.slotGrid.innerHTML =
-      '<div class="empty-state">Для выбранных параметров свободных окон нет. Попробуй другую дату или специалиста.</div>';
+    const service   = findService(elements.serviceSelect.value);
+    const specialist = findSpecialist(elements.specialistSelect.value);
+    const date      = elements.dateInput.value;
+    const svcName   = service?.name || "";
+    const specName  = specialist?.name || "";
+    elements.slotGrid.innerHTML = `
+      <div class="waitlist-block">
+        <p class="waitlist-block__text">${tr(
+          "На эту дату свободных окон нет. Оставьте контакт — сообщим если появится место.",
+          "Nu sunt intervale disponibile. Lăsați contactul — vă vom anunța dacă apare un loc."
+        )}</p>
+        <div class="waitlist-block__form">
+          <input type="text" class="waitlist-name" placeholder="${tr("Ваше имя","Numele dvs.")}" style="flex:1;">
+          <input type="tel" class="waitlist-phone" placeholder="+373..." style="flex:1;">
+          <button type="button" class="button button--ghost waitlist-submit"
+            data-service="${escapeHtml(svcName)}" data-specialist="${escapeHtml(specName)}" data-date="${escapeHtml(date)}">
+            ${tr("Уведомить меня","Anunță-mă")}
+          </button>
+        </div>
+      </div>`;
     return;
   }
 
