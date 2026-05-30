@@ -204,6 +204,17 @@
       groupSizeHtml +
       '<div class="school-meta-item"><span>' + L.cert_label + '</span><strong>' + L.certificate + '</strong></div>' +
       "</div>" +
+      (course.maxStudents > 0 ? (function() {
+        var enrolled = course.enrolledCount || 0;
+        var max = course.maxStudents;
+        var left = max - enrolled;
+        var isFull = left <= 0;
+        var color = isFull ? 'var(--danger)' : (left <= 2 ? '#b36d2c' : 'var(--forest)');
+        var bg = isFull ? 'rgba(186,89,73,0.08)' : (left <= 2 ? 'rgba(179,109,44,0.08)' : 'rgba(40,72,56,0.07)');
+        return '<div class="school-course-card__starts" style="color:' + color + ';background:' + bg + ';">' +
+          (isFull ? tr("Набор закрыт","Înregistrare închisă") : (tr("Осталось мест:","Locuri disponibile:") + " <strong>" + left + " / " + max + "</strong>")) +
+          '</div>';
+      })() : '') +
       (course.startDates && course.startDates.length
         ? '<div class="school-course-card__starts">' +
           '<span>' + tr("Ближайший старт:", "Cel mai apropiat start:") + '</span> ' +
@@ -215,11 +226,9 @@
         : '') +
       '<div class="school-course-card__footer">' +
       priceHtml +
-      '<button type="button" class="button button--primary" data-enroll-course="' +
-      esc(course.id) +
-      '" data-course-name="' +
-      esc(course.name) +
-      '">' + L.enroll_btn + '</button>' +
+      (course.maxStudents > 0 && (course.enrolledCount || 0) >= course.maxStudents
+        ? '<span style="color:var(--danger);font-weight:700;font-size:0.9rem;">' + tr("Набор закрыт","Înregistrare închisă") + '</span>'
+        : '<button type="button" class="button button--primary" data-enroll-course="' + esc(course.id) + '" data-course-name="' + esc(course.name) + '">' + L.enroll_btn + '</button>') +
       "</div>" +
       "</article>"
     );

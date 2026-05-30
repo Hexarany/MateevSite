@@ -538,6 +538,7 @@ function renderCoursesEditor() {
         <label class="field"><span>Длительность</span><input type="text" value="${escapeHtml(c.duration||"")}" data-course-index="${i}" data-course-field="duration" placeholder="3 недели"></label>
         <label class="field"><span>Цена (EUR)</span><input type="number" value="${c.price||0}" data-course-index="${i}" data-course-field="price" min="0"></label>
         <label class="field"><span>Размер группы</span><input type="text" value="${escapeHtml(c.groupSize||"")}" data-course-index="${i}" data-course-field="groupSize" placeholder="до 6 человек"></label>
+        <label class="field"><span>Лимит мест (0 = без лимита)</span><input type="number" value="${c.maxStudents||0}" data-course-index="${i}" data-course-field="maxStudents" min="0"></label>
         <label class="field field--full"><span>Описание</span><textarea rows="3" data-course-index="${i}" data-course-field="description">${escapeHtml(c.description||"")}</textarea></label>
         <label class="field field--full"><span>Что входит (по одному на строку)</span><textarea rows="4" data-course-index="${i}" data-course-field="benefits">${escapeHtml((c.benefits||[]).join("\n"))}</textarea></label>
         <label class="field field--full"><span>Даты старта групп (по одной на строку, напр. "15 июня 2026")</span><textarea rows="3" data-course-index="${i}" data-course-field="startDates" placeholder="15 июня 2026&#10;1 сентября 2026">${escapeHtml((c.startDates||[]).join("\n"))}</textarea></label>

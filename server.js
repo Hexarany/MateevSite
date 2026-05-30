@@ -3348,6 +3348,16 @@ async function handleSchoolEnroll(request, response) {
     return;
   }
 
+  // Check enrollment limit
+  if (course.maxStudents > 0) {
+    const enrollments = await readJson("enrollments.json");
+    const activeCount = enrollments.filter(e => e.courseId === courseId && e.status !== "cancelled").length;
+    if (activeCount >= course.maxStudents) {
+      sendJson(response, 409, { message: "К сожалению, набор на этот курс закрыт. Оставьте заявку — мы сообщим о следующей группе." });
+      return;
+    }
+  }
+
   const enrollment = {
     id: crypto.randomUUID(),
     reference: `SCH-${Date.now().toString().slice(-6)}`,
@@ -3595,9 +3605,14 @@ async function routeApi(request, response, urlObject) {
 
   // GET /api/school/data - public
   if (request.method === "GET" && urlObject.pathname === "/api/school/data") {
-    const courses = await readJson("courses.json");
+    const courses  = await readJson("courses.json");
     const teachers = await readJson("teachers.json");
-    sendJson(response, 200, { courses, teachers });
+    const enrollments = await readJson("enrollments.json");
+    const coursesWithCount = courses.map(c => ({
+      ...c,
+      enrolledCount: enrollments.filter(e => e.courseId === c.id && e.status !== "cancelled").length
+    }));
+    sendJson(response, 200, { courses: coursesWithCount, teachers });
     return;
   }
 
