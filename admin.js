@@ -2074,26 +2074,7 @@ function initRevealObserver() {
 }
 
 function initNavHighlight() {
-  const navLinks = document.querySelectorAll(".admin-sidebar__nav a[href^='#']");
-  if (!navLinks.length) return;
-
-  const sectionIds = Array.from(navLinks).map((a) => a.getAttribute("href").slice(1));
-  const sections = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          navLinks.forEach((a) => {
-            a.classList.toggle("is-active", a.getAttribute("href") === `#${entry.target.id}`);
-          });
-        }
-      });
-    },
-    { rootMargin: "-20% 0px -70% 0px", threshold: 0 }
-  );
-
-  sections.forEach((s) => observer.observe(s));
+  // Disabled — handled by initSectionNav / activateSection
 }
 
 function syncRevealTargets() {
