@@ -54,7 +54,8 @@
             </div>
 
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
-              <a href="/" class="button button--secondary">На главную</a>
+              <a id="repeatBookingLink" href="/#booking" class="button button--secondary">Записаться снова</a>
+              <a href="/" class="button button--ghost">На главную</a>
               <a href="#" class="button button--ghost" id="cancelLink">Отменить запись</a>
             </div>
           </div>
@@ -97,13 +98,15 @@
 
   <script>
     const p = new URLSearchParams(location.search);
-    const ref        = p.get("ref") || "";
-    const service    = p.get("service") || "";
-    const specialist = p.get("specialist") || "";
-    const date       = p.get("date") || "";
-    const time       = p.get("time") || "";
-    const price      = p.get("price") || "";
-    const name       = p.get("name") || "";
+    const ref          = p.get("ref") || "";
+    const service      = p.get("service") || "";
+    const serviceId    = p.get("serviceId") || "";
+    const specialist   = p.get("specialist") || "";
+    const specialistId = p.get("specialistId") || "";
+    const date         = p.get("date") || "";
+    const time         = p.get("time") || "";
+    const price        = p.get("price") || "";
+    const name         = p.get("name") || "";
 
     if (!ref) location.replace("/");
 
@@ -145,6 +148,14 @@
         '<p class="section-kicker" style="margin-bottom:12px;">Контакты</p>' +
         '<p style="color:var(--muted);font-size:0.875rem;">бул. Штефан чел Маре, 145, Кишинев</p>';
     });
+
+    // Build "repeat booking" link with pre-filled service and specialist
+    if (serviceId || specialistId) {
+      const repeatParams = new URLSearchParams();
+      if (serviceId)    repeatParams.set("prefillService",    serviceId);
+      if (specialistId) repeatParams.set("prefillSpecialist", specialistId);
+      document.getElementById("repeatBookingLink").href = "/#booking?" + repeatParams.toString();
+    }
   </script>
 </body>
 </html>

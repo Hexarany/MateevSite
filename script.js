@@ -146,9 +146,25 @@ async function init() {
 
   try {
     await loadBootstrap();
+    applyUrlPrefill();
   } catch (error) {
     showToast(error.message || "Не удалось загрузить информацию о студии.", "error");
   }
+}
+
+function applyUrlPrefill() {
+  const params = new URLSearchParams(location.search || location.hash.replace(/^#booking\?/, ""));
+  const serviceId    = params.get("prefillService");
+  const specialistId = params.get("prefillSpecialist");
+  if (!serviceId && !specialistId) return;
+
+  if (serviceId) elements.serviceSelect.value = serviceId;
+  updateSpecialistOptions();
+  if (specialistId) elements.specialistSelect.value = specialistId;
+
+  document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  refreshAvailability();
+  refreshBookingSummary();
 }
 
 function bindEvents() {
@@ -1035,13 +1051,15 @@ function showToast(message, tone = "info") {
 
 function showBookingSuccess(booking) {
   const p = new URLSearchParams({
-    ref:        booking.reference || "",
-    service:    booking.serviceName || "",
-    specialist: booking.specialistName || "",
-    date:       booking.date || "",
-    time:       booking.slot ? `${booking.slot} — ${booking.endsAt || ""}` : "",
-    price:      booking.totalPrice ? `${booking.totalPrice} MDL` : "",
-    name:       booking.clientName || ""
+    ref:          booking.reference || "",
+    service:      booking.serviceName || "",
+    serviceId:    booking.serviceId || "",
+    specialist:   booking.specialistName || "",
+    specialistId: booking.specialistId || "",
+    date:         booking.date || "",
+    time:         booking.slot ? `${booking.slot} — ${booking.endsAt || ""}` : "",
+    price:        booking.totalPrice ? `${booking.totalPrice} MDL` : "",
+    name:         booking.clientName || ""
   });
   location.href = `/success?${p.toString()}`;
 }
