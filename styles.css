@@ -833,6 +833,39 @@ p {
   gap: 18px;
 }
 
+.cert-field {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(40,72,56,0.04);
+  border: 1px solid rgba(40,72,56,0.12);
+}
+
+.cert-field__row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.cert-status {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.cert-status--ok {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.cert-status--err {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 .booking-sidebar {
   display: grid;
   gap: 18px;

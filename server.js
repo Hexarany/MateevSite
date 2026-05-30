@@ -2894,6 +2894,19 @@ async function handleBookingCreate(request, response) {
 
   const nextBookings = sortBookings([...bookings, booking]);
   await writeJson("bookings.json", nextBookings);
+
+  const certCode = sanitizeText(payload.certificateCode || "");
+  if (certCode) {
+    const certs = await readJson("certificates.json");
+    const certIdx = certs.findIndex(c => c.code.toUpperCase() === certCode.toUpperCase() && c.status === "active");
+    if (certIdx !== -1) {
+      certs[certIdx].status = "used";
+      certs[certIdx].usedAt = new Date().toISOString();
+      certs[certIdx].usedInBooking = booking.reference;
+      await writeJson("certificates.json", certs);
+    }
+  }
+
   void notifyBookingCreated(booking);
 
   sendJson(response, 201, {

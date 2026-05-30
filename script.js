@@ -10,7 +10,8 @@ const state = {
   superUserTapCount: 0,
   superUserTapTimer: null,
   lang: localStorage.getItem('lang') || 'ru',
-  bookingDuration: 0
+  bookingDuration: 0,
+  appliedCert: null
 };
 
 function tr(ruValue, roValue) {
@@ -248,6 +249,11 @@ function bindEvents() {
       await refreshAvailability();
       refreshBookingSummary();
     });
+  });
+
+  document.getElementById("certApplyBtn")?.addEventListener("click", handleCertApply);
+  document.getElementById("certCode")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); handleCertApply(); }
   });
 
   document.getElementById("durationMinus")?.addEventListener("click", async () => {
@@ -801,6 +807,7 @@ function refreshBookingSummary() {
     })() : ""),
     summaryRow(trSite('ui.summaryClientLabel') || "Клиент", elements.clientName.value.trim()),
     summaryRow(trSite('ui.summaryContactLabel') || "Контакт", elements.clientPhone.value.trim()),
+    state.appliedCert ? summaryRow(tr("Сертификат", "Certificat"), `${state.appliedCert.code} (−${state.appliedCert.amount} MDL)`) : "",
   ].join("");
 
   elements.bookingSummary.innerHTML = rows
@@ -848,7 +855,8 @@ async function handleBookingSubmit(event) {
     formStartedAt: Number(elements.formStartedAt?.value || state.bookingFormStartedAt),
     ...(state.bookingDuration > 0 && svcForPayload && state.bookingDuration !== svcForPayload.duration
       ? { customDuration: state.bookingDuration }
-      : {})
+      : {}),
+    ...(state.appliedCert ? { certificateCode: state.appliedCert.code } : {})
   };
 
   elements.submitBookingBtn.disabled = true;
@@ -864,8 +872,13 @@ async function handleBookingSubmit(event) {
     state.bookingProtectionToken = result.meta?.bookingProtectionToken || state.bookingProtectionToken;
     elements.bookingForm.reset();
     state.bookingDuration = 0;
+    state.appliedCert = null;
     const calc = document.getElementById("durationCalc");
     if (calc) calc.hidden = true;
+    const certStatus = document.getElementById("certStatus");
+    if (certStatus) certStatus.hidden = true;
+    const certCode = document.getElementById("certCode");
+    if (certCode) certCode.value = "";
     resetBookingFormProtection();
     setDateConstraints();
     state.selectedSlot = null;
@@ -970,6 +983,34 @@ function closeMobileNav() {
 
 function findService(serviceId) {
   return state.services.find((service) => service.id === serviceId);
+}
+
+async function handleCertApply() {
+  const input = document.getElementById("certCode");
+  const statusEl = document.getElementById("certStatus");
+  if (!input || !statusEl) return;
+
+  const code = input.value.trim().toUpperCase();
+  if (!code) return;
+
+  try {
+    const data = await fetchJson(`/api/certificates/validate?code=${encodeURIComponent(code)}`);
+    state.appliedCert = data.certificate;
+    const cert = data.certificate;
+    const msg = tr(
+      `✓ Сертификат принят — ${cert.amount} MDL${cert.procedure ? ` (${cert.procedure})` : ""}${cert.recipient ? `, для ${cert.recipient}` : ""}`,
+      `✓ Certificat acceptat — ${cert.amount} MDL`
+    );
+    statusEl.textContent = msg;
+    statusEl.className = "cert-status cert-status--ok";
+    statusEl.hidden = false;
+    refreshBookingSummary();
+  } catch (err) {
+    state.appliedCert = null;
+    statusEl.textContent = err.message || tr("Сертификат не найден или недействителен.", "Certificat invalid.");
+    statusEl.className = "cert-status cert-status--err";
+    statusEl.hidden = false;
+  }
 }
 
 function updateDurationCalc() {

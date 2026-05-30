@@ -275,6 +275,17 @@
             </label>
             <input type="hidden" id="formStartedAt">
 
+            <div class="cert-field" id="certField">
+              <div class="cert-field__row">
+                <label class="field" style="flex:1;">
+                  <span id="certCodeLabel">Подарочный сертификат</span>
+                  <input type="text" id="certCode" placeholder="GC-202605-001" autocomplete="off" style="text-transform:uppercase;">
+                </label>
+                <button type="button" class="button button--ghost" id="certApplyBtn" style="align-self:flex-end;white-space:nowrap;">Применить</button>
+              </div>
+              <div class="cert-status" id="certStatus" hidden></div>
+            </div>
+
             <button type="submit" class="button button--primary button--full" id="submitBookingBtn">
               Подтвердить запись
             </button>
