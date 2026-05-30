@@ -285,6 +285,27 @@
                 </article>
               </div>
             </div>
+
+            <div class="admin-two-column" style="margin-top:18px;">
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Сегодня</p>
+                    <h3 class="admin-widget__title">Таймлайн на текущий день</h3>
+                  </div>
+                </div>
+                <div id="todayTimeline"></div>
+              </article>
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div>
+                    <p class="section-kicker">Ближайшие визиты</p>
+                    <h3 class="admin-widget__title">Следующие подтвержденные и новые записи</h3>
+                  </div>
+                </div>
+                <div id="upcomingQueue"></div>
+              </article>
+            </div>
           </section>
 
           <section class="admin-section-block reveal" id="requests">
@@ -382,28 +403,26 @@
               </div>
               <div id="revenueChart"></div>
             </article>
-          </section>
 
-          <section class="admin-section-block reveal">
-            <div class="admin-two-column">
+            <div class="admin-two-column admin-two-column--balanced" style="margin-top:18px;">
               <article class="admin-widget">
                 <div class="admin-widget__head">
                   <div>
-                    <p class="section-kicker">Сегодня</p>
-                    <h3 class="admin-widget__title">Таймлайн на текущий день</h3>
+                    <p class="section-kicker">Pipeline</p>
+                    <h3 class="admin-widget__title">Воронка статусов</h3>
                   </div>
                 </div>
-                <div id="todayTimeline"></div>
+                <div id="pipelineBoard"></div>
               </article>
 
               <article class="admin-widget">
                 <div class="admin-widget__head">
                   <div>
-                    <p class="section-kicker">Ближайшие визиты</p>
-                    <h3 class="admin-widget__title">Следующие подтвержденные и новые записи</h3>
+                    <p class="section-kicker">Внимание</p>
+                    <h3 class="admin-widget__title">Что требует реакции администратора</h3>
                   </div>
                 </div>
-                <div id="upcomingQueue"></div>
+                <div id="attentionBoard"></div>
               </article>
             </div>
           </section>
@@ -432,29 +451,6 @@
             </div>
           </section>
 
-          <section class="admin-section-block reveal">
-            <div class="admin-two-column admin-two-column--balanced">
-              <article class="admin-widget">
-                <div class="admin-widget__head">
-                  <div>
-                    <p class="section-kicker">Pipeline</p>
-                    <h3 class="admin-widget__title">Воронка статусов</h3>
-                  </div>
-                </div>
-                <div id="pipelineBoard"></div>
-              </article>
-
-              <article class="admin-widget">
-                <div class="admin-widget__head">
-                  <div>
-                    <p class="section-kicker">Внимание</p>
-                    <h3 class="admin-widget__title">Что требует реакции администратора</h3>
-                  </div>
-                </div>
-                <div id="attentionBoard"></div>
-              </article>
-            </div>
-          </section>
 
           <section class="admin-section-block reveal" id="school-enrollments">
             <div class="admin-widget admin-widget--table">
