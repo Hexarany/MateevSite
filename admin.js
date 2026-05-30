@@ -3208,7 +3208,7 @@ async function handleSpecialistScheduleSubmit(event) {
   }
 }
 
-function handleAdminTableClick(event) {
+async function handleAdminTableClick(event) {
   const editButton = event.target.closest("[data-edit-booking-id]");
   if (editButton) {
     const booking = state.adminData?.bookings?.find((item) => item.id === editButton.dataset.editBookingId);
