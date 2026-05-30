@@ -204,6 +204,15 @@
       groupSizeHtml +
       '<div class="school-meta-item"><span>' + L.cert_label + '</span><strong>' + L.certificate + '</strong></div>' +
       "</div>" +
+      (course.startDates && course.startDates.length
+        ? '<div class="school-course-card__starts">' +
+          '<span>' + tr("Ближайший старт:", "Cel mai apropiat start:") + '</span> ' +
+          '<strong>' + esc(course.startDates[0]) + '</strong>' +
+          (course.startDates.length > 1
+            ? ' <span style="color:var(--muted);font-size:0.8rem;">(+' + (course.startDates.length - 1) + ' ' + tr("даты","date") + ')</span>'
+            : '') +
+          '</div>'
+        : '') +
       '<div class="school-course-card__footer">' +
       priceHtml +
       '<button type="button" class="button button--primary" data-enroll-course="' +

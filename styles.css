@@ -2591,6 +2591,16 @@ p {
   color: var(--ink);
 }
 
+.school-course-card__starts {
+  font-size: 0.85rem;
+  color: var(--forest);
+  font-weight: 600;
+  padding: 8px 12px;
+  background: rgba(40,72,56,0.07);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
 .school-course-card__footer {
   display: flex;
   align-items: center;

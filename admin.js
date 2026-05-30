@@ -540,6 +540,7 @@ function renderCoursesEditor() {
         <label class="field"><span>Размер группы</span><input type="text" value="${escapeHtml(c.groupSize||"")}" data-course-index="${i}" data-course-field="groupSize" placeholder="до 6 человек"></label>
         <label class="field field--full"><span>Описание</span><textarea rows="3" data-course-index="${i}" data-course-field="description">${escapeHtml(c.description||"")}</textarea></label>
         <label class="field field--full"><span>Что входит (по одному на строку)</span><textarea rows="4" data-course-index="${i}" data-course-field="benefits">${escapeHtml((c.benefits||[]).join("\n"))}</textarea></label>
+        <label class="field field--full"><span>Даты старта групп (по одной на строку, напр. "15 июня 2026")</span><textarea rows="3" data-course-index="${i}" data-course-field="startDates" placeholder="15 июня 2026&#10;1 сентября 2026">${escapeHtml((c.startDates||[]).join("\n"))}</textarea></label>
       </div>
     </article>`).join("")}</div>`;
 }
@@ -605,7 +606,8 @@ async function handleSaveSchool() {
     const processed = state.courses.map(c => ({
       ...c,
       price: Number(c.price) || 0,
-      benefits: typeof c.benefits === "string" ? c.benefits.split("\n").map(s => s.trim()).filter(Boolean) : (c.benefits || [])
+      benefits: typeof c.benefits === "string" ? c.benefits.split("\n").map(s => s.trim()).filter(Boolean) : (c.benefits || []),
+      startDates: typeof c.startDates === "string" ? c.startDates.split("\n").map(s => s.trim()).filter(Boolean) : (c.startDates || [])
     }));
     await fetchJson("/api/admin/school", {
       method: "PUT",
