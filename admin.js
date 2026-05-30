@@ -179,12 +179,12 @@ async function init() {
 }
 
 function activateSection(sectionId) {
-  const content = document.querySelector(".admin-content");
-  if (!content) return;
+  const panel = document.getElementById("adminPanel");
+  if (!panel) return;
 
-  content.classList.add("has-active-section");
+  panel.classList.add("has-active-section");
 
-  document.querySelectorAll(".admin-content > .admin-section-block").forEach(el => {
+  panel.querySelectorAll(":scope > .admin-section-block").forEach(el => {
     el.classList.toggle("is-active-section", el.id === sectionId);
   });
 
