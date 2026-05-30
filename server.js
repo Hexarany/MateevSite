@@ -3606,6 +3606,18 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // DELETE /api/admin/enrollments/:id - admin
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/enrollments/")) {
+    assertAdminPin(request);
+    const enrollmentId = urlObject.pathname.replace("/api/admin/enrollments/", "");
+    const enrollments = await readJson("enrollments.json");
+    const next = enrollments.filter(e => e.id !== enrollmentId);
+    if (next.length === enrollments.length) { sendJson(response, 404, { message: "Заявка не найдена." }); return; }
+    await writeJson("enrollments.json", next);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // PATCH /api/admin/enrollments/:id - admin
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/enrollments/")) {
     assertAdminPin(request);

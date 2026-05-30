@@ -241,6 +241,19 @@ function bindEvents() {
 
   document.getElementById("enrollmentStatusFilter")?.addEventListener("change", renderEnrollmentsTable);
   document.getElementById("enrollmentSearch")?.addEventListener("input", renderEnrollmentsTable);
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".enrollment-delete-btn");
+    if (!btn) return;
+    if (!confirm("Удалить заявку навсегда?")) return;
+    const id = btn.dataset.enrollmentId;
+    try {
+      await fetchJson(`/api/admin/enrollments/${id}`, { method: "DELETE" });
+      state.enrollments = state.enrollments.filter(en => en.id !== id);
+      renderEnrollmentsTable();
+      showToast("Заявка удалена.", "success");
+    } catch { showToast("Не удалось удалить заявку.", "error"); }
+  });
   elements.clientsList.addEventListener("click", handleClientListClick);
   elements.clientDetail.addEventListener("submit", handleClientProfileSubmit);
   elements.saveSiteContentBtn.addEventListener("click", () => handleContentSave("site"));
@@ -3406,6 +3419,7 @@ function renderEnrollmentsTable() {
             `<option value="${s}"${e.status === s ? " selected" : ""}>${statusLabels[s]}</option>`
           ).join("")}
         </select>
+        <button type="button" class="button button--ghost button--mini enrollment-delete-btn" data-enrollment-id="${escapeHtml(e.id)}" style="margin-top:6px;color:var(--danger);border-color:var(--danger-soft);">Удалить</button>
       </td>
     </tr>
   `).join("");
