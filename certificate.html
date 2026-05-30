@@ -351,9 +351,11 @@
       display: block;
       margin: 0 auto;
       object-fit: contain;
+      mix-blend-mode: multiply; /* removes white background on ivory theme */
     }
 
     .cert-canvas--dark .cert-logo-img {
+      mix-blend-mode: screen; /* works on dark background */
       opacity: 0.9;
     }
 
