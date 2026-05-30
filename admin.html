@@ -33,16 +33,20 @@
       </div>
 
       <nav class="admin-sidebar__nav">
-        <a href="#overview">Обзор</a>
-        <a href="#schedule">Расписание</a>
-        <a href="#requests">Журнал заявок</a>
-        <a href="#clients">Клиенты</a>
-        <a href="#operations">Операции</a>
-        <a href="#team">Команда</a>
-        <a href="#services">Услуги</a>
-        <a href="#school-enrollments">Заявки на курсы</a>
+        <a href="#overview" data-section="overview">Обзор</a>
+        <a href="#schedule" data-section="schedule">Расписание</a>
+        <a href="#requests" data-section="requests">Журнал заявок</a>
+        <a href="#clients" data-section="clients">Клиенты</a>
+        <a href="#operations" data-section="operations">Операции</a>
+        <a href="#team" data-section="team">Команда</a>
+        <a href="#services" data-section="services">Услуги</a>
+        <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <hr class="admin-sidebar__divider">
-        <a href="#content">Контент</a>
+        <a href="#content" data-section="content">Витрина</a>
+        <a href="#content-services" data-section="content-services">Каталог услуг</a>
+        <a href="#content-specialists" data-section="content-specialists">Специалисты</a>
+        <a href="#content-courses" data-section="content-courses">Курсы школы</a>
+        <a href="#content-teachers" data-section="content-teachers">Преподаватели</a>
       </nav>
 
       <div class="admin-sidebar__meta" id="adminStudioMeta"></div>
@@ -496,83 +500,68 @@
           <section class="admin-section-block reveal" id="content">
             <div class="admin-section-block__head">
               <div>
-                <p class="section-kicker">Контент</p>
-                <h2 class="admin-section-block__title">Редактирование витрины, каталога и команды</h2>
+                <p class="section-kicker">Витрина</p>
+                <h2 class="admin-section-block__title">Тексты сайта, блоки, отзывы и FAQ</h2>
+              </div>
+              <button type="button" class="button button--secondary" id="saveSiteContentBtn">Сохранить</button>
+            </div>
+            <div class="admin-list-grid" id="siteContentEditor"></div>
+          </section>
+
+          <section class="admin-section-block reveal" id="content-services">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Каталог</p>
+                <h2 class="admin-section-block__title">Услуги студии</h2>
+              </div>
+              <div class="admin-inline-actions">
+                <button type="button" class="button button--ghost" id="addServiceBtn">Добавить услугу</button>
+                <button type="button" class="button button--secondary" id="saveServicesBtn">Сохранить</button>
               </div>
             </div>
+            <div id="servicesEditor"></div>
+          </section>
 
-            <div class="admin-cms-stack">
-              <article class="admin-widget admin-widget--editor">
-                <div class="admin-widget__head admin-widget__head--toolbar">
-                  <div>
-                    <p class="section-kicker">Витрина</p>
-                    <h3 class="admin-widget__title">Тексты, блоки, отзывы и FAQ</h3>
-                  </div>
-                  <button type="button" class="button button--secondary" id="saveSiteContentBtn">Сохранить витрину</button>
-                </div>
-                <div id="siteContentEditor"></div>
-              </article>
-
-              <div class="admin-two-column admin-two-column--editor">
-                <article class="admin-widget admin-widget--editor">
-                  <div class="admin-widget__head admin-widget__head--toolbar">
-                    <div>
-                      <p class="section-kicker">Каталог</p>
-                      <h3 class="admin-widget__title">Услуги</h3>
-                    </div>
-                    <div class="admin-inline-actions">
-                      <button type="button" class="button button--ghost" id="addServiceBtn">Добавить услугу</button>
-                      <button type="button" class="button button--secondary" id="saveServicesBtn">Сохранить услуги</button>
-                    </div>
-                  </div>
-                  <div id="servicesEditor"></div>
-                </article>
-
-                <article class="admin-widget admin-widget--editor">
-                  <div class="admin-widget__head admin-widget__head--toolbar">
-                    <div>
-                      <p class="section-kicker">Команда</p>
-                      <h3 class="admin-widget__title">Специалисты</h3>
-                    </div>
-                    <div class="admin-inline-actions">
-                      <button type="button" class="button button--ghost" id="addSpecialistBtn">Добавить специалиста</button>
-                      <button type="button" class="button button--secondary" id="saveSpecialistsBtn">Сохранить специалистов</button>
-                    </div>
-                  </div>
-                  <div id="specialistsEditor"></div>
-                </article>
+          <section class="admin-section-block reveal" id="content-specialists">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Команда студии</p>
+                <h2 class="admin-section-block__title">Специалисты</h2>
               </div>
-
-              <div class="admin-two-column admin-two-column--editor">
-                <article class="admin-widget admin-widget--editor">
-                  <div class="admin-widget__head admin-widget__head--toolbar">
-                    <div>
-                      <p class="section-kicker">Школа — каталог</p>
-                      <h3 class="admin-widget__title">Курсы</h3>
-                    </div>
-                    <div class="admin-inline-actions">
-                      <button type="button" class="button button--ghost" id="addCourseBtn">Добавить курс</button>
-                      <button type="button" class="button button--secondary" id="saveCoursesBtn">Сохранить курсы</button>
-                    </div>
-                  </div>
-                  <div id="coursesEditor"></div>
-                </article>
-
-                <article class="admin-widget admin-widget--editor">
-                  <div class="admin-widget__head admin-widget__head--toolbar">
-                    <div>
-                      <p class="section-kicker">Школа — команда</p>
-                      <h3 class="admin-widget__title">Преподаватели</h3>
-                    </div>
-                    <div class="admin-inline-actions">
-                      <button type="button" class="button button--ghost" id="addTeacherBtn">Добавить преподавателя</button>
-                      <button type="button" class="button button--secondary" id="saveTeachersBtn">Сохранить преподавателей</button>
-                    </div>
-                  </div>
-                  <div id="teachersEditor"></div>
-                </article>
+              <div class="admin-inline-actions">
+                <button type="button" class="button button--ghost" id="addSpecialistBtn">Добавить специалиста</button>
+                <button type="button" class="button button--secondary" id="saveSpecialistsBtn">Сохранить</button>
               </div>
             </div>
+            <div id="specialistsEditor"></div>
+          </section>
+
+          <section class="admin-section-block reveal" id="content-courses">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Школа</p>
+                <h2 class="admin-section-block__title">Курсы</h2>
+              </div>
+              <div class="admin-inline-actions">
+                <button type="button" class="button button--ghost" id="addCourseBtn">Добавить курс</button>
+                <button type="button" class="button button--secondary" id="saveCoursesBtn">Сохранить</button>
+              </div>
+            </div>
+            <div id="coursesEditor"></div>
+          </section>
+
+          <section class="admin-section-block reveal" id="content-teachers">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Школа</p>
+                <h2 class="admin-section-block__title">Преподаватели</h2>
+              </div>
+              <div class="admin-inline-actions">
+                <button type="button" class="button button--ghost" id="addTeacherBtn">Добавить преподавателя</button>
+                <button type="button" class="button button--secondary" id="saveTeachersBtn">Сохранить</button>
+              </div>
+            </div>
+            <div id="teachersEditor"></div>
           </section>
         </div>
       </main>

@@ -167,6 +167,7 @@ async function init() {
   bindEvents();
   initRevealObserver();
   initNavHighlight();
+  initSectionNav();
   renderCurrentDate();
 
   try {
@@ -175,6 +176,35 @@ async function init() {
   } catch (error) {
     showToast(error.message || "Не удалось загрузить данные студии.", "error");
   }
+}
+
+function activateSection(sectionId) {
+  const content = document.querySelector(".admin-content");
+  if (!content) return;
+
+  content.classList.add("has-active-section");
+
+  document.querySelectorAll(".admin-content > .admin-section-block").forEach(el => {
+    el.classList.toggle("is-active-section", el.id === sectionId);
+  });
+
+  document.querySelectorAll(".admin-sidebar__nav a[data-section]").forEach(a => {
+    a.classList.toggle("is-active", a.dataset.section === sectionId);
+  });
+
+  localStorage.setItem("adminSection", sectionId);
+}
+
+function initSectionNav() {
+  const saved = localStorage.getItem("adminSection") || "overview";
+  activateSection(saved);
+
+  document.querySelectorAll(".admin-sidebar__nav a[data-section]").forEach(a => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      activateSection(a.dataset.section);
+    });
+  });
 }
 
 function bindEvents() {

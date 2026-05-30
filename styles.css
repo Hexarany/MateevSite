@@ -1425,6 +1425,21 @@ p {
   gap: 18px;
 }
 
+/* Section-based navigation */
+.admin-content.has-active-section > .admin-section-block {
+  display: none;
+}
+
+.admin-content.has-active-section > .admin-section-block.is-active-section {
+  display: grid;
+}
+
+.admin-sidebar__nav a.is-active {
+  background: rgba(179, 109, 44, 0.1);
+  border-color: rgba(179, 109, 44, 0.3);
+  color: var(--brand);
+}
+
 .admin-section-block__head {
   display: flex;
   justify-content: space-between;
