@@ -354,8 +354,7 @@
     }
 
     .cert-canvas--dark .cert-logo-img {
-      filter: brightness(0) saturate(100%) invert(70%) sepia(30%) saturate(400%) hue-rotate(10deg) brightness(100%);
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     /* Gift certificate badge */
@@ -932,10 +931,6 @@
     // ── Update theme ──────────────────────────────────
     function updateTheme() {
       canvas.className = `cert-canvas cert-canvas--${state.theme}`;
-
-      // Update botanical color
-      const color = state.theme === "dark" ? "#c49e5a" : "#587254";
-      botanicalEl.style.color = color;
     }
 
     // ── Update display ────────────────────────────────
