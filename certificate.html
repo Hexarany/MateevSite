@@ -344,20 +344,18 @@
     }
 
     /* Logo */
-    .cert-logo {
-      font-family: 'Italiana', Georgia, serif;
-      font-size: 1.6rem;
-      letter-spacing: 0.04em;
-      text-align: center;
-      line-height: 1.15;
+    /* Logo image */
+    .cert-logo-img {
+      width: 120px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      object-fit: contain;
     }
 
-    .cert-canvas--dark .cert-logo { color: var(--cert-dark-accent); }
-    .cert-canvas--ivory .cert-logo { color: var(--cert-ivory-accent); }
-
-    /* Botanical SVG */
-    .cert-botanical {
-      opacity: 0.55;
+    .cert-canvas--dark .cert-logo-img {
+      filter: brightness(0) saturate(100%) invert(70%) sepia(30%) saturate(400%) hue-rotate(10deg) brightness(100%);
+      opacity: 0.85;
     }
 
     /* Gift certificate badge */
@@ -399,31 +397,20 @@
 
     /* Stamp */
     .cert-stamp {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
     }
 
-    .cert-canvas--dark .cert-stamp {
-      border: 2px solid var(--cert-dark-accent);
-    }
+    .cert-stamp-svg { display: block; }
 
-    .cert-canvas--ivory .cert-stamp {
-      border: 2px solid var(--cert-ivory-accent);
-    }
+    .cert-canvas--dark .stamp-ring  { stroke: var(--cert-dark-accent); }
+    .cert-canvas--dark .stamp-text  { fill: var(--cert-dark-accent); }
+    .cert-canvas--dark .stamp-fill  { fill: var(--cert-dark-accent); }
 
-    .cert-stamp__inner {
-      font-size: 0.5rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-family: 'DM Mono', monospace;
-      text-align: center;
-      line-height: 1.5;
-    }
+    .cert-canvas--ivory .stamp-ring { stroke: var(--cert-ivory-accent); }
+    .cert-canvas--ivory .stamp-text { fill: var(--cert-ivory-accent); }
+    .cert-canvas--ivory .stamp-fill { fill: var(--cert-ivory-accent); }
 
     .cert-canvas--dark .cert-stamp__inner { color: var(--cert-dark-accent); }
     .cert-canvas--ivory .cert-stamp__inner { color: var(--cert-ivory-accent); }
@@ -711,17 +698,8 @@
 
       <!-- Left panel -->
       <div class="cert-left">
-        <div class="cert-logo">Mateev<br>Spa Studio</div>
-
-        <!-- Botanical SVG -->
-        <svg class="cert-botanical" width="56" height="72" viewBox="0 0 56 72" fill="none" xmlns="http://www.w3.org/2000/svg" id="certBotanical">
-          <path d="M28 70 C28 70 28 40 28 10" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-          <path d="M28 50 C18 44 12 34 14 24 C20 28 26 38 28 50Z" fill="currentColor" opacity="0.55"/>
-          <path d="M28 50 C38 44 44 34 42 24 C36 28 30 38 28 50Z" fill="currentColor" opacity="0.55"/>
-          <path d="M28 36 C20 30 16 20 20 12 C24 16 28 26 28 36Z" fill="currentColor" opacity="0.35"/>
-          <path d="M28 36 C36 30 40 20 36 12 C32 16 28 26 28 36Z" fill="currentColor" opacity="0.35"/>
-          <circle cx="28" cy="70" r="2" fill="currentColor" opacity="0.5"/>
-        </svg>
+        <!-- Logo image -->
+        <img src="/mateev_logo.png" alt="Mateev Spa Studio" class="cert-logo-img" id="certLogoImg">
 
         <div class="cert-badge">
           <p class="cert-badge__text">Подарочный сертификат</p>
@@ -729,8 +707,48 @@
 
         <p class="cert-validity" id="certValidityText">Действителен 6 месяцев</p>
 
+        <!-- Enhanced stamp -->
         <div class="cert-stamp" id="certStamp">
-          <div class="cert-stamp__inner">Mateev<br>Spa</div>
+          <svg viewBox="0 0 110 110" width="110" height="110" fill="none" xmlns="http://www.w3.org/2000/svg" class="cert-stamp-svg">
+            <defs>
+              <path id="st-outer" d="M 55,8 A 47,47 0 1,1 54.9,8"/>
+              <path id="st-inner-t" d="M 18,55 A 37,37 0 0,1 92,55"/>
+              <path id="st-inner-b" d="M 92,55 A 37,37 0 0,1 18,55"/>
+            </defs>
+            <!-- Outer ring -->
+            <circle cx="55" cy="55" r="50" stroke-width="1.5" class="stamp-ring"/>
+            <!-- Fine detail ring -->
+            <circle cx="55" cy="55" r="46" stroke-width="0.5" stroke-dasharray="1.5 3" class="stamp-ring"/>
+            <!-- Guilloche inner ring -->
+            <circle cx="55" cy="55" r="38" stroke-width="0.8" class="stamp-ring"/>
+            <circle cx="55" cy="55" r="34" stroke-width="0.4" stroke-dasharray="2 2" class="stamp-ring"/>
+            <!-- Outer text: MATEEV SPA STUDIO -->
+            <text font-family="Instrument Sans, sans-serif" font-size="7" letter-spacing="3" class="stamp-text">
+              <textPath href="#st-outer" startOffset="50%" text-anchor="middle">✦  MATEEV  SPA  STUDIO  ✦  CHISINAU  MD</textPath>
+            </text>
+            <!-- Inner top: WELLNESS & MASSAGE -->
+            <text font-family="Instrument Sans, sans-serif" font-size="6" letter-spacing="2" class="stamp-text" opacity="0.8">
+              <textPath href="#st-inner-t" startOffset="50%" text-anchor="middle">WELLNESS · MASSAGE · RECOVERY</textPath>
+            </text>
+            <!-- Inner bottom: ORIGINAL -->
+            <text font-family="Instrument Sans, sans-serif" font-size="5.5" letter-spacing="2" class="stamp-text" opacity="0.8">
+              <textPath href="#st-inner-b" startOffset="50%" text-anchor="middle">ОРИГИНАЛЬНЫЙ СЕРТИФИКАТ</textPath>
+            </text>
+            <!-- Centre cross -->
+            <line x1="55" y1="44" x2="55" y2="66" stroke-width="0.8" class="stamp-ring"/>
+            <line x1="44" y1="55" x2="66" y2="55" stroke-width="0.8" class="stamp-ring"/>
+            <line x1="47" y1="47" x2="63" y2="63" stroke-width="0.4" class="stamp-ring"/>
+            <line x1="63" y1="47" x2="47" y2="63" stroke-width="0.4" class="stamp-ring"/>
+            <!-- Centre circle -->
+            <circle cx="55" cy="55" r="8" stroke-width="0.8" class="stamp-ring"/>
+            <!-- Cardinal diamonds -->
+            <polygon class="stamp-fill" points="55,3 57,6 55,9 53,6"/>
+            <polygon class="stamp-fill" points="55,101 57,104 55,107 53,104"/>
+            <polygon class="stamp-fill" points="3,55 6,57 9,55 6,53"/>
+            <polygon class="stamp-fill" points="101,55 104,57 107,55 104,53"/>
+            <!-- Year -->
+            <text x="55" y="59" text-anchor="middle" font-family="DM Mono, monospace" font-size="7" letter-spacing="1" class="stamp-text" id="certStampYear">2026</text>
+          </svg>
         </div>
       </div>
 
@@ -802,7 +820,6 @@
     const codeDisp       = document.getElementById("certCodeDisplay");
     const validityText   = document.getElementById("certValidityText");
     const stampEl        = document.getElementById("certStamp");
-    const botanicalEl    = document.getElementById("certBotanical");
     const certCodeInput  = document.getElementById("certCode");
     const toastStack     = document.getElementById("toastStack");
 
@@ -819,6 +836,10 @@
       const rand = Math.floor(100 + Math.random() * 900);
       state.code = `GC-${ym}-${rand}`;
       certCodeInput.value = state.code;
+
+      // Sync stamp year
+      const stampYear = document.getElementById("certStampYear");
+      if (stampYear) stampYear.textContent = today.getFullYear();
 
       updateDisplay();
       bindEvents();

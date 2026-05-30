@@ -58,6 +58,7 @@ const STATIC_FILES = {
   "/school-success.html": "school-success.html",
   "/og-image.svg": "og-image.svg",
   "/founder.png": "founder.png",
+  "/mateev_logo.png": "mateev_logo.png",
   "/school": "school.html",
   "/school.html": "school.html",
   "/school.js": "school.js",
