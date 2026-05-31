@@ -12,7 +12,8 @@ const state = {
   lang: localStorage.getItem('lang') || 'ru',
   bookingDuration: 0,
   appliedCert: null,
-  serviceFilter: "all"
+  serviceFilter: "all",
+  servicesExpanded: false
 };
 
 function tr(ruValue, roValue) {
@@ -532,15 +533,21 @@ function renderStaticContent() {
     filtersEl.querySelectorAll(".school-filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         state.serviceFilter = btn.dataset.cat;
+        state.servicesExpanded = false;
         renderStaticContent();
         document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
       });
     });
   }
 
-  const visibleServices = state.serviceFilter === "all"
+  const filteredServices = state.serviceFilter === "all"
     ? state.services
     : state.services.filter(s => s.category === state.serviceFilter);
+
+  const PREVIEW_COUNT = 3;
+  const visibleServices = state.servicesExpanded
+    ? filteredServices
+    : filteredServices.slice(0, PREVIEW_COUNT);
 
   elements.servicesGrid.innerHTML = visibleServices
     .map(
@@ -568,6 +575,34 @@ function renderStaticContent() {
       `
     )
     .join("");
+
+  // Show more / show less button
+  const existingBtn = document.getElementById("servicesShowMoreBtn");
+  if (existingBtn) existingBtn.remove();
+
+  if (filteredServices.length > PREVIEW_COUNT) {
+    const btn = document.createElement("div");
+    btn.id = "servicesShowMoreBtn";
+    btn.style.cssText = "text-align:center; margin-top:28px;";
+    if (!state.servicesExpanded) {
+      btn.innerHTML = `<button class="button button--ghost" id="_servicesExpandBtn">
+        ${tr(`Показать все (${filteredServices.length})`, `Arată toate (${filteredServices.length})`)}
+      </button>`;
+    } else {
+      btn.innerHTML = `<button class="button button--ghost" id="_servicesExpandBtn">
+        ${tr("Скрыть", "Ascunde")}
+      </button>`;
+    }
+    elements.servicesGrid.insertAdjacentElement("afterend", btn);
+    document.getElementById("_servicesExpandBtn")?.addEventListener("click", () => {
+      state.servicesExpanded = !state.servicesExpanded;
+      renderStaticContent();
+      document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
+      if (!state.servicesExpanded) {
+        document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
 
   elements.specialistsGrid.innerHTML = state.specialists
     .map((specialist) => {
