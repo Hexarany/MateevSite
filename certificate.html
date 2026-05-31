@@ -561,15 +561,45 @@
 
     /* ── Print styles ────────────────────────────── */
     @media print {
-      body { background: white; }
-      .cert-sidebar, .cert-main__eyebrow { display: none !important; }
-      .cert-main { padding: 0; }
-      .cert-canvas {
-        box-shadow: none;
-        page-break-inside: avoid;
-        width: 900px !important;
-        height: 450px !important;
+      @page {
+        size: A5 landscape;
+        margin: 0;
       }
+
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      html, body {
+        width: 210mm;
+        height: 148mm;
+        margin: 0;
+        padding: 0;
+        background: white !important;
+      }
+
+      .cert-sidebar,
+      .cert-main__eyebrow { display: none !important; }
+
+      .cert-main {
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 210mm !important;
+        height: 148mm !important;
+      }
+
+      .cert-canvas {
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        width: 210mm !important;
+        height: 148mm !important;
+        position: relative !important;
+      }
+
+      /* Force backgrounds to print */
+      .cert-canvas--dark { background: #121c18 !important; }
+      .cert-canvas--ivory { background: #faf6ee !important; }
     }
   </style>
 </head>
