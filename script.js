@@ -11,7 +11,8 @@ const state = {
   superUserTapTimer: null,
   lang: localStorage.getItem('lang') || 'ru',
   bookingDuration: 0,
-  appliedCert: null
+  appliedCert: null,
+  serviceFilter: "all"
 };
 
 function tr(ruValue, roValue) {
@@ -520,7 +521,28 @@ function renderStaticContent() {
     )
     .join("");
 
-  elements.servicesGrid.innerHTML = state.services
+  // Build category filter buttons
+  const filtersEl = document.getElementById("serviceFilters");
+  if (filtersEl && state.services.length) {
+    const cats = [...new Set(state.services.map(s => s.category).filter(Boolean))];
+    filtersEl.innerHTML = [
+      `<button class="school-filter-btn${state.serviceFilter === "all" ? " is-active" : ""}" data-cat="all">${tr("Все процедуры","Toate procedurile")}</button>`,
+      ...cats.map(c => `<button class="school-filter-btn${state.serviceFilter === c ? " is-active" : ""}" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`)
+    ].join("");
+    filtersEl.querySelectorAll(".school-filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.serviceFilter = btn.dataset.cat;
+        renderStaticContent();
+        document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
+      });
+    });
+  }
+
+  const visibleServices = state.serviceFilter === "all"
+    ? state.services
+    : state.services.filter(s => s.category === state.serviceFilter);
+
+  elements.servicesGrid.innerHTML = visibleServices
     .map(
       (service) => `
         <article class="service-card reveal">
