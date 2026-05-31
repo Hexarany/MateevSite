@@ -45,9 +45,7 @@ const state = {
     },
     scheduleForm: {
       specialistId: "",
-      workDays: [1, 2, 3, 4, 5],
-      workStart: "09:00",
-      workEnd: "20:00",
+      daySchedules: buildDefaultDaySchedules(),
       breaks: [
         { start: "13:00", end: "14:00", label: "Перерыв" }
       ]
@@ -142,9 +140,7 @@ const elements = {
   adminBlockReason: document.getElementById("adminBlockReason"),
   specialistScheduleForm: document.getElementById("specialistScheduleForm"),
   scheduleSpecialistSelect: document.getElementById("scheduleSpecialistSelect"),
-  scheduleWorkStart: document.getElementById("scheduleWorkStart"),
-  scheduleWorkEnd: document.getElementById("scheduleWorkEnd"),
-  scheduleWorkDays: document.getElementById("scheduleWorkDays"),
+  scheduleDayRows: document.getElementById("scheduleDayRows"),
   scheduleBreaks: document.getElementById("scheduleBreaks"),
   addBreakBtn: document.getElementById("addBreakBtn"),
   adminTableBody: document.getElementById("adminTableBody"),
@@ -339,6 +335,8 @@ function bindEvents() {
   elements.addBreakBtn.addEventListener("click", handleAddScheduleBreak);
   elements.scheduleBreaks.addEventListener("click", handleScheduleBreakClick);
   elements.scheduleBreaks.addEventListener("input", handleScheduleBreakInput);
+  elements.scheduleDayRows.addEventListener("change", handleDayRowChange);
+  elements.scheduleDayRows.addEventListener("input", handleDayRowInput);
 
   elements.adminPin.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -2198,6 +2196,12 @@ function formatDateTime(isoString) {
   }).format(new Date(isoString));
 }
 
+function buildDefaultDaySchedules() {
+  return Object.fromEntries(
+    [0, 1, 2, 3, 4, 5, 6].map((d) => [d, { enabled: d >= 1 && d <= 5, start: "09:00", end: "20:00" }])
+  );
+}
+
 function getLocalDateString() {
   const date = new Date();
   const year = date.getFullYear();
@@ -2379,11 +2383,30 @@ function syncScheduleFormFromSpecialist(shouldRender = true) {
     return;
   }
 
+  let daySchedules;
+  if (specialist.daySchedules && typeof specialist.daySchedules === "object") {
+    daySchedules = Object.fromEntries(
+      [0, 1, 2, 3, 4, 5, 6].map((d) => {
+        const raw = specialist.daySchedules[d] ?? specialist.daySchedules[String(d)];
+        return [d, {
+          enabled: !!(raw?.enabled),
+          start: raw?.start || "09:00",
+          end: raw?.end || "20:00"
+        }];
+      })
+    );
+  } else {
+    const workDays = specialist.workDays || [1, 2, 3, 4, 5];
+    const start = specialist.workHours?.start || "09:00";
+    const end = specialist.workHours?.end || "20:00";
+    daySchedules = Object.fromEntries(
+      [0, 1, 2, 3, 4, 5, 6].map((d) => [d, { enabled: workDays.includes(d), start, end }])
+    );
+  }
+
   state.operations.scheduleForm = {
     specialistId: specialist.id,
-    workDays: [...(specialist.workDays || [])],
-    workStart: specialist.workHours?.start || "09:00",
-    workEnd: specialist.workHours?.end || "20:00",
+    daySchedules,
     breaks: (specialist.breaks || []).map((entry) => ({
       start: entry.start || "13:00",
       end: entry.end || "14:00",
@@ -3165,17 +3188,21 @@ async function handleAdminBlockSubmit(event) {
 function renderScheduleSettingsForm() {
   const scheduleForm = state.operations.scheduleForm;
   elements.scheduleSpecialistSelect.value = scheduleForm.specialistId;
-  elements.scheduleWorkStart.value = scheduleForm.workStart;
-  elements.scheduleWorkEnd.value = scheduleForm.workEnd;
-  elements.scheduleWorkDays.innerHTML = weekdayLabels
-    .map(
-      (day) => `
-        <label class="admin-check-option ${scheduleForm.workDays.includes(day.value) ? "is-checked" : ""}">
-          <input type="checkbox" value="${day.value}" ${scheduleForm.workDays.includes(day.value) ? "checked" : ""}>
-          <span>${escapeHtml(day.label)}</span>
-        </label>
-      `
-    )
+  const dayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+  elements.scheduleDayRows.innerHTML = [0, 1, 2, 3, 4, 5, 6]
+    .map((d) => {
+      const ds = scheduleForm.daySchedules[d] || { enabled: false, start: "09:00", end: "20:00" };
+      return `
+        <div class="schedule-day-row ${ds.enabled ? "is-on" : "is-off"}">
+          <label class="schedule-day-row__toggle">
+            <input type="checkbox" data-day="${d}" ${ds.enabled ? "checked" : ""}>
+            <span>${dayNames[d]}</span>
+          </label>
+          <input type="time" class="schedule-day-row__time" data-day-start="${d}" value="${escapeHtml(ds.start)}" ${!ds.enabled ? "disabled" : ""}>
+          <input type="time" class="schedule-day-row__time" data-day-end="${d}" value="${escapeHtml(ds.end)}" ${!ds.enabled ? "disabled" : ""}>
+        </div>
+      `;
+    })
     .join("");
   elements.scheduleBreaks.innerHTML = scheduleForm.breaks
     .map(
@@ -3246,6 +3273,35 @@ function handleScheduleBreakInput(event) {
   state.operations.scheduleForm.breaks[index][field] = target.value;
 }
 
+function handleDayRowChange(event) {
+  const input = event.target.closest("input[data-day]");
+  if (!input) return;
+  const d = Number(input.dataset.day);
+  const ds = state.operations.scheduleForm.daySchedules;
+  if (!ds[d]) return;
+  ds[d].enabled = input.checked;
+  const row = input.closest(".schedule-day-row");
+  if (row) {
+    row.classList.toggle("is-on", input.checked);
+    row.classList.toggle("is-off", !input.checked);
+    row.querySelectorAll("input[type='time']").forEach((el) => {
+      el.disabled = !input.checked;
+    });
+  }
+}
+
+function handleDayRowInput(event) {
+  const target = event.target;
+  const ds = state.operations.scheduleForm.daySchedules;
+  if (target.dataset.dayStart !== undefined) {
+    const d = Number(target.dataset.dayStart);
+    if (ds[d]) ds[d].start = target.value;
+  } else if (target.dataset.dayEnd !== undefined) {
+    const d = Number(target.dataset.dayEnd);
+    if (ds[d]) ds[d].end = target.value;
+  }
+}
+
 async function handleSpecialistScheduleSubmit(event) {
   event.preventDefault();
 
@@ -3255,20 +3311,12 @@ async function handleSpecialistScheduleSubmit(event) {
   }
 
   const specialistId = elements.scheduleSpecialistSelect.value;
-  const workDays = Array.from(
-    elements.scheduleWorkDays.querySelectorAll("input:checked"),
-    (input) => Number(input.value)
-  ).sort((left, right) => left - right);
 
   try {
     await fetchJson(`/api/admin/specialists/${specialistId}/schedule`, {
       method: "PATCH",
       body: JSON.stringify({
-        workDays,
-        workHours: {
-          start: elements.scheduleWorkStart.value,
-          end: elements.scheduleWorkEnd.value
-        },
+        daySchedules: state.operations.scheduleForm.daySchedules,
         breaks: state.operations.scheduleForm.breaks
       })
     });

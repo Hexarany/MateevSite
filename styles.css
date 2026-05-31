@@ -1957,6 +1957,64 @@ p {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
+.schedule-day-rows {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.schedule-day-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.schedule-day-row__toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  user-select: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  color: var(--muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.schedule-day-row.is-on .schedule-day-row__toggle {
+  background: rgba(107, 141, 107, 0.15);
+  border-color: var(--sage);
+  color: var(--forest);
+}
+
+.schedule-day-row__toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: var(--sage);
+}
+
+.schedule-day-row__time {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--ink);
+  transition: opacity 0.15s;
+}
+
+.schedule-day-row.is-off .schedule-day-row__time {
+  opacity: 0.3;
+}
+
 .admin-check-option {
   display: flex;
   align-items: center;

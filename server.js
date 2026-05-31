@@ -1618,14 +1618,18 @@ function assertAdminPin(request) {
 }
 
 function calculateAvailability({ date, service, specialist, bookings }) {
-  if (!specialist.workDays.includes(getDayIndex(date))) {
+  const dayIndex = getDayIndex(date);
+  if (!specialist.workDays.includes(dayIndex)) {
     return {
       slots: [],
       message: "У выбранного специалиста нет приема в этот день."
     };
   }
 
-  const { open, close } = getWorkingWindow(date);
+  const dayConfig = specialist.daySchedules?.[dayIndex];
+  const workHours = dayConfig ? { start: dayConfig.start, end: dayConfig.end } : (specialist.workHours || clone(DEFAULT_WORK_HOURS));
+  const open = toMinutes(workHours.start);
+  const close = toMinutes(workHours.end);
   const specialistBookings = bookings.filter(
     (booking) =>
       booking.date === date &&
@@ -1853,22 +1857,38 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         .filter((item, itemIndex, array) => item && array.indexOf(item) === itemIndex)
         .filter((item) => validServiceIds.has(item));
 
-      const workDays = (Array.isArray(specialist?.workDays) ? specialist.workDays : [])
+      const legacyWorkDays = (Array.isArray(specialist?.workDays) ? specialist.workDays : [])
         .map((day) => Number(day))
         .filter((day, itemIndex, array) => Number.isInteger(day) && day >= 0 && day <= 6 && array.indexOf(day) === itemIndex)
         .sort((left, right) => left - right);
 
-      const start = sanitizeTimeString(
+      const legacyStart = sanitizeTimeString(
         specialist?.workHours?.start || specialist?.workStart,
         DEFAULT_WORK_HOURS.start
       );
-      const end = sanitizeTimeString(
+      const legacyEnd = sanitizeTimeString(
         specialist?.workHours?.end || specialist?.workEnd,
         DEFAULT_WORK_HOURS.end
       );
-      const workHours = toMinutes(end) > toMinutes(start)
-        ? { start, end }
+      const legacyWorkHours = toMinutes(legacyEnd) > toMinutes(legacyStart)
+        ? { start: legacyStart, end: legacyEnd }
         : clone(DEFAULT_WORK_HOURS);
+      const legacyDays = legacyWorkDays.length ? legacyWorkDays : [1, 2, 3, 4, 5];
+
+      const rawDaySchedules = specialist?.daySchedules;
+      const daySchedules = Object.fromEntries(
+        [0, 1, 2, 3, 4, 5, 6].map((d) => {
+          const raw = rawDaySchedules && (rawDaySchedules[d] ?? rawDaySchedules[String(d)]);
+          if (raw && typeof raw === "object") {
+            const s = sanitizeTimeString(raw.start, legacyWorkHours.start);
+            const e = sanitizeTimeString(raw.end, legacyWorkHours.end);
+            return [d, { enabled: !!raw.enabled, start: s, end: toMinutes(e) > toMinutes(s) ? e : legacyWorkHours.end }];
+          }
+          return [d, { enabled: legacyDays.includes(d), start: legacyWorkHours.start, end: legacyWorkHours.end }];
+        })
+      );
+
+      const workDays = [0, 1, 2, 3, 4, 5, 6].filter((d) => daySchedules[d].enabled);
 
       return {
         id,
@@ -1877,8 +1897,9 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         experience,
         bio,
         specialties,
-        workDays: workDays.length ? workDays : [1, 2, 3, 4, 5],
-        workHours,
+        workDays: workDays.length ? workDays : legacyDays,
+        workHours: legacyWorkHours,
+        daySchedules,
         breaks: normalizeBreaks(specialist?.breaks),
         initials: sanitizeText(specialist?.initials) || buildInitials(name),
         photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null
@@ -1941,9 +1962,11 @@ function timeRangesOverlap(leftStart, leftEnd, rightStart, rightEnd) {
 }
 
 function getSpecialistDaySchedule(specialist, dateString) {
+  const dayIndex = getDayIndex(dateString);
+  const dayConfig = specialist.daySchedules?.[dayIndex];
   return {
-    isWorkingDay: specialist.workDays.includes(getDayIndex(dateString)),
-    workHours: specialist.workHours || clone(DEFAULT_WORK_HOURS),
+    isWorkingDay: specialist.workDays.includes(dayIndex),
+    workHours: dayConfig ? { start: dayConfig.start, end: dayConfig.end } : (specialist.workHours || clone(DEFAULT_WORK_HOURS)),
     breaks: normalizeBreaks(specialist.breaks, [])
   };
 }
@@ -3264,11 +3287,11 @@ async function handleSpecialistScheduleUpdate(request, response, specialistId) {
     index === specialistIndex
       ? {
           ...item,
-          workDays: Array.isArray(payload.workDays) ? payload.workDays : item.workDays,
-          workHours:
-            payload.workHours && typeof payload.workHours === "object"
-              ? payload.workHours
-              : item.workHours,
+          ...(payload.daySchedules && typeof payload.daySchedules === "object"
+            ? { daySchedules: payload.daySchedules }
+            : {}),
+          ...(Array.isArray(payload.workDays) ? { workDays: payload.workDays } : {}),
+          ...(payload.workHours && typeof payload.workHours === "object" ? { workHours: payload.workHours } : {}),
           breaks: Array.isArray(payload.breaks) ? payload.breaks : item.breaks
         }
       : item
