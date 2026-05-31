@@ -395,6 +395,7 @@ async function loadBootstrap() {
   renderStaticContent();
   populateServiceOptions();
   updateSpecialistOptions();
+  updateDurationCalc();
   resetBookingFormProtection();
   refreshBookingSummary();
   syncRevealTargets();
