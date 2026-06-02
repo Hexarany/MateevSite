@@ -38,7 +38,6 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  overflow-x: hidden;
   font-family: "Manrope", sans-serif;
   color: var(--ink);
   background:
