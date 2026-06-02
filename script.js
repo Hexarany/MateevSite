@@ -415,6 +415,7 @@ async function loadBootstrap() {
   resetBookingFormProtection();
   refreshBookingSummary();
   syncRevealTargets();
+  scrollToHashAfterLoad();
 }
 
 function renderMethodBlock() {
@@ -440,10 +441,10 @@ function renderDiarySection() {
   const entries = state.diary || [];
   const section = document.getElementById("diary");
   if (!entries.length) {
-    section.hidden = true;
+    section.style.display = "none";
     return;
   }
-  section.hidden = false;
+  section.style.display = "";
   const listExpanded = state.diaryExpanded;
   const visible = listExpanded ? entries : entries.slice(0, DIARY_PREVIEW_COUNT);
   const hasMore = entries.length > DIARY_PREVIEW_COUNT;
@@ -1156,6 +1157,15 @@ function initFabObserver() {
 
   observer.observe(bookingSection);
   if (heroSection) observer.observe(heroSection);
+}
+
+function scrollToHashAfterLoad() {
+  const hash = window.location.hash;
+  if (!hash) return;
+  const target = document.querySelector(hash);
+  if (target) {
+    setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  }
 }
 
 function syncRevealTargets() {
