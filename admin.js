@@ -1788,14 +1788,15 @@ function renderRevenueChart(bookings) {
 }
 
 function renderTodayTimeline(bookings) {
+  const widget = elements.todayTimeline.closest(".admin-widget");
   if (!bookings.length) {
     elements.todayTimeline.innerHTML = `
-      <div class="empty-state">
-        На сегодня активных записей пока нет. Панель останется полной, даже если журнал еще пустой.
-      </div>
+      <div class="empty-state">На сегодня записей нет.</div>
     `;
+    if (widget) widget.dataset.empty = "true";
     return;
   }
+  if (widget) delete widget.dataset.empty;
 
   elements.todayTimeline.innerHTML = `
     <div class="admin-list">

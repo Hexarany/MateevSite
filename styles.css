@@ -2739,6 +2739,15 @@ p {
   }
 }
 
+/* Prevent long text from overflowing flex/grid containers in admin cards */
+.admin-editor-item,
+.admin-editor-item > div,
+.admin-editor-item > div > div:first-child {
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 /* ─── Admin small mobile (≤ 600px / iPhone 13) ───────────────────────────── */
 
 @media (max-width: 600px) {
@@ -2874,6 +2883,27 @@ p {
   /* KPI grid 2 cols on small mobile */
   .admin-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Hide today timeline widget when empty on mobile */
+  .admin-widget[data-empty="true"] {
+    display: none;
+  }
+
+  /* Two-column admin widgets → stack */
+  .admin-two-column {
+    grid-template-columns: 1fr;
+  }
+
+  /* Reviews editor cards: text wraps */
+  #reviewsEditor .admin-editor-item {
+    min-width: 0;
+  }
+
+  /* Diary entries: prevent overflow of long titles */
+  #diaryEntriesList p {
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   /* Enrollments table same card treatment */
