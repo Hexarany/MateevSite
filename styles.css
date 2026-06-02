@@ -382,7 +382,7 @@ p {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 41;
   border-bottom: 1px solid rgba(71, 49, 28, 0.08);
   background: rgba(250, 242, 233, 0.82);
   backdrop-filter: blur(16px);
