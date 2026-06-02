@@ -2711,9 +2711,20 @@ p {
 .admin-layout,
 .admin-workspace,
 .admin-section-block,
-.admin-widget {
+.admin-widget,
+.admin-list-grid,
+#diaryEntriesList,
+#reviewsEditor {
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
+}
+
+#diaryEntriesList > div,
+#reviewsEditor > div {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 980px) {
