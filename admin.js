@@ -156,6 +156,9 @@ const elements = {
   diaryEntriesList: document.getElementById("diaryEntriesList"),
   addDiaryEntryBtn: document.getElementById("addDiaryEntryBtn"),
   diaryEntryCancelBtn: document.getElementById("diaryEntryCancelBtn"),
+  reviewsEditor: document.getElementById("reviewsEditor"),
+  addReviewBtn: document.getElementById("addReviewBtn"),
+  saveReviewsBtn: document.getElementById("saveReviewsBtn"),
   siteContentEditor: document.getElementById("siteContentEditor"),
   servicesEditor: document.getElementById("servicesEditor"),
   specialistsEditor: document.getElementById("specialistsEditor"),
@@ -280,6 +283,10 @@ function bindEvents() {
   elements.diaryEntryCancelBtn.addEventListener("click", handleDiaryEntryCancel);
   elements.diaryEntryForm.addEventListener("submit", handleDiaryEntrySubmit);
   elements.diaryEntriesList.addEventListener("click", handleDiaryListClick);
+  elements.addReviewBtn.addEventListener("click", handleAddReview);
+  elements.saveReviewsBtn.addEventListener("click", handleSaveReviews);
+  elements.reviewsEditor.addEventListener("input", handleReviewEditorInput);
+  elements.reviewsEditor.addEventListener("click", handleReviewEditorClick);
   elements.saveSiteContentBtn.addEventListener("click", () => handleContentSave("site"));
   elements.saveServicesBtn.addEventListener("click", () => handleContentSave("services"));
   elements.saveSpecialistsBtn.addEventListener("click", () => handleContentSave("specialists"));
@@ -521,6 +528,7 @@ function renderContentManagement() {
   elements.siteContentEditor.innerHTML = renderSiteContentEditor();
   elements.servicesEditor.innerHTML = renderServicesEditor();
   elements.specialistsEditor.innerHTML = renderSpecialistsEditor();
+  renderReviewsEditor();
   renderSchoolEditors();
 }
 
@@ -1313,6 +1321,66 @@ function renderCertificatesTable() {
         </td>
       </tr>`;
     }).join("");
+}
+
+function renderReviewsEditor() {
+  const el = elements.reviewsEditor;
+  if (!el) return;
+  const reviews = state.site?.reviews || [];
+  if (!reviews.length) {
+    el.innerHTML = '<p class="empty-state">Отзывов пока нет. Нажмите «Добавить отзыв».</p>';
+    return;
+  }
+  el.innerHTML = reviews
+    .map((r, i) => `
+      <div class="admin-editor-item" style="padding:16px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,0.56);display:grid;gap:10px;">
+        <div class="field-grid">
+          <label class="field">
+            <span>Имя автора</span>
+            <input type="text" data-review-index="${i}" data-review-field="author" value="${escapeHtml(r.author || "")}" placeholder="Имя Фамилия">
+          </label>
+          <label class="field">
+            <span>Подпись</span>
+            <input type="text" data-review-index="${i}" data-review-field="meta" value="${escapeHtml(r.meta || "")}" placeholder="Клиент студии · 2025">
+          </label>
+        </div>
+        <label class="field field--full">
+          <span>Текст отзыва</span>
+          <textarea data-review-index="${i}" data-review-field="text" rows="3" style="resize:vertical;">${escapeHtml(r.text || "")}</textarea>
+        </label>
+        <button type="button" class="button button--ghost button--mini" style="color:var(--danger);justify-self:start;" data-delete-review="${i}">Удалить</button>
+      </div>
+    `)
+    .join("");
+}
+
+function handleAddReview() {
+  if (!state.site) return;
+  if (!Array.isArray(state.site.reviews)) state.site.reviews = [];
+  state.site.reviews.push({ author: "", meta: "Клиент студии", text: "" });
+  renderReviewsEditor();
+  elements.reviewsEditor.lastElementChild?.scrollIntoView({ behavior: "smooth" });
+}
+
+function handleReviewEditorInput(event) {
+  const target = event.target;
+  const index = Number(target.dataset.reviewIndex);
+  const field = target.dataset.reviewField;
+  if (!field || !Number.isInteger(index) || !state.site?.reviews?.[index]) return;
+  state.site.reviews[index][field] = target.value;
+}
+
+function handleReviewEditorClick(event) {
+  const btn = event.target.closest("[data-delete-review]");
+  if (!btn) return;
+  const index = Number(btn.dataset.deleteReview);
+  if (!confirm("Удалить этот отзыв?")) return;
+  state.site.reviews.splice(index, 1);
+  renderReviewsEditor();
+}
+
+async function handleSaveReviews() {
+  await handleContentSave("site");
 }
 
 function renderDiaryEntriesList() {

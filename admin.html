@@ -42,6 +42,7 @@
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
         <a href="#diary" data-section="diary">Дневник практики</a>
+        <a href="#reviews-editor" data-section="reviews-editor">Отзывы на сайте</a>
         <hr class="admin-sidebar__divider">
         <a href="#content" data-section="content">Витрина</a>
         <a href="#content-services" data-section="content-services">Каталог услуг</a>
@@ -568,6 +569,20 @@
               </div>
               <div id="diaryEntriesList" class="admin-list-grid" style="padding:20px;"></div>
             </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="reviews-editor">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Контент</p>
+                <h2 class="admin-section-block__title">Отзывы на сайте</h2>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button type="button" class="button button--ghost" id="addReviewBtn">Добавить отзыв</button>
+                <button type="button" class="button button--secondary" id="saveReviewsBtn">Сохранить</button>
+              </div>
+            </div>
+            <div class="admin-list-grid" id="reviewsEditor" style="padding:20px;"></div>
           </section>
 
           <section class="admin-section-block reveal" id="content">
