@@ -178,6 +178,10 @@ function applyUrlPrefill() {
 
 function bindEvents() {
   elements.navToggle.addEventListener("click", toggleMobileNav);
+  elements.siteNav.addEventListener("click", (e) => {
+    if (e.target.closest("a")) closeMobileNav();
+  });
+  document.getElementById("navBackdrop")?.addEventListener("click", closeMobileNav);
   elements.superUserTrigger.addEventListener("click", handleSuperUserTrigger);
   elements.superUserForm.addEventListener("submit", handleSuperUserSubmit);
   elements.superUserCancelBtn.addEventListener("click", closeAdminAccessModal);
@@ -1169,13 +1173,20 @@ function syncRevealTargets() {
 
 function toggleMobileNav() {
   const expanded = elements.navToggle.getAttribute("aria-expanded") === "true";
-  elements.navToggle.setAttribute("aria-expanded", String(!expanded));
-  elements.siteNav.classList.toggle("is-open", !expanded);
+  const open = !expanded;
+  elements.navToggle.setAttribute("aria-expanded", String(open));
+  elements.siteNav.classList.toggle("is-open", open);
+  const backdrop = document.getElementById("navBackdrop");
+  if (backdrop) backdrop.classList.toggle("is-visible", open);
+  document.body.style.overflow = open ? "hidden" : "";
 }
 
 function closeMobileNav() {
   elements.navToggle.setAttribute("aria-expanded", "false");
   elements.siteNav.classList.remove("is-open");
+  const backdrop = document.getElementById("navBackdrop");
+  if (backdrop) backdrop.classList.remove("is-visible");
+  document.body.style.overflow = "";
 }
 
 function findService(serviceId) {
