@@ -2759,8 +2759,14 @@ p {
 }
 
 .admin-list-grid--padded {
-  padding: 20px;
+  padding: 0 20px 20px;
   box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .admin-list-grid--padded {
+    padding: 0 12px 12px;
+  }
 }
 
 #diaryEntriesList > div,
