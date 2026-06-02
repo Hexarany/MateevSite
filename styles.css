@@ -2729,6 +2729,11 @@ p {
   box-sizing: border-box;
 }
 
+.admin-list-grid--padded {
+  padding: 20px;
+  box-sizing: border-box;
+}
+
 #diaryEntriesList > div,
 #reviewsEditor > div {
   min-width: 0;
@@ -2837,6 +2842,15 @@ p {
   background: rgba(255, 255, 255, 0.56);
   display: grid;
   gap: 6px;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.diary-admin-card > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .diary-admin-card__meta {
@@ -2847,7 +2861,8 @@ p {
 .diary-admin-card__title {
   font-weight: 600;
   word-break: break-word;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .diary-admin-card__excerpt {
@@ -2857,6 +2872,7 @@ p {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
 }
 
 .diary-admin-card__actions {
