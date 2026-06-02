@@ -3830,11 +3830,12 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
-  // GET /api/diary — public published entries
+  // GET /api/diary — public published entries (not future-dated)
   if (request.method === "GET" && urlObject.pathname === "/api/diary") {
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
     const raw = await readJson("diary.json").catch(() => []);
     const entries = normalizeDiary(raw)
-      .filter((e) => e.published)
+      .filter((e) => e.published && e.publishedAt <= today)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     sendJson(response, 200, { entries });
     return;
