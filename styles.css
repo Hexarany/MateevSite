@@ -888,6 +888,11 @@ p {
   align-items: flex-end;
 }
 
+.cert-field__row .button {
+  width: auto;
+  flex-shrink: 0;
+}
+
 .cert-status {
   font-size: 0.875rem;
   font-weight: 600;
