@@ -38,6 +38,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: hidden;
   font-family: "Manrope", sans-serif;
   color: var(--ink);
   background:
@@ -2644,6 +2645,15 @@ p {
 }
 
 /* ─── Admin mobile ───────────────────────────────────────────────────────── */
+
+/* Prevent any child from causing horizontal page overflow */
+.admin-layout,
+.admin-workspace,
+.admin-section-block,
+.admin-widget {
+  min-width: 0;
+  max-width: 100%;
+}
 
 @media (max-width: 980px) {
   /* Sidebar → compact horizontal nav on mobile */
