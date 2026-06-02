@@ -466,12 +466,16 @@ function renderDiarySection() {
   elements.diaryGrid.querySelectorAll(".diary-read-more").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.diaryId;
-      if (state.diaryOpenIds.has(id)) {
-        state.diaryOpenIds.delete(id);
-      } else {
+      const card = btn.closest(".diary-card");
+      const body = card?.querySelector(".diary-card__body");
+      if (!body) return;
+      const isOpen = body.classList.toggle("diary-card__body--open");
+      btn.textContent = isOpen ? "Свернуть" : "Читать полностью →";
+      if (isOpen) {
         state.diaryOpenIds.add(id);
+      } else {
+        state.diaryOpenIds.delete(id);
       }
-      renderDiarySection();
     });
   });
 
