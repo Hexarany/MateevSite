@@ -1159,6 +1159,10 @@ p {
   margin: 0;
 }
 
+.diary-expand-btn {
+  margin-top: 8px;
+}
+
 /* ─── Founder section ────────────────────────────────────────────────────── */
 
 .founder-section {

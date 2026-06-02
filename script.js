@@ -14,7 +14,8 @@ const state = {
   bookingDuration: 0,
   appliedCert: null,
   serviceFilter: "all",
-  servicesExpanded: false
+  servicesExpanded: false,
+  diaryExpanded: false
 };
 
 function tr(ruValue, roValue) {
@@ -427,15 +428,22 @@ function renderMethodBlock() {
   document.getElementById("method").hidden = false;
 }
 
+const DIARY_PREVIEW_COUNT = 1;
+
 function renderDiarySection() {
   if (!elements.diaryGrid) return;
   const entries = state.diary || [];
+  const section = document.getElementById("diary");
   if (!entries.length) {
-    document.getElementById("diary").hidden = true;
+    section.hidden = true;
     return;
   }
-  document.getElementById("diary").hidden = false;
-  elements.diaryGrid.innerHTML = entries
+  section.hidden = false;
+  const expanded = state.diaryExpanded;
+  const visible = expanded ? entries : entries.slice(0, DIARY_PREVIEW_COUNT);
+  const hasMore = entries.length > DIARY_PREVIEW_COUNT;
+
+  elements.diaryGrid.innerHTML = visible
     .map((entry) => {
       const date = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
         day: "numeric", month: "long", year: "numeric"
@@ -449,6 +457,23 @@ function renderDiarySection() {
       `;
     })
     .join("");
+
+  const existingBtn = section.querySelector(".diary-expand-btn");
+  if (existingBtn) existingBtn.remove();
+
+  if (hasMore) {
+    const btn = document.createElement("button");
+    btn.className = "button button--ghost diary-expand-btn";
+    btn.textContent = expanded
+      ? "Свернуть"
+      : `Показать все записи (${entries.length})`;
+    btn.addEventListener("click", () => {
+      state.diaryExpanded = !state.diaryExpanded;
+      renderDiarySection();
+      syncRevealTargets();
+    });
+    section.querySelector(".container").appendChild(btn);
+  }
 }
 
 function renderStaticContent() {
