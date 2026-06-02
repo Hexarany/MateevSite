@@ -1638,6 +1638,14 @@ p {
 
 .admin-workspace {
   min-width: 0;
+  overflow-x: hidden;
+}
+
+.admin-banner__title,
+.admin-section-block__title,
+.admin-widget__title {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .admin-topbar,
