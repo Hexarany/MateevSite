@@ -2757,8 +2757,28 @@ p {
 .admin-page input[type="tel"],
 .admin-page select,
 .admin-page textarea {
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Diary cards: absolute width constraint */
+#diaryEntriesList {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.diary-admin-card,
+.diary-admin-card__title,
+.diary-admin-card__excerpt,
+.diary-admin-card__meta {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .admin-list-grid--padded {
