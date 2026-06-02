@@ -1178,7 +1178,6 @@ function toggleMobileNav() {
   elements.siteNav.classList.toggle("is-open", open);
   const backdrop = document.getElementById("navBackdrop");
   if (backdrop) backdrop.classList.toggle("is-visible", open);
-  document.body.style.overflow = open ? "hidden" : "";
 }
 
 function closeMobileNav() {
@@ -1186,7 +1185,6 @@ function closeMobileNav() {
   elements.siteNav.classList.remove("is-open");
   const backdrop = document.getElementById("navBackdrop");
   if (backdrop) backdrop.classList.remove("is-visible");
-  document.body.style.overflow = "";
 }
 
 function findService(serviceId) {
