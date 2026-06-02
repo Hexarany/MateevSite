@@ -2517,11 +2517,10 @@ p {
   position: fixed;
   inset: 0;
   background: rgba(36, 28, 23, 0.45);
-  backdrop-filter: blur(4px);
   z-index: 39;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .nav-backdrop.is-visible {
