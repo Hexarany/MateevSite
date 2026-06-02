@@ -1401,17 +1401,13 @@ function renderDiaryEntriesList() {
         day: "numeric", month: "long", year: "numeric"
       });
       return `
-        <div class="admin-editor-item" style="padding:16px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,0.56);">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-            <div>
-              <p style="font-size:0.78rem;color:var(--muted);margin-bottom:4px;">${date}${entry.published ? "" : " · <em>Черновик</em>"}</p>
-              <p style="font-weight:600;margin-bottom:6px;">${escapeHtml(entry.title)}</p>
-              <p style="font-size:0.85rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(entry.body)}</p>
-            </div>
-            <div style="display:flex;gap:8px;flex-shrink:0;">
-              <button type="button" class="button button--ghost button--mini" data-diary-edit="${escapeHtml(entry.id)}">Ред.</button>
-              <button type="button" class="button button--ghost button--mini" style="color:var(--danger);" data-diary-delete="${escapeHtml(entry.id)}">Удалить</button>
-            </div>
+        <div class="diary-admin-card">
+          <div class="diary-admin-card__meta">${date}${entry.published ? "" : " · <em>Черновик</em>"}</div>
+          <div class="diary-admin-card__title">${escapeHtml(entry.title)}</div>
+          <div class="diary-admin-card__excerpt">${escapeHtml(entry.body)}</div>
+          <div class="diary-admin-card__actions">
+            <button type="button" class="button button--ghost button--mini" data-diary-edit="${escapeHtml(entry.id)}">Ред.</button>
+            <button type="button" class="button button--ghost button--mini diary-admin-card__delete" data-diary-delete="${escapeHtml(entry.id)}">Удалить</button>
           </div>
         </div>
       `;

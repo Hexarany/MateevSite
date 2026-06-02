@@ -2415,6 +2415,7 @@ p {
 
 .client-detail__columns {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
   word-break: break-all;
   overflow-wrap: break-word;
 }
@@ -2826,6 +2827,47 @@ p {
   min-width: 0;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+/* Diary admin card */
+.diary-admin-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  display: grid;
+  gap: 6px;
+}
+
+.diary-admin-card__meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.diary-admin-card__title {
+  font-weight: 600;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.diary-admin-card__excerpt {
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.diary-admin-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.diary-admin-card__delete {
+  color: var(--danger);
 }
 
 /* ─── Admin small mobile (≤ 600px / iPhone 13) ───────────────────────────── */
