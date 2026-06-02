@@ -1038,6 +1038,127 @@ p {
   margin: 0;
 }
 
+/* ─── Method section ─────────────────────────────────────────────────────── */
+
+.method-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #1a2e22 0%, #243b2e 100%);
+  color: #fff;
+}
+
+.method-section .section-heading {
+  margin-bottom: 48px;
+}
+
+.method-kicker {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.method-title {
+  color: #fff;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  margin-bottom: 12px;
+}
+
+.method-section .section-copy {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.method-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: background 0.2s;
+}
+
+.method-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.method-card__num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--sage);
+  opacity: 0.8;
+}
+
+.method-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.method-card__text {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .method-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .method-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Diary section ───────────────────────────────────────────────────────── */
+
+.diary-grid {
+  display: grid;
+  gap: 20px;
+  max-width: 780px;
+}
+
+.diary-card {
+  padding: 28px 32px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diary-card__date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.diary-card__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--forest);
+  margin: 0;
+}
+
+.diary-card__body {
+  font-size: 0.92rem;
+  color: var(--ink);
+  line-height: 1.75;
+  margin: 0;
+}
+
 /* ─── Founder section ────────────────────────────────────────────────────── */
 
 .founder-section {

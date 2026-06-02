@@ -41,6 +41,7 @@
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
+        <a href="#diary" data-section="diary">Дневник практики</a>
         <hr class="admin-sidebar__divider">
         <a href="#content" data-section="content">Витрина</a>
         <a href="#content-services" data-section="content-services">Каталог услуг</a>
@@ -512,6 +513,60 @@
                   <tbody id="certificatesTableBody"></tbody>
                 </table>
               </div>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="diary">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Контент</p>
+                <h2 class="admin-section-block__title">Дневник практики</h2>
+              </div>
+              <button type="button" class="button button--secondary" id="addDiaryEntryBtn">Новая запись</button>
+            </div>
+
+            <div class="admin-widget">
+              <div class="admin-widget__head">
+                <div>
+                  <p class="section-kicker">Редактор</p>
+                  <h3 class="admin-widget__title">Добавить / редактировать запись</h3>
+                </div>
+              </div>
+              <form id="diaryEntryForm" class="admin-form-stack" style="padding: 20px;">
+                <input type="hidden" id="diaryEntryId">
+                <label class="field field--full">
+                  <span>Заголовок</span>
+                  <input type="text" id="diaryEntryTitle" placeholder="Название записи" required>
+                </label>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Дата</span>
+                    <input type="date" id="diaryEntryDate">
+                  </label>
+                  <label class="field admin-check-option" style="flex-direction:row;align-items:center;gap:8px;padding:10px 14px;">
+                    <input type="checkbox" id="diaryEntryPublished" checked>
+                    <span>Опубликована</span>
+                  </label>
+                </div>
+                <label class="field field--full">
+                  <span>Текст записи</span>
+                  <textarea id="diaryEntryBody" rows="6" placeholder="Текст заметки..." style="resize:vertical;"></textarea>
+                </label>
+                <div style="display:flex;gap:10px;">
+                  <button type="submit" class="button button--secondary">Сохранить запись</button>
+                  <button type="button" class="button button--ghost" id="diaryEntryCancelBtn">Отмена</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head">
+                <div>
+                  <p class="section-kicker">Публикации</p>
+                  <h3 class="admin-widget__title">Все записи</h3>
+                </div>
+              </div>
+              <div id="diaryEntriesList" class="admin-list-grid" style="padding:20px;"></div>
             </div>
           </section>
 

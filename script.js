@@ -2,6 +2,7 @@ const state = {
   services: [],
   specialists: [],
   site: null,
+  diary: [],
   selectedSlot: null,
   availability: [],
   currency: "MDL",
@@ -88,6 +89,9 @@ const elements = {
   bookingSectionKicker: document.getElementById("bookingSectionKicker"),
   bookingSectionTitle: document.getElementById("bookingSectionTitle"),
   bookingSectionCopy: document.getElementById("bookingSectionCopy"),
+  methodTagline: document.getElementById("methodTagline"),
+  methodGrid: document.getElementById("methodGrid"),
+  diaryGrid: document.getElementById("diaryGrid"),
   reviewsGrid: document.getElementById("reviewsGrid"),
   faqList: document.getElementById("faqList"),
   reviewsSectionKicker: document.getElementById("reviewsSectionKicker"),
@@ -385,20 +389,66 @@ async function handleSuperUserSubmit(event) {
 }
 
 async function loadBootstrap() {
-  const payload = await fetchJson("/api/bootstrap");
+  const [payload, diaryPayload] = await Promise.all([
+    fetchJson("/api/bootstrap"),
+    fetchJson("/api/diary").catch(() => ({ entries: [] }))
+  ]);
   state.services = payload.services;
   state.specialists = payload.specialists;
   state.site = payload.site;
   state.currency = payload.site?.brand?.currency || "MDL";
   state.bookingProtectionToken = payload.meta?.bookingProtectionToken || "";
+  state.diary = diaryPayload.entries || [];
 
   renderStaticContent();
+  renderMethodBlock();
+  renderDiarySection();
   populateServiceOptions();
   updateSpecialistOptions();
   updateDurationCalc();
   resetBookingFormProtection();
   refreshBookingSummary();
   syncRevealTargets();
+}
+
+function renderMethodBlock() {
+  const method = state.site?.method;
+  if (!method || method.enabled === false || !elements.methodGrid) return;
+  if (elements.methodTagline) elements.methodTagline.textContent = method.tagline || "";
+  elements.methodGrid.innerHTML = (method.principles || [])
+    .map((p, i) => `
+      <div class="method-card reveal">
+        <span class="method-card__num">0${i + 1}</span>
+        <h3 class="method-card__title">${escapeHtml(p.title)}</h3>
+        <p class="method-card__text">${escapeHtml(p.text)}</p>
+      </div>
+    `)
+    .join("");
+  document.getElementById("method").hidden = false;
+}
+
+function renderDiarySection() {
+  if (!elements.diaryGrid) return;
+  const entries = state.diary || [];
+  if (!entries.length) {
+    document.getElementById("diary").hidden = true;
+    return;
+  }
+  document.getElementById("diary").hidden = false;
+  elements.diaryGrid.innerHTML = entries
+    .map((entry) => {
+      const date = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
+        day: "numeric", month: "long", year: "numeric"
+      });
+      return `
+        <article class="diary-card reveal">
+          <time class="diary-card__date">${date}</time>
+          <h3 class="diary-card__title">${escapeHtml(entry.title)}</h3>
+          <p class="diary-card__body">${escapeHtml(entry.body).replace(/\n/g, "<br>")}</p>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function renderStaticContent() {

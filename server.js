@@ -391,7 +391,29 @@ const DEFAULT_SITE_CONTENT = {
       answer:
         "Да, конечно. Если планы изменились, просто предупредите нас заранее по телефону или в Telegram, и мы подберем новое удобное время."
     }
-  ]
+  ],
+  method: {
+    enabled: true,
+    tagline: "Авторский подход к работе с телом",
+    principles: [
+      {
+        title: "Первопричина",
+        text: "Работаем с источником боли, а не симптомом — находим причину и убираем её"
+      },
+      {
+        title: "Карта тела",
+        text: "Индивидуальный постуральный анализ до и после каждого сеанса"
+      },
+      {
+        title: "Честный прогноз",
+        text: "Сколько нужно сеансов — скажу сразу и честно, без лишних визитов"
+      },
+      {
+        title: "Живая техника",
+        text: "Комбинация методик подбирается под конкретного человека в конкретный день"
+      }
+    ]
+  }
 };
 
 function clone(value) {
@@ -675,6 +697,21 @@ function normalizeSiteContent(siteInput = {}) {
         answer: sanitizeText(item?.answer, defaults.faq[index]?.answer || "")
       }))
       .filter((item) => item.question || item.answer),
+    method: (() => {
+      const m = input.method && typeof input.method === "object" ? input.method : {};
+      const dm = defaults.method;
+      return {
+        enabled: m.enabled !== false,
+        tagline: sanitizeText(m.tagline, dm.tagline),
+        principles: (Array.isArray(m.principles) ? m.principles : dm.principles)
+          .slice(0, 6)
+          .map((p, i) => ({
+            title: sanitizeText(p?.title, dm.principles[i]?.title || ""),
+            text: sanitizeText(p?.text, dm.principles[i]?.text || "")
+          }))
+          .filter((p) => p.title)
+      };
+    })(),
     translations: input.translations || defaults.translations || {}
   };
 }
@@ -3793,9 +3830,83 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // GET /api/diary — public published entries
+  if (request.method === "GET" && urlObject.pathname === "/api/diary") {
+    const raw = await readJson("diary.json").catch(() => []);
+    const entries = normalizeDiary(raw)
+      .filter((e) => e.published)
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    sendJson(response, 200, { entries });
+    return;
+  }
+
+  // GET /api/admin/diary — all entries
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/diary") {
+    assertAdminPin(request);
+    const raw = await readJson("diary.json").catch(() => []);
+    const entries = normalizeDiary(raw).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    sendJson(response, 200, { entries });
+    return;
+  }
+
+  // POST /api/admin/diary — create entry
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/diary") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const entries = normalizeDiary(await readJson("diary.json").catch(() => []));
+    const now = new Date().toISOString().slice(0, 7).replace("-", "");
+    const newId = `diary-${now}-${String(entries.length + 1).padStart(3, "0")}`;
+    const entry = normalizeDiaryEntry({ ...payload, id: newId }, 0);
+    await writeJson("diary.json", [entry, ...entries]);
+    sendJson(response, 201, { entry });
+    return;
+  }
+
+  // PATCH /api/admin/diary/:id — update entry
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/diary/")) {
+    assertAdminPin(request);
+    const entryId = urlObject.pathname.replace("/api/admin/diary/", "");
+    const payload = await parseJsonBody(request);
+    const entries = normalizeDiary(await readJson("diary.json").catch(() => []));
+    const idx = entries.findIndex((e) => e.id === entryId);
+    if (idx === -1) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+    entries[idx] = normalizeDiaryEntry({ ...entries[idx], ...payload, id: entryId }, idx);
+    await writeJson("diary.json", entries);
+    sendJson(response, 200, { entry: entries[idx] });
+    return;
+  }
+
+  // DELETE /api/admin/diary/:id — delete entry
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/diary/")) {
+    assertAdminPin(request);
+    const entryId = urlObject.pathname.replace("/api/admin/diary/", "");
+    const entries = normalizeDiary(await readJson("diary.json").catch(() => []));
+    const next = entries.filter((e) => e.id !== entryId);
+    if (next.length === entries.length) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+    await writeJson("diary.json", next);
+    sendJson(response, 200, { message: "Запись удалена." });
+    return;
+  }
+
   sendJson(response, 404, {
     message: "API route not found."
   });
+}
+
+function normalizeDiaryEntry(entry, index) {
+  const id = sanitizeText(entry?.id) || `diary-${Date.now()}-${index}`;
+  return {
+    id,
+    title: sanitizeText(entry?.title) || "",
+    body: sanitizeText(entry?.body) || "",
+    publishedAt: sanitizeText(entry?.publishedAt) || new Date().toISOString().slice(0, 10),
+    published: entry?.published !== false
+  };
+}
+
+function normalizeDiary(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries.map(normalizeDiaryEntry).filter((e) => e.title);
 }
 
 function createServer() {

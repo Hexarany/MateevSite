@@ -3,6 +3,7 @@ const state = {
   adminData: null,
   enrollments: [],
   certificates: [],
+  diary: [],
   daySchedule: null,
   clients: [],
   selectedClientId: "",
@@ -146,6 +147,15 @@ const elements = {
   adminTableBody: document.getElementById("adminTableBody"),
   statusFilter: document.getElementById("statusFilter"),
   bookingSearch: document.getElementById("bookingSearch"),
+  diaryEntryForm: document.getElementById("diaryEntryForm"),
+  diaryEntryId: document.getElementById("diaryEntryId"),
+  diaryEntryTitle: document.getElementById("diaryEntryTitle"),
+  diaryEntryDate: document.getElementById("diaryEntryDate"),
+  diaryEntryBody: document.getElementById("diaryEntryBody"),
+  diaryEntryPublished: document.getElementById("diaryEntryPublished"),
+  diaryEntriesList: document.getElementById("diaryEntriesList"),
+  addDiaryEntryBtn: document.getElementById("addDiaryEntryBtn"),
+  diaryEntryCancelBtn: document.getElementById("diaryEntryCancelBtn"),
   siteContentEditor: document.getElementById("siteContentEditor"),
   servicesEditor: document.getElementById("servicesEditor"),
   specialistsEditor: document.getElementById("specialistsEditor"),
@@ -266,6 +276,10 @@ function bindEvents() {
   });
   elements.clientsList.addEventListener("click", handleClientListClick);
   elements.clientDetail.addEventListener("submit", handleClientProfileSubmit);
+  elements.addDiaryEntryBtn.addEventListener("click", handleAddDiaryEntry);
+  elements.diaryEntryCancelBtn.addEventListener("click", handleDiaryEntryCancel);
+  elements.diaryEntryForm.addEventListener("submit", handleDiaryEntrySubmit);
+  elements.diaryEntriesList.addEventListener("click", handleDiaryListClick);
   elements.saveSiteContentBtn.addEventListener("click", () => handleContentSave("site"));
   elements.saveServicesBtn.addEventListener("click", () => handleContentSave("services"));
   elements.saveSpecialistsBtn.addEventListener("click", () => handleContentSave("specialists"));
@@ -1256,6 +1270,11 @@ async function loadAdminData() {
     state.certificates = certData.certificates || [];
     renderCertificatesTable();
   } catch {}
+  try {
+    const diaryData = await fetchJson("/api/admin/diary");
+    state.diary = diaryData.entries || [];
+    renderDiaryEntriesList();
+  } catch {}
   renderDashboard();
 }
 
@@ -1294,6 +1313,110 @@ function renderCertificatesTable() {
         </td>
       </tr>`;
     }).join("");
+}
+
+function renderDiaryEntriesList() {
+  const el = elements.diaryEntriesList;
+  if (!el) return;
+  if (!state.diary.length) {
+    el.innerHTML = '<p class="empty-state">Записей пока нет. Нажмите «Новая запись».</p>';
+    return;
+  }
+  el.innerHTML = state.diary
+    .map((entry) => {
+      const date = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
+        day: "numeric", month: "long", year: "numeric"
+      });
+      return `
+        <div class="admin-editor-item" style="padding:16px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,0.56);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+            <div>
+              <p style="font-size:0.78rem;color:var(--muted);margin-bottom:4px;">${date}${entry.published ? "" : " · <em>Черновик</em>"}</p>
+              <p style="font-weight:600;margin-bottom:6px;">${escapeHtml(entry.title)}</p>
+              <p style="font-size:0.85rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(entry.body)}</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button type="button" class="button button--ghost button--mini" data-diary-edit="${escapeHtml(entry.id)}">Ред.</button>
+              <button type="button" class="button button--ghost button--mini" style="color:var(--danger);" data-diary-delete="${escapeHtml(entry.id)}">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function handleAddDiaryEntry() {
+  elements.diaryEntryId.value = "";
+  elements.diaryEntryTitle.value = "";
+  elements.diaryEntryDate.value = new Date().toISOString().slice(0, 10);
+  elements.diaryEntryBody.value = "";
+  elements.diaryEntryPublished.checked = true;
+  elements.diaryEntryForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  elements.diaryEntryTitle.focus();
+}
+
+function handleDiaryEntryCancel() {
+  elements.diaryEntryId.value = "";
+  elements.diaryEntryTitle.value = "";
+  elements.diaryEntryBody.value = "";
+  elements.diaryEntryPublished.checked = true;
+}
+
+async function handleDiaryEntrySubmit(event) {
+  event.preventDefault();
+  const id = elements.diaryEntryId.value;
+  const payload = {
+    title: elements.diaryEntryTitle.value.trim(),
+    body: elements.diaryEntryBody.value.trim(),
+    publishedAt: elements.diaryEntryDate.value || new Date().toISOString().slice(0, 10),
+    published: elements.diaryEntryPublished.checked
+  };
+
+  try {
+    if (id) {
+      await fetchJson(`/api/admin/diary/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+      showToast("Запись обновлена.", "success");
+    } else {
+      await fetchJson("/api/admin/diary", { method: "POST", body: JSON.stringify(payload) });
+      showToast("Запись добавлена.", "success");
+    }
+    const diaryData = await fetchJson("/api/admin/diary");
+    state.diary = diaryData.entries || [];
+    renderDiaryEntriesList();
+    handleDiaryEntryCancel();
+  } catch (error) {
+    showToast(error.message || "Не удалось сохранить запись.", "error");
+  }
+}
+
+async function handleDiaryListClick(event) {
+  const editBtn = event.target.closest("[data-diary-edit]");
+  if (editBtn) {
+    const entry = state.diary.find((e) => e.id === editBtn.dataset.diaryEdit);
+    if (!entry) return;
+    elements.diaryEntryId.value = entry.id;
+    elements.diaryEntryTitle.value = entry.title;
+    elements.diaryEntryDate.value = entry.publishedAt;
+    elements.diaryEntryBody.value = entry.body;
+    elements.diaryEntryPublished.checked = entry.published;
+    elements.diaryEntryForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    elements.diaryEntryTitle.focus();
+    return;
+  }
+  const deleteBtn = event.target.closest("[data-diary-delete]");
+  if (deleteBtn) {
+    if (!confirm("Удалить запись навсегда?")) return;
+    try {
+      await fetchJson(`/api/admin/diary/${deleteBtn.dataset.diaryDelete}`, { method: "DELETE" });
+      const diaryData = await fetchJson("/api/admin/diary");
+      state.diary = diaryData.entries || [];
+      renderDiaryEntriesList();
+      showToast("Запись удалена.", "success");
+    } catch (error) {
+      showToast(error.message || "Не удалось удалить запись.", "error");
+    }
+  }
 }
 
 async function tryAutoLoginFromSession() {
