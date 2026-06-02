@@ -2865,6 +2865,7 @@ p {
 
 /* Diary admin card */
 .diary-admin-card {
+  width: 100%;
   padding: 16px;
   border-radius: 12px;
   border: 1px solid var(--line);
@@ -2880,6 +2881,7 @@ p {
 .diary-admin-card > * {
   min-width: 0;
   max-width: 100%;
+  width: 100%;
 }
 
 .diary-admin-card__meta {
