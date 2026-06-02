@@ -2381,13 +2381,26 @@ function normalizeClientProfiles(profilesInput = []) {
     .filter(Boolean);
 }
 
+function normalizePhoneDigits(phone) {
+  return sanitizeText(phone).replace(/\D/g, "");
+}
+
 function buildAdminClients(bookings, profiles = []) {
   const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
   const clientMap = new Map();
+  const phoneIndex = new Map(); // normalizedPhone → clientId
   const now = Date.now();
 
   sortBookings(bookings).forEach((booking) => {
-    const clientId = createClientProfileId(booking);
+    const rawPhone = normalizePhoneDigits(booking.phone || "");
+
+    // Deduplicate by phone number — same phone = same client
+    let clientId = rawPhone ? phoneIndex.get(rawPhone) : null;
+    if (!clientId) {
+      clientId = createClientProfileId(booking);
+      if (rawPhone) phoneIndex.set(rawPhone, clientId);
+    }
+
     const existing = clientMap.get(clientId) || {
       id: clientId,
       clientName: booking.clientName,
@@ -2403,7 +2416,10 @@ function buildAdminClients(bookings, profiles = []) {
       history: []
     };
 
-    existing.clientName = existing.clientName || booking.clientName;
+    // Keep most complete data: prefer name with more chars, keep email if any
+    if ((booking.clientName || "").length > (existing.clientName || "").length) {
+      existing.clientName = booking.clientName;
+    }
     existing.phone = existing.phone || booking.phone || "";
     existing.email = existing.email || booking.email || "";
     existing.history.push(booking);
