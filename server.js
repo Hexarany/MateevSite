@@ -3910,6 +3910,103 @@ function normalizeDiary(entries) {
   return entries.map(normalizeDiaryEntry).filter((e) => e.title);
 }
 
+function renderBlogEntryPage(entry) {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const url = `${base}/blog/${entry.id}`;
+  const description = entry.body.replace(/\n/g, " ").slice(0, 160).trim();
+  const dateFormatted = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+  const bodyHtml = escapeHtml(entry.body)
+    .split(/\n{2,}/)
+    .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(entry.title)} — Mateev Spa Studio</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <link rel="canonical" href="${url}">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="${escapeHtml(entry.title)}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:url" content="${url}">
+  <meta property="og:site_name" content="Mateev Spa Studio">
+  <meta property="article:published_time" content="${entry.publishedAt}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": entry.title,
+    "description": description,
+    "datePublished": entry.publishedAt,
+    "author": { "@type": "Person", "name": "Денис Матиевич" },
+    "publisher": { "@type": "Organization", "name": "Mateev Spa Studio", "url": base }
+  })}</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Manrope', sans-serif; background: #f7f0e6; color: #241c17; line-height: 1.7; }
+    a { color: #6b8d6b; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar { background: rgba(250,242,233,0.95); border-bottom: 1px solid rgba(71,49,28,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px); }
+    .topbar__inner { max-width: 760px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+    .topbar__brand { font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; color: #241c17; }
+    .topbar__back { font-size: 0.85rem; color: #6b8d6b; font-weight: 600; }
+    .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+    .article { padding: 56px 0 80px; }
+    .article__kicker { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #b36d2c; margin-bottom: 16px; }
+    .article__title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 600; line-height: 1.2; color: #1a2e22; margin-bottom: 12px; }
+    .article__date { font-size: 0.82rem; color: #7d6d60; font-weight: 500; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(71,49,28,0.1); }
+    .article__body p { margin-bottom: 20px; font-size: 1rem; color: #3a2e26; }
+    .article__body p:last-child { margin-bottom: 0; }
+    .cta-block { margin-top: 56px; padding: 32px; background: #1a2e22; border-radius: 20px; text-align: center; }
+    .cta-block__title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: #fff; margin-bottom: 8px; }
+    .cta-block__text { font-size: 0.9rem; color: rgba(255,255,255,0.65); margin-bottom: 24px; }
+    .cta-block__btn { display: inline-block; padding: 14px 32px; background: #b36d2c; color: #fff; border-radius: 10px; font-weight: 700; font-size: 0.95rem; }
+    .cta-block__btn:hover { background: #9a5d24; text-decoration: none; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 40px; font-size: 0.85rem; color: #6b8d6b; font-weight: 600; }
+    footer { padding: 24px 0; border-top: 1px solid rgba(71,49,28,0.08); text-align: center; font-size: 0.8rem; color: #7d6d60; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <span class="topbar__brand">Mateev Spa Studio</span>
+      <a href="/#diary" class="topbar__back">← Дневник практики</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <article class="article">
+        <p class="article__kicker">Дневник практики</p>
+        <h1 class="article__title">${escapeHtml(entry.title)}</h1>
+        <p class="article__date">${dateFormatted} · Денис Матиевич</p>
+        <div class="article__body">${bodyHtml}</div>
+
+        <div class="cta-block">
+          <p class="cta-block__title">Записаться на сеанс</p>
+          <p class="cta-block__text">Онлайн-запись без звонков — выберите удобное время</p>
+          <a href="${base}/#booking" class="cta-block__btn">Выбрать время →</a>
+        </div>
+
+        <a href="/#diary" class="back-link">← Все записи дневника</a>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p>
+  </footer>
+</body>
+</html>`;
+}
+
 function createServer() {
   return http.createServer(async (request, response) => {
     try {
@@ -3926,14 +4023,38 @@ function createServer() {
         return;
       }
 
+      if (urlObject.pathname.startsWith("/blog/")) {
+        const entryId = urlObject.pathname.replace("/blog/", "").replace(/\/$/, "");
+        const raw = await readJson("diary.json").catch(() => []);
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+        const entry = normalizeDiary(raw).find(
+          (e) => e.id === entryId && e.published && e.publishedAt <= today
+        );
+        if (!entry) {
+          response.writeHead(302, { Location: "/#diary" });
+          response.end();
+          return;
+        }
+        const html = renderBlogEntryPage(entry);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
+        return;
+      }
+
       if (urlObject.pathname === "/sitemap.xml") {
         const site = await readJson("site.json").catch(() => ({}));
         const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
         const now = new Date().toISOString().slice(0, 10);
+        const raw = await readJson("diary.json").catch(() => []);
+        const published = normalizeDiary(raw).filter((e) => e.published && e.publishedAt <= now);
+        const blogUrls = published
+          .map((e) => `  <url><loc>${base}/blog/${e.id}</loc><lastmod>${e.publishedAt}</lastmod><priority>0.7</priority></url>`)
+          .join("\n");
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${base}/</loc><lastmod>${now}</lastmod><priority>1.0</priority></url>
   <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
+${blogUrls}
 </urlset>`;
         response.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" });
         response.end(xml);

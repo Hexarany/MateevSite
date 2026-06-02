@@ -455,9 +455,12 @@ function renderDiarySection() {
           <time class="diary-card__date">${date}</time>
           <h3 class="diary-card__title">${escapeHtml(entry.title)}</h3>
           <p class="diary-card__body ${isOpen ? "diary-card__body--open" : ""}">${escapeHtml(entry.body).replace(/\n/g, "<br>")}</p>
-          <button type="button" class="diary-read-more" data-diary-id="${escapeHtml(entry.id)}">
-            ${isOpen ? "Свернуть" : "Читать полностью →"}
-          </button>
+          <div class="diary-card__actions">
+            <button type="button" class="diary-read-more" data-diary-id="${escapeHtml(entry.id)}">
+              ${isOpen ? "Свернуть" : "Читать полностью →"}
+            </button>
+            <a href="/blog/${escapeHtml(entry.id)}" class="diary-card__link">Открыть страницу ↗</a>
+          </div>
         </article>
       `;
     })

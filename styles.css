@@ -1174,6 +1174,13 @@ p {
   -webkit-line-clamp: unset;
 }
 
+.diary-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .diary-read-more {
   background: none;
   border: none;
@@ -1184,12 +1191,21 @@ p {
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
-  margin-top: 4px;
-  align-self: flex-start;
 }
 
 .diary-read-more:hover {
   color: var(--sage);
+}
+
+.diary-card__link {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.diary-card__link:hover {
+  color: var(--forest);
 }
 
 .diary-expand-btn {
