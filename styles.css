@@ -1157,6 +1157,34 @@ p {
   color: var(--ink);
   line-height: 1.75;
   margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.diary-card__body--open {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.diary-read-more {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--forest);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+.diary-read-more:hover {
+  color: var(--sage);
 }
 
 .diary-expand-btn {

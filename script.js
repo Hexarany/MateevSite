@@ -15,7 +15,8 @@ const state = {
   appliedCert: null,
   serviceFilter: "all",
   servicesExpanded: false,
-  diaryExpanded: false
+  diaryExpanded: false,
+  diaryOpenIds: new Set()
 };
 
 function tr(ruValue, roValue) {
@@ -428,7 +429,7 @@ function renderMethodBlock() {
   document.getElementById("method").hidden = false;
 }
 
-const DIARY_PREVIEW_COUNT = 1;
+const DIARY_PREVIEW_COUNT = 3;
 
 function renderDiarySection() {
   if (!elements.diaryGrid) return;
@@ -439,8 +440,8 @@ function renderDiarySection() {
     return;
   }
   section.hidden = false;
-  const expanded = state.diaryExpanded;
-  const visible = expanded ? entries : entries.slice(0, DIARY_PREVIEW_COUNT);
+  const listExpanded = state.diaryExpanded;
+  const visible = listExpanded ? entries : entries.slice(0, DIARY_PREVIEW_COUNT);
   const hasMore = entries.length > DIARY_PREVIEW_COUNT;
 
   elements.diaryGrid.innerHTML = visible
@@ -448,15 +449,31 @@ function renderDiarySection() {
       const date = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
         day: "numeric", month: "long", year: "numeric"
       });
+      const isOpen = state.diaryOpenIds.has(entry.id);
       return `
         <article class="diary-card reveal">
           <time class="diary-card__date">${date}</time>
           <h3 class="diary-card__title">${escapeHtml(entry.title)}</h3>
-          <p class="diary-card__body">${escapeHtml(entry.body).replace(/\n/g, "<br>")}</p>
+          <p class="diary-card__body ${isOpen ? "diary-card__body--open" : ""}">${escapeHtml(entry.body).replace(/\n/g, "<br>")}</p>
+          <button type="button" class="diary-read-more" data-diary-id="${escapeHtml(entry.id)}">
+            ${isOpen ? "Свернуть" : "Читать полностью →"}
+          </button>
         </article>
       `;
     })
     .join("");
+
+  elements.diaryGrid.querySelectorAll(".diary-read-more").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.diaryId;
+      if (state.diaryOpenIds.has(id)) {
+        state.diaryOpenIds.delete(id);
+      } else {
+        state.diaryOpenIds.add(id);
+      }
+      renderDiarySection();
+    });
+  });
 
   const existingBtn = section.querySelector(".diary-expand-btn");
   if (existingBtn) existingBtn.remove();
@@ -464,7 +481,7 @@ function renderDiarySection() {
   if (hasMore) {
     const btn = document.createElement("button");
     btn.className = "button button--ghost diary-expand-btn";
-    btn.textContent = expanded
+    btn.textContent = listExpanded
       ? "Свернуть"
       : `Показать все записи (${entries.length})`;
     btn.addEventListener("click", () => {
