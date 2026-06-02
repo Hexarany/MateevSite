@@ -26,7 +26,7 @@ const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "";
 const SITE_URL       = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
 
 // Google review URL — update after getting it from Google Maps
-const GOOGLE_REVIEW_URL = "https://g.page/r/YOUR_PLACE_ID/review";
+const GOOGLE_REVIEW_URL = "https://g.page/r/Cbye495fXWm7EBM/review";
 
 function post(urlString, headers, body) {
   return new Promise((resolve, reject) => {
