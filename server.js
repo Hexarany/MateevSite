@@ -2382,7 +2382,12 @@ function normalizeClientProfiles(profilesInput = []) {
 }
 
 function normalizePhoneDigits(phone) {
-  return sanitizeText(phone).replace(/\D/g, "");
+  let digits = sanitizeText(phone).replace(/\D/g, "");
+  // Moldova: 0XXXXXXXX → 373XXXXXXXX
+  if (digits.length >= 8 && digits.length <= 9 && digits.startsWith("0")) {
+    digits = "373" + digits.slice(1);
+  }
+  return digits;
 }
 
 function buildAdminClients(bookings, profiles = []) {

@@ -20,6 +20,8 @@ const state = {
   clientFilters: {
     search: ""
   },
+  bookingPage: 0,
+  clientPage: 0,
   operations: {
     date: getLocalDateString(),
     selectedBookingId: "",
@@ -222,14 +224,17 @@ function bindEvents() {
   elements.adminLogoutBtn.addEventListener("click", handleAdminLogout);
   elements.statusFilter.addEventListener("change", () => {
     state.filters.status = elements.statusFilter.value;
+    state.bookingPage = 0;
     renderAdminTable();
   });
   elements.bookingSearch.addEventListener("input", () => {
     state.filters.search = elements.bookingSearch.value.trim().toLowerCase();
+    state.bookingPage = 0;
     renderAdminTable();
   });
   elements.clientSearch.addEventListener("input", () => {
     state.clientFilters.search = elements.clientSearch.value.trim().toLowerCase();
+    state.clientPage = 0;
     renderClientsWorkspace();
   });
   elements.adminTableBody.addEventListener("change", handleAdminStatusChange);
@@ -2886,18 +2891,37 @@ function renderClientsWorkspace() {
     return;
   }
 
+  // Sort: most visits first, then by name
+  clients.sort((a, b) => b.totalVisits - a.totalVisits || a.clientName.localeCompare(b.clientName, "ru"));
+
+  const CLIENT_PAGE_SIZE = 20;
+  const totalClientPages = Math.ceil(clients.length / CLIENT_PAGE_SIZE);
+  state.clientPage = Math.min(state.clientPage, Math.max(0, totalClientPages - 1));
+  const pageClients = clients.slice(state.clientPage * CLIENT_PAGE_SIZE, (state.clientPage + 1) * CLIENT_PAGE_SIZE);
+
   const selectedClient =
-    clients.find((client) => client.id === state.selectedClientId) || clients[0];
-  state.selectedClientId = selectedClient.id;
+    pageClients.find((client) => client.id === state.selectedClientId) ||
+    clients.find((client) => client.id === state.selectedClientId) ||
+    pageClients[0] || clients[0];
+  state.selectedClientId = selectedClient?.id || "";
+
+  const paginationHtml = totalClientPages > 1 ? `
+    <div class="table-pagination" style="padding:8px 12px;">
+      <span class="table-pagination__info">Стр. ${state.clientPage + 1}/${totalClientPages} · ${clients.length} клиентов</span>
+      <div class="table-pagination__btns">
+        <button type="button" class="button button--ghost button--mini" id="clientPgPrev" ${state.clientPage === 0 ? "disabled" : ""}>←</button>
+        <button type="button" class="button button--ghost button--mini" id="clientPgNext" ${state.clientPage >= totalClientPages - 1 ? "disabled" : ""}>→</button>
+      </div>
+    </div>` : "";
 
   elements.clientsList.innerHTML = `
     <div class="client-list">
-      ${clients
+      ${pageClients
         .map(
           (client) => `
             <button
               type="button"
-              class="client-list-item ${client.id === selectedClient.id ? "is-active" : ""}"
+              class="client-list-item ${client.id === selectedClient?.id ? "is-active" : ""}"
               data-client-id="${escapeHtml(client.id)}"
             >
               <div class="client-list-item__head">
@@ -2914,7 +2938,11 @@ function renderClientsWorkspace() {
         )
         .join("")}
     </div>
+    ${paginationHtml}
   `;
+
+  document.getElementById("clientPgPrev")?.addEventListener("click", () => { state.clientPage--; renderClientsWorkspace(); });
+  document.getElementById("clientPgNext")?.addEventListener("click", () => { state.clientPage++; renderClientsWorkspace(); });
 
   renderClientDetail(selectedClient);
 }
@@ -3664,6 +3692,28 @@ function renderAdminTable() {
       `
     )
     .join("");
+}
+
+function renderTablePagination(total, totalPages) {
+  let el = document.getElementById("bookingPagination");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "bookingPagination";
+    el.className = "table-pagination";
+    elements.adminTableBody.closest("table")?.after(el);
+  }
+  if (totalPages <= 1) { el.hidden = true; return; }
+  el.hidden = false;
+  const cur = state.bookingPage;
+  el.innerHTML = `
+    <span class="table-pagination__info">Страница ${cur + 1} из ${totalPages} · ${total} записей</span>
+    <div class="table-pagination__btns">
+      <button type="button" class="button button--ghost button--mini" id="pgPrev" ${cur === 0 ? "disabled" : ""}>← Назад</button>
+      <button type="button" class="button button--ghost button--mini" id="pgNext" ${cur >= totalPages - 1 ? "disabled" : ""}>Вперёд →</button>
+    </div>
+  `;
+  el.querySelector("#pgPrev")?.addEventListener("click", () => { state.bookingPage--; renderAdminTable(); });
+  el.querySelector("#pgNext")?.addEventListener("click", () => { state.bookingPage++; renderAdminTable(); });
 }
 
 function renderEnrollmentsTable() {

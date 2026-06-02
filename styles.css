@@ -2435,6 +2435,26 @@ p {
   overflow: auto;
 }
 
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.table-pagination__info {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.table-pagination__btns {
+  display: flex;
+  gap: 6px;
+}
+
 .table-main {
   display: block;
   font-weight: 700;
