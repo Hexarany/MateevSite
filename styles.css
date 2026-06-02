@@ -2382,6 +2382,20 @@ p {
 .client-detail {
   display: grid;
   gap: 18px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.client-detail > *,
+.client-detail .admin-widget,
+.client-detail .admin-kpi-card {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .client-detail__hero {
@@ -3031,6 +3045,35 @@ p {
   /* Two-column admin widgets → stack */
   .admin-two-column {
     grid-template-columns: 1fr;
+  }
+
+  /* Client detail columns → 1 column */
+  .client-detail__columns {
+    grid-template-columns: 1fr;
+  }
+
+  /* Client detail: contain all children */
+  .client-detail,
+  .client-detail .admin-editor-item,
+  .client-detail .admin-chip-row,
+  .client-detail .client-history,
+  .client-detail .client-history__item {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .client-history__item {
+    grid-template-columns: 1fr;
+  }
+
+  .client-history__meta {
+    justify-items: start;
+    flex-direction: row;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   /* Reviews editor cards: text wraps */
