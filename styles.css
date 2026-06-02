@@ -2729,6 +2729,165 @@ p {
   }
 }
 
+/* ─── Admin small mobile (≤ 600px / iPhone 13) ───────────────────────────── */
+
+@media (max-width: 600px) {
+
+  /* Section head: title + buttons stack */
+  .admin-section-block__head,
+  .admin-widget__head--toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .admin-section-block__head > div:last-child,
+  .admin-section-block__head > a,
+  .admin-section-block__head > button {
+    width: 100%;
+  }
+
+  /* All field-grids → 1 column in admin */
+  .admin-widget .field-grid,
+  .admin-form-stack .field-grid,
+  #diaryEntryForm .field-grid,
+  #reviewsEditor .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Schedule day rows — tighten */
+  .schedule-day-row {
+    grid-template-columns: 52px 1fr 1fr;
+    gap: 6px;
+  }
+
+  /* Booking table → card layout */
+  .booking-table {
+    min-width: 0;
+  }
+
+  .booking-table thead {
+    display: none;
+  }
+
+  .booking-table,
+  .booking-table tbody {
+    display: block;
+  }
+
+  .booking-table tr {
+    display: block;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.56);
+  }
+
+  .booking-table td {
+    display: block;
+    padding: 3px 0;
+    border: none;
+    font-size: 0.88rem;
+  }
+
+  /* Hide booking reference cell — redundant on mobile */
+  .booking-table td:first-child {
+    display: none;
+  }
+
+  .table-main {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .table-sub {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  /* Status select full width */
+  .booking-table .status-select,
+  .cert-status-select {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  /* Action buttons full width row */
+  .table-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .table-actions .button {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* Pagination → stack */
+  .table-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .table-pagination__btns {
+    width: 100%;
+  }
+
+  .table-pagination__btns .button {
+    flex: 1;
+  }
+
+  /* Client detail metrics — 2 cols already fine, keep */
+
+  /* Diary entries list — actions stack */
+  #diaryEntriesList .admin-editor-item > div {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #diaryEntriesList .admin-editor-item > div > div:last-child {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Reviews editor field-grid already handled above */
+
+  /* Admin booking form time select full width */
+  #adminBookingSlot {
+    width: 100%;
+  }
+
+  /* KPI grid 2 cols on small mobile */
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Enrollments table same card treatment */
+  #enrollmentsTableBody tr {
+    display: block;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.56);
+  }
+
+  #enrollmentsTableBody td {
+    display: block;
+    padding: 2px 0;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  #enrollmentsTableBody thead {
+    display: none;
+  }
+}
+
 /* ─── Confirm dialog ─────────────────────────────────────────────────────── */
 
 .confirm-backdrop {
