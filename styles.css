@@ -2394,12 +2394,21 @@ p {
   gap: 8px;
 }
 
+.client-detail__meta .meta-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .client-detail__metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .client-detail__columns {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .client-history__item {
@@ -2668,9 +2677,12 @@ p {
 
   .admin-kpi-grid--compact,
   .admin-check-grid--days,
-  .client-detail__metrics,
-  .client-detail__columns {
+  .client-detail__metrics {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .client-detail__columns {
+    grid-template-columns: 1fr;
   }
 
   .admin-schedule-grid {
