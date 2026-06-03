@@ -284,6 +284,7 @@ function bindEvents() {
   });
   elements.clientsList.addEventListener("click", handleClientListClick);
   elements.clientDetail.addEventListener("submit", handleClientProfileSubmit);
+  elements.clientDetail.addEventListener("click", handleClientDetailClick);
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".chart-period-btn");
     if (!btn) return;
@@ -3095,9 +3096,16 @@ function renderClientDetail(client) {
     <div class="client-detail">
       <div class="client-detail__hero">
         <div class="client-detail__hero-copy">
-          <div>
-          <p class="section-kicker">Карточка клиента</p>
-          <h3 class="admin-widget__title">${escapeHtml(client.clientName)}</h3>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <div>
+              <p class="section-kicker">Карточка клиента</p>
+              <h3 class="admin-widget__title">${escapeHtml(client.clientName)}</h3>
+            </div>
+            <button type="button" class="button button--secondary button--mini"
+              data-rebook-client="${escapeHtml(client.id)}"
+              style="flex-shrink:0;">
+              + Записать снова
+            </button>
           </div>
           <div class="client-detail__meta">
             <span class="meta-chip">${escapeHtml(statusLabel)}</span>
@@ -3209,6 +3217,54 @@ function renderClientDetail(client) {
       </div>
     </div>
   `;
+}
+
+function handleClientDetailClick(event) {
+  const btn = event.target.closest("[data-rebook-client]");
+  if (!btn) return;
+
+  const client = state.clients.find((c) => c.id === btn.dataset.rebookClient);
+  if (!client) return;
+
+  // Pre-fill booking form with client's data and favourite service/specialist
+  const favService = client.favoriteServices[0];
+  const favSpecialist = client.favoriteSpecialists[0];
+
+  const bookingForm = state.operations.bookingForm;
+  bookingForm.mode = "create";
+  bookingForm.id = "";
+  bookingForm.clientName = client.clientName;
+  bookingForm.phone = client.phone || "";
+  bookingForm.email = client.email || "";
+  bookingForm.notes = "";
+  bookingForm.status = "confirmed";
+
+  if (favService) {
+    const svc = state.services.find((s) => s.name === favService.name || s.id === favService.id);
+    if (svc) bookingForm.serviceId = svc.id;
+  }
+  if (favSpecialist) {
+    const sp = state.specialists.find((s) => s.name === favSpecialist.name || s.id === favSpecialist.id);
+    if (sp) bookingForm.specialistId = sp.id;
+  }
+
+  // Switch to operations section and populate form fields
+  activateSection("operations");
+  setTimeout(() => {
+    renderOperationsSelects();
+    // Populate form fields directly
+    if (elements.adminBookingClientName) elements.adminBookingClientName.value = client.clientName;
+    if (elements.adminBookingPhone) elements.adminBookingPhone.value = client.phone || "";
+    if (elements.adminBookingEmail) elements.adminBookingEmail.value = client.email || "";
+    if (elements.adminBookingStatus) elements.adminBookingStatus.value = "confirmed";
+    if (favService && elements.adminBookingService) {
+      const svc = state.services.find((s) => s.name === favService.name);
+      if (svc) { elements.adminBookingService.value = svc.id; elements.adminBookingService.dispatchEvent(new Event("change")); }
+    }
+    document.getElementById("adminBookingForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 150);
+
+  showToast(`Форма заполнена для ${client.clientName}`, "success");
 }
 
 function handleClientListClick(event) {
