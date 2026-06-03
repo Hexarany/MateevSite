@@ -704,6 +704,7 @@ function renderStaticContent() {
             >
               ${escapeHtml(trSite('ui.specialistCardCta') || "Выбрать мастера")}
             </button>
+            <a href="/team/${escapeHtml(specialist.id)}" class="button button--ghost" style="font-size:0.85rem;">Подробнее</a>
           </div>
         </article>
       `;
