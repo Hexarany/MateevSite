@@ -3931,6 +3931,175 @@ function normalizeDiary(entries) {
   return entries.map(normalizeDiaryEntry).filter((e) => e.title);
 }
 
+function renderBlogListPage(entries, site) {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const sharedHead = `
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
+  const sharedStyle = `
+    <style>
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.7}
+      a{color:#6b8d6b;text-decoration:none}
+      a:hover{text-decoration:underline}
+      .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
+      .topbar__inner{max-width:840px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+      .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+      .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+      .container{max-width:840px;margin:0 auto;padding:0 24px}
+      .page{padding:56px 0 80px}
+      .page__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
+      .page__title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:8px}
+      .page__subtitle{color:#7d6d60;margin-bottom:48px;font-size:0.95rem}
+      .entries{display:grid;gap:20px}
+      .entry-card{background:rgba(255,255,255,0.7);border:1px solid rgba(71,49,28,0.1);border-radius:20px;padding:28px 32px;transition:box-shadow 0.2s}
+      .entry-card:hover{box-shadow:0 8px 24px rgba(36,28,23,0.08)}
+      .entry-card__date{font-size:0.78rem;font-weight:600;letter-spacing:0.06em;color:#7d6d60;text-transform:uppercase;margin-bottom:10px}
+      .entry-card__title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:#1a2e22;margin-bottom:10px;line-height:1.3}
+      .entry-card__excerpt{font-size:0.9rem;color:#5a4e45;line-height:1.7;margin-bottom:16px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+      .entry-card__link{font-size:0.85rem;font-weight:600;color:#6b8d6b}
+      .empty{text-align:center;padding:80px 0;color:#7d6d60}
+      footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
+    </style>`;
+
+  const entriesHtml = entries.length
+    ? entries.map((e) => {
+        const date = new Date(e.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+        return `
+          <a href="${base}/blog/${escapeHtml(e.id)}" class="entry-card">
+            <div class="entry-card__date">${date}</div>
+            <div class="entry-card__title">${escapeHtml(e.title)}</div>
+            <div class="entry-card__excerpt">${escapeHtml(e.body)}</div>
+            <span class="entry-card__link">Читать полностью →</span>
+          </a>`;
+      }).join("")
+    : `<div class="empty">Записей пока нет</div>`;
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  ${sharedHead}
+  <title>Дневник практики — Mateev Spa Studio</title>
+  <meta name="description" content="Заметки о работе с телом: техники массажа, наблюдения из практики, советы по восстановлению от Дениса Матиевича.">
+  <link rel="canonical" href="${base}/blog">
+  ${sharedStyle}
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <span class="topbar__brand">Mateev Spa Studio</span>
+      <a href="/" class="topbar__back">← На главную</a>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="page">
+        <p class="page__kicker">Дневник практики</p>
+        <h1 class="page__title">Заметки о работе с телом</h1>
+        <p class="page__subtitle">Техники, наблюдения и случаи из практики — от Дениса Матиевича</p>
+        <div class="entries">${entriesHtml}</div>
+      </div>
+    </div>
+  </main>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+</body>
+</html>`;
+}
+
+function renderCertificatesPage(site) {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const phone = site?.brand?.phone || "+373 69 158 475";
+  const telegram = site?.brand?.telegram || "";
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Подарочные сертификаты — Mateev Spa Studio</title>
+  <meta name="description" content="Подарите сеанс массажа в Mateev Spa Studio. Сертификаты на любую сумму — идеальный подарок для близких.">
+  <link rel="canonical" href="${base}/certificates">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.7}
+    a{color:#6b8d6b;text-decoration:none}
+    .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
+    .topbar__inner{max-width:840px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .container{max-width:840px;margin:0 auto;padding:0 24px}
+    .hero{padding:64px 0 48px;text-align:center}
+    .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
+    .hero__title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:600;color:#1a2e22;margin-bottom:16px;line-height:1.2}
+    .hero__subtitle{color:#7d6d60;max-width:520px;margin:0 auto 48px;font-size:0.95rem}
+    .amounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:64px}
+    .amount-card{background:rgba(255,255,255,0.7);border:1px solid rgba(71,49,28,0.1);border-radius:20px;padding:28px 20px;text-align:center}
+    .amount-card__value{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#1a2e22;margin-bottom:4px}
+    .amount-card__label{font-size:0.8rem;color:#7d6d60}
+    .how{background:rgba(255,255,255,0.5);border-radius:24px;padding:40px;margin-bottom:48px}
+    .how__title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#1a2e22;margin-bottom:24px}
+    .steps{display:grid;gap:16px}
+    .step{display:flex;gap:16px;align-items:flex-start}
+    .step__num{width:32px;height:32px;border-radius:50%;background:#1a2e22;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .step__text{padding-top:4px;font-size:0.92rem;color:#3a2e26}
+    .cta-block{background:#1a2e22;border-radius:24px;padding:40px;text-align:center;margin-bottom:64px}
+    .cta-block__title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:#fff;margin-bottom:8px}
+    .cta-block__sub{color:rgba(255,255,255,0.65);margin-bottom:28px;font-size:0.9rem}
+    .cta-btn{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem;margin:6px}
+    .cta-btn:hover{background:#9a5c22;text-decoration:none}
+    .cta-btn--ghost{background:transparent;border:2px solid rgba(255,255,255,0.3);color:#fff}
+    .cta-btn--ghost:hover{background:rgba(255,255,255,0.1)}
+    footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <span class="topbar__brand">Mateev Spa Studio</span>
+      <a href="/" class="topbar__back">← На главную</a>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="hero">
+        <p class="hero__kicker">Подарочные сертификаты</p>
+        <h1 class="hero__title">Подарите заботу о теле</h1>
+        <p class="hero__subtitle">Сертификат на массаж — подарок который помогает восстановиться, снять напряжение и почувствовать себя лучше. Подходит для любого повода.</p>
+      </div>
+
+      <div class="amounts">
+        <div class="amount-card"><div class="amount-card__value">500 MDL</div><div class="amount-card__label">~30 мин процедура</div></div>
+        <div class="amount-card"><div class="amount-card__value">1 000 MDL</div><div class="amount-card__label">~60 мин процедура</div></div>
+        <div class="amount-card"><div class="amount-card__value">1 500 MDL</div><div class="amount-card__label">~90 мин процедура</div></div>
+        <div class="amount-card"><div class="amount-card__value">2 000 MDL</div><div class="amount-card__label">Комплексная программа</div></div>
+      </div>
+
+      <div class="how">
+        <div class="how__title">Как это работает</div>
+        <div class="steps">
+          <div class="step"><div class="step__num">1</div><div class="step__text">Напишите нам — укажите имя получателя и желаемый номинал</div></div>
+          <div class="step"><div class="step__num">2</div><div class="step__text">Мы оформляем красивый сертификат с уникальным кодом и отправляем вам</div></div>
+          <div class="step"><div class="step__num">3</div><div class="step__text">Получатель записывается на удобное время и предъявляет код</div></div>
+        </div>
+      </div>
+
+      <div class="cta-block">
+        <div class="cta-block__title">Заказать сертификат</div>
+        <div class="cta-block__sub">Напишите нам — оформим и отправим в течение часа</div>
+        <a href="tel:${escapeHtml(phone)}" class="cta-btn">Позвонить</a>
+        ${telegram ? `<a href="https://t.me/${escapeHtml(telegram.replace("@", ""))}" class="cta-btn cta-btn--ghost">Написать в Telegram</a>` : ""}
+      </div>
+    </div>
+  </main>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+</body>
+</html>`;
+}
+
 function renderBlogEntryPage(entry) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const url = `${base}/blog/${entry.id}`;
@@ -4044,6 +4213,27 @@ function createServer() {
         return;
       }
 
+      if (urlObject.pathname === "/blog" || urlObject.pathname === "/blog/") {
+        const raw = await readJson("diary.json").catch(() => []);
+        const site = await readJson("site.json").catch(() => ({}));
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+        const entries = normalizeDiary(raw)
+          .filter((e) => e.published && e.publishedAt <= today)
+          .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+        const html = renderBlogListPage(entries, site);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/certificates" || urlObject.pathname === "/certificates/") {
+        const site = await readJson("site.json").catch(() => ({}));
+        const html = renderCertificatesPage(site);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
+        return;
+      }
+
       if (urlObject.pathname.startsWith("/blog/")) {
         const entryId = urlObject.pathname.replace("/blog/", "").replace(/\/$/, "");
         const raw = await readJson("diary.json").catch(() => []);
@@ -4075,6 +4265,8 @@ function createServer() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${base}/</loc><lastmod>${now}</lastmod><priority>1.0</priority></url>
   <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
+  <url><loc>${base}/blog</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
+  <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
 ${blogUrls}
 </urlset>`;
         response.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" });
