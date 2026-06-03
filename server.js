@@ -1366,6 +1366,15 @@ async function sendEmailNotification(booking) {
   return { channel: "email", delivered: true };
 }
 
+function generateClientConfirmToken(bookingId) {
+  return crypto.createHmac("sha256", FORM_TOKEN_SECRET).update(`confirm:${bookingId}`).digest("hex").slice(0, 32);
+}
+
+function verifyClientConfirmToken(bookingId, token) {
+  const expected = generateClientConfirmToken(bookingId);
+  return typeof token === "string" && token.length === 32 && token === expected;
+}
+
 async function sendClientConfirmationEmail(booking) {
   if (!RESEND_API_KEY || !EMAIL_FROM || !booking.email) {
     return { channel: "client-email", skipped: true };
@@ -1373,6 +1382,10 @@ async function sendClientConfirmationEmail(booking) {
 
   const cancelUrl = SITE_URL
     ? `${SITE_URL}/cancel?ref=${encodeURIComponent(booking.reference)}`
+    : null;
+
+  const confirmUrl = SITE_URL
+    ? `${SITE_URL}/confirm?id=${encodeURIComponent(booking.id)}&token=${generateClientConfirmToken(booking.id)}`
     : null;
 
   const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
@@ -1431,9 +1444,19 @@ async function sendClientConfirmationEmail(booking) {
           </td>
         </tr>
 
+        ${confirmUrl ? `
+        <tr>
+          <td style="padding:24px 36px 8px;text-align:center;">
+            <p style="margin:0 0 16px;font-size:14px;color:${muted};">Пожалуйста, подтвердите что придёте — это займёт один клик:</p>
+            <a href="${confirmUrl}" style="display:inline-block;padding:16px 36px;background:#2a6b3e;border-radius:12px;font-size:15px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.01em;">
+              ✓ Подтверждаю — буду
+            </a>
+          </td>
+        </tr>` : ""}
+
         ${cancelUrl ? `
         <tr>
-          <td style="padding:0 36px 32px;">
+          <td style="padding:16px 36px 32px;">
             <p style="margin:0 0 14px;font-size:13px;color:${muted};line-height:1.5;">
               Если планы изменились — отменить запись можно самостоятельно не позднее чем за ${CANCEL_CUTOFF_HOURS} ч до визита.
             </p>
@@ -1473,7 +1496,8 @@ async function sendClientConfirmationEmail(booking) {
     `Специалист: ${booking.specialistName}`,
     `Дата и время: ${dateLabel}, ${booking.slot}–${booking.endsAt}`,
     `Стоимость: ${booking.totalPrice} MDL`,
-    cancelUrl ? `\nОтменить запись: ${cancelUrl}` : "",
+    confirmUrl ? `\nПодтвердить визит: ${confirmUrl}` : "",
+    cancelUrl ? `Отменить запись: ${cancelUrl}` : "",
     "",
     "Ждём вас. До встречи!"
   ].join("\n");
@@ -3934,6 +3958,51 @@ function normalizeDiary(entries) {
   return entries.map(normalizeDiaryEntry).filter((e) => e.title);
 }
 
+function renderConfirmSuccessPage(booking, alreadyConfirmed) {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+  const dateLabel = ru.format(new Date(`${booking.date}T12:00:00`)).replace(" г.", "");
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${alreadyConfirmed ? "Запись уже подтверждена" : "Спасибо за подтверждение"} — Mateev Spa Studio</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+    .icon{font-size:4rem;margin-bottom:20px}
+    .title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,5vw,2.6rem);font-weight:600;color:#1a2e22;margin-bottom:12px}
+    .sub{color:#7d6d60;font-size:0.95rem;margin-bottom:32px;max-width:440px;line-height:1.7}
+    .card{background:rgba(255,255,255,0.7);border:1px solid rgba(71,49,28,0.1);border-radius:20px;padding:24px 28px;margin-bottom:32px;text-align:left;max-width:400px;width:100%}
+    .card-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(71,49,28,0.08);font-size:0.88rem}
+    .card-row:last-child{border-bottom:none}
+    .card-row span:first-child{color:#7d6d60}
+    .card-row span:last-child{font-weight:600;color:#1a2e22}
+    .btn{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="icon">${alreadyConfirmed ? "✓" : "🎉"}</div>
+  <h1 class="title">${alreadyConfirmed ? "Запись уже подтверждена" : "Отлично, ждём вас!"}</h1>
+  <p class="sub">${alreadyConfirmed
+    ? "Ваша запись уже была подтверждена ранее. До встречи в студии!"
+    : `Спасибо, ${escapeHtml(booking.clientName)}! Ваша запись подтверждена — до встречи в студии.`}</p>
+  <div class="card">
+    <div class="card-row"><span>Процедура</span><span>${escapeHtml(booking.serviceName)}</span></div>
+    <div class="card-row"><span>Специалист</span><span>${escapeHtml(booking.specialistName)}</span></div>
+    <div class="card-row"><span>Дата</span><span>${escapeHtml(dateLabel)}</span></div>
+    <div class="card-row"><span>Время</span><span>${escapeHtml(booking.slot)}–${escapeHtml(booking.endsAt)}</span></div>
+  </div>
+  <a href="${base}/" class="btn">На главную</a>
+</body>
+</html>`;
+}
+
 function renderFirstVisitPage() {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const sharedFonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
@@ -4628,6 +4697,56 @@ function createServer() {
           .slice(0, 3);
         const html = renderSpecialistPage(specialist, services, site, recentPosts);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/confirm") {
+        const bookingId = urlObject.searchParams.get("id") || "";
+        const token = urlObject.searchParams.get("token") || "";
+        const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+
+        if (!bookingId || !verifyClientConfirmToken(bookingId, token)) {
+          response.writeHead(302, { Location: `${base}/` });
+          response.end();
+          return;
+        }
+
+        const bookings = await readJson("bookings.json").catch(() => []);
+        const idx = bookings.findIndex((b) => b.id === bookingId);
+
+        if (idx === -1) {
+          response.writeHead(302, { Location: `${base}/` });
+          response.end();
+          return;
+        }
+
+        const booking = bookings[idx];
+        const alreadyConfirmed = booking.status === "confirmed";
+
+        if (booking.status === "new") {
+          bookings[idx] = { ...booking, status: "confirmed", confirmedByClientAt: new Date().toISOString() };
+          await writeJson("bookings.json", bookings);
+
+          // Telegram notification
+          void (async () => {
+            try {
+              if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+                const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
+                const dateLabel = ru.format(new Date(`${booking.date}T12:00:00`));
+                await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                  body: {
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: `✅ Клиент подтвердил запись\n\n${booking.clientName} · ${booking.serviceName}\n${dateLabel}, ${booking.slot}–${booking.endsAt}`
+                  }
+                });
+              }
+            } catch {}
+          })();
+        }
+
+        const html = renderConfirmSuccessPage(booking, alreadyConfirmed);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         response.end(html);
         return;
       }
