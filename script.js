@@ -146,6 +146,12 @@ const elements = {
 
 document.addEventListener("DOMContentLoaded", init);
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+  });
+}
+
 async function init() {
   bindEvents();
   setDateConstraints();
@@ -416,6 +422,36 @@ async function loadBootstrap() {
   refreshBookingSummary();
   syncRevealTargets();
   scrollToHashAfterLoad();
+  injectServicesSchema();
+}
+
+function injectServicesSchema() {
+  if (!state.services.length) return;
+  const base = "https://mateevmassage.com";
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Процедуры Mateev Spa Studio",
+    "itemListElement": state.services.map((s, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "item": {
+        "@type": "Service",
+        "name": s.name,
+        "description": s.description || "",
+        "offers": { "@type": "Offer", "price": s.price, "priceCurrency": "MDL" },
+        "provider": { "@type": "LocalBusiness", "name": "Mateev Spa Studio", "url": base }
+      }
+    }))
+  };
+  let el = document.getElementById("services-schema");
+  if (!el) {
+    el = document.createElement("script");
+    el.id = "services-schema";
+    el.type = "application/ld+json";
+    document.head.appendChild(el);
+  }
+  el.textContent = JSON.stringify(schema);
 }
 
 function renderMethodBlock() {

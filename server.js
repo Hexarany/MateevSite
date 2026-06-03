@@ -68,7 +68,9 @@ const STATIC_FILES = {
   "/script.js": "script.js",
   "/admin.js": "admin.js",
   "/certificate": "certificate.html",
-  "/certificate.html": "certificate.html"
+  "/certificate.html": "certificate.html",
+  "/manifest.json": "manifest.json",
+  "/service-worker.js": "service-worker.js"
 };
 
 const MIME_TYPES = {
@@ -79,7 +81,8 @@ const MIME_TYPES = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
-  ".webp": "image/webp"
+  ".webp": "image/webp",
+  ".webmanifest": "application/manifest+json"
 };
 
 const BOOKING_STATUSES = ["new", "confirmed", "completed", "cancelled"];
@@ -4660,6 +4663,7 @@ function renderBlogEntryPage(entry) {
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="Mateev Spa Studio">
+  <meta property="og:image" content="${url}/og.svg">
   <meta property="article:published_time" content="${entry.publishedAt}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4850,6 +4854,43 @@ function createServer() {
         const html = renderCertificatesPage(site);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname.startsWith("/blog/") && urlObject.pathname.endsWith("/og.svg")) {
+        const entryId = urlObject.pathname.replace("/blog/", "").replace("/og.svg", "");
+        const raw = await readJson("diary.json").catch(() => []);
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+        const entry = normalizeDiary(raw).find((e) => e.id === entryId && e.published && e.publishedAt <= today);
+        if (!entry) { sendText(response, 404, "Not found"); return; }
+        const title = entry.title.length > 60 ? entry.title.slice(0, 57) + "..." : entry.title;
+        const words = title.split(" ");
+        const lines = [];
+        let line = "";
+        words.forEach((w) => {
+          if ((line + " " + w).trim().length > 32) { lines.push(line.trim()); line = w; }
+          else { line = (line + " " + w).trim(); }
+        });
+        if (line) lines.push(line);
+        const linesSvg = lines.map((l, i) =>
+          `<text x="492" y="${200 + i * 68}" font-family="Georgia,serif" font-size="52" font-weight="600" fill="#1a2e22" letter-spacing="-0.5">${escapeHtml(l)}</text>`
+        ).join("");
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+          <rect width="1200" height="630" fill="#f7f0e6"/>
+          <ellipse cx="0" cy="0" rx="480" ry="380" fill="rgba(201,147,80,0.14)"/>
+          <rect x="0" y="0" width="420" height="630" fill="#1a2e22"/>
+          <text x="56" y="184" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="rgba(179,109,44,0.9)" letter-spacing="4">ДНЕВНИК ПРАКТИКИ</text>
+          <text x="56" y="244" font-family="Georgia,serif" font-size="42" font-weight="600" fill="#fff">Mateev</text>
+          <text x="56" y="292" font-family="Georgia,serif" font-size="42" font-weight="600" fill="#fff">Spa Studio</text>
+          <line x1="56" y1="324" x2="340" y2="324" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <text x="56" y="358" font-family="Arial,sans-serif" font-size="16" fill="rgba(255,255,255,0.55)">Денис Матиевич</text>
+          <text x="56" y="380" font-family="Arial,sans-serif" font-size="16" fill="rgba(255,255,255,0.55)">mateevmassage.com</text>
+          <text x="492" y="158" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#b36d2c" letter-spacing="3">ЗАМЕТКА</text>
+          ${linesSvg}
+          <rect x="0" y="618" width="1200" height="12" fill="rgba(179,109,44,0.5)"/>
+        </svg>`;
+        response.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" });
+        response.end(svg);
         return;
       }
 

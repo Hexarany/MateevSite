@@ -1,0 +1,32 @@
+{
+  "name": "Mateev Spa Studio",
+  "short_name": "Mateev Spa",
+  "description": "Массаж и телесная терапия в Кишинёве. Онлайн-запись.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f0e6",
+  "theme_color": "#1a2e22",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Записаться",
+      "short_name": "Запись",
+      "url": "/#booking",
+      "description": "Онлайн-запись на процедуру"
+    },
+    {
+      "name": "Дневник",
+      "short_name": "Дневник",
+      "url": "/blog",
+      "description": "Дневник практики"
+    }
+  ]
+}
