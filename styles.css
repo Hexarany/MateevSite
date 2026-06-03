@@ -47,6 +47,18 @@ body {
     linear-gradient(180deg, #fbf6f0 0%, #f3eadf 100%);
 }
 
+/* ─── Paper grain texture ─────────────────────────────────────────────────── */
+body:not(.admin-page)::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: multiply;
+}
+
 body.admin-page {
   background:
     radial-gradient(circle at top left, rgba(179, 109, 44, 0.18), transparent 30%),
@@ -670,12 +682,21 @@ p {
   gap: 14px;
 }
 
-.feature-card__index,
-.process-card__index {
+.feature-card__index {
   color: var(--brand);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 0.76rem;
+}
+
+.process-card__index {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1;
+  opacity: 0.7;
+  letter-spacing: -0.03em;
 }
 
 .feature-card p,
@@ -1047,9 +1068,14 @@ p {
 /* ─── Method section ─────────────────────────────────────────────────────── */
 
 .method-section {
-  padding: 80px 0;
+  padding: 96px 0 80px;
   background: linear-gradient(135deg, #1a2e22 0%, #243b2e 100%);
   color: #fff;
+  clip-path: polygon(0 40px, 100% 0, 100% calc(100% - 40px), 0 100%);
+  margin-top: -40px;
+  margin-bottom: -40px;
+  position: relative;
+  z-index: 2;
 }
 
 .method-section .section-heading {
@@ -1085,6 +1111,8 @@ p {
   flex-direction: column;
   gap: 12px;
   transition: background 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 .method-card:hover {
@@ -1092,11 +1120,17 @@ p {
 }
 
 .method-card__num {
-  font-size: 0.75rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 5.5rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--sage);
-  opacity: 0.8;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.07);
+  position: absolute;
+  top: -8px;
+  right: 16px;
+  letter-spacing: -0.04em;
+  pointer-events: none;
+  user-select: none;
 }
 
 .method-card__title {
@@ -1308,7 +1342,8 @@ p {
 .founder-section {
   position: relative;
   z-index: 1;
-  padding: 72px 0;
+  padding: 80px 0 96px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 40px), 0 100%);
   background: linear-gradient(135deg, rgba(40,72,56,0.96), rgba(33,61,47,0.92));
   color: #f5efe8;
 }
