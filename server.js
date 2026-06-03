@@ -3987,6 +3987,16 @@ function renderFirstVisitPage() {
   <meta property="og:title" content="Первый визит — Mateev Spa Studio">
   <meta property="og:description" content="Как подготовиться к первому сеансу, что будет происходить и что делать после. Простые ответы на частые вопросы.">
   <meta property="og:url" content="${base}/first-visit">
+  <meta property="og:image" content="${base}/og-image.svg">
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faq.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": { "@type": "Answer", "text": f.a }
+    }))
+  })}</script>
   ${sharedFonts}
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -4371,6 +4381,24 @@ function renderCertificatesPage(site) {
   <title>Подарочные сертификаты — Mateev Spa Studio</title>
   <meta name="description" content="Подарите сеанс массажа в Mateev Spa Studio. Сертификаты на любую сумму — идеальный подарок для близких.">
   <link rel="canonical" href="${base}/certificates">
+  <meta property="og:title" content="Подарочные сертификаты — Mateev Spa Studio">
+  <meta property="og:description" content="Подарите сеанс массажа. Сертификаты от 500 MDL — идеальный подарок для близких.">
+  <meta property="og:url" content="${base}/certificates">
+  <meta property="og:image" content="${base}/og-image.svg">
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Подарочный сертификат на массаж",
+    "description": "Сертификат на сеанс массажа в Mateev Spa Studio, Кишинёв. Доступны номиналы 500, 1000, 1500, 2000 MDL и любая сумма.",
+    "brand": { "@type": "Brand", "name": "Mateev Spa Studio" },
+    "offers": [500, 1000, 1500, 2000].map(price => ({
+      "@type": "Offer",
+      "price": price,
+      "priceCurrency": "MDL",
+      "availability": "https://schema.org/InStock",
+      "url": `${base}/certificates`
+    }))
+  })}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
