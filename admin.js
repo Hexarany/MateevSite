@@ -1615,7 +1615,22 @@ function buildDashboardModel() {
       label: "Средний чек",
       value: formatCurrency(payableBookings.length ? revenue / payableBookings.length : 0),
       hint: payableBookings.length ? "по оплачиваемому потоку" : "появится после подтверждений"
-    }
+    },
+    (() => {
+      const phoneMap = new Map();
+      bookings.filter((b) => b.status === "completed" || b.status === "confirmed").forEach((b) => {
+        const key = (b.phone || "").replace(/\D/g, "").slice(-8);
+        if (key) phoneMap.set(key, (phoneMap.get(key) || 0) + 1);
+      });
+      const total = phoneMap.size;
+      const returning = [...phoneMap.values()].filter((c) => c > 1).length;
+      const pct = total > 0 ? Math.round((returning / total) * 100) : 0;
+      return {
+        label: "Возврат",
+        value: total > 0 ? `${pct}%` : "—",
+        hint: total > 0 ? `${returning} из ${total} клиентов приходят повторно` : "появится после первых визитов"
+      };
+    })()
   ];
 
   const specialistRows = state.specialists

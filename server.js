@@ -3955,6 +3955,37 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // GET /api/unsubscribe?email=...
+  if (request.method === "GET" && urlObject.pathname === "/api/unsubscribe") {
+    const email = sanitizeText(urlObject.searchParams.get("email") || "").toLowerCase();
+    if (email) {
+      const subs = await readJson("subscribers.json").catch(() => []);
+      await writeJson("subscribers.json", subs.filter((s) => s.email !== email));
+    }
+    response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    response.end(`<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Отписка</title></head><body style="font-family:sans-serif;text-align:center;padding:80px 24px;background:#f7f0e6;"><h1 style="color:#1a2e22;">Вы отписаны</h1><p style="color:#7d6d60;">Письма больше не будут приходить.</p><a href="/" style="color:#6b8d6b;">На главную</a></body></html>`);
+    return;
+  }
+
+  // POST /api/subscribe — diary newsletter
+  if (request.method === "POST" && urlObject.pathname === "/api/subscribe") {
+    const payload = await parseJsonBody(request);
+    const email = sanitizeText(payload.email || "").toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      sendJson(response, 400, { message: "Укажите корректный email." });
+      return;
+    }
+    const subs = await readJson("subscribers.json").catch(() => []);
+    if (subs.some((s) => s.email === email)) {
+      sendJson(response, 200, { message: "Вы уже подписаны." });
+      return;
+    }
+    subs.push({ email, subscribedAt: new Date().toISOString() });
+    await writeJson("subscribers.json", subs);
+    sendJson(response, 200, { message: "Спасибо! Новые записи будут приходить на вашу почту." });
+    return;
+  }
+
   // GET /api/diary — public published entries (not future-dated)
   if (request.method === "GET" && urlObject.pathname === "/api/diary") {
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
@@ -3984,6 +4015,7 @@ async function routeApi(request, response, urlObject) {
     const newId = `diary-${now}-${String(entries.length + 1).padStart(3, "0")}`;
     const entry = normalizeDiaryEntry({ ...payload, id: newId }, 0);
     await writeJson("diary.json", [entry, ...entries]);
+    if (entry.published) void notifyDiarySubscribers(entry);
     sendJson(response, 201, { entry });
     return;
   }
@@ -4017,6 +4049,49 @@ async function routeApi(request, response, urlObject) {
   sendJson(response, 404, {
     message: "API route not found."
   });
+}
+
+async function notifyDiarySubscribers(entry) {
+  if (!RESEND_API_KEY || !EMAIL_FROM) return;
+  try {
+    const subs = await readJson("subscribers.json").catch(() => []);
+    if (!subs.length) return;
+    const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+    const url = `${base}/blog/${entry.id}`;
+    const excerpt = entry.body.replace(/\n/g, " ").slice(0, 200).trim();
+    const ink = "#241c17"; const muted = "#7d6d60"; const bg = "#f7f0e6"; const green = "#1a2e22";
+    const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${bg};font-family:'Helvetica Neue',Arial,sans-serif;color:${ink};">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${bg};padding:40px 16px;"><tr><td align="center">
+<table width="100%" style="max-width:520px;background:#fffaf4;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(54,35,20,0.10);">
+<tr><td style="background:${green};padding:24px 36px;">
+<p style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Дневник практики</p>
+<p style="margin:6px 0 0;font-size:18px;font-weight:700;color:#fff;">Mateev Spa Studio</p></td></tr>
+<tr><td style="padding:32px 36px 24px;">
+<p style="margin:0 0 4px;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:${muted};">Новая запись</p>
+<h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:${ink};line-height:1.3;">${escapeHtml(entry.title)}</h1>
+<p style="margin:0 0 24px;font-size:14px;color:${muted};line-height:1.7;">${escapeHtml(excerpt)}...</p>
+<a href="${url}" style="display:inline-block;padding:12px 28px;background:#b36d2c;color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;">Читать полностью →</a>
+</td></tr>
+<tr><td style="padding:16px 36px;border-top:1px solid rgba(68,50,36,0.10);background:rgba(179,109,44,0.04);">
+<p style="margin:0;font-size:11px;color:${muted};">Вы получили это письмо потому что подписались на дневник. <a href="${base}/unsubscribe?email={{email}}" style="color:${muted};">Отписаться</a></p>
+</td></tr></table></td></tr></table></body></html>`;
+
+    for (const sub of subs) {
+      try {
+        await requestJson("https://api.resend.com/emails", {
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+          body: {
+            from: EMAIL_FROM,
+            to: [sub.email],
+            replyTo: EMAIL_REPLY_TO || undefined,
+            subject: `Новая запись: ${entry.title}`,
+            html: html.replace("{{email}}", encodeURIComponent(sub.email))
+          }
+        });
+      } catch {}
+    }
+  } catch {}
 }
 
 function normalizeDiaryEntry(entry, index) {
@@ -4508,9 +4583,48 @@ function renderBlogListPage(entries, site) {
         <h1 class="page__title">Заметки о работе с телом</h1>
         <p class="page__subtitle">Техники, наблюдения и случаи из практики — от Дениса Матиевича</p>
         <div class="entries">${entriesHtml}</div>
+
+        <div style="margin-top:56px;padding:36px;background:rgba(26,46,34,0.06);border:1px solid rgba(26,46,34,0.12);border-radius:20px;text-align:center;">
+          <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:8px;">Подписка</p>
+          <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#1a2e22;margin-bottom:8px;">Новые записи — на почту</h2>
+          <p style="color:#7d6d60;font-size:0.9rem;margin-bottom:20px;">Один email когда выйдет новая заметка. Без спама.</p>
+          <form id="subscribeForm" style="display:flex;gap:10px;max-width:400px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
+            <input type="email" id="subscribeEmail" placeholder="ваш@email.com" required
+              style="flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid rgba(71,49,28,0.2);background:#fff;font-size:0.9rem;font-family:inherit;">
+            <button type="submit"
+              style="padding:12px 24px;background:#1a2e22;color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;">
+              Подписаться
+            </button>
+          </form>
+          <p id="subscribeMsg" style="margin-top:12px;font-size:0.85rem;color:#6b8d6b;display:none;"></p>
+        </div>
       </div>
     </div>
   </main>
+  <script>
+    document.getElementById("subscribeForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("subscribeEmail").value.trim();
+      const msg = document.getElementById("subscribeMsg");
+      const btn = e.target.querySelector("button");
+      btn.disabled = true;
+      btn.textContent = "...";
+      try {
+        const r = await fetch("/api/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+        const data = await r.json();
+        msg.textContent = data.message || "Готово!";
+        msg.style.display = "block";
+        e.target.reset();
+      } catch {
+        msg.textContent = "Ошибка. Попробуйте позже.";
+        msg.style.color = "#c0392b";
+        msg.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Подписаться";
+      }
+    });
+  </script>
   <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
 </body>
 </html>`;
@@ -4724,7 +4838,23 @@ function renderBlogEntryPage(entry) {
           <a href="${base}/#booking" class="cta-block__btn">Выбрать время →</a>
         </div>
 
-        <a href="/#diary" class="back-link">← Все записи дневника</a>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:40px;">
+          <a href="/blog" class="back-link">← Все записи дневника</a>
+          <div style="display:flex;gap:10px;">
+            <a href="https://wa.me/?text=${encodeURIComponent(entry.title + " — " + url)}"
+               target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#25d366;color:#fff;border-radius:10px;font-size:0.85rem;font-weight:600;text-decoration:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.138.566 4.14 1.547 5.876L.057 23.7a.5.5 0 00.633.633l5.824-1.49A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.381l-.36-.214-3.733.955.972-3.648-.235-.374A9.872 9.872 0 012.1 12C2.1 6.526 6.526 2.1 12 2.1S21.9 6.526 21.9 12 17.474 21.9 12 21.9z"/></svg>
+              WhatsApp
+            </a>
+            <a href="https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(entry.title)}"
+               target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#229ed9;color:#fff;border-radius:10px;font-size:0.85rem;font-weight:600;text-decoration:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.857l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.978.702z"/></svg>
+              Telegram
+            </a>
+          </div>
+        </div>
       </article>
     </div>
   </main>
