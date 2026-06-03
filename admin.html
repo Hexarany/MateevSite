@@ -410,9 +410,16 @@
               <div class="admin-widget__head">
                 <div>
                   <p class="section-kicker">Динамика</p>
-                  <h3 class="admin-widget__title">Выручка за последние 30 дней</h3>
+                  <h3 class="admin-widget__title">Выручка</h3>
                 </div>
-                <div id="revenueChartTotal" style="font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:600; color:var(--ink);"></div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="display:flex;gap:4px;">
+                    <button type="button" class="button button--ghost button--mini chart-period-btn is-active" data-period="30">30 дн.</button>
+                    <button type="button" class="button button--ghost button--mini chart-period-btn" data-period="90">3 мес.</button>
+                    <button type="button" class="button button--ghost button--mini chart-period-btn" data-period="365">Год</button>
+                  </div>
+                  <div id="revenueChartTotal" style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--ink);white-space:nowrap;"></div>
+                </div>
               </div>
               <div id="revenueChart"></div>
             </article>

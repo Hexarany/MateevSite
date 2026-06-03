@@ -284,6 +284,13 @@ function bindEvents() {
   });
   elements.clientsList.addEventListener("click", handleClientListClick);
   elements.clientDetail.addEventListener("submit", handleClientProfileSubmit);
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".chart-period-btn");
+    if (!btn) return;
+    document.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    renderRevenueChart(state.adminData?.bookings || [], Number(btn.dataset.period));
+  });
   elements.addDiaryEntryBtn.addEventListener("click", handleAddDiaryEntry);
   elements.diaryEntryCancelBtn.addEventListener("click", handleDiaryEntryCancel);
   elements.diaryEntryForm.addEventListener("submit", handleDiaryEntrySubmit);
@@ -1716,72 +1723,120 @@ function renderAdminStats(cards) {
     .join("");
 }
 
-function renderRevenueChart(bookings) {
+let chartPeriod = 30;
+
+function renderRevenueChart(bookings, period) {
   const chartEl = document.getElementById("revenueChart");
   const totalEl = document.getElementById("revenueChartTotal");
   if (!chartEl) return;
 
-  const days = 30;
+  if (period !== undefined) chartPeriod = period;
+  const days = chartPeriod;
   const today = new Date();
-  const data = [];
+  const monthNames = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
 
+  // Build daily data
+  const dailyMap = new Map();
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
-    const dayRevenue = bookings
-      .filter((b) => b.date === dateStr && (b.status === "confirmed" || b.status === "completed"))
-      .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
-    data.push({ date: dateStr, revenue: dayRevenue, d });
+    dailyMap.set(dateStr, { d, revenue: 0 });
+  }
+  bookings.forEach((b) => {
+    if (dailyMap.has(b.date) && (b.status === "confirmed" || b.status === "completed")) {
+      dailyMap.get(b.date).revenue += Number(b.totalPrice || 0);
+    }
+  });
+
+  // Group by week if > 30 days
+  let data;
+  if (days <= 30) {
+    data = [...dailyMap.values()].map((item) => ({
+      label: `${item.d.getDate()} ${monthNames[item.d.getMonth()]}`,
+      revenue: item.revenue
+    }));
+  } else if (days <= 90) {
+    // Group by week
+    const weeks = new Map();
+    [...dailyMap.values()].forEach(({ d, revenue }) => {
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay() + 1);
+      const key = weekStart.toISOString().slice(0, 10);
+      if (!weeks.has(key)) weeks.set(key, { d: weekStart, revenue: 0 });
+      weeks.get(key).revenue += revenue;
+    });
+    data = [...weeks.values()].map(({ d, revenue }) => ({
+      label: `${d.getDate()} ${monthNames[d.getMonth()]}`,
+      revenue
+    }));
+  } else {
+    // Group by month
+    const months = new Map();
+    [...dailyMap.values()].forEach(({ d, revenue }) => {
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      if (!months.has(key)) months.set(key, { d, revenue: 0 });
+      months.get(key).revenue += revenue;
+    });
+    data = [...months.values()].map(({ d, revenue }) => ({
+      label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
+      revenue
+    }));
+  }
+
+  const totalRevenue = data.reduce((s, item) => s + item.revenue, 0);
+  const prevPeriodRevenue = (() => {
+    let prev = 0;
+    bookings.forEach((b) => {
+      const d = new Date(b.date + "T00:00:00");
+      const diffDays = (today - d) / 86400000;
+      if (diffDays >= days && diffDays < days * 2 && (b.status === "confirmed" || b.status === "completed")) {
+        prev += Number(b.totalPrice || 0);
+      }
+    });
+    return prev;
+  })();
+  const trend = prevPeriodRevenue > 0
+    ? Math.round(((totalRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100)
+    : null;
+
+  if (totalEl) {
+    const trendHtml = trend !== null
+      ? `<span style="font-size:0.72rem;font-weight:600;color:${trend >= 0 ? "var(--success)" : "var(--danger)"};margin-left:8px;">${trend >= 0 ? "▲" : "▼"} ${Math.abs(trend)}%</span>`
+      : "";
+    totalEl.innerHTML = `${totalRevenue > 0 ? formatCurrency(totalRevenue) : "—"}${trendHtml}`;
   }
 
   const maxRevenue = Math.max(1, ...data.map((item) => item.revenue));
-  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
-
-  if (totalEl) {
-    totalEl.textContent = totalRevenue > 0 ? formatCurrency(totalRevenue) : "—";
-  }
-
-  const barWidth = 14;
-  const gap = 4;
+  const barWidth = Math.max(8, Math.min(20, Math.floor(480 / data.length) - 4));
+  const gap = Math.max(2, Math.round(barWidth * 0.3));
   const chartH = 120;
-  const svgW = days * (barWidth + gap) - gap;
-  const monthNames = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+  const svgW = data.length * (barWidth + gap) - gap;
 
   const bars = data.map((item, i) => {
     const barH = item.revenue > 0 ? Math.max(4, Math.round((item.revenue / maxRevenue) * chartH)) : 2;
     const x = i * (barWidth + gap);
     const y = chartH - barH;
-    const isToday = item.dateStr === today.toISOString().slice(0, 10);
-    const label = item.revenue > 0
-      ? `${item.d.getDate()} ${monthNames[item.d.getMonth()]}: ${formatCurrency(item.revenue)}`
-      : `${item.d.getDate()} ${monthNames[item.d.getMonth()]}: нет записей`;
-
-    return `<rect
-      x="${x}" y="${y}" width="${barWidth}" height="${barH}"
-      rx="4"
+    return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3"
       fill="${item.revenue > 0 ? "var(--brand)" : "var(--line-strong)"}"
-      opacity="${item.revenue > 0 ? "0.85" : "1"}"
-    >
-      <title>${label}</title>
+      opacity="${item.revenue > 0 ? "0.85" : "0.4"}">
+      <title>${item.label}: ${formatCurrency(item.revenue)}</title>
     </rect>`;
   }).join("");
 
-  const labelStep = 7;
+  const labelStep = Math.max(1, Math.round(data.length / 6));
   const labels = data
-    .filter((_, i) => i % labelStep === 0 || i === days - 1)
-    .map((item, _, arr) => {
+    .filter((_, i) => i % labelStep === 0 || i === data.length - 1)
+    .map((item) => {
       const i = data.indexOf(item);
       const x = i * (barWidth + gap) + barWidth / 2;
-      return `<text x="${x}" y="${chartH + 16}" text-anchor="middle" font-size="10" fill="var(--muted)">${item.d.getDate()} ${monthNames[item.d.getMonth()]}</text>`;
+      return `<text x="${x}" y="${chartH + 16}" text-anchor="middle" font-size="9" fill="var(--muted)">${item.label}</text>`;
     }).join("");
 
   chartEl.innerHTML = `
-    <svg width="100%" viewBox="0 0 ${svgW} ${chartH + 24}" preserveAspectRatio="none" style="display:block; overflow:visible;">
-      ${bars}
-      ${labels}
-    </svg>
-  `;
+    <svg width="100%" viewBox="0 0 ${svgW} ${chartH + 24}" preserveAspectRatio="none" style="display:block;overflow:visible;margin-top:12px;">
+      ${bars}${labels}
+    </svg>`;
 }
 
 function renderTodayTimeline(bookings) {
