@@ -3971,10 +3971,13 @@ function render404Page() {
 </html>`;
 }
 
-function renderSpecialistPage(specialist, site) {
+function renderSpecialistPage(specialist, services, site, recentPosts = []) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const name = specialist.name || "Специалист";
   const description = specialist.bio ? specialist.bio.slice(0, 160) : `${name} — специалист Mateev Spa Studio`;
+  const specialistServices = (specialist.specialties || [])
+    .map(id => services.find(s => s.id === id))
+    .filter(Boolean);
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -4006,23 +4009,61 @@ function renderSpecialistPage(specialist, site) {
     a{color:#6b8d6b;text-decoration:none}
     a:hover{text-decoration:underline}
     .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
-    .topbar__inner{max-width:900px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .topbar__inner{max-width:960px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
     .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
     .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
-    .container{max-width:900px;margin:0 auto;padding:0 24px}
-    .profile{padding:64px 0 80px;display:grid;grid-template-columns:280px 1fr;gap:56px;align-items:start}
-    .profile__photo{width:100%;border-radius:24px;object-fit:cover;aspect-ratio:3/4;background:#e8ddd4}
-    .profile__photo-placeholder{width:100%;aspect-ratio:3/4;border-radius:24px;background:linear-gradient(135deg,#2a3d2e,#1a2e22);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:700;color:rgba(255,255,255,0.2)}
-    .profile__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:10px}
-    .profile__name{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:6px;line-height:1.1}
-    .profile__role{color:#7d6d60;font-size:0.95rem;margin-bottom:28px}
-    .profile__bio{font-size:0.95rem;color:#3a2e26;line-height:1.8;margin-bottom:28px}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
-    .chip{padding:6px 14px;border-radius:999px;border:1px solid rgba(71,49,28,0.15);font-size:0.82rem;color:#5a4e45;background:rgba(255,255,255,0.6)}
-    .cta-btn{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem}
+    .container{max-width:960px;margin:0 auto;padding:0 24px}
+
+    /* Hero */
+    .hero{background:linear-gradient(135deg,#1a2e22,#243b2e);padding:72px 0;color:#fff}
+    .hero__inner{display:grid;grid-template-columns:260px 1fr;gap:56px;align-items:center}
+    .hero__photo{width:100%;border-radius:20px;object-fit:cover;aspect-ratio:3/4;border:3px solid rgba(255,255,255,0.12)}
+    .hero__placeholder{width:100%;aspect-ratio:3/4;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:700;color:rgba(255,255,255,0.15)}
+    .hero__kicker{font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(179,109,44,0.9);margin-bottom:12px}
+    .hero__name{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,4vw,3.4rem);font-weight:600;color:#fff;margin-bottom:8px;line-height:1.1}
+    .hero__role{color:rgba(255,255,255,0.6);font-size:0.95rem;margin-bottom:32px}
+    .stats{display:flex;gap:32px;flex-wrap:wrap;margin-bottom:36px}
+    .stat__value{display:block;font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#fff;line-height:1}
+    .stat__label{font-size:0.75rem;color:rgba(255,255,255,0.5);letter-spacing:0.06em;text-transform:uppercase}
+    .hero__cta{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem}
+    .hero__cta:hover{background:#9a5c22;text-decoration:none}
+
+    /* Sections */
+    .section{padding:56px 0}
+    .section + .section{border-top:1px solid rgba(71,49,28,0.08)}
+    .section__title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600;color:#1a2e22;margin-bottom:20px}
+    .bio{font-size:1rem;color:#3a2e26;line-height:1.85;max-width:720px}
+    .chips{display:flex;flex-wrap:wrap;gap:10px}
+    .chip{padding:8px 18px;border-radius:999px;border:1px solid rgba(71,49,28,0.15);font-size:0.85rem;color:#5a4e45;background:rgba(255,255,255,0.7)}
+
+    /* Services grid */
+    .services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+    .service-item{background:rgba(255,255,255,0.6);border:1px solid rgba(71,49,28,0.1);border-radius:16px;padding:20px 22px}
+    .service-item__name{font-weight:600;color:#1a2e22;margin-bottom:4px}
+    .service-item__meta{font-size:0.82rem;color:#7d6d60}
+
+    /* Blog posts */
+    .posts{display:grid;gap:16px}
+    .post-card{background:rgba(255,255,255,0.6);border:1px solid rgba(71,49,28,0.1);border-radius:16px;padding:20px 24px;display:grid;gap:6px}
+    .post-card__date{font-size:0.75rem;color:#7d6d60;letter-spacing:0.05em;text-transform:uppercase}
+    .post-card__title{font-weight:600;color:#1a2e22}
+    .post-card__link{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+
+    /* CTA section */
+    .cta-section{background:#1a2e22;border-radius:24px;padding:48px;text-align:center;margin-bottom:64px}
+    .cta-section__title{font-family:'Cormorant Garamond',serif;font-size:2rem;color:#fff;margin-bottom:8px}
+    .cta-section__sub{color:rgba(255,255,255,0.6);margin-bottom:28px}
+    .cta-btn{display:inline-block;padding:14px 36px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:1rem}
     .cta-btn:hover{background:#9a5c22;text-decoration:none}
+
     footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
-    @media(max-width:700px){.profile{grid-template-columns:1fr}.profile__photo,.profile__photo-placeholder{max-width:260px;margin:0 auto}}
+    @media(max-width:700px){
+      .hero__inner{grid-template-columns:1fr}
+      .hero__photo,.hero__placeholder{max-width:240px;margin:0 auto}
+      .hero{padding:48px 0}
+      .stats{gap:20px}
+      .cta-section{padding:32px 24px}
+    }
   </style>
 </head>
 <body>
@@ -4032,23 +4073,66 @@ function renderSpecialistPage(specialist, site) {
       <a href="/#specialists" class="topbar__back">← Специалисты</a>
     </div>
   </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero__inner">
+        ${specialist.photo
+          ? `<img src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(name)}" class="hero__photo" loading="lazy">`
+          : `<div class="hero__placeholder">${escapeHtml(specialist.initials || "ДМ")}</div>`}
+        <div>
+          <p class="hero__kicker">Специалист студии</p>
+          <h1 class="hero__name">${escapeHtml(name)}</h1>
+          <p class="hero__role">${escapeHtml(specialist.role || "Массажист")}</p>
+          <div class="stats">
+            ${specialist.experience ? `<div><span class="stat__value">${escapeHtml(specialist.experience)}</span><span class="stat__label">лет практики</span></div>` : ""}
+            ${specialistServices.length ? `<div><span class="stat__value">${specialistServices.length}</span><span class="stat__label">процедур</span></div>` : ""}
+          </div>
+          <a href="${base}/#booking" class="hero__cta">Записаться на сеанс →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <main>
     <div class="container">
-      <div class="profile">
-        ${specialist.photo
-          ? `<img src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(name)}" class="profile__photo" loading="lazy">`
-          : `<div class="profile__photo-placeholder">${escapeHtml(specialist.initials || "DM")}</div>`}
-        <div class="profile__content">
-          <p class="profile__kicker">Специалист студии</p>
-          <h1 class="profile__name">${escapeHtml(name)}</h1>
-          <p class="profile__role">${escapeHtml(specialist.role || "Массажист")}${specialist.experience ? ` · ${escapeHtml(specialist.experience)}` : ""}</p>
-          ${specialist.bio ? `<p class="profile__bio">${escapeHtml(specialist.bio)}</p>` : ""}
-          ${specialist.specialties && specialist.specialties.length ? `
-          <div class="chips">
-            ${specialist.specialties.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join("")}
-          </div>` : ""}
-          <a href="${base}/#booking" class="cta-btn">Записаться на сеанс</a>
+      ${specialist.bio ? `
+      <div class="section">
+        <h2 class="section__title">О специалисте</h2>
+        <p class="bio">${escapeHtml(specialist.bio)}</p>
+      </div>` : ""}
+
+      ${specialistServices.length ? `
+      <div class="section">
+        <h2 class="section__title">Процедуры</h2>
+        <div class="services-grid">
+          ${specialistServices.map(s => `
+            <div class="service-item">
+              <div class="service-item__name">${escapeHtml(s.name)}</div>
+              <div class="service-item__meta">${s.duration} мин · ${s.price} MDL</div>
+            </div>`).join("")}
         </div>
+      </div>` : ""}
+
+      ${recentPosts.length ? `
+      <div class="section">
+        <h2 class="section__title">Дневник практики</h2>
+        <div class="posts">
+          ${recentPosts.map(p => {
+            const date = new Date(p.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+            return `<a href="${base}/blog/${escapeHtml(p.id)}" class="post-card">
+              <span class="post-card__date">${date}</span>
+              <span class="post-card__title">${escapeHtml(p.title)}</span>
+              <span class="post-card__link">Читать →</span>
+            </a>`;
+          }).join("")}
+        </div>
+      </div>` : ""}
+
+      <div class="cta-section">
+        <div class="cta-section__title">Записаться к ${escapeHtml(name.split(" ")[0])}</div>
+        <p class="cta-section__sub">Онлайн-запись без звонков — выберите удобное время</p>
+        <a href="${base}/#booking" class="cta-btn">Выбрать время</a>
       </div>
     </div>
   </main>
@@ -4353,17 +4437,26 @@ function createServer() {
 
       if (urlObject.pathname.startsWith("/team/")) {
         const specialistId = urlObject.pathname.replace("/team/", "").replace(/\/$/, "");
-        const specialists = await readJson("specialists.json").catch(() => []);
-        const site = await readJson("site.json").catch(() => ({}));
-        const specialist = normalizeSpecialists(specialists, []).find(
-          (s) => s.id === specialistId || s.id.includes(specialistId)
+        const [rawSpecialists, rawServices, site, diary] = await Promise.all([
+          readJson("specialists.json").catch(() => []),
+          readJson("services.json").catch(() => []),
+          readJson("site.json").catch(() => ({})),
+          readJson("diary.json").catch(() => [])
+        ]);
+        const services = normalizeServices(rawServices);
+        const specialist = normalizeSpecialists(rawSpecialists, services).find(
+          (s) => s.id === specialistId
         );
         if (!specialist) {
           response.writeHead(302, { Location: "/#specialists" });
           response.end();
           return;
         }
-        const html = renderSpecialistPage(specialist, site);
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+        const recentPosts = normalizeDiary(diary)
+          .filter((e) => e.published && e.publishedAt <= today)
+          .slice(0, 3);
+        const html = renderSpecialistPage(specialist, services, site, recentPosts);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
