@@ -1543,6 +1543,7 @@ function renderDashboard() {
   renderClientsWorkspace();
   renderAdminStats(model.statCards);
   renderRevenueChart(state.adminData?.bookings || []);
+  renderSlotHeatmap(state.adminData?.bookings || []);
   renderTodayTimeline(model.todayBookings);
   renderUpcomingQueue(model.upcomingBookings);
   renderSpecialistLoad(model.specialistRows);
@@ -1837,6 +1838,76 @@ function renderRevenueChart(bookings, period) {
     <svg width="100%" viewBox="0 0 ${svgW} ${chartH + 24}" preserveAspectRatio="none" style="display:block;overflow:visible;margin-top:12px;">
       ${bars}${labels}
     </svg>`;
+}
+
+function renderSlotHeatmap(bookings) {
+  const el = document.getElementById("slotHeatmap");
+  if (!el) return;
+
+  const completed = bookings.filter((b) => b.status === "completed" || b.status === "confirmed");
+  if (!completed.length) {
+    el.innerHTML = '<div class="empty-state">Нет данных — появится после первых завершённых записей.</div>';
+    return;
+  }
+
+  // Build grid: day of week (0=Mon..6=Sun) × hour (9..20)
+  const hours = Array.from({ length: 12 }, (_, i) => i + 9); // 9..20
+  const dayLabels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const grid = Array.from({ length: 7 }, () => new Array(hours.length).fill(0));
+
+  completed.forEach((b) => {
+    if (!b.date || !b.slot) return;
+    const dow = new Date(b.date + "T00:00:00").getDay(); // 0=Sun
+    const jsDay = (dow + 6) % 7; // 0=Mon
+    const hour = parseInt(b.slot.split(":")[0], 10);
+    const hIdx = hours.indexOf(hour);
+    if (hIdx !== -1) grid[jsDay][hIdx]++;
+  });
+
+  const maxVal = Math.max(1, ...grid.flat());
+  const cellW = 36;
+  const cellH = 28;
+  const labelW = 28;
+  const labelH = 20;
+  const cols = hours.length;
+  const rows = 7;
+  const svgW = labelW + cols * cellW;
+  const svgH = labelH + rows * cellH;
+
+  const cells = grid.flatMap((row, dayIdx) =>
+    row.map((val, hIdx) => {
+      const x = labelW + hIdx * cellW;
+      const y = labelH + dayIdx * cellH;
+      const intensity = val / maxVal;
+      const alpha = val === 0 ? 0.06 : 0.15 + intensity * 0.8;
+      const color = val === 0 ? "var(--line-strong)" : `rgba(179,109,44,${alpha.toFixed(2)})`;
+      const textColor = intensity > 0.6 ? "#fff" : "var(--ink)";
+      return `
+        <rect x="${x+1}" y="${y+1}" width="${cellW-2}" height="${cellH-2}" rx="4" fill="${color}"/>
+        ${val > 0 ? `<text x="${x+cellW/2}" y="${y+cellH/2+4}" text-anchor="middle" font-size="10" fill="${textColor}" font-weight="600">${val}</text>` : ""}
+        <title>${dayLabels[dayIdx]}, ${hours[hIdx]}:00 — ${val} записей</title>`;
+    })
+  ).join("");
+
+  const hourLabels = hours.map((h, i) =>
+    `<text x="${labelW + i * cellW + cellW/2}" y="${labelH - 4}" text-anchor="middle" font-size="9" fill="var(--muted)">${h}:00</text>`
+  ).join("");
+
+  const dayLabelsSvg = dayLabels.map((d, i) =>
+    `<text x="${labelW - 4}" y="${labelH + i * cellH + cellH/2 + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${d}</text>`
+  ).join("");
+
+  el.innerHTML = `
+    <svg width="${svgW}" height="${svgH}" style="display:block;min-width:${svgW}px;">
+      ${hourLabels}
+      ${dayLabelsSvg}
+      ${cells}
+    </svg>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--muted);">
+      <span>Мало</span>
+      ${[0.15,0.35,0.55,0.75,0.95].map(a => `<span style="display:inline-block;width:16px;height:10px;border-radius:3px;background:rgba(179,109,44,${a});"></span>`).join("")}
+      <span>Много</span>
+    </div>`;
 }
 
 function renderTodayTimeline(bookings) {
