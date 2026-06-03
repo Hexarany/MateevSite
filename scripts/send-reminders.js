@@ -31,8 +31,14 @@ const EMAIL_REPLY_TO     = process.env.EMAIL_REPLY_TO || "";
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID || "";
 const SITE_URL           = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+const FORM_TOKEN_SECRET  = process.env.FORM_TOKEN_SECRET || process.env.ADMIN_SESSION_SECRET || "fallback";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+const crypto = require("node:crypto");
+
+function generateConfirmToken(bookingId) {
+  return crypto.createHmac("sha256", FORM_TOKEN_SECRET).update(`confirm:${bookingId}`).digest("hex").slice(0, 32);
+}
 function post(urlString, body) {
   return new Promise((resolve, reject) => {
     const url     = new URL(urlString);
@@ -70,6 +76,9 @@ function buildReminderHtml(booking, dateLabel) {
   const ink = "#241c17";
   const muted = "#7d6d60";
   const cancelUrl = `${SITE_URL}/cancel?ref=${encodeURIComponent(booking.reference)}`;
+  const confirmUrl = booking.status !== "confirmed"
+    ? `${SITE_URL}/confirm?id=${encodeURIComponent(booking.id)}&token=${generateConfirmToken(booking.id)}`
+    : null;
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -108,6 +117,18 @@ function buildReminderHtml(booking, dateLabel) {
             </table>
           </td>
         </tr>
+        ${confirmUrl ? `
+        <tr>
+          <td style="padding:8px 36px 16px;text-align:center;">
+            <p style="margin:0 0 14px;font-size:14px;color:${muted};">Подтвердите что будете — один клик:</p>
+            <a href="${confirmUrl}" style="display:inline-block;padding:14px 32px;background:#2a6b3e;border-radius:12px;font-size:15px;font-weight:700;color:#fff;text-decoration:none;">✓ Подтверждаю — буду</a>
+          </td>
+        </tr>` : `
+        <tr>
+          <td style="padding:8px 36px 16px;text-align:center;">
+            <p style="margin:0;font-size:14px;color:#2a6b3e;font-weight:600;">✓ Запись подтверждена</p>
+          </td>
+        </tr>`}
         <tr>
           <td style="padding:0 36px 32px;">
             <p style="margin:0 0 14px;font-size:13px;color:${muted};line-height:1.5;">Если планы изменились — отмените запись заранее.</p>
