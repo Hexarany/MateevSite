@@ -2747,6 +2747,11 @@ p {
   box-sizing: border-box;
 }
 
+/* Section blocks clip their content — the definitive overflow fix */
+.admin-section-block {
+  overflow-x: hidden;
+}
+
 /* Admin forms: inputs/textareas never wider than their container */
 .admin-page input[type="text"],
 .admin-page input[type="number"],
