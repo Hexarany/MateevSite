@@ -1,5 +1,6 @@
 const state = {
   adminPin: "",
+  role: "admin",
   adminData: null,
   enrollments: [],
   certificates: [],
@@ -1256,18 +1257,20 @@ async function handleAdminLogin() {
   elements.adminLoginBtn.textContent = "Проверяю...";
 
   try {
-    await fetchJson("/api/admin/session", {
+    const loginData = await fetchJson("/api/admin/session", {
       method: "POST",
-      body: JSON.stringify({
-        pin
-      })
+      body: JSON.stringify({ pin })
     });
     state.adminPin = "__session__";
+    state.role = loginData.role || "admin";
     await loadAdminData();
     elements.adminPin.value = "";
     elements.adminPanel.hidden = false;
     elements.adminGateMessage.textContent =
-      "Доступ открыт. Панель загружена, статусы можно менять прямо в журнале.";
+      state.role === "staff"
+        ? "Вы вошли как сотрудник — доступен журнал записей."
+        : "Доступ открыт. Панель загружена, статусы можно менять прямо в журнале.";
+    applyRoleRestrictions();
     syncRevealTargets();
     showToast("Админ-панель подключена.", "success");
   } catch (error) {
@@ -1507,16 +1510,43 @@ async function tryAutoLoginFromSession() {
       return;
     }
 
+    const data = await response.json();
     state.adminPin = "__session__";
+    state.role = data.role || "admin";
     await loadAdminData();
     elements.adminPanel.hidden = false;
     elements.adminGateMessage.textContent =
       "Super-user сессия восстановлена. Кабинет открыт автоматически.";
+    applyRoleRestrictions();
     syncRevealTargets();
   } catch {
     state.adminPin = "";
     elements.adminPin.value = "";
   }
+}
+
+function applyRoleRestrictions() {
+  if (state.role !== "staff") return;
+
+  // Staff: show only requests journal and clients (read-only hint)
+  const staffSections = ["overview", "requests", "clients"];
+  const nav = document.querySelector(".admin-sidebar__nav");
+  if (!nav) return;
+
+  nav.querySelectorAll("a[data-section]").forEach((link) => {
+    if (!staffSections.includes(link.dataset.section)) {
+      link.style.display = "none";
+    }
+  });
+  nav.querySelectorAll("hr").forEach((hr) => hr.style.display = "none");
+
+  // Hide client profile save button (read-only for staff)
+  document.querySelectorAll(".client-detail__save, [data-rebook-client]").forEach((el) => {
+    el.style.display = "none";
+  });
+
+  showToast("Вы вошли как сотрудник — доступен только журнал записей.", "info");
+  activateSection("requests");
 }
 
 async function handleAdminLogout() {

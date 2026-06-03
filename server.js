@@ -11,6 +11,7 @@ if (!ADMIN_PIN) {
   process.stderr.write("[FATAL] ADMIN_PIN is required. Copy .env.example to .env and set it.\n");
   process.exit(1);
 }
+const STAFF_PIN = process.env.STAFF_PIN || null; // optional — staff limited access
 const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const BACKUP_DIR = path.join(ROOT_DIR, "backups");
@@ -1146,12 +1147,13 @@ function readSignedToken(token, secret) {
   }
 }
 
-function createAdminSessionToken() {
+function createAdminSessionToken(role = "admin") {
   const now = Date.now();
   return createSignedToken(
     {
       purpose: "admin-session",
       key: ADMIN_PIN_FINGERPRINT,
+      role,
       iat: now,
       exp: now + ADMIN_SESSION_TTL_MS,
       nonce: crypto.randomBytes(12).toString("hex")
@@ -2756,13 +2758,18 @@ async function handleAdminSessionCreate(request, response) {
   });
 
   const payload = await parseJsonBody(request);
-  if (sanitizeEnv(payload.pin) !== ADMIN_PIN) {
+  const pin = sanitizeEnv(payload.pin);
+  let role = null;
+  if (pin === ADMIN_PIN) role = "admin";
+  else if (STAFF_PIN && pin === STAFF_PIN) role = "staff";
+
+  if (!role) {
     const error = new Error("PIN не подошёл.");
     error.statusCode = 401;
     throw error;
   }
 
-  const sessionToken = createAdminSessionToken();
+  const sessionToken = createAdminSessionToken(role);
   const session = readSignedToken(sessionToken, ADMIN_SESSION_SECRET);
 
   sendJson(
@@ -2789,6 +2796,7 @@ async function handleAdminSessionStatus(request, response) {
 
   sendJson(response, 200, {
     authenticated: true,
+    role: session.role || "admin",
     expiresAt: session.exp
   });
 }
