@@ -54,9 +54,11 @@ function getYesterday() {
 
 function buildReviewEmail(booking) {
   const brandColor = "#b36d2c";
+  const green = "#1a2e22";
   const bg = "#f7f0e6";
   const ink = "#241c17";
   const muted = "#7d6d60";
+  const bookAgainUrl = `${SITE_URL}/#booking`;
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -65,41 +67,52 @@ function buildReviewEmail(booking) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:${bg};padding:40px 16px;">
     <tr><td align="center">
       <table width="100%" style="max-width:520px;background:#fffaf4;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(54,35,20,0.10);">
+
         <tr>
-          <td style="background:${brandColor};padding:28px 36px;">
-            <p style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.75);">Студия массажа в Кишиневе</p>
-            <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#fff;">Mateev Spa Studio</p>
+          <td style="background:${green};padding:28px 36px;">
+            <p style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Mateev Spa Studio · Кишинёв</p>
+            <p style="margin:8px 0 0;font-size:20px;font-weight:700;color:#fff;">Денис Матиевич</p>
           </td>
         </tr>
+
         <tr>
-          <td style="padding:32px 36px 24px;">
-            <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:${muted};">Спасибо за визит</p>
-            <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:${ink};">${booking.clientName}, как прошёл сеанс?</h1>
-            <p style="margin:0 0 24px;font-size:15px;color:${muted};line-height:1.7;">
-              Вы посетили нас вчера — ${booking.serviceName} с ${booking.specialistName}.<br>
-              Нам важно знать ваше мнение. Если вам понравилось — оставьте отзыв на Google, это очень поможет студии.
+          <td style="padding:32px 36px 8px;">
+            <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:${ink};line-height:1.3;">
+              ${booking.clientName}, вчера был ваш<br>${booking.serviceName}
+            </h1>
+            <p style="margin:0 0 20px;font-size:15px;color:${ink};line-height:1.75;">
+              Надеюсь, всё прошло хорошо и вы чувствуете разницу. Если сеанс был полезен — у меня к вам одна небольшая просьба.
+            </p>
+            <p style="margin:0 0 28px;font-size:15px;color:${muted};line-height:1.75;">
+              Напишите пару слов об ощущениях в Google — это поможет другим людям найти студию и решиться на первый визит. Занимает меньше минуты.
             </p>
             <a href="${GOOGLE_REVIEW_URL}"
-               style="display:inline-block;padding:14px 28px;background:${brandColor};color:#fff;border-radius:10px;font-size:15px;font-weight:700;text-decoration:none;">
-              ⭐ Оставить отзыв на Google
+               style="display:inline-block;padding:16px 32px;background:${brandColor};color:#fff;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:0.01em;">
+              ⭐ Оставить отзыв в Google
             </a>
           </td>
         </tr>
+
         <tr>
-          <td style="padding:20px 36px 28px;">
-            <p style="margin:0;font-size:13px;color:${muted};line-height:1.6;">
-              Если что-то пошло не так или есть пожелания — просто ответьте на это письмо.<br>
-              Ждём вас снова. До встречи!
+          <td style="padding:24px 36px 28px;border-top:1px solid rgba(68,50,36,0.08);margin-top:24px;">
+            <p style="margin:0 0 6px;font-size:13px;color:${muted};line-height:1.6;">
+              Если что-то в сеансе можно было сделать лучше — ответьте на это письмо напрямую. Мне важно это знать.
+            </p>
+            <p style="margin:12px 0 0;font-size:13px;color:${muted};">
+              До встречи,<br>
+              <strong style="color:${ink};">Денис</strong>
             </p>
           </td>
         </tr>
+
         <tr>
-          <td style="padding:20px 36px;border-top:1px solid rgba(68,50,36,0.10);background:rgba(179,109,44,0.04);">
-            <a href="${SITE_URL}/#booking" style="font-size:13px;color:${brandColor};font-weight:700;text-decoration:none;">
+          <td style="padding:16px 36px;border-top:1px solid rgba(68,50,36,0.08);background:rgba(179,109,44,0.04);">
+            <a href="${bookAgainUrl}" style="font-size:13px;color:${brandColor};font-weight:700;text-decoration:none;">
               Записаться снова →
             </a>
           </td>
         </tr>
+
       </table>
     </td></tr>
   </table>
@@ -141,7 +154,7 @@ async function main() {
           from: EMAIL_FROM,
           to: [booking.email],
           replyTo: EMAIL_REPLY_TO || undefined,
-          subject: `${booking.clientName}, как прошёл ваш визит? — Mateev Spa Studio`,
+          subject: `${booking.clientName}, как прошёл ваш ${booking.serviceName}?`,
           html: buildReviewEmail(booking),
           text: `Здравствуйте, ${booking.clientName}!\n\nВы посетили нас вчера — ${booking.serviceName} с ${booking.specialistName}.\n\nЕсли вам понравилось, пожалуйста оставьте отзыв на Google:\n${GOOGLE_REVIEW_URL}\n\nЗаписаться снова: ${SITE_URL}/#booking`
         }
