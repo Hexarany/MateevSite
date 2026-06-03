@@ -4038,7 +4038,9 @@ function renderCertificatesPage(site) {
     .hero__subtitle{color:#7d6d60;max-width:520px;margin:0 auto 48px;font-size:0.95rem}
     .amounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:64px}
     .amount-card{background:rgba(255,255,255,0.7);border:1px solid rgba(71,49,28,0.1);border-radius:20px;padding:28px 20px;text-align:center}
+    .amount-card--custom{background:rgba(26,46,34,0.06);border-color:rgba(26,46,34,0.2);border-style:dashed}
     .amount-card__value{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#1a2e22;margin-bottom:4px}
+    .amount-card__value--custom{font-size:1.4rem;color:#6b8d6b}
     .amount-card__label{font-size:0.8rem;color:#7d6d60}
     .how{background:rgba(255,255,255,0.5);border-radius:24px;padding:40px;margin-bottom:48px}
     .how__title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#1a2e22;margin-bottom:24px}
@@ -4072,10 +4074,11 @@ function renderCertificatesPage(site) {
       </div>
 
       <div class="amounts">
-        <div class="amount-card"><div class="amount-card__value">500 MDL</div><div class="amount-card__label">~30 мин процедура</div></div>
-        <div class="amount-card"><div class="amount-card__value">1 000 MDL</div><div class="amount-card__label">~60 мин процедура</div></div>
-        <div class="amount-card"><div class="amount-card__value">1 500 MDL</div><div class="amount-card__label">~90 мин процедура</div></div>
-        <div class="amount-card"><div class="amount-card__value">2 000 MDL</div><div class="amount-card__label">Комплексная программа</div></div>
+        <div class="amount-card"><div class="amount-card__value">500 MDL</div></div>
+        <div class="amount-card"><div class="amount-card__value">1 000 MDL</div></div>
+        <div class="amount-card"><div class="amount-card__value">1 500 MDL</div></div>
+        <div class="amount-card"><div class="amount-card__value">2 000 MDL</div></div>
+        <div class="amount-card amount-card--custom"><div class="amount-card__value amount-card__value--custom">Любая сумма</div><div class="amount-card__label">На ваш выбор</div></div>
       </div>
 
       <div class="how">
