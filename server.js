@@ -56,7 +56,8 @@ const STATIC_FILES = {
   "/success.html": "success.html",
   "/school-success": "school-success.html",
   "/school-success.html": "school-success.html",
-  "/og-image.svg": "og-image.svg",
+  "/og-image.jpg": "og-image.jpg",
+  "/og-image.jpg": "og-image.jpg",
   "/founder.png": "founder.png",
   "/mateev_logo.png": "mateev_logo.png",
   "/mateev_logo.jpg": "mateev_logo.jpg",
@@ -3987,7 +3988,7 @@ function renderFirstVisitPage() {
   <meta property="og:title" content="Первый визит — Mateev Spa Studio">
   <meta property="og:description" content="Как подготовиться к первому сеансу, что будет происходить и что делать после. Простые ответы на частые вопросы.">
   <meta property="og:url" content="${base}/first-visit">
-  <meta property="og:image" content="${base}/og-image.svg">
+  <meta property="og:image" content="${base}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -4384,7 +4385,7 @@ function renderCertificatesPage(site) {
   <meta property="og:title" content="Подарочные сертификаты — Mateev Spa Studio">
   <meta property="og:description" content="Подарите сеанс массажа. Сертификаты от 500 MDL — идеальный подарок для близких.">
   <meta property="og:url" content="${base}/certificates">
-  <meta property="og:image" content="${base}/og-image.svg">
+  <meta property="og:image" content="${base}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Product",
