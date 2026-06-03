@@ -1250,9 +1250,10 @@ p {
 /* ─── Instagram section ──────────────────────────────────────────────────── */
 
 .instagram-section {
-  padding: 72px 0;
-  background: linear-gradient(135deg, #3d2314 0%, #2a1a0e 100%);
-  color: #fff;
+  padding: 64px 0;
+  background: rgba(255, 255, 255, 0.45);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 .instagram__inner {
@@ -1263,22 +1264,21 @@ p {
 }
 
 .instagram__kicker {
-  color: rgba(255,255,255,0.5) !important;
   margin-bottom: 10px;
 }
 
 .instagram__title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 600;
-  color: #fff;
+  color: var(--forest);
   margin-bottom: 10px;
 }
 
 .instagram__sub {
-  color: rgba(255,255,255,0.65);
-  font-size: 0.95rem;
-  margin-bottom: 28px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 24px;
   max-width: 380px;
 }
 
@@ -1298,7 +1298,7 @@ p {
 .instagram__stats {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .instagram__stat {
@@ -1310,13 +1310,13 @@ p {
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.8rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
   line-height: 1;
 }
 
 .instagram__stat-label {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+  color: var(--muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1324,7 +1324,7 @@ p {
 @media (max-width: 760px) {
   .instagram__inner {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 28px;
   }
 
   .instagram__stats {
