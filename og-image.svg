@@ -1,40 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f3e8d8"/>
-      <stop offset="100%" stop-color="#e8d4b8"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f7f0e6"/>
+      <stop offset="100%" style="stop-color:#ede4d6"/>
     </linearGradient>
-    <radialGradient id="glow1" cx="15%" cy="20%" r="40%">
-      <stop offset="0%" stop-color="rgba(201,147,80,0.22)"/>
-      <stop offset="100%" stop-color="rgba(201,147,80,0)"/>
-    </radialGradient>
-    <radialGradient id="glow2" cx="85%" cy="80%" r="40%">
-      <stop offset="0%" stop-color="rgba(40,72,56,0.16)"/>
-      <stop offset="100%" stop-color="rgba(40,72,56,0)"/>
-    </radialGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2e22"/>
+      <stop offset="100%" style="stop-color:#243b2e"/>
+    </linearGradient>
   </defs>
 
+  <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#glow1)"/>
-  <rect width="1200" height="630" fill="url(#glow2)"/>
 
-  <!-- Brand mark -->
-  <rect x="80" y="80" width="48" height="48" rx="12" fill="#b36d2c"/>
-  <text x="104" y="115" font-family="Georgia, serif" font-size="28" font-weight="700" fill="#fffaf4" text-anchor="middle">M</text>
+  <!-- Warm glow top-left -->
+  <ellipse cx="0" cy="0" rx="480" ry="380" fill="rgba(201,147,80,0.14)"/>
 
-  <!-- Eyebrow -->
-  <text x="80" y="200" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#b36d2c" letter-spacing="4">СТУДИЯ МАССАЖА В КИШИНЕВЕ</text>
+  <!-- Green glow bottom-right -->
+  <ellipse cx="1200" cy="630" rx="420" ry="320" fill="rgba(40,72,56,0.10)"/>
 
-  <!-- Title -->
-  <text x="80" y="290" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#241c17">Mateev Spa Studio</text>
+  <!-- Left dark panel -->
+  <rect x="0" y="0" width="420" height="630" fill="url(#accent)"/>
 
-  <!-- Subtitle -->
-  <text x="80" y="370" font-family="Arial, sans-serif" font-size="30" fill="#7d6d60">Массаж и телесная терапия.</text>
-  <text x="80" y="414" font-family="Arial, sans-serif" font-size="30" fill="#7d6d60">Онлайн-запись 24/7.</text>
+  <!-- Decorative large letter -->
+  <text x="390" y="500" font-family="Georgia,serif" font-size="500" font-weight="700"
+        fill="rgba(255,255,255,0.04)" text-anchor="end">M</text>
 
-  <!-- Divider -->
-  <rect x="80" y="468" width="120" height="3" rx="2" fill="#b36d2c"/>
+  <!-- Kicker -->
+  <text x="56" y="184" font-family="Arial,sans-serif" font-size="15" font-weight="600"
+        fill="rgba(179,109,44,0.9)" letter-spacing="4">КИШИНЁВ · МОЛДОВА</text>
 
-  <!-- URL -->
-  <text x="80" y="530" font-family="Arial, sans-serif" font-size="26" fill="#b36d2c" font-weight="700">mateevmassage.com</text>
+  <!-- Brand name on dark panel -->
+  <text x="56" y="244" font-family="Georgia,serif" font-size="50" font-weight="600"
+        fill="#ffffff" letter-spacing="1">Mateev</text>
+  <text x="56" y="300" font-family="Georgia,serif" font-size="50" font-weight="600"
+        fill="#ffffff" letter-spacing="1">Spa Studio</text>
+
+  <!-- Divider line -->
+  <line x1="56" y1="334" x2="340" y2="334" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+
+  <!-- Tagline on dark panel -->
+  <text x="56" y="368" font-family="Arial,sans-serif" font-size="17" fill="rgba(255,255,255,0.6)">Массаж и телесная терапия</text>
+  <text x="56" y="392" font-family="Arial,sans-serif" font-size="17" fill="rgba(255,255,255,0.6)">для восстановления</text>
+
+  <!-- CTA pill -->
+  <rect x="56" y="444" width="200" height="48" rx="24" fill="rgba(179,109,44,0.9)"/>
+  <text x="156" y="474" font-family="Arial,sans-serif" font-size="16" font-weight="700"
+        fill="#ffffff" text-anchor="middle">Онлайн-запись</text>
+
+  <!-- Right side headline -->
+  <text x="492" y="220" font-family="Georgia,serif" font-size="68" font-weight="600"
+        fill="#1a2e22" letter-spacing="-1">Забота о теле —</text>
+  <text x="492" y="300" font-family="Georgia,serif" font-size="68" font-weight="600"
+        fill="#1a2e22" letter-spacing="-1">ваш выбор</text>
+
+  <!-- Features -->
+  <text x="492" y="376" font-family="Arial,sans-serif" font-size="19" fill="#7d6d60">· Классический, тайский, спортивный массаж</text>
+  <text x="492" y="408" font-family="Arial,sans-serif" font-size="19" fill="#7d6d60">· Реабилитация и восстановление</text>
+  <text x="492" y="440" font-family="Arial,sans-serif" font-size="19" fill="#7d6d60">· 10+ лет практики · Призёр ЧМ 2017</text>
+
+  <!-- Domain -->
+  <text x="492" y="534" font-family="Arial,sans-serif" font-size="22" font-weight="600"
+        fill="#b36d2c" letter-spacing="0.5">mateevmassage.com</text>
+
+  <!-- Bottom accent -->
+  <rect x="0" y="618" width="1200" height="12" fill="rgba(179,109,44,0.5)"/>
 </svg>

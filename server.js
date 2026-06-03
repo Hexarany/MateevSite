@@ -981,7 +981,9 @@ async function serveStaticFile(requestPath, response) {
   const fileName = STATIC_FILES[requestPath];
 
   if (!fileName) {
-    sendText(response, 404, "Not found");
+    const html = render404Page();
+    response.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
+    response.end(html);
     return;
   }
 
@@ -3931,6 +3933,130 @@ function normalizeDiary(entries) {
   return entries.map(normalizeDiaryEntry).filter((e) => e.title);
 }
 
+function render404Page() {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Страница не найдена — Mateev Spa Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+    .num{font-family:'Cormorant Garamond',serif;font-size:clamp(6rem,20vw,12rem);font-weight:700;color:#1a2e22;line-height:1;opacity:0.12;margin-bottom:-20px}
+    .title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:600;color:#1a2e22;margin-bottom:12px}
+    .sub{color:#7d6d60;font-size:0.95rem;margin-bottom:36px;max-width:400px}
+    .btn{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem;text-decoration:none}
+    .btn:hover{background:#9a5c22}
+    .links{margin-top:24px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+    .link{font-size:0.88rem;color:#6b8d6b;text-decoration:none;font-weight:500}
+    .link:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="num">404</div>
+  <h1 class="title">Страница не найдена</h1>
+  <p class="sub">Возможно, ссылка устарела или адрес введён с ошибкой</p>
+  <a href="${base}/" class="btn">На главную</a>
+  <div class="links">
+    <a href="${base}/#booking" class="link">Записаться</a>
+    <a href="${base}/blog" class="link">Дневник</a>
+    <a href="${base}/school" class="link">Школа</a>
+    <a href="${base}/certificates" class="link">Сертификаты</a>
+  </div>
+</body>
+</html>`;
+}
+
+function renderSpecialistPage(specialist, site) {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const name = specialist.name || "Специалист";
+  const description = specialist.bio ? specialist.bio.slice(0, 160) : `${name} — специалист Mateev Spa Studio`;
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeHtml(name)} — Mateev Spa Studio</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <link rel="canonical" href="${base}/team/${escapeHtml(specialist.id)}">
+  <meta property="og:title" content="${escapeHtml(name)} — Mateev Spa Studio">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:url" content="${base}/team/${escapeHtml(specialist.id)}">
+  ${specialist.photo ? `<meta property="og:image" content="${base}${escapeHtml(specialist.photo)}">` : ""}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": name,
+    "jobTitle": specialist.role || "Массажист",
+    "description": specialist.bio || "",
+    "worksFor": { "@type": "HealthAndBeautyBusiness", "name": "Mateev Spa Studio", "url": base },
+    "url": `${base}/team/${specialist.id}`,
+    ...(specialist.photo ? { "image": `${base}${specialist.photo}` } : {})
+  })}</script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.7}
+    a{color:#6b8d6b;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
+    .topbar__inner{max-width:900px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .container{max-width:900px;margin:0 auto;padding:0 24px}
+    .profile{padding:64px 0 80px;display:grid;grid-template-columns:280px 1fr;gap:56px;align-items:start}
+    .profile__photo{width:100%;border-radius:24px;object-fit:cover;aspect-ratio:3/4;background:#e8ddd4}
+    .profile__photo-placeholder{width:100%;aspect-ratio:3/4;border-radius:24px;background:linear-gradient(135deg,#2a3d2e,#1a2e22);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:700;color:rgba(255,255,255,0.2)}
+    .profile__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:10px}
+    .profile__name{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:6px;line-height:1.1}
+    .profile__role{color:#7d6d60;font-size:0.95rem;margin-bottom:28px}
+    .profile__bio{font-size:0.95rem;color:#3a2e26;line-height:1.8;margin-bottom:28px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+    .chip{padding:6px 14px;border-radius:999px;border:1px solid rgba(71,49,28,0.15);font-size:0.82rem;color:#5a4e45;background:rgba(255,255,255,0.6)}
+    .cta-btn{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem}
+    .cta-btn:hover{background:#9a5c22;text-decoration:none}
+    footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
+    @media(max-width:700px){.profile{grid-template-columns:1fr}.profile__photo,.profile__photo-placeholder{max-width:260px;margin:0 auto}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <span class="topbar__brand">Mateev Spa Studio</span>
+      <a href="/#specialists" class="topbar__back">← Специалисты</a>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="profile">
+        ${specialist.photo
+          ? `<img src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(name)}" class="profile__photo" loading="lazy">`
+          : `<div class="profile__photo-placeholder">${escapeHtml(specialist.initials || "DM")}</div>`}
+        <div class="profile__content">
+          <p class="profile__kicker">Специалист студии</p>
+          <h1 class="profile__name">${escapeHtml(name)}</h1>
+          <p class="profile__role">${escapeHtml(specialist.role || "Массажист")}${specialist.experience ? ` · ${escapeHtml(specialist.experience)}` : ""}</p>
+          ${specialist.bio ? `<p class="profile__bio">${escapeHtml(specialist.bio)}</p>` : ""}
+          ${specialist.specialties && specialist.specialties.length ? `
+          <div class="chips">
+            ${specialist.specialties.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join("")}
+          </div>` : ""}
+          <a href="${base}/#booking" class="cta-btn">Записаться на сеанс</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+</body>
+</html>`;
+}
+
 function renderBlogListPage(entries, site) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const sharedHead = `
@@ -4222,6 +4348,24 @@ function createServer() {
 
       if (urlObject.pathname.startsWith("/api/")) {
         await routeApi(request, response, urlObject);
+        return;
+      }
+
+      if (urlObject.pathname.startsWith("/team/")) {
+        const specialistId = urlObject.pathname.replace("/team/", "").replace(/\/$/, "");
+        const specialists = await readJson("specialists.json").catch(() => []);
+        const site = await readJson("site.json").catch(() => ({}));
+        const specialist = normalizeSpecialists(specialists, []).find(
+          (s) => s.id === specialistId || s.id.includes(specialistId)
+        );
+        if (!specialist) {
+          response.writeHead(302, { Location: "/#specialists" });
+          response.end();
+          return;
+        }
+        const html = renderSpecialistPage(specialist, site);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
         return;
       }
 
