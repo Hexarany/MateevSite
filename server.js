@@ -3933,6 +3933,147 @@ function normalizeDiary(entries) {
   return entries.map(normalizeDiaryEntry).filter((e) => e.title);
 }
 
+function renderFirstVisitPage() {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const sharedFonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
+
+  const steps = [
+    {
+      num: "01",
+      title: "Запись и подтверждение",
+      text: "Выберите процедуру и удобное время на сайте. Подтверждение придёт на почту — там будет дата, время и адрес студии."
+    },
+    {
+      num: "02",
+      title: "Как подготовиться",
+      text: "Ничего особенного не нужно. Приходите в комфортной одежде. За 1-2 часа лучше не есть плотно. Если есть хронические заболевания или недавние травмы — сообщите об этом при записи или при встрече."
+    },
+    {
+      num: "03",
+      title: "Начало сеанса",
+      text: "В начале я спрошу о вашем самочувствии, зонах напряжения и целях визита. Это займёт 3-5 минут — важно понять запрос чтобы работа была точной и полезной, а не шаблонной."
+    },
+    {
+      num: "04",
+      title: "Во время процедуры",
+      text: "Вы лежите на массажном столе в тепле, всё необходимое — в студии. Интенсивность давления подбирается по вашим ощущениям — говорите если что-то некомфортно. Работа идёт в тишине или с мягкой фоновой музыкой — как вам лучше."
+    },
+    {
+      num: "05",
+      title: "После сеанса",
+      text: "После процедуры не торопитесь вставать — дайте телу пару минут. В первые часы рекомендую пить больше воды. Лёгкая усталость или ощущение «прожитых мышц» — это нормально и проходит к следующему дню."
+    },
+    {
+      num: "06",
+      title: "Что дальше",
+      text: "Скажу честно сколько сеансов нужно именно вам и с каким интервалом. Если разовый визит — дам рекомендации что делать самостоятельно. Никаких лишних визитов — только то что реально нужно."
+    }
+  ];
+
+  const faq = [
+    { q: "Нужно ли что-то брать с собой?", a: "Нет. Всё необходимое — полотенца, одноразовые материалы, масло — в студии." },
+    { q: "Можно ли перенести запись?", a: "Да. Сообщите заранее по телефону или в Telegram — подберём новое время." },
+    { q: "Как выбрать процедуру если не знаю что нужно?", a: "Выбирайте классический массаж или напишите мне — опишите где болит или что беспокоит, посоветую." },
+    { q: "Можно при беременности?", a: "Некоторые техники противопоказаны, особенно в первом триместре. Сообщите о беременности при записи — подберём безопасный формат." }
+  ];
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Первый визит в Mateev Spa Studio — что нужно знать</title>
+  <meta name="description" content="Как подготовиться к первому сеансу массажа, что взять с собой и что будет происходить. Всё что нужно знать перед визитом в Mateev Spa Studio.">
+  <link rel="canonical" href="${base}/first-visit">
+  <meta property="og:title" content="Первый визит — Mateev Spa Studio">
+  <meta property="og:description" content="Как подготовиться к первому сеансу, что будет происходить и что делать после. Простые ответы на частые вопросы.">
+  <meta property="og:url" content="${base}/first-visit">
+  ${sharedFonts}
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.7}
+    a{color:#6b8d6b;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
+    .topbar__inner{max-width:800px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .container{max-width:800px;margin:0 auto;padding:0 24px}
+    .hero{padding:64px 0 48px}
+    .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
+    .hero__title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:12px;line-height:1.2}
+    .hero__sub{color:#7d6d60;font-size:1rem;max-width:580px}
+    .steps{padding:48px 0;display:grid;gap:32px}
+    .step{display:grid;grid-template-columns:64px 1fr;gap:20px;align-items:start}
+    .step__num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:#b36d2c;opacity:0.6;line-height:1}
+    .step__title{font-weight:700;font-size:1.05rem;color:#1a2e22;margin-bottom:6px}
+    .step__text{color:#3a2e26;font-size:0.95rem;line-height:1.8}
+    .divider{border:none;border-top:1px solid rgba(71,49,28,0.1);margin:0}
+    .faq{padding:48px 0}
+    .faq__title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600;color:#1a2e22;margin-bottom:28px}
+    .faq-item{padding:20px 0;border-bottom:1px solid rgba(71,49,28,0.1)}
+    .faq-item:last-child{border-bottom:none}
+    .faq-item__q{font-weight:600;color:#1a2e22;margin-bottom:8px}
+    .faq-item__a{color:#5a4e45;font-size:0.93rem;line-height:1.75}
+    .cta{background:#1a2e22;border-radius:24px;padding:48px;text-align:center;margin-bottom:64px}
+    .cta__title{font-family:'Cormorant Garamond',serif;font-size:2rem;color:#fff;margin-bottom:8px}
+    .cta__sub{color:rgba(255,255,255,0.6);margin-bottom:28px}
+    .cta-btn{display:inline-block;padding:14px 36px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:1rem}
+    .cta-btn:hover{background:#9a5c22;text-decoration:none}
+    footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
+    @media(max-width:600px){.step{grid-template-columns:48px 1fr;gap:14px}.step__num{font-size:2.2rem}.cta{padding:32px 20px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <span class="topbar__brand">Mateev Spa Studio</span>
+      <a href="/" class="topbar__back">← На главную</a>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="hero">
+        <p class="hero__kicker">Первый визит</p>
+        <h1 class="hero__title">Что нужно знать перед первым сеансом</h1>
+        <p class="hero__sub">Простые ответы на все вопросы — от записи до того что делать после процедуры.</p>
+      </div>
+
+      <hr class="divider">
+
+      <div class="steps">
+        ${steps.map(s => `
+          <div class="step">
+            <div class="step__num">${escapeHtml(s.num)}</div>
+            <div>
+              <div class="step__title">${escapeHtml(s.title)}</div>
+              <div class="step__text">${escapeHtml(s.text)}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+
+      <hr class="divider">
+
+      <div class="faq">
+        <h2 class="faq__title">Частые вопросы</h2>
+        ${faq.map(f => `
+          <div class="faq-item">
+            <div class="faq-item__q">${escapeHtml(f.q)}</div>
+            <div class="faq-item__a">${escapeHtml(f.a)}</div>
+          </div>`).join("")}
+      </div>
+
+      <div class="cta">
+        <div class="cta__title">Готовы записаться?</div>
+        <p class="cta__sub">Онлайн-запись без звонков — выберите удобное время прямо сейчас</p>
+        <a href="${base}/#booking" class="cta-btn">Выбрать время →</a>
+      </div>
+    </div>
+  </main>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+</body>
+</html>`;
+}
+
 function render404Page() {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   return `<!DOCTYPE html>
@@ -4462,6 +4603,13 @@ function createServer() {
         return;
       }
 
+      if (urlObject.pathname === "/first-visit" || urlObject.pathname === "/first-visit/") {
+        const html = renderFirstVisitPage();
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+        response.end(html);
+        return;
+      }
+
       if (urlObject.pathname === "/blog" || urlObject.pathname === "/blog/") {
         const raw = await readJson("diary.json").catch(() => []);
         const site = await readJson("site.json").catch(() => ({}));
@@ -4502,13 +4650,21 @@ function createServer() {
       }
 
       if (urlObject.pathname === "/sitemap.xml") {
-        const site = await readJson("site.json").catch(() => ({}));
         const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
         const now = new Date().toISOString().slice(0, 10);
-        const raw = await readJson("diary.json").catch(() => []);
-        const published = normalizeDiary(raw).filter((e) => e.published && e.publishedAt <= now);
+        const [rawDiary, rawSpecialists, rawServices] = await Promise.all([
+          readJson("diary.json").catch(() => []),
+          readJson("specialists.json").catch(() => []),
+          readJson("services.json").catch(() => [])
+        ]);
+        const services = normalizeServices(rawServices);
+        const specialists = normalizeSpecialists(rawSpecialists, services);
+        const published = normalizeDiary(rawDiary).filter((e) => e.published && e.publishedAt <= now);
         const blogUrls = published
           .map((e) => `  <url><loc>${base}/blog/${e.id}</loc><lastmod>${e.publishedAt}</lastmod><priority>0.7</priority></url>`)
+          .join("\n");
+        const teamUrls = specialists
+          .map((s) => `  <url><loc>${base}/team/${s.id}</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>`)
           .join("\n");
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -4516,6 +4672,8 @@ function createServer() {
   <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
   <url><loc>${base}/blog</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
+  <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
+${teamUrls}
 ${blogUrls}
 </urlset>`;
         response.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" });
