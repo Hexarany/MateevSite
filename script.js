@@ -171,7 +171,7 @@ function applyUrlPrefill() {
   updateSpecialistOptions();
   if (specialistId) elements.specialistSelect.value = specialistId;
 
-  document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("booking")?.scrollIntoView({ behavior: window.innerWidth <= 980 ? "instant" : "smooth", block: "start" });
   refreshAvailability();
   refreshBookingSummary();
 }
