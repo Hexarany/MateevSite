@@ -4036,12 +4036,15 @@ function renderCertificatesPage(site) {
     .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
     .hero__title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:600;color:#1a2e22;margin-bottom:16px;line-height:1.2}
     .hero__subtitle{color:#7d6d60;max-width:520px;margin:0 auto 48px;font-size:0.95rem}
-    .amounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:64px}
+    .amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
     .amount-card{background:rgba(255,255,255,0.7);border:1px solid rgba(71,49,28,0.1);border-radius:20px;padding:28px 20px;text-align:center}
-    .amount-card--custom{background:rgba(26,46,34,0.06);border-color:rgba(26,46,34,0.2);border-style:dashed}
-    .amount-card__value{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#1a2e22;margin-bottom:4px}
-    .amount-card__value--custom{font-size:1.4rem;color:#6b8d6b}
+    .amount-card__value{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#1a2e22}
     .amount-card__label{font-size:0.8rem;color:#7d6d60}
+    .amount-custom{display:flex;align-items:center;justify-content:space-between;gap:20px;background:rgba(26,46,34,0.06);border:1.5px dashed rgba(26,46,34,0.25);border-radius:20px;padding:24px 32px;margin-bottom:48px}
+    .amount-custom__text{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:#1a2e22}
+    .amount-custom__sub{font-size:0.85rem;color:#6b8d6b;margin-top:4px}
+    .amount-custom__hint{font-size:0.85rem;color:#7d6d60;text-align:right}
+    @media(max-width:600px){.amounts{grid-template-columns:repeat(2,1fr)}.amount-custom{flex-direction:column;text-align:center}.amount-custom__hint{text-align:center}}
     .how{background:rgba(255,255,255,0.5);border-radius:24px;padding:40px;margin-bottom:48px}
     .how__title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#1a2e22;margin-bottom:24px}
     .steps{display:grid;gap:16px}
@@ -4078,7 +4081,13 @@ function renderCertificatesPage(site) {
         <div class="amount-card"><div class="amount-card__value">1 000 MDL</div></div>
         <div class="amount-card"><div class="amount-card__value">1 500 MDL</div></div>
         <div class="amount-card"><div class="amount-card__value">2 000 MDL</div></div>
-        <div class="amount-card amount-card--custom"><div class="amount-card__value amount-card__value--custom">Любая сумма</div><div class="amount-card__label">На ваш выбор</div></div>
+      </div>
+      <div class="amount-custom">
+        <div>
+          <div class="amount-custom__text">Любая сумма — на ваш выбор</div>
+          <div class="amount-custom__sub">Можем оформить сертификат на любой номинал</div>
+        </div>
+        <div class="amount-custom__hint">Уточните при заказе →</div>
       </div>
 
       <div class="how">
