@@ -136,11 +136,19 @@ async function main() {
 
   const bookings = JSON.parse(fs.readFileSync(bookingsPath, "utf8"));
 
+  // Phones that already received a review request — don't ask again
+  const alreadyAsked = new Set(
+    bookings
+      .filter(b => b.reviewRequestedAt && b.phone)
+      .map(b => b.phone.replace(/\D/g, "").slice(-8))
+  );
+
   const due = bookings.filter(b =>
     b.date === yesterday &&
     (b.status === "confirmed" || b.status === "completed") &&
     b.email &&
-    !b.reviewRequestedAt
+    !b.reviewRequestedAt &&
+    !alreadyAsked.has((b.phone || "").replace(/\D/g, "").slice(-8))
   );
 
   console.log(`[review-requests] Yesterday: ${yesterday}, eligible: ${due.length}`);
