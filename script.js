@@ -434,8 +434,6 @@ function renderMethodBlock() {
   document.getElementById("method").hidden = false;
 }
 
-const DIARY_PREVIEW_COUNT = 3;
-
 function renderDiarySection() {
   if (!elements.diaryGrid) return;
   const entries = state.diary || [];
@@ -445,64 +443,26 @@ function renderDiarySection() {
     return;
   }
   section.style.display = "";
-  const listExpanded = state.diaryExpanded;
-  const visible = listExpanded ? entries : entries.slice(0, DIARY_PREVIEW_COUNT);
-  const hasMore = entries.length > DIARY_PREVIEW_COUNT;
 
-  elements.diaryGrid.innerHTML = visible
-    .map((entry) => {
-      const date = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
-        day: "numeric", month: "long", year: "numeric"
-      });
-      const isOpen = state.diaryOpenIds.has(entry.id);
-      return `
-        <article class="diary-card reveal">
-          <time class="diary-card__date">${date}</time>
-          <h3 class="diary-card__title">${escapeHtml(entry.title)}</h3>
-          <p class="diary-card__body ${isOpen ? "diary-card__body--open" : ""}">${escapeHtml(entry.body).replace(/\n/g, "<br>")}</p>
-          <div class="diary-card__actions">
-            <button type="button" class="diary-read-more" data-diary-id="${escapeHtml(entry.id)}">
-              ${isOpen ? "Свернуть" : "Читать полностью →"}
-            </button>
-            <a href="/blog/${escapeHtml(entry.id)}" class="diary-card__link">Открыть страницу ↗</a>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-
-  elements.diaryGrid.querySelectorAll(".diary-read-more").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.diaryId;
-      const card = btn.closest(".diary-card");
-      const body = card?.querySelector(".diary-card__body");
-      if (!body) return;
-      const isOpen = body.classList.toggle("diary-card__body--open");
-      btn.textContent = isOpen ? "Свернуть" : "Читать полностью →";
-      if (isOpen) {
-        state.diaryOpenIds.add(id);
-      } else {
-        state.diaryOpenIds.delete(id);
-      }
-    });
+  // Show only the latest entry as a teaser — full listing at /blog
+  const latest = entries[0];
+  const date = new Date(latest.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
+    day: "numeric", month: "long", year: "numeric"
   });
+  const excerpt = latest.body.replace(/\n/g, " ").slice(0, 200).trim() + (latest.body.length > 200 ? "..." : "");
 
-  const existingBtn = section.querySelector(".diary-expand-btn");
-  if (existingBtn) existingBtn.remove();
+  elements.diaryGrid.innerHTML = `
+    <article class="diary-card reveal">
+      <time class="diary-card__date">${date}</time>
+      <h3 class="diary-card__title">${escapeHtml(latest.title)}</h3>
+      <p class="diary-card__body diary-card__body--open" style="-webkit-line-clamp:unset;display:block;">${escapeHtml(excerpt)}</p>
+      <div class="diary-card__actions">
+        <a href="/blog/${escapeHtml(latest.id)}" class="diary-read-more" style="text-decoration:underline;">Читать полностью →</a>
+        ${entries.length > 1 ? `<a href="/blog" class="diary-card__link">Все записи (${entries.length}) ↗</a>` : ""}
+      </div>
+    </article>
+  `;
 
-  if (hasMore) {
-    const btn = document.createElement("button");
-    btn.className = "button button--ghost diary-expand-btn";
-    btn.textContent = listExpanded
-      ? "Свернуть"
-      : `Показать все записи (${entries.length})`;
-    btn.addEventListener("click", () => {
-      state.diaryExpanded = !state.diaryExpanded;
-      renderDiarySection();
-      syncRevealTargets();
-    });
-    section.querySelector(".container").appendChild(btn);
-  }
 }
 
 function renderStaticContent() {
