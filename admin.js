@@ -358,6 +358,7 @@ function bindEvents() {
   elements.adminBlockForm.addEventListener("submit", handleAdminBlockSubmit);
   elements.scheduleSpecialistSelect.addEventListener("change", handleScheduleSpecialistSelect);
   elements.specialistScheduleForm.addEventListener("submit", handleSpecialistScheduleSubmit);
+  document.getElementById("vacationForm")?.addEventListener("submit", handleVacationSubmit);
   elements.addBreakBtn.addEventListener("click", handleAddScheduleBreak);
   elements.scheduleBreaks.addEventListener("click", handleScheduleBreakClick);
   elements.scheduleBreaks.addEventListener("input", handleScheduleBreakInput);
@@ -3515,6 +3516,43 @@ function handleDayRowInput(event) {
   } else if (target.dataset.dayEnd !== undefined) {
     const d = Number(target.dataset.dayEnd);
     if (ds[d]) ds[d].end = target.value;
+  }
+}
+
+async function handleVacationSubmit(event) {
+  event.preventDefault();
+  if (!state.adminPin) { showToast("Сначала откройте админ-панель по PIN.", "info"); return; }
+
+  const start = document.getElementById("vacationStart").value;
+  const end = document.getElementById("vacationEnd").value;
+  const reason = document.getElementById("vacationReason").value.trim() || "Отпуск";
+  const specialistId = elements.scheduleSpecialistSelect.value;
+
+  if (!start || !end || start > end) { showToast("Укажите корректный период.", "error"); return; }
+  if (!specialistId) { showToast("Выберите специалиста.", "error"); return; }
+
+  // Generate one block per day in the range
+  const dates = [];
+  const cur = new Date(start + "T00:00:00");
+  const last = new Date(end + "T00:00:00");
+  while (cur <= last) {
+    dates.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  try {
+    await Promise.all(dates.map(date =>
+      fetchJson("/api/admin/schedule/block", {
+        method: "POST",
+        body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason })
+      })
+    ));
+    showToast(`Период ${start} — ${end} закрыт (${dates.length} дн.).`, "success");
+    document.getElementById("vacationForm").reset();
+    await loadAdminData();
+    renderScheduleBoard();
+  } catch (error) {
+    showToast(error.message || "Не удалось закрыть период.", "error");
   }
 }
 

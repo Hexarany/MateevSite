@@ -1067,6 +1067,9 @@ function getWorkingWindow(dateString) {
   return { open: 9 * 60, close: 20 * 60 };
 }
 
+const BOOKING_HORIZON_DAYS = 14;   // max days ahead clients can book
+const BOOKING_MIN_NOTICE_HOURS = 24; // min hours before session to book
+
 function isFutureOrToday(dateString) {
   const date = new Date(`${dateString}T00:00:00`);
 
@@ -1077,6 +1080,15 @@ function isFutureOrToday(dateString) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return date >= today;
+}
+
+function isWithinBookingHorizon(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  const maxDate = new Date();
+  maxDate.setHours(0, 0, 0, 0);
+  maxDate.setDate(maxDate.getDate() + BOOKING_HORIZON_DAYS);
+  return date <= maxDate;
 }
 
 function parseCookies(request) {
@@ -1775,6 +1787,10 @@ function validateBookingPayload(payload, services, specialists) {
     throw new Error("Можно записаться только на сегодняшнюю или будущую дату.");
   }
 
+  if (!options.adminMode && !isWithinBookingHorizon(payload.date)) {
+    throw new Error(`Онлайн-запись доступна не более чем на ${BOOKING_HORIZON_DAYS} дней вперёд.`);
+  }
+
   const trimmedName = payload.clientName.trim();
   const trimmedPhone = payload.phone.trim();
   const trimmedEmail = (payload.email || "").trim();
@@ -2110,12 +2126,19 @@ function calculateAvailability({ date, service, specialist, bookings, schedule =
   const close = toMinutes(daySchedule.workHours.end);
   const slots = [];
 
-  // Skip past slots for today (timezone-aware: Moldova = Europe/Chisinau)
+  // Skip past slots + enforce minimum notice (Moldova timezone)
   const nowLocal = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }));
   const todayString = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth()+1).padStart(2,"0")}-${String(nowLocal.getDate()).padStart(2,"0")}`;
+  const tomorrowLocal = new Date(nowLocal);
+  tomorrowLocal.setDate(tomorrowLocal.getDate() + 1);
+  const tomorrowString = `${tomorrowLocal.getFullYear()}-${String(tomorrowLocal.getMonth()+1).padStart(2,"0")}-${String(tomorrowLocal.getDate()).padStart(2,"0")}`;
+  // nowMinutes + BOOKING_MIN_NOTICE_HOURS: block slots within the notice window
+  const nowTotalMinutes = nowLocal.getHours() * 60 + nowLocal.getMinutes() + BOOKING_MIN_NOTICE_HOURS * 60;
   const nowMinutes = date === todayString
-    ? nowLocal.getHours() * 60 + nowLocal.getMinutes()
-    : 0;
+    ? nowTotalMinutes
+    : date === tomorrowString
+      ? Math.max(0, nowTotalMinutes - 24 * 60)
+      : 0;
 
   for (let current = open; current + service.duration <= close; current += SLOT_STEP_MINUTES) {
     const candidateStart = current;

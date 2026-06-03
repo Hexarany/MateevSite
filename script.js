@@ -1059,10 +1059,19 @@ async function handleBookingSubmit(event) {
 
 function setDateConstraints() {
   const today = getLocalDateString();
-  elements.dateInput.min = today;
+  // Min: tomorrow (24h notice) for public booking
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 1);
+  const minDateStr = `${minDate.getFullYear()}-${String(minDate.getMonth()+1).padStart(2,"0")}-${String(minDate.getDate()).padStart(2,"0")}`;
+  elements.dateInput.min = minDateStr;
 
-  if (!elements.dateInput.value || elements.dateInput.value < today) {
-    elements.dateInput.value = today;
+  // Max: 14 days ahead
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 14);
+  elements.dateInput.max = `${maxDate.getFullYear()}-${String(maxDate.getMonth()+1).padStart(2,"0")}-${String(maxDate.getDate()).padStart(2,"0")}`;
+
+  if (!elements.dateInput.value || elements.dateInput.value < minDateStr) {
+    elements.dateInput.value = minDateStr;
   }
 }
 
