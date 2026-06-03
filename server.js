@@ -1541,6 +1541,40 @@ async function notifyBookingCreated(booking) {
   });
 }
 
+async function notifyWaitlistOnCancellation(cancelledBooking) {
+  try {
+    const waitlist = await readJson("waitlist.json").catch(() => []);
+    const matches = waitlist.filter((entry) =>
+      !entry.notified &&
+      entry.date === cancelledBooking.date &&
+      (
+        !entry.specialistId || entry.specialistId === cancelledBooking.specialistId ||
+        !entry.serviceId || entry.serviceId === cancelledBooking.serviceId
+      )
+    );
+
+    if (!matches.length) return;
+
+    const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
+    const dateLabel = ru.format(new Date(`${cancelledBooking.date}T12:00:00`));
+
+    for (const entry of matches) {
+      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+        await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          body: {
+            chat_id: TELEGRAM_CHAT_ID,
+            text: `🔔 Освободилось место!\n\n${dateLabel} · ${cancelledBooking.serviceName} · ${cancelledBooking.slot}\n\nВ листе ожидания: ${entry.name}, ${entry.phone}\n\nСвяжитесь с клиентом для подтверждения.`
+          }
+        });
+      }
+      entry.notified = true;
+      entry.notifiedAt = new Date().toISOString();
+    }
+
+    await writeJson("waitlist.json", waitlist);
+  } catch {}
+}
+
 async function notifyBookingCancelledByClient(booking) {
   const text = [
     `Отмена записи ${booking.reference} (клиент)`,
@@ -1649,6 +1683,7 @@ async function handleBookingCancel(request, response) {
   await writeJson("bookings.json", updated);
 
   void notifyBookingCancelledByClient(booking);
+  void notifyWaitlistOnCancellation(booking);
 
   sendJson(response, 200, {
     message: "Ваша запись отменена.",
@@ -2837,6 +2872,10 @@ async function handleBookingStatusUpdate(request, response, bookingId) {
   const nextBookings = sortBookings(bookings);
   await writeJson("bookings.json", nextBookings);
 
+  if (payload.status === "cancelled") {
+    void notifyWaitlistOnCancellation(bookings[bookingIndex]);
+  }
+
   sendJson(response, 200, {
     message: "Статус записи обновлен.",
     booking: nextBookings.find((booking) => booking.id === bookingId)
@@ -3770,14 +3809,26 @@ async function routeApi(request, response, urlObject) {
     const payload = await parseJsonBody(request);
     const name       = sanitizeText(payload.name || "");
     const phone      = sanitizeText(payload.phone || "");
-    const service    = sanitizeText(payload.service || "");
-    const specialist = sanitizeText(payload.specialist || "");
+    const serviceId  = sanitizeText(payload.serviceId || payload.service || "");
+    const specialistId = sanitizeText(payload.specialistId || payload.specialist || "");
     const date       = sanitizeText(payload.date || "");
     if (!name || !phone) { sendJson(response, 400, { message: "Укажите имя и телефон." }); return; }
+
+    // Save to waitlist.json
+    const entry = {
+      id: `wl-${Date.now()}`,
+      name, phone, serviceId, specialistId, date,
+      createdAt: new Date().toISOString(),
+      notified: false
+    };
+    const waitlist = await readJson("waitlist.json").catch(() => []);
+    waitlist.push(entry);
+    await writeJson("waitlist.json", waitlist);
+
     void (async () => {
       try {
         if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-          const text = `⏳ Лист ожидания\n\nИмя: ${name}\nТелефон: ${phone}${service ? `\nУслуга: ${service}` : ""}${specialist ? `\nСпециалист: ${specialist}` : ""}${date ? `\nДата: ${date}` : ""}`;
+          const text = `⏳ Лист ожидания\n\nИмя: ${name}\nТелефон: ${phone}${serviceId ? `\nУслуга: ${serviceId}` : ""}${specialistId ? `\nСпециалист: ${specialistId}` : ""}${date ? `\nДата: ${date}` : ""}`;
           await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             body: { chat_id: TELEGRAM_CHAT_ID, text }
           });
