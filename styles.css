@@ -1213,6 +1213,96 @@ p {
   margin-top: 8px;
 }
 
+/* ─── Instagram section ──────────────────────────────────────────────────── */
+
+.instagram-section {
+  padding: 72px 0;
+  background: linear-gradient(135deg, #3d2314 0%, #2a1a0e 100%);
+  color: #fff;
+}
+
+.instagram__inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 48px;
+  align-items: center;
+}
+
+.instagram__kicker {
+  color: rgba(255,255,255,0.5) !important;
+  margin-bottom: 10px;
+}
+
+.instagram__title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.instagram__sub {
+  color: rgba(255,255,255,0.65);
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+  max-width: 380px;
+}
+
+.instagram__btn {
+  background: linear-gradient(135deg, #f09433, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.instagram__btn::before {
+  content: "📷";
+  font-size: 1rem;
+}
+
+.instagram__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.instagram__stat {
+  text-align: right;
+}
+
+.instagram__stat-value {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.instagram__stat-label {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .instagram__inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .instagram__stats {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .instagram__stat {
+    text-align: left;
+  }
+}
+
 /* ─── Founder section ────────────────────────────────────────────────────── */
 
 .founder-section {
