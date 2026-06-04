@@ -4652,7 +4652,10 @@ function renderMedicalCardPage(clientName, profile) {
     </div>
   </div>
 
-  <div class="client-name">Клиент: ${escapeHtml(clientName)}</div>
+  <div class="client-name">
+    <span style="font-size:0.78rem;font-weight:400;color:#7d6d60;display:block;margin-bottom:2px;">Пациент</span>
+    ${escapeHtml(clientName)}
+  </div>
 
   <div class="section">
     <div class="section-title">Показатели на сегодня</div>
@@ -4688,7 +4691,7 @@ function renderMedicalCardPage(clientName, profile) {
     <div class="section-title">Зоны дискомфорта — отметьте на рисунке</div>
     <p style="font-size:0.78rem;color:#7d6d60;margin-bottom:12px;">Обведите или отметьте зоны где чувствуете боль, напряжение или дискомфорт</p>
       <img src="/body-diagram.jpg" alt="Схема тела для отметки зон дискомфорта"
-           style="max-width:100%;width:480px;border-radius:8px;border:1px solid #e8ddd4;">
+           style="max-width:100%;width:600px;display:block;margin:0 auto;border-radius:8px;border:1px solid #e8ddd4;">
     </div>
     <p style="font-size:0.72rem;color:#9a8a7a;margin-top:8px;">Обозначения: ● боль &nbsp;&nbsp; ○ напряжение &nbsp;&nbsp; × онемение &nbsp;&nbsp; ↗ отдаёт в...</p>
   </div>
@@ -4719,7 +4722,7 @@ function renderMedicalCardPage(clientName, profile) {
   </div>
 
   <div style="display:flex;align-items:center;gap:20px;margin-top:24px;padding-top:16px;border-top:1px solid #e8ddd4;">
-    <img src="https://chart.googleapis.com/chart?cht=qr&chs=100x100&chl=${encodeURIComponent(base + '/intake')}&choe=UTF-8"
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(base + '/intake')}&bgcolor=faf6f0&margin=4"
          alt="QR карта пациента" width="100" height="100" style="border-radius:8px;border:1px solid #e8ddd4;">
     <div>
       <p style="font-size:0.8rem;font-weight:700;color:#1a2e22;margin-bottom:4px;">Заполните карту на телефоне</p>
@@ -5457,12 +5460,13 @@ function createServer() {
 
       if (urlObject.pathname.startsWith("/medical-card/")) {
         const clientId = urlObject.pathname.replace("/medical-card/", "").replace(/\/$/, "");
-        const { clients, bookings } = await loadStudioData();
+        const { clients, bookings, services } = await loadStudioData();
         const profile = clients.find((c) => c.id === clientId);
         if (!profile) { response.writeHead(302, { Location: "/" }); response.end(); return; }
-        const clientBookings = bookings.filter((b) => b.id && b.phone && profile.phone &&
-          b.phone.replace(/\D/g,"").slice(-8) === profile.phone.replace(/\D/g,"").slice(-8));
-        const clientName = clientBookings[0]?.clientName || profile.id;
+        // Find client name by matching generated ID from bookings
+        const allClients = buildAdminClients(bookings, clients);
+        const fullClient = allClients.find(c => c.id === clientId);
+        const clientName = fullClient?.clientName || profile.medCard?.name || "Клиент";
         const html = renderMedicalCardPage(clientName, profile);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         response.end(html);
