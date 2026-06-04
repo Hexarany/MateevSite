@@ -1434,6 +1434,15 @@ async function sendClientConfirmationEmail(booking) {
           <td style="padding:32px 36px 24px;">
             <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:${muted};">Запись подтверждена</p>
             <h1 style="margin:0 0 24px;font-size:24px;font-weight:700;color:${ink};">Ждём вас, ${escapeHtml(booking.clientName)}!</h1>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(26,46,34,0.05);border:1px solid rgba(26,46,34,0.12);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+              <tr><td style="padding:14px 18px;">
+                <table cellpadding="0" cellspacing="0"><tr>
+                  <td style="padding-right:16px;"><img src="https://chart.googleapis.com/chart?cht=qr&chs=80x80&chl=${encodeURIComponent((SITE_URL || 'https://mateevmassage.com') + '/intake')}&choe=UTF-8" width="80" height="80" alt="QR" style="border-radius:8px;display:block;"></td>
+                  <td><p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#1a2e22;">Впервые у нас?</p>
+                  <p style="margin:0;font-size:12px;color:${muted};line-height:1.5;">Заполните персональную карту пациента за 2–3 минуты до визита — это поможет специалисту лучше подготовиться.</p></td>
+                </tr></table>
+              </td></tr>
+            </table>
 
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(68,50,36,0.12);border-radius:14px;overflow:hidden;">
               <tr style="background:rgba(179,109,44,0.06);">
@@ -2618,22 +2627,44 @@ function buildAdminStats(bookings) {
   return stats;
 }
 
+function detectClosure(schedule) {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+  const blocks = (schedule?.blocks || []).filter(b => b.date >= today && b.start === "00:00");
+  if (blocks.length < 2) return null;
+  const sorted = [...new Set(blocks.map(b => b.date))].sort();
+  // Find consecutive range starting from today or nearby
+  let start = null, end = null, streak = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const expected = new Date(new Date(sorted[0] + "T00:00:00").getTime() + i * 86400000)
+      .toISOString().slice(0, 10);
+    if (sorted[i] === expected) {
+      if (!start) start = sorted[i];
+      end = sorted[i];
+      streak++;
+    } else break;
+  }
+  return streak >= 2 ? { from: start, to: end } : null;
+}
+
 async function handleBootstrap(response) {
-  const [rawServices, rawSpecialists, rawSite, bookings] = await Promise.all([
+  const [rawServices, rawSpecialists, rawSite, bookings, schedule] = await Promise.all([
     readJson("services.json"),
     readJson("specialists.json"),
     readJson("site.json"),
-    readJson("bookings.json")
+    readJson("bookings.json"),
+    readJson("schedule.json").catch(() => ({}))
   ]);
 
   const services = normalizeServices(rawServices);
   const specialists = normalizeSpecialists(rawSpecialists, services);
   const site = normalizeSiteContent(rawSite);
+  const closure = detectClosure(schedule);
 
   sendJson(response, 200, {
     services,
     specialists,
     site,
+    closure,
     meta: {
       existingBookings: bookings.length,
       bookingProtectionToken: createBookingProtectionToken()
@@ -4035,6 +4066,59 @@ async function routeApi(request, response, urlObject) {
       .filter((e) => e.published && e.publishedAt <= today)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     sendJson(response, 200, { entries });
+    return;
+  }
+
+  // PATCH /api/admin/bookings/:id/recommendations — save & email home recommendations
+  if (request.method === "PATCH" && urlObject.pathname.match(/^\/api\/admin\/bookings\/[^/]+\/recommendations$/)) {
+    assertAdminPin(request);
+    const bookingId = urlObject.pathname.split("/")[4];
+    const payload = await parseJsonBody(request);
+    const bookings = await readJson("bookings.json");
+    const idx = bookings.findIndex(b => b.id === bookingId);
+    if (idx === -1) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+    const rec = sanitizeText(payload.recommendations || "");
+    bookings[idx].homeRecommendations = rec;
+    await writeJson("bookings.json", bookings);
+    // Send email if client has email
+    const booking = bookings[idx];
+    if (rec && RESEND_API_KEY && EMAIL_FROM && booking.email) {
+      const ink = "#241c17"; const muted = "#7d6d60"; const bg = "#f7f0e6"; const green = "#1a2e22";
+      const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:${bg};font-family:'Helvetica Neue',Arial,sans-serif;color:${ink};">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${bg};padding:40px 16px;"><tr><td align="center">
+<table width="100%" style="max-width:520px;background:#fffaf4;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(54,35,20,0.10);">
+<tr><td style="background:${green};padding:24px 36px;"><p style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);">После сеанса</p>
+<p style="margin:6px 0 0;font-size:18px;font-weight:700;color:#fff;">Mateev Spa Studio</p></td></tr>
+<tr><td style="padding:28px 36px;">
+<h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:${ink};">Рекомендации после сеанса</h1>
+<p style="margin:0 0 20px;font-size:14px;color:${muted};">${escapeHtml(booking.serviceName)} · ${escapeHtml(booking.date)}</p>
+<div style="background:#f0f7f0;border-left:3px solid #6b8d6b;border-radius:0 8px 8px 0;padding:16px 20px;font-size:14px;color:${ink};line-height:1.7;white-space:pre-wrap;">${escapeHtml(rec)}</div>
+</td></tr>
+<tr><td style="padding:16px 36px;border-top:1px solid rgba(68,50,36,0.10);background:rgba(179,109,44,0.04);">
+<p style="margin:0;font-size:12px;color:${muted};">До встречи! — Денис Матиевич, Mateev Spa Studio</p>
+</td></tr></table></td></tr></table></body></html>`;
+      void requestJson("https://api.resend.com/emails", {
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+        body: { from: EMAIL_FROM, to: [booking.email], replyTo: EMAIL_REPLY_TO || undefined,
+          subject: `Рекомендации после сеанса — ${booking.serviceName}`, html }
+      }).catch(() => {});
+    }
+    sendJson(response, 200, { ok: true, emailed: !!(rec && booking.email) });
+    return;
+  }
+
+  // PATCH /api/admin/bookings/:id/session-notes
+  if (request.method === "PATCH" && urlObject.pathname.match(/^\/api\/admin\/bookings\/[^/]+\/session-notes$/)) {
+    assertAdminPin(request);
+    const bookingId = urlObject.pathname.split("/")[4];
+    const payload = await parseJsonBody(request);
+    const bookings = await readJson("bookings.json");
+    const idx = bookings.findIndex(b => b.id === bookingId);
+    if (idx === -1) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+    bookings[idx].sessionNotes = sanitizeText(payload.sessionNotes || "");
+    await writeJson("bookings.json", bookings);
+    sendJson(response, 200, { ok: true });
     return;
   }
 

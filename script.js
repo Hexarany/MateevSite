@@ -408,6 +408,7 @@ async function loadBootstrap() {
   state.services = payload.services;
   state.specialists = payload.specialists;
   state.site = payload.site;
+  if (payload.closure) renderClosureBanner(payload.closure);
   state.currency = payload.site?.brand?.currency || "MDL";
   state.bookingProtectionToken = payload.meta?.bookingProtectionToken || "";
   state.diary = diaryPayload.entries || [];
@@ -1174,6 +1175,17 @@ function initFabObserver() {
 
   observer.observe(bookingSection);
   if (heroSection) observer.observe(heroSection);
+}
+
+function renderClosureBanner(closure) {
+  const existing = document.getElementById("closureBanner");
+  if (existing) return;
+  const fmt = (d) => new Date(d + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+  const banner = document.createElement("div");
+  banner.id = "closureBanner";
+  banner.style.cssText = "background:#1a2e22;color:#fff;text-align:center;padding:12px 20px;font-size:0.88rem;position:relative;z-index:25;";
+  banner.innerHTML = `🌿 Студия закрыта с <strong>${fmt(closure.from)}</strong> по <strong>${fmt(closure.to)}</strong> включительно. Запись откроется после возвращения.`;
+  document.querySelector(".topbar")?.insertAdjacentElement("afterend", banner);
 }
 
 function scrollToHashAfterLoad() {

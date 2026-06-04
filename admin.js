@@ -356,6 +356,7 @@ function bindEvents() {
   elements.diaryEntryCancelBtn.addEventListener("click", handleDiaryEntryCancel);
   elements.diaryEntryForm.addEventListener("submit", handleDiaryEntrySubmit);
   elements.diaryEntriesList.addEventListener("click", handleDiaryListClick);
+  document.getElementById("exportClientsCsvBtn")?.addEventListener("click", handleExportClientsCsv);
   elements.addReviewBtn.addEventListener("click", handleAddReview);
   elements.saveReviewsBtn.addEventListener("click", handleSaveReviews);
   elements.reviewsEditor.addEventListener("input", handleReviewEditorInput);
@@ -1659,6 +1660,7 @@ function renderDashboard() {
   renderAdminStats(model.statCards);
   renderRevenueChart(state.adminData?.bookings || []);
   renderSlotHeatmap(state.adminData?.bookings || []);
+  renderUpcomingBirthdays();
   renderTodayTimeline(model.todayBookings);
   renderUpcomingQueue(model.upcomingBookings);
   renderSpecialistLoad(model.specialistRows);
@@ -1968,6 +1970,33 @@ function renderRevenueChart(bookings, period) {
     <svg width="100%" viewBox="0 0 ${svgW} ${chartH + 24}" preserveAspectRatio="none" style="display:block;overflow:visible;margin-top:12px;">
       ${bars}${labels}
     </svg>`;
+}
+
+function renderUpcomingBirthdays() {
+  const el = document.getElementById("birthdayWidget");
+  if (!el) return;
+  const today = new Date();
+  const mm = today.getMonth() + 1;
+  const dd = today.getDate();
+  const upcoming = (state.clients || [])
+    .filter(c => c.medCard?.dob)
+    .map(c => {
+      const [y, m, d] = c.medCard.dob.split("-").map(Number);
+      let next = new Date(today.getFullYear(), m - 1, d);
+      if (next < today) next = new Date(today.getFullYear() + 1, m - 1, d);
+      const days = Math.round((next - today) / 86400000);
+      return { name: c.clientName, days, date: `${d} ${["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"][m-1]}` };
+    })
+    .filter(c => c.days <= 14)
+    .sort((a, b) => a.days - b.days);
+
+  if (!upcoming.length) { el.closest(".admin-widget")?.setAttribute("data-empty","true"); return; }
+  el.closest(".admin-widget")?.removeAttribute("data-empty");
+  el.innerHTML = upcoming.map(c => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);">
+      <span style="font-weight:600;">🎂 ${escapeHtml(c.name)}</span>
+      <span style="font-size:0.82rem;color:var(--muted);">${c.date} · ${c.days === 0 ? "сегодня!" : c.days === 1 ? "завтра" : `через ${c.days} дн.`}</span>
+    </div>`).join("");
 }
 
 function renderSlotHeatmap(bookings) {
@@ -2282,11 +2311,35 @@ function renderAdminTable() {
           <td>
             <span class="table-main">${booking.notes ? escapeHtml(booking.notes) : "—"}</span>
             <span class="table-sub">Статус: ${escapeHtml(statusLabels[booking.status])}</span>
+            ${booking.status === "completed" ? `
+            <div style="margin-top:6px;">
+              <textarea class="session-notes-input" data-booking-id="${escapeHtml(booking.id)}"
+                placeholder="Заметки специалиста: что делали, результат, рекомендации..."
+                style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:52px;font-family:inherit;">${escapeHtml(booking.sessionNotes || "")}</textarea>
+              <button type="button" class="button button--ghost button--mini save-session-notes" data-booking-id="${escapeHtml(booking.id)}" style="margin-top:4px;">Сохранить</button>
+            </div>` : ""}
           </td>
         </tr>
       `
     )
     .join("");
+
+  // Session notes save handler
+  elements.adminTableBody.querySelectorAll(".save-session-notes").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.bookingId;
+      const notes = elements.adminTableBody.querySelector(`.session-notes-input[data-booking-id="${id}"]`)?.value || "";
+      try {
+        await fetchJson(`/api/admin/bookings/${id}/session-notes`, {
+          method: "PATCH",
+          body: JSON.stringify({ sessionNotes: notes })
+        });
+        const booking = state.adminData?.bookings?.find(b => b.id === id);
+        if (booking) booking.sessionNotes = notes;
+        showToast("Заметка сохранена.", "success");
+      } catch { showToast("Ошибка сохранения.", "error"); }
+    });
+  });
 }
 
 async function handleAdminStatusChange(event) {
@@ -2761,6 +2814,28 @@ function handleExportCsv() {
   a.download = `mateev-bookings-${date}${statusSuffix}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function handleExportClientsCsv() {
+  const clients = state.clients || [];
+  if (!clients.length) { showToast("Клиентов пока нет.", "info"); return; }
+  const headers = ["Имя", "Телефон", "Email", "Статус", "Всего визитов", "Завершено", "Выручка", "Последний визит", "Профессия", "Дата рождения", "Заметка"];
+  const rows = clients.map(c => [
+    c.clientName, c.phone || "", c.email || "",
+    clientStatusLabels[c.status] || c.status,
+    c.totalVisits, c.completedVisits,
+    c.totalSpent,
+    c.lastBooking ? `${c.lastBooking.date} ${c.lastBooking.slot}` : "",
+    c.medCard?.profession || "",
+    c.medCard?.dob || "",
+    c.note || ""
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v||"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mateev-clients-${getLocalDateString()}.csv`;
+  a.click();
 }
 
 function showToast(message, tone = "info") {
@@ -3435,15 +3510,18 @@ function renderClientDetail(client) {
           ${client.history
             .map(
               (booking) => `
-                <div class="client-history__item">
-                  <div>
-                    <strong>${escapeHtml(booking.serviceName)}</strong>
-                    <span>${escapeHtml(formatDate(booking.date))} · ${escapeHtml(booking.slot)} · ${escapeHtml(booking.specialistName)}</span>
+                <div class="client-history__item" style="display:block;padding:12px 16px;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+                    <div>
+                      <strong>${escapeHtml(booking.serviceName)}</strong>
+                      <span style="display:block;font-size:0.82rem;color:var(--muted);">${escapeHtml(formatDate(booking.date))} · ${escapeHtml(booking.slot)} · ${escapeHtml(booking.specialistName)}</span>
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+                      <span class="meta-chip">${escapeHtml(statusLabels[booking.status] || booking.status)}</span>
+                      <span style="font-weight:600;">${formatCurrency(booking.totalPrice)}</span>
+                    </div>
                   </div>
-                  <div class="client-history__meta">
-                    <span class="meta-chip">${escapeHtml(statusLabels[booking.status] || booking.status)}</span>
-                    <span>${formatCurrency(booking.totalPrice)}</span>
-                  </div>
+                  ${booking.sessionNotes ? `<p style="margin-top:8px;font-size:0.82rem;color:var(--forest);background:rgba(107,141,107,0.08);padding:8px 10px;border-radius:8px;border-left:2px solid var(--sage);">📝 ${escapeHtml(booking.sessionNotes)}</p>` : ""}
                 </div>
               `
             )
