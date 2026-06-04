@@ -2582,7 +2582,8 @@ function buildAdminClients(bookings, profiles = []) {
         upcomingBooking: upcomingBooking || null,
         favoriteServices,
         favoriteSpecialists,
-        history
+        history,
+        medCard: profile?.medCard || null
       };
     })
     .sort((left, right) => {
@@ -3508,7 +3509,8 @@ async function handleAdminClientUpdate(request, response, clientId) {
     id: clientId,
     status: ["new", "regular", "vip", "attention"].includes(status) ? status : "regular",
     note: sanitizeText(payload.note),
-    tag: sanitizeText(payload.tag)
+    tag: sanitizeText(payload.tag),
+    medCard: payload.medCard && typeof payload.medCard === "object" ? payload.medCard : (profiles[profileIndex]?.medCard || null)
   };
 
   if (profileIndex === -1) {
@@ -4333,6 +4335,119 @@ function renderFirstVisitPage() {
 </html>`;
 }
 
+function renderMedicalCardPage(clientName, profile) {
+  const mc = profile.medCard || {};
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const goalsMap = { relaxation:"Расслабление", pain:"Боль / напряжение", rehab:"Реабилитация", prevention:"Профилактика", doctor:"Назначение врача" };
+  const goalsList = (mc.goals || []).map(g => goalsMap[g] || g).join(", ") || "—";
+  const row = (label, value) => `<tr><td style="padding:8px 12px;font-size:0.85rem;color:#7d6d60;width:40%;border-bottom:1px solid #e8ddd4;">${label}</td><td style="padding:8px 12px;font-size:0.9rem;font-weight:600;color:#241c17;border-bottom:1px solid #e8ddd4;">${escapeHtml(String(value || "—"))}</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Медкарта — ${escapeHtml(clientName)}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;color:#241c17;padding:32px;max-width:800px;margin:0 auto;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #1a2e22;}
+    .brand{font-size:1.4rem;font-weight:700;color:#1a2e22;}
+    .brand-sub{font-size:0.78rem;color:#7d6d60;margin-top:2px;}
+    .doc-title{text-align:right;}
+    .doc-title h1{font-size:1rem;font-weight:700;color:#1a2e22;}
+    .doc-title p{font-size:0.78rem;color:#7d6d60;margin-top:2px;}
+    .client-name{font-size:1.2rem;font-weight:700;color:#1a2e22;margin-bottom:20px;padding:12px 16px;background:#f7f0e6;border-radius:8px;}
+    .section{margin-bottom:20px;}
+    .section-title{font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#b36d2c;margin-bottom:8px;}
+    table{width:100%;border-collapse:collapse;background:#faf6f0;border-radius:8px;overflow:hidden;}
+    .vitals{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+    .vital-card{background:#f7f0e6;border-radius:8px;padding:12px;text-align:center;}
+    .vital-value{font-size:1.6rem;font-weight:700;color:#1a2e22;}
+    .vital-label{font-size:0.72rem;color:#7d6d60;margin-top:2px;}
+    .contraindications{background:#fff8f0;border:1px solid #e8c99a;border-radius:8px;padding:14px 16px;font-size:0.78rem;color:#5a4e45;line-height:1.6;margin-bottom:20px;}
+    .contraindications strong{color:#b36d2c;}
+    .signature-block{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;padding-top:20px;border-top:1px solid #e8ddd4;}
+    .sign-line{border-bottom:1px solid #241c17;margin-bottom:6px;height:32px;}
+    .sign-label{font-size:0.75rem;color:#7d6d60;}
+    .print-btn{display:block;margin:20px auto;padding:12px 32px;background:#1a2e22;color:#fff;border:none;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+    @media print{.print-btn{display:none!important;}body{padding:16px;}@page{margin:1cm;}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="brand">Mateev Spa Studio</div>
+      <div class="brand-sub">Кишинёв · mateevmassage.com</div>
+    </div>
+    <div class="doc-title">
+      <h1>Персональная карта пациента</h1>
+      <p>Дата: ${escapeHtml(mc.date || new Date().toISOString().slice(0,10))}</p>
+    </div>
+  </div>
+
+  <div class="client-name">Клиент: ${escapeHtml(clientName)}</div>
+
+  <div class="section">
+    <div class="section-title">Показатели на сегодня</div>
+    <div class="vitals">
+      <div class="vital-card"><div class="vital-value">${escapeHtml(mc.bp_sys && mc.bp_dia ? mc.bp_sys+"/"+mc.bp_dia : "—")}</div><div class="vital-label">АД (мм рт.ст.)</div></div>
+      <div class="vital-card"><div class="vital-value">${escapeHtml(String(mc.pulse || "—"))}</div><div class="vital-label">Пульс (уд/мин)</div></div>
+      <div class="vital-card"><div class="vital-value">${escapeHtml(String(mc.wellbeing || "—"))}/10</div><div class="vital-label">Самочувствие</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Личные данные и цель визита</div>
+    <table>
+      ${row("Дата рождения", mc.dob)}
+      ${row("Профессия", mc.profession)}
+      ${row("Цель визита", goalsList)}
+      ${row("Основная жалоба", mc.complaint)}
+      ${row("Последний массаж", mc.last_massage)}
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Медицинский анамнез</div>
+    <table>
+      ${row("Хронические заболевания", mc.chronic)}
+      ${row("Травмы и операции", mc.injuries)}
+      ${row("Принимаемые препараты", mc.medications)}
+      ${row("Аллергии", mc.allergies)}
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Зоны работы</div>
+    <table>
+      ${row("Зоны фокуса", mc.focus)}
+      ${row("Зоны избегать", mc.avoid)}
+    </table>
+  </div>
+
+  <div class="contraindications">
+    <strong>Противопоказания к массажу:</strong> онкология, тромбоз, острые воспаления, варикоз в зоне работы,
+    инфекционные заболевания, повышенная температура, острая сердечная/почечная/печеночная недостаточность,
+    кожные поражения в зоне работы, психические расстройства, приём алкоголя.
+  </div>
+
+  <div class="signature-block">
+    <div>
+      <div class="sign-line"></div>
+      <div class="sign-label">Подпись клиента / Semnătura clientului</div>
+    </div>
+    <div>
+      <div class="sign-line"></div>
+      <div class="sign-label">Специалист / Specialist — Матиевич Денис</div>
+    </div>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">🖨 Распечатать</button>
+</body>
+</html>`;
+}
+
 function render404Page() {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   return `<!DOCTYPE html>
@@ -5045,6 +5160,20 @@ function createServer() {
       if (urlObject.pathname === "/first-visit" || urlObject.pathname === "/first-visit/") {
         const html = renderFirstVisitPage();
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname.startsWith("/medical-card/")) {
+        const clientId = urlObject.pathname.replace("/medical-card/", "").replace(/\/$/, "");
+        const { clients, bookings } = await loadStudioData();
+        const profile = clients.find((c) => c.id === clientId);
+        if (!profile) { response.writeHead(302, { Location: "/" }); response.end(); return; }
+        const clientBookings = bookings.filter((b) => b.id && b.phone && profile.phone &&
+          b.phone.replace(/\D/g,"").slice(-8) === profile.phone.replace(/\D/g,"").slice(-8));
+        const clientName = clientBookings[0]?.clientName || profile.id;
+        const html = renderMedicalCardPage(clientName, profile);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         response.end(html);
         return;
       }

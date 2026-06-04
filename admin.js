@@ -3276,6 +3276,88 @@ function renderClientDetail(client) {
       </div>
 
       <form class="admin-form-stack" data-client-profile-form>
+        <!-- ── Медицинская карта ── -->
+        <div style="background:rgba(26,46,34,0.05);border:1px solid rgba(26,46,34,0.15);border-radius:16px;padding:20px 24px;display:grid;gap:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              <p class="section-kicker" style="margin-bottom:4px;">Персональная карта пациента</p>
+              <p style="font-size:0.82rem;color:var(--muted);">Заполняется при первом визите</p>
+            </div>
+            <a href="/medical-card/${escapeHtml(client.id)}" target="_blank" class="button button--ghost button--mini">🖨 Распечатать</a>
+          </div>
+
+          <div class="field-grid">
+            <label class="field"><span>Дата рождения</span>
+              <input type="date" name="mc_dob" value="${escapeHtml(client.medCard?.dob || "")}"></label>
+            <label class="field"><span>Профессия / тип работы</span>
+              <input type="text" name="mc_profession" placeholder="Программист, водитель..." value="${escapeHtml(client.medCard?.profession || "")}"></label>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <label class="field"><span>АД верхнее</span>
+              <input type="number" name="mc_bp_sys" placeholder="120" value="${escapeHtml(String(client.medCard?.bp_sys || ""))}"></label>
+            <label class="field"><span>АД нижнее</span>
+              <input type="number" name="mc_bp_dia" placeholder="80" value="${escapeHtml(String(client.medCard?.bp_dia || ""))}"></label>
+            <label class="field"><span>Пульс</span>
+              <input type="number" name="mc_pulse" placeholder="72" value="${escapeHtml(String(client.medCard?.pulse || ""))}"></label>
+          </div>
+
+          <div class="field-grid">
+            <label class="field"><span>Самочувствие сегодня (1–10)</span>
+              <input type="number" name="mc_wellbeing" min="1" max="10" placeholder="7" value="${escapeHtml(String(client.medCard?.wellbeing || ""))}"></label>
+            <label class="field"><span>Последний массаж</span>
+              <input type="text" name="mc_last_massage" placeholder="6 месяцев назад / никогда" value="${escapeHtml(client.medCard?.last_massage || "")}"></label>
+          </div>
+
+          <label class="field field--full"><span>Цель визита</span>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+              ${[["relaxation","Расслабление"],["pain","Боль / напряжение"],["rehab","Реабилитация"],["prevention","Профилактика"],["doctor","Назначение врача"]].map(([v,l]) =>
+                `<label style="display:flex;align-items:center;gap:5px;font-size:0.85rem;cursor:pointer;">
+                  <input type="checkbox" name="mc_goals" value="${v}" ${(client.medCard?.goals||[]).includes(v)?"checked":""}> ${l}
+                </label>`).join("")}
+            </div>
+          </label>
+
+          <label class="field field--full"><span>Основная жалоба / запрос</span>
+            <textarea rows="2" name="mc_complaint" placeholder="Боль в шее, скованность по утрам...">${escapeHtml(client.medCard?.complaint || "")}</textarea></label>
+
+          <label class="field field--full"><span>Хронические заболевания</span>
+            <input type="text" name="mc_chronic" placeholder="Нет / Гипертония / Диабет..." value="${escapeHtml(client.medCard?.chronic || "")}"></label>
+
+          <div class="field-grid">
+            <label class="field"><span>Травмы и операции</span>
+              <input type="text" name="mc_injuries" placeholder="Нет / Перелом 2018..." value="${escapeHtml(client.medCard?.injuries || "")}"></label>
+            <label class="field"><span>Принимаемые препараты</span>
+              <input type="text" name="mc_medications" placeholder="Нет / Конкор..." value="${escapeHtml(client.medCard?.medications || "")}"></label>
+          </div>
+
+          <label class="field field--full"><span>Аллергии (масла, ароматы, кремы)</span>
+            <input type="text" name="mc_allergies" placeholder="Нет / Лаванда..." value="${escapeHtml(client.medCard?.allergies || "")}"></label>
+
+          <label class="field field--full"><span>Зоны фокуса (где работать)</span>
+            <input type="text" name="mc_focus" placeholder="Шея, плечи, поясница..." value="${escapeHtml(client.medCard?.focus || "")}"></label>
+
+          <label class="field field--full"><span>Зоны избегать</span>
+            <input type="text" name="mc_avoid" placeholder="Нет / Правое колено..." value="${escapeHtml(client.medCard?.avoid || "")}"></label>
+
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.85rem;cursor:pointer;">
+            <input type="checkbox" name="mc_contraindications" ${client.medCard?.contraindications_ok?"checked":""} style="margin-top:2px;">
+            <span>Клиент ознакомлен с противопоказаниями и подтверждает отсутствие запретов</span>
+          </label>
+
+          <div class="field-grid">
+            <label class="field"><span>Дата заполнения</span>
+              <input type="date" name="mc_date" value="${escapeHtml(client.medCard?.date || new Date().toISOString().slice(0,10))}"></label>
+            <label class="field"><span>Карта заполнена</span>
+              <select name="mc_status">
+                <option value="">Не заполнена</option>
+                <option value="filled" ${client.medCard?.status==="filled"?"selected":""}>Заполнена</option>
+                <option value="signed" ${client.medCard?.status==="signed"?"selected":""}>Подписана</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <!-- ── конец медкарты ── -->
         <div class="field-grid">
           <label class="field">
             <span>Статус клиента</span>
@@ -3418,10 +3500,31 @@ async function handleClientProfileSubmit(event) {
     return;
   }
 
+  const goals = [...form.querySelectorAll('[name="mc_goals"]:checked')].map(el => el.value);
   const payload = {
     status: form.querySelector('[name="status"]').value,
     tag: form.querySelector('[name="tag"]').value.trim(),
-    note: form.querySelector('[name="note"]').value.trim()
+    note: form.querySelector('[name="note"]').value.trim(),
+    medCard: {
+      dob: form.querySelector('[name="mc_dob"]')?.value || "",
+      profession: form.querySelector('[name="mc_profession"]')?.value.trim() || "",
+      bp_sys: Number(form.querySelector('[name="mc_bp_sys"]')?.value) || null,
+      bp_dia: Number(form.querySelector('[name="mc_bp_dia"]')?.value) || null,
+      pulse: Number(form.querySelector('[name="mc_pulse"]')?.value) || null,
+      wellbeing: Number(form.querySelector('[name="mc_wellbeing"]')?.value) || null,
+      last_massage: form.querySelector('[name="mc_last_massage"]')?.value.trim() || "",
+      goals,
+      complaint: form.querySelector('[name="mc_complaint"]')?.value.trim() || "",
+      chronic: form.querySelector('[name="mc_chronic"]')?.value.trim() || "",
+      injuries: form.querySelector('[name="mc_injuries"]')?.value.trim() || "",
+      medications: form.querySelector('[name="mc_medications"]')?.value.trim() || "",
+      allergies: form.querySelector('[name="mc_allergies"]')?.value.trim() || "",
+      focus: form.querySelector('[name="mc_focus"]')?.value.trim() || "",
+      avoid: form.querySelector('[name="mc_avoid"]')?.value.trim() || "",
+      contraindications_ok: form.querySelector('[name="mc_contraindications"]')?.checked || false,
+      date: form.querySelector('[name="mc_date"]')?.value || new Date().toISOString().slice(0,10),
+      status: form.querySelector('[name="mc_status"]')?.value || ""
+    }
   };
 
   try {
