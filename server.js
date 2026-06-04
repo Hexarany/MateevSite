@@ -720,7 +720,14 @@ function normalizeSiteContent(siteInput = {}) {
           .filter((p) => p.title)
       };
     })(),
-    translations: input.translations || defaults.translations || {}
+    translations: input.translations || defaults.translations || {},
+    promoBanner: input.promoBanner && typeof input.promoBanner === "object" ? {
+      enabled: !!input.promoBanner.enabled,
+      text: sanitizeText(input.promoBanner.text),
+      cta: sanitizeText(input.promoBanner.cta),
+      ctaUrl: sanitizeText(input.promoBanner.ctaUrl),
+      color: sanitizeText(input.promoBanner.color) || "brand"
+    } : null
   };
 }
 
@@ -1352,7 +1359,15 @@ async function sendTelegramNotification(booking) {
   await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
     body: {
       chat_id: TELEGRAM_CHAT_ID,
-      text: buildBookingNotificationText(booking)
+      text: buildBookingNotificationText(booking),
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "✅ Подтвердить", callback_data: `confirm:${booking.id}` },
+          { text: "🏁 Завершить", callback_data: `complete:${booking.id}` },
+          { text: "❌ Отменить", callback_data: `cancel:${booking.id}` }
+        ]]
+      }
     }
   });
 
@@ -4009,6 +4024,64 @@ async function routeApi(request, response, urlObject) {
     }
     response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     response.end(`<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Отписка</title></head><body style="font-family:sans-serif;text-align:center;padding:80px 24px;background:#f7f0e6;"><h1 style="color:#1a2e22;">Вы отписаны</h1><p style="color:#7d6d60;">Письма больше не будут приходить.</p><a href="/" style="color:#6b8d6b;">На главную</a></body></html>`);
+    return;
+  }
+
+  // GET /api/admin/telegram/setup — register webhook (run once)
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/telegram/setup") {
+    assertAdminPin(request);
+    const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+    const result = await requestJson(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
+      { body: { url: `${base}/api/telegram/webhook`, allowed_updates: ["callback_query"] } }
+    );
+    sendJson(response, 200, result);
+    return;
+  }
+
+  // POST /api/telegram/webhook — Telegram bot callback handler
+  if (request.method === "POST" && urlObject.pathname === "/api/telegram/webhook") {
+    const payload = await parseJsonBody(request);
+    const cb = payload?.callback_query;
+    if (cb && cb.data) {
+      const [action, bookingId] = cb.data.split(":");
+      const statusMap = { confirm: "confirmed", complete: "completed", cancel: "cancelled" };
+      const labelMap = { confirm: "✅ Подтверждена", complete: "🏁 Завершена", cancel: "❌ Отменена" };
+      const newStatus = statusMap[action];
+      if (newStatus && bookingId) {
+        void (async () => {
+          try {
+            const bookings = await readJson("bookings.json");
+            const idx = bookings.findIndex(b => b.id === bookingId);
+            if (idx !== -1 && bookings[idx].status !== newStatus) {
+              bookings[idx].status = newStatus;
+              bookings[idx].updatedAt = new Date().toISOString();
+              await writeJson("bookings.json", bookings);
+              const b = bookings[idx];
+              const answerText = `${labelMap[action]}\n${b.clientName} · ${b.serviceName}\n${b.date}, ${b.slot}`;
+              // Answer callback query (removes loading state in Telegram)
+              await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                body: { callback_query_id: cb.id, text: labelMap[action], show_alert: false }
+              });
+              // Edit original message to remove buttons
+              await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+                body: {
+                  chat_id: cb.message.chat.id,
+                  message_id: cb.message.message_id,
+                  text: `${cb.message.text}\n\n${labelMap[action]}`,
+                  reply_markup: { inline_keyboard: [] }
+                }
+              });
+            } else {
+              await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                body: { callback_query_id: cb.id, text: "Уже обновлено", show_alert: false }
+              });
+            }
+          } catch {}
+        })();
+      }
+    }
+    sendJson(response, 200, { ok: true });
     return;
   }
 

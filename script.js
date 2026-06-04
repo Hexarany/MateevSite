@@ -409,6 +409,7 @@ async function loadBootstrap() {
   state.specialists = payload.specialists;
   state.site = payload.site;
   if (payload.closure) renderClosureBanner(payload.closure);
+  if (payload.site?.promoBanner?.enabled) renderPromoBanner(payload.site.promoBanner);
   state.currency = payload.site?.brand?.currency || "MDL";
   state.bookingProtectionToken = payload.meta?.bookingProtectionToken || "";
   state.diary = diaryPayload.entries || [];
@@ -1175,6 +1176,26 @@ function initFabObserver() {
 
   observer.observe(bookingSection);
   if (heroSection) observer.observe(heroSection);
+}
+
+function renderPromoBanner(banner) {
+  if (document.getElementById("promoBanner")) return;
+  const colors = {
+    brand: "background:#b36d2c;color:#fff;",
+    forest: "background:#1a2e22;color:#fff;",
+    sage: "background:#6b8d6b;color:#fff;",
+    warm: "background:#f5e6d3;color:#241c17;"
+  };
+  const style = colors[banner.color] || colors.brand;
+  const el = document.createElement("div");
+  el.id = "promoBanner";
+  el.style.cssText = `${style}text-align:center;padding:10px 20px;font-size:0.88rem;font-weight:600;position:relative;z-index:24;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;`;
+  el.innerHTML = `
+    <span>${escapeHtml(banner.text)}</span>
+    ${banner.cta && banner.ctaUrl ? `<a href="${escapeHtml(banner.ctaUrl)}" style="padding:4px 14px;border:1.5px solid currentColor;border-radius:8px;text-decoration:none;color:inherit;font-size:0.82rem;flex-shrink:0;">${escapeHtml(banner.cta)}</a>` : ""}
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;opacity:0.6;font-size:1.1rem;color:inherit;position:absolute;right:12px;top:50%;transform:translateY(-50%);">×</button>
+  `;
+  document.querySelector(".topbar")?.insertAdjacentElement("afterend", el);
 }
 
 function renderClosureBanner(closure) {

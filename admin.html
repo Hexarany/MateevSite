@@ -690,6 +690,33 @@
               <button type="button" class="button button--secondary" id="saveSiteContentBtn">Сохранить</button>
             </div>
             <div class="admin-list-grid" id="siteContentEditor"></div>
+
+            <div class="admin-widget" style="margin-top:18px;">
+              <div class="admin-widget__head">
+                <div><p class="section-kicker">Акционный баннер</p><h3 class="admin-widget__title">Полоса под шапкой сайта</h3></div>
+                <label class="admin-check-option is-checked" style="gap:8px;padding:8px 14px;">
+                  <input type="checkbox" id="bannerEnabled"> Включить
+                </label>
+              </div>
+              <div class="admin-form-stack" style="padding:0 4px;">
+                <label class="field field--full"><span>Текст баннера</span>
+                  <input type="text" id="bannerText" placeholder="Июньская акция: -15% на первый визит"></label>
+                <div class="field-grid">
+                  <label class="field"><span>Кнопка (текст)</span>
+                    <input type="text" id="bannerCta" placeholder="Записаться"></label>
+                  <label class="field"><span>Кнопка (ссылка)</span>
+                    <input type="text" id="bannerCtaUrl" placeholder="#booking"></label>
+                </div>
+                <label class="field"><span>Цвет</span>
+                  <select id="bannerColor">
+                    <option value="brand">Янтарный (бренд)</option>
+                    <option value="forest">Тёмно-зелёный</option>
+                    <option value="sage">Шалфей</option>
+                    <option value="warm">Тёплый светлый</option>
+                  </select>
+                </label>
+              </div>
+            </div>
           </section>
 
           <section class="admin-section-block reveal" id="content-services">

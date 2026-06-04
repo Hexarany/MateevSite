@@ -605,6 +605,22 @@ function renderContentManagement() {
   elements.specialistsEditor.innerHTML = renderSpecialistsEditor();
   renderReviewsEditor();
   renderSchoolEditors();
+  renderBannerEditor();
+}
+
+function renderBannerEditor() {
+  const banner = state.site?.promoBanner;
+  const enabledEl = document.getElementById("bannerEnabled");
+  const textEl = document.getElementById("bannerText");
+  const ctaEl = document.getElementById("bannerCta");
+  const ctaUrlEl = document.getElementById("bannerCtaUrl");
+  const colorEl = document.getElementById("bannerColor");
+  if (!enabledEl) return;
+  enabledEl.checked = !!(banner?.enabled);
+  if (textEl) textEl.value = banner?.text || "";
+  if (ctaEl) ctaEl.value = banner?.cta || "";
+  if (ctaUrlEl) ctaUrlEl.value = banner?.ctaUrl || "";
+  if (colorEl) colorEl.value = banner?.color || "brand";
 }
 
 function renderSchoolEditors() {
@@ -1267,6 +1283,16 @@ async function handleContentSave(scope) {
   button.textContent = labelMap[scope];
 
   try {
+    // Merge banner from form into site before saving
+    if (scope === "site" && state.site) {
+      state.site.promoBanner = {
+        enabled: document.getElementById("bannerEnabled")?.checked || false,
+        text: document.getElementById("bannerText")?.value.trim() || "",
+        cta: document.getElementById("bannerCta")?.value.trim() || "",
+        ctaUrl: document.getElementById("bannerCtaUrl")?.value.trim() || "",
+        color: document.getElementById("bannerColor")?.value || "brand"
+      };
+    }
     const payload = await fetchJson("/api/admin/content", {
       method: "PUT",
       body: JSON.stringify({
