@@ -72,6 +72,7 @@ const STATIC_FILES = {
   "/certificate": "certificate.html",
   "/certificate.html": "certificate.html",
   "/manifest.json": "manifest.json",
+  "/manifest-admin.json": "manifest-admin.json",
   "/service-worker.js": "service-worker.js",
   "/body-diagram.jpg": "body-diagram.jpg"
 };
