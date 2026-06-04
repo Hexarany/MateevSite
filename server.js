@@ -4784,10 +4784,10 @@ function parseMarkdown(text) {
   // HTML escape
   let s = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   // Images: ![alt](url)
-  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<figure style="margin:28px 0;"><img src="$2" alt="$1" style="max-width:100%;border-radius:14px;display:block;">' +
-    '$1'.length > 0 ? '<figcaption style="font-size:0.82rem;color:#7d6d60;margin-top:8px;text-align:center;">$1</figcaption>' : '' +
-    '</figure>');
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(_, alt, src) {
+    var caption = alt ? '<figcaption style="font-size:0.82rem;color:#7d6d60;margin-top:8px;text-align:center;">' + alt + '</figcaption>' : '';
+    return '<figure style="margin:28px 0;"><img src="' + src + '" alt="' + alt + '" style="max-width:100%;border-radius:14px;display:block;">' + caption + '</figure>';
+  });
   // Links: [text](url)
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener" style="color:#6b8d6b;">$1</a>');
   // Bold+italic: ***text***
