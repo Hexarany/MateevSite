@@ -41,6 +41,7 @@
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
+        <a href="#intakes" data-section="intakes">Анкеты пациентов</a>
         <a href="#diary" data-section="diary">Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">Отзывы на сайте</a>
         <hr class="admin-sidebar__divider">
@@ -553,6 +554,24 @@
                   </thead>
                   <tbody id="certificatesTableBody"></tbody>
                 </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="intakes">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Анкеты</p>
+                <h2 class="admin-section-block__title">Карты пациентов с QR-формы</h2>
+              </div>
+              <a href="/intake" target="_blank" class="button button--ghost">Открыть форму →</a>
+            </div>
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head">
+                <div><p class="section-kicker">Входящие</p><h3 class="admin-widget__title">Новые заполненные анкеты</h3></div>
+              </div>
+              <div id="intakesList" style="padding:20px;display:grid;gap:12px;">
+                <p class="empty-state">Загрузка...</p>
               </div>
             </div>
           </section>

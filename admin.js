@@ -1359,6 +1359,10 @@ async function loadAdminData() {
     state.diary = diaryData.entries || [];
     renderDiaryEntriesList();
   } catch {}
+  try {
+    const intakesData = await fetchJson("/api/admin/intakes");
+    renderIntakesList(intakesData.intakes || []);
+  } catch {}
   renderDashboard();
 }
 
@@ -1457,6 +1461,27 @@ function handleReviewEditorClick(event) {
 
 async function handleSaveReviews() {
   await handleContentSave("site");
+}
+
+function renderIntakesList(intakes) {
+  const el = document.getElementById("intakesList");
+  if (!el) return;
+  if (!intakes.length) {
+    el.innerHTML = '<p class="empty-state">Анкет пока нет. Когда клиент заполнит QR-форму — она появится здесь.</p>';
+    return;
+  }
+  const goalsMap = { relaxation:"Расслабление", pain:"Боль", rehab:"Реабилитация", prevention:"Профилактика", doctor:"Назначение врача" };
+  el.innerHTML = intakes.map(entry => {
+    const date = new Date(entry.submittedAt).toLocaleString("ru-RU", { day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" });
+    const goals = (entry.goals || []).map(g => goalsMap[g] || g).join(", ") || "—";
+    return `
+      <div class="diary-admin-card" style="border-left:3px solid ${entry.linked ? "var(--sage)" : "var(--brand)"};">
+        <div class="diary-admin-card__meta">${date} ${entry.linked ? "· ✅ Привязана" : "· 🆕 Новая"}</div>
+        <div class="diary-admin-card__title">${escapeHtml(entry.name || "—")} ${entry.phone ? "· " + escapeHtml(entry.phone) : ""}</div>
+        <div class="diary-admin-card__excerpt">Цель: ${escapeHtml(goals)} · ${escapeHtml(entry.complaint || "жалоб нет")}</div>
+        ${entry.chronic && entry.chronic !== "Нет" ? `<div style="font-size:0.8rem;color:var(--danger);">⚠ ${escapeHtml(entry.chronic)}</div>` : ""}
+      </div>`;
+  }).join("");
 }
 
 function renderDiaryEntriesList() {

@@ -3979,6 +3979,35 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/intake — public patient intake form submission
+  if (request.method === "POST" && urlObject.pathname === "/api/intake") {
+    const payload = await parseJsonBody(request);
+    const name = sanitizeText(payload.name || "");
+    if (!name) { sendJson(response, 400, { message: "Укажите имя." }); return; }
+    const entry = {
+      id: `intake-${Date.now()}`,
+      ...payload,
+      submittedAt: new Date().toISOString(),
+      linked: false
+    };
+    const intakes = await readJson("intakes.json").catch(() => []);
+    intakes.push(entry);
+    await writeJson("intakes.json", intakes);
+    void (async () => {
+      try {
+        if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+          const goals = (payload.goals || []).join(", ") || "—";
+          const text = `📋 Новая карта пациента\n\n👤 ${name}\n📞 ${payload.phone || "—"}\n🎯 ${goals}\n💬 ${payload.complaint || "—"}`;
+          await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            body: { chat_id: TELEGRAM_CHAT_ID, text }
+          });
+        }
+      } catch {}
+    })();
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // POST /api/subscribe — diary newsletter
   if (request.method === "POST" && urlObject.pathname === "/api/subscribe") {
     const payload = await parseJsonBody(request);
@@ -4006,6 +4035,14 @@ async function routeApi(request, response, urlObject) {
       .filter((e) => e.published && e.publishedAt <= today)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     sendJson(response, 200, { entries });
+    return;
+  }
+
+  // GET /api/admin/intakes
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/intakes") {
+    assertAdminPin(request);
+    const intakes = await readJson("intakes.json").catch(() => []);
+    sendJson(response, 200, { intakes: intakes.sort((a,b) => b.submittedAt.localeCompare(a.submittedAt)) });
     return;
   }
 
@@ -4335,6 +4372,149 @@ function renderFirstVisitPage() {
 </html>`;
 }
 
+function renderIntakePage() {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const goalsOptions = [
+    ["relaxation","Расслабление"],["pain","Боль / напряжение"],
+    ["rehab","Реабилитация"],["prevention","Профилактика"],["doctor","Назначение врача"]
+  ];
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Карта пациента — Mateev Spa Studio</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f0e6;color:#241c17;padding:20px;max-width:560px;margin:0 auto;}
+    .header{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1a2e22;}
+    .brand{font-size:1.2rem;font-weight:700;color:#1a2e22;}
+    .brand-sub{font-size:0.78rem;color:#7d6d60;margin-top:2px;}
+    h1{font-size:1rem;font-weight:700;color:#1a2e22;margin:16px 0 4px;}
+    p.intro{font-size:0.85rem;color:#7d6d60;line-height:1.6;margin-bottom:20px;}
+    .section{margin-bottom:20px;}
+    .section-title{font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#b36d2c;margin-bottom:10px;}
+    label{display:block;font-size:0.82rem;color:#5a4e45;margin-bottom:4px;font-weight:500;}
+    input[type=text],input[type=date],input[type=number],textarea,select{
+      width:100%;padding:12px 14px;border:1px solid rgba(71,49,28,0.2);border-radius:10px;
+      background:#fffaf4;font-size:0.9rem;font-family:inherit;color:#241c17;margin-bottom:12px;}
+    textarea{resize:vertical;min-height:70px;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    .checkbox-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+    .checkbox-label{display:flex;align-items:center;gap:6px;font-size:0.85rem;padding:8px 12px;
+      border:1px solid rgba(71,49,28,0.15);border-radius:8px;background:#fffaf4;cursor:pointer;}
+    .checkbox-label input{width:16px;height:16px;}
+    .contraindications{background:#fff8f0;border:1px solid #e8c99a;border-radius:10px;padding:14px;font-size:0.78rem;color:#5a4e45;line-height:1.7;margin-bottom:16px;}
+    .contraindications strong{color:#b36d2c;}
+    .consent-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;}
+    .consent-row input{width:20px;height:20px;flex-shrink:0;margin-top:2px;}
+    .consent-text{font-size:0.82rem;color:#5a4e45;line-height:1.5;}
+    .submit-btn{width:100%;padding:16px;background:#1a2e22;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;}
+    .submit-btn:disabled{opacity:0.6;}
+    .success{text-align:center;padding:40px 20px;display:none;}
+    .success h2{font-size:1.4rem;color:#1a2e22;margin-bottom:8px;}
+    .success p{color:#7d6d60;font-size:0.9rem;}
+    .success .icon{font-size:3rem;margin-bottom:16px;}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">Mateev Spa Studio</div>
+    <div class="brand-sub">Персональная карта пациента</div>
+  </div>
+
+  <h1>Добро пожаловать!</h1>
+  <p class="intro">Пожалуйста заполните эту форму — это займёт 2–3 минуты и поможет специалисту лучше подготовиться к вашему сеансу.</p>
+
+  <form id="intakeForm">
+    <div class="section">
+      <div class="section-title">Личные данные</div>
+      <label>Имя и фамилия *</label>
+      <input type="text" name="name" required placeholder="Анна Иванова">
+      <div class="grid2">
+        <div><label>Телефон</label><input type="text" name="phone" placeholder="+373..."></div>
+        <div><label>Дата рождения</label><input type="date" name="dob"></div>
+      </div>
+      <label>Профессия / тип работы</label>
+      <input type="text" name="profession" placeholder="Программист, парикмахер...">
+    </div>
+
+    <div class="section">
+      <div class="section-title">Цель визита</div>
+      <div class="checkbox-group">
+        ${goalsOptions.map(([v,l]) => `<label class="checkbox-label"><input type="checkbox" name="goals" value="${v}"> ${l}</label>`).join("")}
+      </div>
+      <label>Основная жалоба / что беспокоит</label>
+      <textarea name="complaint" placeholder="Боль в шее, скованность по утрам, стресс..."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Здоровье</div>
+      <label>Хронические заболевания</label>
+      <input type="text" name="chronic" placeholder="Нет / Гипертония / Диабет...">
+      <label>Травмы и перенесённые операции</label>
+      <input type="text" name="injuries" placeholder="Нет / Перелом 2018...">
+      <label>Принимаемые препараты</label>
+      <input type="text" name="medications" placeholder="Нет / Конкор...">
+      <label>Аллергии (масла, ароматы)</label>
+      <input type="text" name="allergies" placeholder="Нет / Лаванда...">
+      <label>Когда последний раз были на массаже</label>
+      <input type="text" name="last_massage" placeholder="Никогда / 6 месяцев назад...">
+    </div>
+
+    <div class="section">
+      <div class="section-title">Противопоказания</div>
+      <div class="contraindications">
+        <strong>Массаж противопоказан при:</strong> онкологии, тромбозе, острых воспалениях, варикозе в зоне работы, инфекционных заболеваниях, повышенной температуре, острой сердечной/почечной недостаточности, психических расстройствах, приёме алкоголя.
+      </div>
+      <label class="consent-row">
+        <input type="checkbox" name="consent" required>
+        <span class="consent-text">Я ознакомился(ась) с противопоказаниями и подтверждаю что они ко мне не относятся. Вся указанная информация верна.</span>
+      </label>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Отправить карту →</button>
+  </form>
+
+  <div class="success" id="successBlock">
+    <div class="icon">✅</div>
+    <h2>Спасибо!</h2>
+    <p>Ваша карта заполнена. Специалист уже получил информацию.</p>
+    <p style="margin-top:8px;font-size:0.8rem;color:#9a8a7a;">Mateev Spa Studio · Кишинёв</p>
+  </div>
+
+  <script>
+    document.getElementById("intakeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true; btn.textContent = "Отправляю...";
+      const fd = new FormData(e.target);
+      const goals = [...fd.getAll("goals")];
+      const data = {
+        name: fd.get("name"), phone: fd.get("phone"), dob: fd.get("dob"),
+        profession: fd.get("profession"), complaint: fd.get("complaint"),
+        chronic: fd.get("chronic"), injuries: fd.get("injuries"),
+        medications: fd.get("medications"), allergies: fd.get("allergies"),
+        last_massage: fd.get("last_massage"), goals,
+        consent: !!fd.get("consent"), filledAt: new Date().toISOString()
+      };
+      try {
+        const r = await fetch("/api/intake", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(data) });
+        if (r.ok) {
+          e.target.style.display = "none";
+          document.getElementById("successBlock").style.display = "block";
+        } else { throw new Error(); }
+      } catch {
+        btn.disabled = false; btn.textContent = "Отправить карту →";
+        alert("Ошибка. Попробуйте ещё раз.");
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
+
 function renderMedicalCardPage(clientName, profile) {
   const mc = profile.medCard || {};
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
@@ -4550,6 +4730,15 @@ function renderMedicalCardPage(clientName, profile) {
     <div>
       <div class="sign-line"></div>
       <div class="sign-label">Специалист / Specialist — Матиевич Денис</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:20px;margin-top:24px;padding-top:16px;border-top:1px solid #e8ddd4;">
+    <img src="https://chart.googleapis.com/chart?cht=qr&chs=100x100&chl=${encodeURIComponent(base + '/intake')}&choe=UTF-8"
+         alt="QR карта пациента" width="100" height="100" style="border-radius:8px;border:1px solid #e8ddd4;">
+    <div>
+      <p style="font-size:0.8rem;font-weight:700;color:#1a2e22;margin-bottom:4px;">Заполните карту на телефоне</p>
+      <p style="font-size:0.75rem;color:#7d6d60;line-height:1.5;">Отсканируйте QR-код камерой телефона<br>и заполните форму самостоятельно.<br><strong style="color:#b36d2c;">${base}/intake</strong></p>
     </div>
   </div>
 
@@ -5270,6 +5459,13 @@ function createServer() {
       if (urlObject.pathname === "/first-visit" || urlObject.pathname === "/first-visit/") {
         const html = renderFirstVisitPage();
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/intake" || urlObject.pathname === "/intake/") {
+        const html = renderIntakePage();
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         response.end(html);
         return;
       }
