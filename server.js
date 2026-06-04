@@ -72,7 +72,8 @@ const STATIC_FILES = {
   "/certificate": "certificate.html",
   "/certificate.html": "certificate.html",
   "/manifest.json": "manifest.json",
-  "/service-worker.js": "service-worker.js"
+  "/service-worker.js": "service-worker.js",
+  "/body-diagram.jpg": "body-diagram.jpg"
 };
 
 const MIME_TYPES = {
@@ -4685,111 +4686,10 @@ function renderMedicalCardPage(clientName, profile) {
   <div class="section">
     <div class="section-title">Зоны дискомфорта — отметьте на рисунке</div>
     <p style="font-size:0.78rem;color:#7d6d60;margin-bottom:12px;">Обведите или отметьте зоны где чувствуете боль, напряжение или дискомфорт</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:center;">
-
-      <div>
-        <p style="font-size:0.75rem;color:#7d6d60;margin-bottom:6px;font-weight:600;">СПЕРЕДИ</p>
-        <svg viewBox="0 0 120 280" width="120" height="280" style="border:1px solid #e8ddd4;border-radius:8px;background:#faf6f0;">
-          <!-- Голова -->
-          <ellipse cx="60" cy="22" rx="16" ry="18" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Шея -->
-          <rect x="54" y="38" width="12" height="10" rx="2" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Туловище -->
-          <path d="M30 48 Q20 52 18 80 L18 140 Q18 148 30 150 L90 150 Q102 148 102 140 L102 80 Q100 52 90 48 Z" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Плечи линия -->
-          <line x1="18" y1="58" x2="102" y2="58" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="3,2"/>
-          <!-- Грудь / верхняя спина разделитель -->
-          <line x1="18" y1="95" x2="102" y2="95" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="3,2"/>
-          <!-- Живот разделитель -->
-          <line x1="18" y1="122" x2="102" y2="122" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="3,2"/>
-          <!-- Левая рука -->
-          <path d="M18 58 Q10 70 8 100 Q8 112 12 118 L18 118 Q22 112 22 100 L22 58" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Правая рука -->
-          <path d="M102 58 Q110 70 112 100 Q112 112 108 118 L102 118 Q98 112 98 100 L98 58" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Левая кисть -->
-          <ellipse cx="10" cy="124" rx="6" ry="9" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Правая кисть -->
-          <ellipse cx="110" cy="124" rx="6" ry="9" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Таз -->
-          <path d="M18 150 Q18 165 28 168 L92 168 Q102 165 102 150" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Левое бедро -->
-          <path d="M28 168 Q22 200 22 220 L36 220 Q40 200 40 168" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Правое бедро -->
-          <path d="M92 168 Q98 200 98 220 L84 220 Q80 200 80 168" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Колени -->
-          <ellipse cx="29" cy="224" rx="9" ry="7" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <ellipse cx="91" cy="224" rx="9" ry="7" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Левая голень -->
-          <path d="M22 230 Q20 252 22 264 L36 264 Q38 252 36 230" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Правая голень -->
-          <path d="M98 230 Q100 252 98 264 L84 264 Q82 252 84 230" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Левая стопа -->
-          <path d="M20 264 L20 270 Q20 274 28 274 L38 274 Q42 274 42 270 L38 264" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Правая стопа -->
-          <path d="M100 264 L100 270 Q100 274 92 274 L82 274 Q78 274 78 270 L82 264" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Подписи зон -->
-          <text x="60" y="30" text-anchor="middle" font-size="6" fill="#b36d2c" font-weight="600">голова</text>
-          <text x="60" y="53" text-anchor="middle" font-size="5.5" fill="#9a8a7a">шея</text>
-          <text x="60" y="80" text-anchor="middle" font-size="5.5" fill="#9a8a7a">грудь</text>
-          <text x="60" y="112" text-anchor="middle" font-size="5.5" fill="#9a8a7a">живот</text>
-          <text x="60" y="160" text-anchor="middle" font-size="5.5" fill="#9a8a7a">таз</text>
-          <text x="10" y="90" text-anchor="middle" font-size="5" fill="#9a8a7a">рука</text>
-          <text x="110" y="90" text-anchor="middle" font-size="5" fill="#9a8a7a">рука</text>
-          <text x="29" y="210" text-anchor="middle" font-size="5" fill="#9a8a7a">бедро</text>
-          <text x="91" y="210" text-anchor="middle" font-size="5" fill="#9a8a7a">бедро</text>
-          <text x="29" y="250" text-anchor="middle" font-size="5" fill="#9a8a7a">голень</text>
-          <text x="91" y="250" text-anchor="middle" font-size="5" fill="#9a8a7a">голень</text>
-        </svg>
-      </div>
-
-      <div>
-        <p style="font-size:0.75rem;color:#7d6d60;margin-bottom:6px;font-weight:600;">СЗАДИ</p>
-        <svg viewBox="0 0 120 280" width="120" height="280" style="border:1px solid #e8ddd4;border-radius:8px;background:#faf6f0;">
-          <!-- Голова -->
-          <ellipse cx="60" cy="22" rx="16" ry="18" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Шея -->
-          <rect x="54" y="38" width="12" height="10" rx="2" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Туловище -->
-          <path d="M30 48 Q20 52 18 80 L18 140 Q18 148 30 150 L90 150 Q102 148 102 140 L102 80 Q100 52 90 48 Z" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Плечи -->
-          <line x1="18" y1="58" x2="102" y2="58" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="3,2"/>
-          <!-- Верхняя спина / поясница разделитель -->
-          <line x1="18" y1="95" x2="102" y2="95" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="3,2"/>
-          <!-- Поясница / крестец -->
-          <line x1="18" y1="130" x2="102" y2="130" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="3,2"/>
-          <!-- Позвоночник -->
-          <line x1="60" y1="48" x2="60" y2="150" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="2,3"/>
-          <!-- Руки -->
-          <path d="M18 58 Q10 70 8 100 Q8 112 12 118 L18 118 Q22 112 22 100 L22 58" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <path d="M102 58 Q110 70 112 100 Q112 112 108 118 L102 118 Q98 112 98 100 L98 58" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <ellipse cx="10" cy="124" rx="6" ry="9" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <ellipse cx="110" cy="124" rx="6" ry="9" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Таз / ягодицы -->
-          <path d="M18 150 Q18 165 28 168 L92 168 Q102 165 102 150" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <line x1="60" y1="150" x2="60" y2="168" stroke="#c8beb0" stroke-width="0.8" stroke-dasharray="2,3"/>
-          <!-- Ноги -->
-          <path d="M28 168 Q22 200 22 220 L36 220 Q40 200 40 168" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <path d="M92 168 Q98 200 98 220 L84 220 Q80 200 80 168" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <ellipse cx="29" cy="224" rx="9" ry="7" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <ellipse cx="91" cy="224" rx="9" ry="7" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <path d="M22 230 Q20 252 22 264 L36 264 Q38 252 36 230" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <path d="M98 230 Q100 252 98 264 L84 264 Q82 252 84 230" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <path d="M22 264 L22 270 Q22 274 30 274 L40 274 Q44 274 44 270 L40 264" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <path d="M98 264 L98 270 Q98 274 90 274 L80 274 Q76 274 76 270 L80 264" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
-          <!-- Подписи -->
-          <text x="60" y="53" text-anchor="middle" font-size="5.5" fill="#9a8a7a">шея</text>
-          <text x="60" y="78" text-anchor="middle" font-size="5.5" fill="#b36d2c" font-weight="600">верх.спина</text>
-          <text x="60" y="115" text-anchor="middle" font-size="5.5" fill="#b36d2c" font-weight="600">поясница</text>
-          <text x="60" y="143" text-anchor="middle" font-size="5.5" fill="#9a8a7a">крестец</text>
-          <text x="60" y="162" text-anchor="middle" font-size="5.5" fill="#9a8a7a">ягодицы</text>
-          <text x="29" y="210" text-anchor="middle" font-size="5" fill="#9a8a7a">бедро</text>
-          <text x="91" y="210" text-anchor="middle" font-size="5" fill="#9a8a7a">бедро</text>
-          <text x="29" y="250" text-anchor="middle" font-size="5" fill="#9a8a7a">голень</text>
-          <text x="91" y="250" text-anchor="middle" font-size="5" fill="#9a8a7a">голень</text>
-        </svg>
-      </div>
+      <img src="/body-diagram.jpg" alt="Схема тела для отметки зон дискомфорта"
+           style="max-width:100%;width:480px;border-radius:8px;border:1px solid #e8ddd4;">
     </div>
-    <p style="font-size:0.72rem;color:#9a8a7a;margin-top:8px;">● боль &nbsp;&nbsp; ○ напряжение &nbsp;&nbsp; × онемение</p>
+    <p style="font-size:0.72rem;color:#9a8a7a;margin-top:8px;">Обозначения: ● боль &nbsp;&nbsp; ○ напряжение &nbsp;&nbsp; × онемение &nbsp;&nbsp; ↗ отдаёт в...</p>
   </div>
 
   <div class="section">
