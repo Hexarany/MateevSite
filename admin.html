@@ -589,11 +589,26 @@
                     <span>Опубликована</span>
                   </label>
                 </div>
-                <label class="field field--full">
-                  <span>Текст записи</span>
-                  <textarea id="diaryEntryBody" rows="6" placeholder="Текст заметки..." style="resize:vertical;"></textarea>
-                </label>
-                <div style="display:flex;gap:10px;">
+                <div class="field field--full">
+                  <span style="display:block;margin-bottom:8px;">Текст записи <span style="color:var(--muted);font-size:0.78rem;font-weight:400;">(поддерживает Markdown)</span></span>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="## " data-wrap="false" title="Заголовок 2">H2</button>
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="### " data-wrap="false" title="Заголовок 3">H3</button>
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="**" data-wrap="true" title="Жирный"><strong>Ж</strong></button>
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="*" data-wrap="true" title="Курсив"><em>К</em></button>
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="- " data-wrap="false" title="Список">— Список</button>
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="> " data-wrap="false" title="Цитата">❝ Цитата</button>
+                    <button type="button" class="button button--ghost button--mini diary-fmt-btn" data-fmt="---" data-wrap="false" title="Разделитель">─ Линия</button>
+                    <label class="button button--ghost button--mini" style="cursor:pointer;" title="Загрузить фото">
+                      📎 Фото
+                      <input type="file" id="diaryImageUpload" accept="image/*" style="display:none;">
+                    </label>
+                    <button type="button" class="button button--ghost button--mini" id="diaryPreviewBtn">👁 Предпросмотр</button>
+                  </div>
+                  <textarea id="diaryEntryBody" rows="16" placeholder="## Заголовок раздела&#10;&#10;Обычный текст с **жирными** словами и *курсивом*.&#10;&#10;- Пункт списка&#10;- Ещё пункт&#10;&#10;---&#10;&#10;![Описание фото](url)" style="resize:vertical;font-family:monospace;font-size:0.88rem;"></textarea>
+                  <div id="diaryPreview" style="display:none;padding:20px;background:rgba(255,255,255,0.7);border-radius:12px;border:1px solid var(--line);margin-top:8px;line-height:1.8;"></div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
                   <button type="submit" class="button button--secondary">Сохранить запись</button>
                   <button type="button" class="button button--ghost" id="diaryEntryCancelBtn">Отмена</button>
                 </div>

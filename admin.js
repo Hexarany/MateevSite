@@ -293,6 +293,65 @@ function bindEvents() {
     btn.classList.add("is-active");
     renderRevenueChart(state.adminData?.bookings || [], Number(btn.dataset.period));
   });
+  // Markdown format buttons
+  document.addEventListener("click", (e) => {
+    const fmtBtn = e.target.closest(".diary-fmt-btn");
+    if (!fmtBtn) return;
+    const ta = elements.diaryEntryBody;
+    const fmt = fmtBtn.dataset.fmt;
+    const wrap = fmtBtn.dataset.wrap === "true";
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = ta.value.slice(start, end);
+    let replacement;
+    if (wrap) {
+      replacement = selected ? `${fmt}${selected}${fmt}` : `${fmt}текст${fmt}`;
+    } else {
+      replacement = `\n${fmt}${selected || "текст"}`;
+    }
+    ta.setRangeText(replacement, start, end, "select");
+    ta.focus();
+  });
+
+  // Image upload for diary
+  document.getElementById("diaryImageUpload")?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const data = await fetchJson("/api/admin/diary/upload", {
+          method: "POST",
+          body: JSON.stringify({ image: reader.result })
+        });
+        const ta = elements.diaryEntryBody;
+        const pos = ta.selectionStart;
+        const mdImg = `\n![Описание фото](${data.url})\n`;
+        ta.setRangeText(mdImg, pos, pos, "end");
+        ta.focus();
+        showToast("Фото загружено — вставлено в текст.", "success");
+      } catch {
+        showToast("Не удалось загрузить фото.", "error");
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  });
+
+  // Preview toggle
+  document.getElementById("diaryPreviewBtn")?.addEventListener("click", () => {
+    const preview = document.getElementById("diaryPreview");
+    const ta = elements.diaryEntryBody;
+    if (preview.style.display === "none") {
+      preview.innerHTML = parseMarkdownAdmin(ta.value);
+      preview.style.display = "block";
+      document.getElementById("diaryPreviewBtn").textContent = "✎ Редактор";
+    } else {
+      preview.style.display = "none";
+      document.getElementById("diaryPreviewBtn").textContent = "👁 Предпросмотр";
+    }
+  });
+
   elements.addDiaryEntryBtn.addEventListener("click", handleAddDiaryEntry);
   elements.diaryEntryCancelBtn.addEventListener("click", handleDiaryEntryCancel);
   elements.diaryEntryForm.addEventListener("submit", handleDiaryEntrySubmit);
@@ -2560,6 +2619,30 @@ function formatDateTime(isoString) {
     hour: "2-digit",
     minute: "2-digit"
   }).format(new Date(isoString));
+}
+
+function parseMarkdownAdmin(text) {
+  if (!text) return "";
+  let s = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1" style="max-width:100%;border-radius:10px;margin:12px 0;display:block;">');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" style="color:#6b8d6b;">$1</a>');
+  s = s.replace(/\*\*\*([^*]+)\*\*\*/g,'<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+  return s.split(/\n{2,}/).map(b => {
+    b = b.trim(); if (!b) return "";
+    if (b.startsWith("### ")) return `<h3 style="font-size:1.15rem;margin:16px 0 8px;color:#1a2e22;">${b.slice(4)}</h3>`;
+    if (b.startsWith("## ")) return `<h2 style="font-size:1.35rem;margin:20px 0 10px;color:#1a2e22;">${b.slice(3)}</h2>`;
+    if (b.startsWith("# ")) return `<h1 style="font-size:1.6rem;margin:24px 0 12px;color:#1a2e22;">${b.slice(2)}</h1>`;
+    if (b === "---") return '<hr style="border:none;border-top:1px solid var(--line);margin:20px 0;">';
+    if (b.startsWith("&gt; ")) return `<blockquote style="border-left:3px solid #b36d2c;padding:8px 16px;color:#5a4e45;font-style:italic;">${b.slice(5)}</blockquote>`;
+    if (b.match(/^- /m)) {
+      const items = b.split("\n").filter(l=>l.startsWith("- ")).map(l=>`<li>${l.slice(2)}</li>`).join("");
+      return `<ul style="padding-left:20px;">${items}</ul>`;
+    }
+    if (b.includes("<img")) return b;
+    return `<p style="margin-bottom:12px;">${b.replace(/\n/g,"<br>")}</p>`;
+  }).filter(Boolean).join("\n");
 }
 
 function buildDefaultDaySchedules() {

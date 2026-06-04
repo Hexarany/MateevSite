@@ -485,7 +485,18 @@ function renderDiarySection() {
   const date = new Date(latest.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
     day: "numeric", month: "long", year: "numeric"
   });
-  const excerpt = latest.body.replace(/\n/g, " ").slice(0, 200).trim() + (latest.body.length > 200 ? "..." : "");
+  const plainBody = latest.body
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+    .replace(/\[[^\]]+\]\([^)]+\)/g, "$1")
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
+    .replace(/^#{1,4} /gm, "")
+    .replace(/^[-*] /gm, "")
+    .replace(/^> /gm, "")
+    .replace(/---/g, "")
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const excerpt = plainBody.slice(0, 200) + (plainBody.length > 200 ? "..." : "");
 
   elements.diaryGrid.innerHTML = `
     <article class="diary-card reveal">

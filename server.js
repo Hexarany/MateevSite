@@ -16,6 +16,7 @@ const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const BACKUP_DIR = path.join(ROOT_DIR, "backups");
 const UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "specialists");
+const BLOG_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "blog");
 const ADMIN_SESSION_COOKIE_NAME = "mateev_admin_session";
 const ADMIN_SESSION_TTL_HOURS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_HOURS) || 12);
 const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000;
@@ -968,7 +969,8 @@ function sendText(response, statusCode, message) {
 async function serveStaticFile(requestPath, response) {
   if (requestPath.startsWith("/uploads/")) {
     const safeName = path.basename(requestPath);
-    const fullPath = path.join(ROOT_DIR, "uploads", "specialists", safeName);
+    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : "specialists";
+    const fullPath = path.join(ROOT_DIR, "uploads", subDir, safeName);
     try {
       const fileBuffer = await fs.readFile(fullPath);
       const extension = path.extname(fullPath).toLowerCase();
@@ -4014,6 +4016,23 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/admin/diary/upload — upload image for blog post
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/diary/upload") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 8 * 1024 * 1024);
+    const dataUrl = typeof payload.image === "string" ? payload.image : "";
+    const match = dataUrl.match(/^data:image\/(jpeg|jpg|png|webp|gif);base64,(.+)$/);
+    if (!match) { sendJson(response, 400, { message: "Некорректный формат изображения." }); return; }
+    const ext = match[1] === "jpeg" ? "jpg" : match[1];
+    const buffer = Buffer.from(match[2], "base64");
+    if (buffer.length > 6 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой (макс. 6 МБ)." }); return; }
+    await fs.mkdir(BLOG_UPLOADS_DIR, { recursive: true });
+    const filename = `blog-${Date.now()}.${ext}`;
+    await fs.writeFile(path.join(BLOG_UPLOADS_DIR, filename), buffer);
+    sendJson(response, 200, { url: `/uploads/blog/${filename}` });
+    return;
+  }
+
   // POST /api/admin/diary — create entry
   if (request.method === "POST" && urlObject.pathname === "/api/admin/diary") {
     assertAdminPin(request);
@@ -4562,7 +4581,7 @@ function renderBlogListPage(entries, site) {
           <a href="${base}/blog/${escapeHtml(e.id)}" class="entry-card">
             <div class="entry-card__date">${date}</div>
             <div class="entry-card__title">${escapeHtml(e.title)}</div>
-            <div class="entry-card__excerpt">${escapeHtml(e.body)}</div>
+            <div class="entry-card__excerpt">${escapeHtml(stripMarkdown(e.body))}</div>
             <span class="entry-card__link">Читать полностью →</span>
           </a>`;
       }).join("")
@@ -4760,6 +4779,65 @@ function renderCertificatesPage(site) {
 </html>`;
 }
 
+function parseMarkdown(text) {
+  if (!text) return "";
+  // HTML escape
+  let s = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  // Images: ![alt](url)
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
+    '<figure style="margin:28px 0;"><img src="$2" alt="$1" style="max-width:100%;border-radius:14px;display:block;">' +
+    '$1'.length > 0 ? '<figcaption style="font-size:0.82rem;color:#7d6d60;margin-top:8px;text-align:center;">$1</figcaption>' : '' +
+    '</figure>');
+  // Links: [text](url)
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener" style="color:#6b8d6b;">$1</a>');
+  // Bold+italic: ***text***
+  s = s.replace(/\*\*\*([^*]+)\*\*\*/g,'<strong><em>$1</em></strong>');
+  // Bold: **text**
+  s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  // Italic: *text*
+  s = s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+
+  const blocks = s.split(/\n{2,}/);
+  return blocks.map(block => {
+    block = block.trim();
+    if (!block) return "";
+    if (block.startsWith("#### ")) return `<h4 style="font-size:1rem;color:#1a2e22;margin:20px 0 8px;">${block.slice(5)}</h4>`;
+    if (block.startsWith("### ")) return `<h3 style="font-family:'Georgia',serif;font-size:1.3rem;color:#1a2e22;margin:28px 0 10px;">${block.slice(4)}</h3>`;
+    if (block.startsWith("## ")) return `<h2 style="font-family:'Georgia',serif;font-size:1.6rem;color:#1a2e22;margin:36px 0 12px;">${block.slice(3)}</h2>`;
+    if (block.startsWith("# ")) return `<h1 style="font-family:'Georgia',serif;font-size:2rem;color:#1a2e22;margin:40px 0 14px;">${block.slice(2)}</h1>`;
+    if (block === "---" || block === "***") return '<hr style="border:none;border-top:1px solid rgba(71,49,28,0.15);margin:36px 0;">';
+    if (block.includes("<figure")) return block;
+    if (block.match(/^- /m)) {
+      const items = block.split("\n").filter(l => l.startsWith("- "))
+        .map(l => `<li style="margin-bottom:6px;">${l.slice(2)}</li>`).join("");
+      return `<ul style="padding-left:24px;margin:16px 0;">${items}</ul>`;
+    }
+    if (block.match(/^\d+\. /m)) {
+      const items = block.split("\n").filter(l => l.match(/^\d+\. /))
+        .map(l => `<li style="margin-bottom:6px;">${l.replace(/^\d+\. /,"")}</li>`).join("");
+      return `<ol style="padding-left:24px;margin:16px 0;">${items}</ol>`;
+    }
+    if (block.startsWith("&gt; ")) {
+      return `<blockquote style="border-left:3px solid #b36d2c;padding:12px 20px;margin:24px 0;color:#5a4e45;font-style:italic;">${block.slice(5)}</blockquote>`;
+    }
+    return `<p style="margin-bottom:18px;">${block.replace(/\n/g,"<br>")}</p>`;
+  }).filter(Boolean).join("\n");
+}
+
+function stripMarkdown(text) {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+    .replace(/\[[^\]]+\]\([^)]+\)/g, "$1")
+    .replace(/\*\*\*([^*]+)\*\*\*/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/^#{1,4} /gm, "")
+    .replace(/^- /gm, "")
+    .replace(/^> /gm, "")
+    .replace(/---/g, "")
+    .trim();
+}
+
 function renderBlogEntryPage(entry) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const url = `${base}/blog/${entry.id}`;
@@ -4767,10 +4845,7 @@ function renderBlogEntryPage(entry) {
   const dateFormatted = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
     day: "numeric", month: "long", year: "numeric"
   });
-  const bodyHtml = escapeHtml(entry.body)
-    .split(/\n{2,}/)
-    .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
-    .join("\n");
+  const bodyHtml = parseMarkdown(entry.body);
 
   return `<!DOCTYPE html>
 <html lang="ru">
