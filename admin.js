@@ -195,17 +195,19 @@ function activateSection(sectionId) {
   const panel = document.getElementById("adminPanel");
   if (!panel) return;
 
+  const resolvedId = sectionId === "overview" ? "analyticsWidget" : sectionId;
+
   panel.classList.add("has-active-section");
 
   panel.querySelectorAll(":scope > .admin-section-block").forEach(el => {
-    el.classList.toggle("is-active-section", el.id === sectionId);
+    el.classList.toggle("is-active-section", el.id === resolvedId);
   });
 
   document.querySelectorAll(".admin-sidebar__nav a[data-section]").forEach(a => {
     a.classList.toggle("is-active", a.dataset.section === sectionId);
   });
 
-  localStorage.setItem("adminSection", sectionId);
+  localStorage.setItem("adminSection", resolvedId === "analyticsWidget" ? "overview" : sectionId);
 }
 
 function initSectionNav() {
