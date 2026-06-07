@@ -251,6 +251,7 @@ function bindEvents() {
       if (state.site) {
         renderStaticContent();
         renderMethodBlock();
+        renderDiarySection();
         applyStaticTranslations();
         document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
       }
