@@ -10,7 +10,7 @@ const state = {
   bookingFormStartedAt: 0,
   superUserTapCount: 0,
   superUserTapTimer: null,
-  lang: localStorage.getItem('lang') || 'ru',
+  lang: (() => { const p = new URLSearchParams(location.search).get('lang'); if (p === 'ro' || p === 'ru') { localStorage.setItem('lang', p); return p; } return localStorage.getItem('lang') || 'ru'; })(),
   bookingDuration: 0,
   appliedCert: null,
   serviceFilter: "all",
@@ -250,6 +250,7 @@ function bindEvents() {
       document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
       if (state.site) {
         renderStaticContent();
+        renderMethodBlock();
         applyStaticTranslations();
         document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
       }
