@@ -4084,7 +4084,7 @@ async function handleVacationSubmit(event) {
 
   try {
     await Promise.all(dates.map(date =>
-      fetchJson("/api/admin/schedule/block", {
+      fetchJson("/api/admin/blocks", {
         method: "POST",
         body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason })
       })

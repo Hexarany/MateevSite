@@ -64,9 +64,9 @@ function formatDate(dateStr) {
 }
 
 function getTomorrow() {
-  const d = new Date();
+  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }));
   d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // ── Email template ─────────────────────────────────────────────────────────
@@ -160,7 +160,8 @@ async function main() {
   const bookings = JSON.parse(fs.readFileSync(bookingsPath, "utf8"));
   const due = bookings.filter(b =>
     b.date === tomorrow &&
-    (b.status === "confirmed" || b.status === "new")
+    (b.status === "confirmed" || b.status === "new") &&
+    !b.reminderSentAt
   );
 
   console.log(`[reminders] Tomorrow: ${tomorrow}, bookings due: ${due.length}`);
@@ -173,7 +174,10 @@ async function main() {
   // Send email to each client
   if (RESEND_API_KEY && EMAIL_FROM) {
     for (const booking of due) {
-      if (!booking.email) continue;
+      if (!booking.email) {
+        console.log(`  — No email for ${booking.reference} (${booking.clientName}), skipping email.`);
+        continue;
+      }
       try {
         await post("https://api.resend.com/emails", {
           from: EMAIL_FROM,
@@ -193,10 +197,11 @@ async function main() {
     console.log("  Skipping emails: RESEND_API_KEY or EMAIL_FROM not set.");
   }
 
-  // Send Telegram summary to admin
+  // Send Telegram summary to admin (only once — skip if all due bookings already had reminder)
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-    const lines = due.map(b => `• ${b.slot} — ${b.clientName} (${b.serviceName}, ${b.specialistName}) ${b.phone}`);
-    const text = `📅 Завтра ${dateLabel} — ${due.length} визит(а/ов):\n\n${lines.join("\n")}`;
+    const noEmail = due.filter(b => !b.email);
+    const lines = due.map(b => `• ${b.slot} — ${b.clientName} (${b.serviceName}, ${b.specialistName}) ${b.phone}${!b.email ? " ⚠️ нет email" : ""}`);
+    const text = `📅 Завтра ${dateLabel} — ${due.length} визит(а/ов):\n\n${lines.join("\n")}${noEmail.length ? `\n\n⚠️ ${noEmail.length} клиент(а) без email — напомни вручную.` : ""}`;
     try {
       await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         chat_id: TELEGRAM_CHAT_ID,
@@ -207,6 +212,14 @@ async function main() {
       console.error("  ✗ Telegram failed:", err.message);
     }
   }
+
+  // Mark reminders as sent to prevent duplicates on second daily run
+  let changed = false;
+  for (const booking of due) {
+    const idx = bookings.findIndex(b => b.id === booking.id);
+    if (idx !== -1) { bookings[idx].reminderSentAt = new Date().toISOString(); changed = true; }
+  }
+  if (changed) fs.writeFileSync(bookingsPath, JSON.stringify(bookings, null, 2) + "\n", "utf8");
 
   console.log(`[reminders] Done. Emails: ${emailsSent}/${due.filter(b => b.email).length}`);
 }

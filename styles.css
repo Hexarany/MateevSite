@@ -1486,6 +1486,7 @@ p {
   transform: translateY(-2px) scale(1.05);
 }
 
+.messenger-btn--ig  { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
 .messenger-btn--wa  { background: #25d366; }
 .messenger-btn--viber { background: #7360f2; }
 .messenger-btn--tg  { background: #229ed9; }

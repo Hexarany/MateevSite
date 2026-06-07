@@ -143,13 +143,17 @@ async function main() {
       .map(b => b.phone.replace(/\D/g, "").slice(-8))
   );
 
-  const due = bookings.filter(b =>
-    b.date === yesterday &&
-    (b.status === "confirmed" || b.status === "completed") &&
-    b.email &&
-    !b.reviewRequestedAt &&
-    !alreadyAsked.has((b.phone || "").replace(/\D/g, "").slice(-8))
-  );
+  // Включаем запись, если:
+  // (A) дата визита — вчера И статус confirmed/completed, ИЛИ
+  // (B) запись была помечена "completed" вчера (admin поставил статус позже дня визита)
+  const due = bookings.filter(b => {
+    if (!b.email) return false;
+    if (b.reviewRequestedAt) return false;
+    if (alreadyAsked.has((b.phone || "").replace(/\D/g, "").slice(-8))) return false;
+    const visitWasYesterday = b.date === yesterday && (b.status === "confirmed" || b.status === "completed");
+    const completedYesterday = b.status === "completed" && b.updatedAt && b.updatedAt.startsWith(yesterday);
+    return visitWasYesterday || completedYesterday;
+  });
 
   console.log(`[review-requests] Yesterday: ${yesterday}, eligible: ${due.length}`);
 
