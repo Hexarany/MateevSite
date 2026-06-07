@@ -3699,3 +3699,42 @@ p {
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── iOS: prevent auto-zoom on sub-16px inputs ──────────────────────────── */
+@media (max-width: 760px) {
+  .field input,
+  .field select,
+  .field textarea,
+  .admin-date-input,
+  .schedule-day-row__time,
+  .admin-page .admin-widget--editor .field input,
+  .admin-page .admin-widget--editor .field select,
+  .admin-page .admin-widget--editor .field textarea,
+  .admin-page .admin-editor-card .field input,
+  .admin-page .admin-editor-card .field select,
+  .admin-page .admin-editor-card .field textarea,
+  .admin-page .admin-entry-card .field input,
+  .admin-page .admin-entry-card .field select,
+  .admin-page .admin-entry-card .field textarea {
+    font-size: 16px;
+  }
+}
+
+/* ─── Mobile: messenger buttons above FAB, smaller size ─────────────────── */
+@media (max-width: 600px) {
+  .messenger-btns {
+    bottom: 82px;
+    right: 12px;
+    gap: 8px;
+  }
+
+  .messenger-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .messenger-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+}
