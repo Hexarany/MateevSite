@@ -5397,25 +5397,29 @@ function stripMarkdown(text) {
     .trim();
 }
 
-function renderBlogEntryPage(entry) {
+function renderBlogEntryPage(entry, lang = "ru") {
+  const isRo = lang === "ro" && (entry.titleRo || entry.bodyRo);
+  const title = isRo ? (entry.titleRo || entry.title) : entry.title;
+  const body = isRo ? (entry.bodyRo || entry.body) : entry.body;
+  const locale = isRo ? "ro-RO" : "ru-RU";
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const url = `${base}/blog/${entry.id}`;
-  const description = entry.body.replace(/\n/g, " ").slice(0, 160).trim();
-  const dateFormatted = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
+  const description = body.replace(/\n/g, " ").slice(0, 160).trim();
+  const dateFormatted = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString(locale, {
     day: "numeric", month: "long", year: "numeric"
   });
-  const bodyHtml = parseMarkdown(entry.body);
+  const bodyHtml = parseMarkdown(body);
 
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escapeHtml(entry.title)} — Mateev Spa Studio</title>
+  <title>${escapeHtml(title)} — Mateev Spa Studio</title>
   <meta name="description" content="${escapeHtml(description)}">
   <link rel="canonical" href="${url}">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="${escapeHtml(entry.title)}">
+  <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="Mateev Spa Studio">
@@ -5462,34 +5466,34 @@ function renderBlogEntryPage(entry) {
   <header class="topbar">
     <div class="topbar__inner">
       <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/#diary" class="topbar__back">← Дневник практики</a>
+      <a href="/${isRo ? '?lang=ro#diary' : '#diary'}" class="topbar__back">← ${isRo ? 'Jurnalul practicii' : 'Дневник практики'}</a>
     </div>
   </header>
 
   <main>
     <div class="container">
       <article class="article">
-        <p class="article__kicker">Дневник практики</p>
-        <h1 class="article__title">${escapeHtml(entry.title)}</h1>
-        <p class="article__date">${dateFormatted} · Денис Матиевич</p>
+        <p class="article__kicker">${isRo ? 'Jurnalul practicii' : 'Дневник практики'}</p>
+        <h1 class="article__title">${escapeHtml(title)}</h1>
+        <p class="article__date">${dateFormatted} · Denis Matievici</p>
         <div class="article__body">${bodyHtml}</div>
 
         <div class="cta-block">
-          <p class="cta-block__title">Записаться на сеанс</p>
-          <p class="cta-block__text">Онлайн-запись без звонков — выберите удобное время</p>
-          <a href="${base}/#booking" class="cta-block__btn">Выбрать время →</a>
+          <p class="cta-block__title">${isRo ? 'Programare la ședință' : 'Записаться на сеанс'}</p>
+          <p class="cta-block__text">${isRo ? 'Programare online fără apeluri — alegeți un timp convenabil' : 'Онлайн-запись без звонков — выберите удобное время'}</p>
+          <a href="${base}/${isRo ? '?lang=ro#booking' : '#booking'}" class="cta-block__btn">${isRo ? 'Alegeți ora →' : 'Выбрать время →'}</a>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:40px;">
-          <a href="/blog" class="back-link">← Все записи дневника</a>
+          <a href="/blog${isRo ? '?lang=ro' : ''}" class="back-link">← ${isRo ? 'Toate înregistrările' : 'Все записи дневника'}</a>
           <div style="display:flex;gap:10px;">
-            <a href="https://wa.me/?text=${encodeURIComponent(entry.title + " — " + url)}"
+            <a href="https://wa.me/?text=${encodeURIComponent(title + " — " + url)}"
                target="_blank" rel="noopener"
                style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#25d366;color:#fff;border-radius:10px;font-size:0.85rem;font-weight:600;text-decoration:none;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.138.566 4.14 1.547 5.876L.057 23.7a.5.5 0 00.633.633l5.824-1.49A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.381l-.36-.214-3.733.955.972-3.648-.235-.374A9.872 9.872 0 012.1 12C2.1 6.526 6.526 2.1 12 2.1S21.9 6.526 21.9 12 17.474 21.9 12 21.9z"/></svg>
               WhatsApp
             </a>
-            <a href="https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(entry.title)}"
+            <a href="https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}"
                target="_blank" rel="noopener"
                style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#229ed9;color:#fff;border-radius:10px;font-size:0.85rem;font-weight:600;text-decoration:none;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.857l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.978.702z"/></svg>
@@ -5700,7 +5704,8 @@ function createServer() {
           response.end();
           return;
         }
-        const html = renderBlogEntryPage(entry);
+        const lang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderBlogEntryPage(entry, lang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;

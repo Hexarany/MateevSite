@@ -488,7 +488,8 @@ function renderDiarySection() {
   const date = new Date(latest.publishedAt + "T00:00:00").toLocaleDateString(diaryLocale, {
     day: "numeric", month: "long", year: "numeric"
   });
-  const plainBody = latest.body
+  const bodyForExcerpt = tr(latest.body, latest.bodyRo);
+  const plainBody = bodyForExcerpt
     .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
     .replace(/\[[^\]]+\]\([^)]+\)/g, "$1")
     .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
@@ -508,8 +509,8 @@ function renderDiarySection() {
       <p class="diary-card__body diary-card__body--open" style="-webkit-line-clamp:unset;display:block;">${escapeHtml(excerpt)}</p>
       ${state.lang === "ro" && !latest.titleRo ? `<span style="font-size:0.75rem;color:var(--muted);display:block;margin-top:4px;">↳ ${tr("","Articol disponibil în rusă")}</span>` : ""}
       <div class="diary-card__actions">
-        <a href="/blog/${escapeHtml(latest.id)}" class="diary-read-more" style="text-decoration:underline;">${tr("Читать полностью →", "Citește tot →")}</a>
-        ${entries.length > 1 ? `<a href="/blog" class="diary-card__link">${tr(`Все записи (${entries.length}) ↗`, `Toate înregistrările (${entries.length}) ↗`)}</a>` : ""}
+        <a href="/blog/${escapeHtml(latest.id)}${state.lang === 'ro' ? '?lang=ro' : ''}" class="diary-read-more" style="text-decoration:underline;">${tr("Читать полностью →", "Citește tot →")}</a>
+        ${entries.length > 1 ? `<a href="/blog${state.lang === 'ro' ? '?lang=ro' : ''}" class="diary-card__link">${tr(`Все записи (${entries.length}) ↗`, `Toate înregistrările (${entries.length}) ↗`)}</a>` : ""}
       </div>
     </article>
   `;
