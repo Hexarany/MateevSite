@@ -4353,6 +4353,28 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // GET /api/admin/analytics — GA4 report (requires admin session)
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/analytics") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    try {
+      const report = await getGA4Report();
+      const totals = report.totals?.[0]?.metricValues || [];
+      const rows = (report.rows || []).map(r => ({
+        page: r.dimensionValues[0].value,
+        views: r.metricValues[2].value
+      }));
+      sendJson(response, 200, {
+        users: totals[0]?.value || "0",
+        sessions: totals[1]?.value || "0",
+        pageviews: totals[2]?.value || "0",
+        topPages: rows
+      });
+    } catch(err) {
+      sendJson(response, 500, { message: err.message });
+    }
+    return;
+  }
+
   // POST /api/github/webhook — auto-deploy on push to main
   if (request.method === "POST" && urlObject.pathname === "/api/github/webhook") {
     if (!GITHUB_WEBHOOK_SECRET) {
@@ -4387,6 +4409,71 @@ async function routeApi(request, response, urlObject) {
   sendJson(response, 404, {
     message: "API route not found."
   });
+}
+
+// ─── GA4 Analytics ───────────────────────────────────────────────────────────
+let _ga4 = { token: null, tokenExp: 0, report: null, reportTime: 0 };
+
+async function getGA4Token() {
+  const saPath = process.env.GA_SERVICE_ACCOUNT_FILE;
+  if (!saPath) throw new Error("GA_SERVICE_ACCOUNT_FILE not configured");
+  const now = Math.floor(Date.now() / 1000);
+  if (_ga4.token && _ga4.tokenExp > now + 60) return _ga4.token;
+  const sa = JSON.parse(await fs.readFile(saPath, "utf8"));
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({
+    iss: sa.client_email,
+    scope: "https://www.googleapis.com/auth/analytics.readonly",
+    aud: "https://oauth2.googleapis.com/token",
+    exp: now + 3600, iat: now
+  })).toString("base64url");
+  const signing = `${header}.${payload}`;
+  const sign = crypto.createSign("RSA-SHA256");
+  sign.update(signing);
+  const jwt = `${signing}.${sign.sign(sa.private_key, "base64url")}`;
+  const form = `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`;
+  const data = await new Promise((resolve, reject) => {
+    const req = https.request({ hostname: "oauth2.googleapis.com", path: "/token", method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(form) }
+    }, res => {
+      const chunks = [];
+      res.on("data", c => chunks.push(c));
+      res.on("end", () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString())); } catch(e) { reject(e); } });
+    });
+    req.on("error", reject);
+    req.write(form);
+    req.end();
+  });
+  if (!data.access_token) throw new Error(data.error_description || "GA4 token error");
+  _ga4.token = data.access_token;
+  _ga4.tokenExp = now + 3500;
+  return _ga4.token;
+}
+
+async function getGA4Report() {
+  const propertyId = process.env.GA_PROPERTY_ID;
+  if (!propertyId) throw new Error("GA_PROPERTY_ID not configured");
+  const now = Date.now();
+  if (_ga4.report && now - _ga4.reportTime < 10 * 60 * 1000) return _ga4.report;
+  const token = await getGA4Token();
+  const data = await requestJson(
+    `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        dateRanges: [{ startDate: "7daysAgo", endDate: "today" }],
+        metrics: [{ name: "activeUsers" }, { name: "sessions" }, { name: "screenPageViews" }],
+        dimensions: [{ name: "pagePath" }],
+        metricAggregations: ["TOTAL"],
+        limit: 5,
+        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }]
+      }
+    }
+  );
+  _ga4.report = data;
+  _ga4.reportTime = now;
+  return data;
 }
 
 async function notifyDiarySubscribers(entry) {

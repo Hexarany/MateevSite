@@ -110,6 +110,29 @@
         </section>
 
         <div class="admin-panel" id="adminPanel" hidden>
+
+          <!-- GA4 Analytics widget -->
+          <section class="admin-section-block reveal" id="analyticsWidget">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Google Analytics</p>
+                <h2 class="admin-section-block__title">Последние 7 дней</h2>
+              </div>
+              <a href="https://analytics.google.com/analytics/web/#/p540562714/reports/intelligenthome" target="_blank" rel="noopener" class="button button--ghost" style="white-space:nowrap;">Открыть GA4 ↗</a>
+            </div>
+            <div id="analyticsBody">
+              <div class="admin-kpi-grid admin-kpi-grid--compact" id="analyticsKpi" style="margin-bottom:20px;">
+                <div class="admin-kpi-card"><p class="admin-kpi-card__label">Пользователи</p><p class="admin-kpi-card__value" id="gaUsers">—</p></div>
+                <div class="admin-kpi-card"><p class="admin-kpi-card__label">Сессии</p><p class="admin-kpi-card__value" id="gaSessions">—</p></div>
+                <div class="admin-kpi-card"><p class="admin-kpi-card__label">Просмотры</p><p class="admin-kpi-card__value" id="gaPageviews">—</p></div>
+              </div>
+              <div>
+                <p style="font-size:0.82rem;font-weight:700;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">Топ страниц</p>
+                <div id="gaTopPages" style="display:grid;gap:6px;"></div>
+              </div>
+            </div>
+          </section>
+
           <section class="admin-section-block reveal" id="schedule">
             <div class="admin-section-block__head">
               <div>

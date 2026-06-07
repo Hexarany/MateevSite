@@ -504,6 +504,32 @@ function bindEvents() {
   });
 }
 
+async function loadAnalytics() {
+  try {
+    const data = await fetchJson("/api/admin/analytics");
+    document.getElementById("gaUsers").textContent = Number(data.users).toLocaleString("ru");
+    document.getElementById("gaSessions").textContent = Number(data.sessions).toLocaleString("ru");
+    document.getElementById("gaPageviews").textContent = Number(data.pageviews).toLocaleString("ru");
+    const maxViews = Math.max(...(data.topPages || []).map(p => Number(p.views)), 1);
+    document.getElementById("gaTopPages").innerHTML = (data.topPages || []).map(p => {
+      const pct = Math.round(Number(p.views) / maxViews * 100);
+      const label = p.page === "/" ? "Главная" : p.page;
+      return `<div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;">
+        <div>
+          <div style="font-size:0.82rem;font-weight:600;color:var(--ink);margin-bottom:3px;">${escapeHtml(label)}</div>
+          <div style="height:4px;border-radius:2px;background:var(--line);overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:var(--forest);border-radius:2px;"></div>
+          </div>
+        </div>
+        <span style="font-size:0.82rem;color:var(--muted);white-space:nowrap;">${Number(p.views).toLocaleString("ru")} просм.</span>
+      </div>`;
+    }).join("");
+  } catch(e) {
+    document.getElementById("analyticsBody").innerHTML =
+      `<p style="color:var(--muted);font-size:0.88rem;">Аналитика недоступна: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
 async function loadBootstrap() {
   const payload = await fetchJson("/api/bootstrap");
   state.services = payload.services;
@@ -1360,6 +1386,7 @@ async function handleAdminLogin() {
     applyRoleRestrictions();
     syncRevealTargets();
     showToast("Админ-панель подключена.", "success");
+    loadAnalytics();
   } catch (error) {
     state.adminPin = "";
     elements.adminPanel.hidden = true;
@@ -1663,6 +1690,7 @@ async function tryAutoLoginFromSession() {
       "Super-user сессия восстановлена. Кабинет открыт автоматически.";
     applyRoleRestrictions();
     syncRevealTargets();
+    loadAnalytics();
   } catch {
     state.adminPin = "";
     elements.adminPin.value = "";
