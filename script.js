@@ -592,6 +592,11 @@ function renderStaticContent() {
   elements.bookingSummaryKicker.textContent = trSite('sections.booking.summaryKicker') || "";
   elements.contactCardKicker.textContent = trSite('sections.booking.contactsKicker') || "";
 
+  const certCodeLabelEl = document.getElementById("certCodeLabel");
+  if (certCodeLabelEl) certCodeLabelEl.textContent = tr("Подарочный сертификат", "Card cadou");
+  const certApplyBtn = document.getElementById("certApplyBtn");
+  if (certApplyBtn) certApplyBtn.textContent = tr("Применить", "Aplicați");
+
   elements.heroBadges.innerHTML = site.hero.badges
     .map((badge) => `<span class="pill">${escapeHtml(badge)}</span>`)
     .join("");
@@ -640,9 +645,12 @@ function renderStaticContent() {
   const filtersEl = document.getElementById("serviceFilters");
   if (filtersEl && state.services.length) {
     const cats = [...new Set(state.services.map(s => s.category).filter(Boolean))];
+    // Build ru→ro category name map
+    const catRoMap = {};
+    state.services.forEach(s => { if (s.category && s.categoryRo) catRoMap[s.category] = s.categoryRo; });
     filtersEl.innerHTML = [
       `<button class="school-filter-btn${state.serviceFilter === "all" ? " is-active" : ""}" data-cat="all">${tr("Все процедуры","Toate procedurile")}</button>`,
-      ...cats.map(c => `<button class="school-filter-btn${state.serviceFilter === c ? " is-active" : ""}" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`)
+      ...cats.map(c => `<button class="school-filter-btn${state.serviceFilter === c ? " is-active" : ""}" data-cat="${escapeHtml(c)}">${escapeHtml(tr(c, catRoMap[c]))}</button>`)
     ].join("");
     filtersEl.querySelectorAll(".school-filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -663,21 +671,22 @@ function renderStaticContent() {
     ? filteredServices
     : filteredServices.slice(0, PREVIEW_COUNT);
 
+  const durLabel = tr("мин", "min");
   elements.servicesGrid.innerHTML = visibleServices
     .map(
       (service) => `
         <article class="service-card reveal">
-          <span class="feature-card__index">${escapeHtml(service.category)}</span>
-          <h3>${escapeHtml(service.name)}</h3>
-          <p>${escapeHtml(service.description)}</p>
+          <span class="feature-card__index">${escapeHtml(tr(service.category, service.categoryRo))}</span>
+          <h3>${escapeHtml(tr(service.name, service.nameRo))}</h3>
+          <p>${escapeHtml(tr(service.description, service.descriptionRo))}</p>
 
           <div class="service-card__meta">
             <span class="meta-chip">${formatCurrency(service.price)}</span>
-            <span class="meta-chip">${service.duration} мин</span>
+            <span class="meta-chip">${service.duration} ${durLabel}</span>
           </div>
 
           <div class="service-card__benefits">
-            ${service.benefits.map((benefit) => `<span>${escapeHtml(benefit)}</span>`).join("")}
+            ${(tr(service.benefits, service.benefitsRo) || service.benefits).map((benefit) => `<span>${escapeHtml(benefit)}</span>`).join("")}
           </div>
 
           <div class="service-card__actions">
@@ -721,7 +730,10 @@ function renderStaticContent() {
   elements.specialistsGrid.innerHTML = state.specialists
     .map((specialist) => {
       const specialties = specialist.specialties
-        .map((serviceId) => findService(serviceId)?.name)
+        .map((serviceId) => {
+          const svc = findService(serviceId);
+          return svc ? tr(svc.name, svc.nameRo) : null;
+        })
         .filter(Boolean)
         .slice(0, 3)
         .map((name) => `<span class="meta-chip">${escapeHtml(name)}</span>`)
@@ -735,9 +747,9 @@ function renderStaticContent() {
             ? `<img class="specialist-card__photo" src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(specialist.name)}" loading="lazy">`
             : `<div class="specialist-card__avatar">${escapeHtml(specialist.initials)}</div>`
           }
-          <div class="specialist-card__role">${escapeHtml(specialist.role)}</div>
+          <div class="specialist-card__role">${escapeHtml(tr(specialist.role, specialist.roleRo))}</div>
           <h3>${escapeHtml(specialist.name)}</h3>
-          <p>${escapeHtml(specialist.bio)}</p>
+          <p>${escapeHtml(tr(specialist.bio, specialist.bioRo))}</p>
 
           <div class="specialist-card__meta">
             <span class="meta-chip">${escapeHtml(specialist.experience)}</span>
@@ -753,7 +765,7 @@ function renderStaticContent() {
             >
               ${escapeHtml(trSite('ui.specialistCardCta') || "Выбрать мастера")}
             </button>
-            <a href="/team/${escapeHtml(specialist.id)}" class="button button--ghost" style="font-size:0.85rem;">Подробнее</a>
+            <a href="/team/${escapeHtml(specialist.id)}" class="button button--ghost" style="font-size:0.85rem;">${tr("Подробнее","Mai mult")}</a>
           </div>
         </article>
       `;
@@ -764,7 +776,7 @@ function renderStaticContent() {
     .map(
       (item, index) => `
         <article class="process-card reveal">
-          <span class="process-card__index">${escapeHtml(ui.processPrefix || "Шаг")} ${index + 1}</span>
+          <span class="process-card__index">${escapeHtml(trSite('ui.processPrefix') || ui.processPrefix || tr("Шаг","Pasul"))} ${index + 1}</span>
           <h3>${escapeHtml(item.title)}</h3>
           <p>${escapeHtml(item.text)}</p>
         </article>
@@ -789,7 +801,7 @@ function renderStaticContent() {
   if (reviews.length > REVIEWS_VISIBLE) {
     const btn = document.createElement("button");
     btn.className = "button button--ghost show-all-btn";
-    btn.textContent = `Показать все отзывы (${reviews.length})`;
+    btn.textContent = tr(`Показать все отзывы (${reviews.length})`, `Arată toate recenziile (${reviews.length})`);
     btn.addEventListener("click", () => {
       elements.reviewsGrid.querySelectorAll("article.review-card--hidden").forEach(el => el.classList.remove("review-card--hidden"));
       btn.remove();
@@ -913,7 +925,7 @@ function updateSpecialistOptions() {
     `<option value="">${placeholder}</option>`,
     ...availableSpecialists.map(
       (specialist) =>
-        `<option value="${escapeHtml(specialist.id)}">${escapeHtml(specialist.name)} · ${escapeHtml(specialist.role)}</option>`
+        `<option value="${escapeHtml(specialist.id)}">${escapeHtml(specialist.name)} · ${escapeHtml(tr(specialist.role, specialist.roleRo))}</option>`
     )
   ].join("");
 
