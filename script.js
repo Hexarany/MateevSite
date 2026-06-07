@@ -156,6 +156,7 @@ async function init() {
   bindEvents();
   setDateConstraints();
   initRevealObserver();
+  initMessengerToggle();
   document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("is-active", b.dataset.lang === state.lang));
   applyStaticTranslations();
 
@@ -1183,6 +1184,19 @@ function initRevealObserver() {
 
   syncRevealTargets();
   initFabObserver();
+}
+
+function initMessengerToggle() {
+  const toggle = document.getElementById("messengerToggle");
+  const btns = document.getElementById("messengerBtns");
+  if (!toggle || !btns) return;
+  toggle.addEventListener("click", () => {
+    const open = btns.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", open);
+  });
+  document.addEventListener("click", (e) => {
+    if (!btns.contains(e.target)) btns.classList.remove("is-open");
+  });
 }
 
 function initFabObserver() {
