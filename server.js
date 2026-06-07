@@ -2062,6 +2062,9 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
 
       const workDays = [0, 1, 2, 3, 4, 5, 6].filter((d) => daySchedules[d].enabled);
 
+      const roleRo = sanitizeText(specialist?.roleRo);
+      const bioRo = sanitizeText(specialist?.bioRo);
+
       return {
         id,
         name: name || `Специалист ${index + 1}`,
@@ -2074,7 +2077,9 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         daySchedules,
         breaks: normalizeBreaks(specialist?.breaks),
         initials: sanitizeText(specialist?.initials) || buildInitials(name),
-        photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null
+        photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null,
+        ...(roleRo && { roleRo }),
+        ...(bioRo && { bioRo })
       };
     })
     .filter(Boolean);

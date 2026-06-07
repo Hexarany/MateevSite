@@ -484,7 +484,8 @@ function renderDiarySection() {
 
   // Show only the latest entry as a teaser — full listing at /blog
   const latest = entries[0];
-  const date = new Date(latest.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
+  const diaryLocale = state.lang === "ro" ? "ro-RO" : "ru-RU";
+  const date = new Date(latest.publishedAt + "T00:00:00").toLocaleDateString(diaryLocale, {
     day: "numeric", month: "long", year: "numeric"
   });
   const plainBody = latest.body
@@ -506,8 +507,8 @@ function renderDiarySection() {
       <h3 class="diary-card__title">${escapeHtml(latest.title)}</h3>
       <p class="diary-card__body diary-card__body--open" style="-webkit-line-clamp:unset;display:block;">${escapeHtml(excerpt)}</p>
       <div class="diary-card__actions">
-        <a href="/blog/${escapeHtml(latest.id)}" class="diary-read-more" style="text-decoration:underline;">Читать полностью →</a>
-        ${entries.length > 1 ? `<a href="/blog" class="diary-card__link">Все записи (${entries.length}) ↗</a>` : ""}
+        <a href="/blog/${escapeHtml(latest.id)}" class="diary-read-more" style="text-decoration:underline;">${tr("Читать полностью →", "Citește tot →")}</a>
+        ${entries.length > 1 ? `<a href="/blog" class="diary-card__link">${tr(`Все записи (${entries.length}) ↗`, `Toate înregistrările (${entries.length}) ↗`)}</a>` : ""}
       </div>
     </article>
   `;
