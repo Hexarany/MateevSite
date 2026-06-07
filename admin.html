@@ -287,26 +287,10 @@
                     <button type="submit" class="button button--secondary">Сохранить график</button>
                   </form>
 
-                  <div style="margin-top:20px;padding:20px;background:rgba(201,147,80,0.08);border:1px solid rgba(201,147,80,0.2);border-radius:16px;">
-                    <p class="section-kicker" style="margin-bottom:8px;">Отпуск / закрытие</p>
-                    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Закрыть все слоты на период — для отпуска, переезда, ремонта</p>
-                    <form id="vacationForm" class="admin-form-stack">
-                      <div class="field-grid">
-                        <label class="field">
-                          <span>С даты</span>
-                          <input type="date" id="vacationStart">
-                        </label>
-                        <label class="field">
-                          <span>По дату</span>
-                          <input type="date" id="vacationEnd">
-                        </label>
-                      </div>
-                      <label class="field field--full">
-                        <span>Причина (необязательно)</span>
-                        <input type="text" id="vacationReason" placeholder="Отпуск">
-                      </label>
-                      <button type="submit" class="button button--secondary" style="background:var(--brand);">Закрыть период</button>
-                    </form>
+                  <div style="margin-top:20px;">
+                    <button type="button" class="button button--ghost" id="openVacationModalBtn" style="width:100%;">
+                      🗓 Отпуск и закрытие дней →
+                    </button>
                   </div>
                 </article>
               </div>

@@ -427,7 +427,7 @@ function bindEvents() {
   elements.adminBlockForm.addEventListener("submit", handleAdminBlockSubmit);
   elements.scheduleSpecialistSelect.addEventListener("change", handleScheduleSpecialistSelect);
   elements.specialistScheduleForm.addEventListener("submit", handleSpecialistScheduleSubmit);
-  document.getElementById("vacationForm")?.addEventListener("submit", handleVacationSubmit);
+  document.getElementById("openVacationModalBtn")?.addEventListener("click", showVacationModal);
   elements.addBreakBtn.addEventListener("click", handleAddScheduleBreak);
   elements.scheduleBreaks.addEventListener("click", handleScheduleBreakClick);
   elements.scheduleBreaks.addEventListener("input", handleScheduleBreakInput);
@@ -4061,42 +4061,157 @@ function handleDayRowInput(event) {
   }
 }
 
-async function handleVacationSubmit(event) {
-  event.preventDefault();
+function showVacationModal() {
   if (!state.adminPin) { showToast("Сначала откройте админ-панель по PIN.", "info"); return; }
 
-  const start = document.getElementById("vacationStart").value;
-  const end = document.getElementById("vacationEnd").value;
-  const reason = document.getElementById("vacationReason").value.trim() || "Отпуск";
-  const specialistId = elements.scheduleSpecialistSelect.value;
+  const specialists = state.specialists || [];
+  const today = getLocalDateString();
 
-  if (!start || !end || start > end) { showToast("Укажите корректный период.", "error"); return; }
-  if (!specialistId) { showToast("Выберите специалиста.", "error"); return; }
+  const backdrop = document.createElement("div");
+  backdrop.className = "confirm-backdrop";
 
-  // Generate one block per day in the range
-  const dates = [];
-  const cur = new Date(start + "T00:00:00");
-  const last = new Date(end + "T00:00:00");
-  while (cur <= last) {
-    dates.push(cur.toISOString().slice(0, 10));
-    cur.setDate(cur.getDate() + 1);
+  function getBlocks() {
+    const schedule = state.adminData?.schedule || { blocks: [] };
+    return (schedule.blocks || [])
+      .filter(b => b.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.specialistId.localeCompare(b.specialistId));
   }
 
-  try {
-    await Promise.all(dates.map(date =>
-      fetchJson("/api/admin/blocks", {
-        method: "POST",
-        body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason, force: true })
-      })
-    ));
-    showToast(`Период ${start} — ${end} закрыт (${dates.length} дн.). Проверь записи клиентов на эти дни.`, "success");
-    document.getElementById("vacationForm").reset();
-    await loadAdminData();
-    await loadDaySchedule();
-    renderScheduleBoard();
-  } catch (error) {
-    showToast(error.message || "Не удалось закрыть период.", "error");
+  function specialistName(id) {
+    return specialists.find(s => s.id === id)?.name || id;
   }
+
+  function renderBlocksList() {
+    const blocks = getBlocks();
+    if (!blocks.length) return `<p class="empty-state" style="padding:12px 0;">Активных блокировок нет.</p>`;
+    return blocks.map(b => `
+      <div class="vacation-block-row">
+        <div class="vacation-block-row__info">
+          <strong>${escapeHtml(specialistName(b.specialistId))}</strong>
+          <span>${escapeHtml(b.date)}</span>
+          <span class="vacation-block-row__reason">${escapeHtml(b.reason || "Блокировка")}</span>
+        </div>
+        <button type="button" class="button button--ghost button--mini" data-delete-vacation-block="${escapeHtml(b.id)}">Удалить</button>
+      </div>
+    `).join("");
+  }
+
+  function render() {
+    backdrop.innerHTML = `
+      <div class="vacation-modal" role="dialog" aria-modal="true">
+        <div class="vacation-modal__head">
+          <div>
+            <p class="section-kicker">Расписание</p>
+            <h3 class="vacation-modal__title">Отпуск и закрытие дней</h3>
+          </div>
+          <button type="button" class="button button--ghost button--mini" data-action="close">✕</button>
+        </div>
+
+        <form id="vacationModalForm" class="admin-form-stack vacation-modal__form">
+          <div class="field-grid">
+            <label class="field">
+              <span>Специалист</span>
+              <select id="vmSpecialist">
+                ${specialists.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="field">
+              <span>Причина</span>
+              <input type="text" id="vmReason" placeholder="Отпуск" value="Отпуск">
+            </label>
+          </div>
+          <div class="field-grid">
+            <label class="field">
+              <span>С даты</span>
+              <input type="date" id="vmStart" min="${today}">
+            </label>
+            <label class="field">
+              <span>По дату</span>
+              <input type="date" id="vmEnd" min="${today}">
+            </label>
+          </div>
+          <button type="submit" class="button button--secondary">Закрыть период</button>
+        </form>
+
+        <div class="vacation-modal__divider"></div>
+
+        <div class="vacation-modal__list-head">
+          <p class="section-kicker">Активные блокировки (с сегодня)</p>
+        </div>
+        <div id="vacationBlocksList" class="vacation-modal__list">
+          ${renderBlocksList()}
+        </div>
+      </div>
+    `;
+
+    backdrop.querySelector("#vacationModalForm").addEventListener("submit", handleSubmit);
+    backdrop.addEventListener("click", handleClick);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const specialistId = backdrop.querySelector("#vmSpecialist").value;
+    const start = backdrop.querySelector("#vmStart").value;
+    const end = backdrop.querySelector("#vmEnd").value;
+    const reason = backdrop.querySelector("#vmReason").value.trim() || "Отпуск";
+
+    if (!start || !end || start > end) { showToast("Укажите корректный период.", "error"); return; }
+
+    const dates = [];
+    const cur = new Date(start + "T00:00:00");
+    const last = new Date(end + "T00:00:00");
+    while (cur <= last) {
+      dates.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    const btn = backdrop.querySelector("#vacationModalForm button[type=submit]");
+    btn.disabled = true;
+    btn.textContent = "Закрываю...";
+
+    try {
+      await Promise.all(dates.map(date =>
+        fetchJson("/api/admin/blocks", {
+          method: "POST",
+          body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason, force: true })
+        })
+      ));
+      showToast(`Закрыто ${dates.length} дн. (${start} — ${end}). Проверь записи клиентов.`, "success");
+      backdrop.querySelector("#vacationModalForm").reset();
+      backdrop.querySelector("#vmReason").value = "Отпуск";
+      await loadAdminData();
+      await loadDaySchedule();
+      renderScheduleBoard();
+      backdrop.querySelector("#vacationBlocksList").innerHTML = renderBlocksList();
+    } catch (err) {
+      showToast(err.message || "Не удалось закрыть период.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Закрыть период";
+    }
+  }
+
+  async function handleClick(e) {
+    if (e.target === backdrop || e.target.dataset.action === "close") {
+      backdrop.remove();
+      return;
+    }
+    const blockId = e.target.dataset.deleteVacationBlock;
+    if (!blockId) return;
+    try {
+      await fetchJson(`/api/admin/blocks/${blockId}`, { method: "DELETE" });
+      await loadAdminData();
+      await loadDaySchedule();
+      renderScheduleBoard();
+      backdrop.querySelector("#vacationBlocksList").innerHTML = renderBlocksList();
+      showToast("Блокировка удалена.", "success");
+    } catch (err) {
+      showToast(err.message || "Не удалось удалить.", "error");
+    }
+  }
+
+  render();
+  document.body.appendChild(backdrop);
 }
 
 async function handleSpecialistScheduleSubmit(event) {

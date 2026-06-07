@@ -3337,6 +3337,81 @@ p {
   justify-content: flex-end;
 }
 
+/* ─── Vacation modal ─────────────────────────────────────────────────────── */
+
+.vacation-modal {
+  background: var(--panel-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.vacation-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.vacation-modal__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+
+.vacation-modal__form {
+  padding: 20px 28px;
+}
+
+.vacation-modal__divider {
+  height: 1px;
+  background: var(--line);
+  margin: 0 28px;
+}
+
+.vacation-modal__list-head {
+  padding: 16px 28px 4px;
+}
+
+.vacation-modal__list {
+  padding: 8px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vacation-block-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(201, 147, 80, 0.07);
+  border: 1px solid rgba(201, 147, 80, 0.18);
+  border-radius: 10px;
+}
+
+.vacation-block-row__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.vacation-block-row__reason {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 /* ─── School page ──────────────────────────────────────────────────────────── */
 
 .school-filters {
