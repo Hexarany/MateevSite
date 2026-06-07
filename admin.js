@@ -4086,12 +4086,13 @@ async function handleVacationSubmit(event) {
     await Promise.all(dates.map(date =>
       fetchJson("/api/admin/blocks", {
         method: "POST",
-        body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason })
+        body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason, force: true })
       })
     ));
-    showToast(`Период ${start} — ${end} закрыт (${dates.length} дн.).`, "success");
+    showToast(`Период ${start} — ${end} закрыт (${dates.length} дн.). Проверь записи клиентов на эти дни.`, "success");
     document.getElementById("vacationForm").reset();
     await loadAdminData();
+    await loadDaySchedule();
     renderScheduleBoard();
   } catch (error) {
     showToast(error.message || "Не удалось закрыть период.", "error");

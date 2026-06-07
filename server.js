@@ -3380,6 +3380,7 @@ async function handleAdminBlockCreate(request, response) {
   const start = sanitizeTimeString(payload.start, "");
   const end = sanitizeTimeString(payload.end, "");
   const reason = sanitizeText(payload.reason, "Блокировка");
+  const force = payload.force === true;
   const specialist = specialists.find((item) => item.id === specialistId);
 
   if (!specialist || !isValidDateString(date) || !start || !end) {
@@ -3396,20 +3397,22 @@ async function handleAdminBlockCreate(request, response) {
     return;
   }
 
-  const hasBookingConflict = getActiveBookingsForSpecialist(bookings, specialistId, date).some((booking) =>
-    timeRangesOverlap(
-      toMinutes(start),
-      toMinutes(end),
-      toMinutes(booking.slot),
-      toMinutes(booking.endsAt)
-    )
-  );
+  if (!force) {
+    const hasBookingConflict = getActiveBookingsForSpecialist(bookings, specialistId, date).some((booking) =>
+      timeRangesOverlap(
+        toMinutes(start),
+        toMinutes(end),
+        toMinutes(booking.slot),
+        toMinutes(booking.endsAt)
+      )
+    );
 
-  if (hasBookingConflict) {
-    sendJson(response, 409, {
-      message: "Нельзя блокировать интервал, в котором уже есть активная запись."
-    });
-    return;
+    if (hasBookingConflict) {
+      sendJson(response, 409, {
+        message: "Нельзя блокировать интервал, в котором уже есть активная запись. Для отпуска используйте форму «Отпуск / закрытие»."
+      });
+      return;
+    }
   }
 
   const hasBlockConflict = getBlocksForSpecialist(schedule, specialistId, date).some((block) =>
@@ -4029,7 +4032,12 @@ async function routeApi(request, response, urlObject) {
 
   // GET /api/admin/telegram/setup — register webhook (run once)
   if (request.method === "GET" && urlObject.pathname === "/api/admin/telegram/setup") {
-    assertAdminPin(request);
+    const queryPin = sanitizeEnv(urlObject.searchParams.get("pin") || "");
+    const sessionOk = !!getAdminSession(request);
+    if (queryPin !== ADMIN_PIN && !sessionOk) {
+      sendJson(response, 403, { message: "PIN не подошёл." });
+      return;
+    }
     const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
     const result = await requestJson(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
