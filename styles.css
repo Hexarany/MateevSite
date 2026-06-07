@@ -3701,9 +3701,19 @@ p {
 }
 
 /* ─── iOS Safari: fix date input overflow ───────────────────────────────── */
+
+/* Clip any date/time input that overflows its parent on iOS */
+.field--date,
+.field:has(input[type="date"]),
+.field:has(input[type="time"]) {
+  overflow: hidden;
+}
+
+/* Force date input to respect container width on WebKit */
 input[type="date"],
 input[type="time"] {
-  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
 }
 
 input[type="date"]::-webkit-date-and-time-value {
@@ -3712,14 +3722,16 @@ input[type="date"]::-webkit-date-and-time-value {
   max-width: 100%;
 }
 
-input[type="date"]::-webkit-datetime-edit {
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit {
   overflow: hidden;
   min-width: 0;
   padding: 0;
   max-width: 100%;
 }
 
-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
   overflow: hidden;
   min-width: 0;
   max-width: 100%;
