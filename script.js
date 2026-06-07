@@ -504,8 +504,9 @@ function renderDiarySection() {
   elements.diaryGrid.innerHTML = `
     <article class="diary-card reveal">
       <time class="diary-card__date">${date}</time>
-      <h3 class="diary-card__title">${escapeHtml(latest.title)}</h3>
+      <h3 class="diary-card__title">${escapeHtml(tr(latest.title, latest.titleRo))}</h3>
       <p class="diary-card__body diary-card__body--open" style="-webkit-line-clamp:unset;display:block;">${escapeHtml(excerpt)}</p>
+      ${state.lang === "ro" && !latest.titleRo ? `<span style="font-size:0.75rem;color:var(--muted);display:block;margin-top:4px;">↳ ${tr("","Articol disponibil în rusă")}</span>` : ""}
       <div class="diary-card__actions">
         <a href="/blog/${escapeHtml(latest.id)}" class="diary-read-more" style="text-decoration:underline;">${tr("Читать полностью →", "Citește tot →")}</a>
         ${entries.length > 1 ? `<a href="/blog" class="diary-card__link">${tr(`Все записи (${entries.length}) ↗`, `Toate înregistrările (${entries.length}) ↗`)}</a>` : ""}

@@ -355,6 +355,7 @@ function bindEvents() {
   elements.addDiaryEntryBtn.addEventListener("click", handleAddDiaryEntry);
   elements.diaryEntryCancelBtn.addEventListener("click", handleDiaryEntryCancel);
   elements.diaryEntryForm.addEventListener("submit", handleDiaryEntrySubmit);
+  document.getElementById("diaryTranslateBtn")?.addEventListener("click", handleDiaryTranslate);
   elements.diaryEntriesList.addEventListener("click", handleDiaryListClick);
   document.getElementById("exportClientsCsvBtn")?.addEventListener("click", handleExportClientsCsv);
   elements.addReviewBtn.addEventListener("click", handleAddReview);
@@ -1511,6 +1512,25 @@ function renderIntakesList(intakes) {
   }).join("");
 }
 
+async function handleDiaryTranslate() {
+  const id = elements.diaryEntryId.value;
+  if (!id) { showToast("Сначала сохраните запись, затем переводите.", "info"); return; }
+  const btn = document.getElementById("diaryTranslateBtn");
+  btn.disabled = true;
+  btn.textContent = "Перевожу...";
+  try {
+    const data = await fetchJson(`/api/admin/diary/${id}/translate`, { method: "POST" });
+    if (diaryRoTitle()) diaryRoTitle().value = data.titleRo || "";
+    if (diaryRoBody())  diaryRoBody().value  = data.bodyRo  || "";
+    showToast("Перевод готов. Проверьте и сохраните запись.", "success");
+  } catch (err) {
+    showToast(err.message || "Ошибка DeepL перевода.", "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🌐 Перевести через DeepL";
+  }
+}
+
 function renderDiaryEntriesList() {
   const el = elements.diaryEntriesList;
   if (!el) return;
@@ -1538,12 +1558,17 @@ function renderDiaryEntriesList() {
     .join("");
 }
 
+function diaryRoTitle() { return document.getElementById("diaryEntryTitleRo"); }
+function diaryRoBody()  { return document.getElementById("diaryEntryBodyRo"); }
+
 function handleAddDiaryEntry() {
   elements.diaryEntryId.value = "";
   elements.diaryEntryTitle.value = "";
   elements.diaryEntryDate.value = new Date().toISOString().slice(0, 10);
   elements.diaryEntryBody.value = "";
   elements.diaryEntryPublished.checked = true;
+  if (diaryRoTitle()) diaryRoTitle().value = "";
+  if (diaryRoBody())  diaryRoBody().value  = "";
   elements.diaryEntryForm.scrollIntoView({ behavior: "smooth", block: "start" });
   elements.diaryEntryTitle.focus();
 }
@@ -1553,16 +1578,22 @@ function handleDiaryEntryCancel() {
   elements.diaryEntryTitle.value = "";
   elements.diaryEntryBody.value = "";
   elements.diaryEntryPublished.checked = true;
+  if (diaryRoTitle()) diaryRoTitle().value = "";
+  if (diaryRoBody())  diaryRoBody().value  = "";
 }
 
 async function handleDiaryEntrySubmit(event) {
   event.preventDefault();
   const id = elements.diaryEntryId.value;
+  const titleRo = diaryRoTitle()?.value.trim() || undefined;
+  const bodyRo  = diaryRoBody()?.value.trim()  || undefined;
   const payload = {
     title: elements.diaryEntryTitle.value.trim(),
     body: elements.diaryEntryBody.value.trim(),
     publishedAt: elements.diaryEntryDate.value || new Date().toISOString().slice(0, 10),
-    published: elements.diaryEntryPublished.checked
+    published: elements.diaryEntryPublished.checked,
+    ...(titleRo && { titleRo }),
+    ...(bodyRo  && { bodyRo  })
   };
 
   try {
@@ -1592,6 +1623,8 @@ async function handleDiaryListClick(event) {
     elements.diaryEntryDate.value = entry.publishedAt;
     elements.diaryEntryBody.value = entry.body;
     elements.diaryEntryPublished.checked = entry.published;
+    if (diaryRoTitle()) diaryRoTitle().value = entry.titleRo || "";
+    if (diaryRoBody())  diaryRoBody().value  = entry.bodyRo  || "";
     elements.diaryEntryForm.scrollIntoView({ behavior: "smooth", block: "start" });
     elements.diaryEntryTitle.focus();
     return;

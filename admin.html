@@ -633,6 +633,20 @@
                   <textarea id="diaryEntryBody" rows="16" placeholder="## Заголовок раздела&#10;&#10;Обычный текст с **жирными** словами и *курсивом*.&#10;&#10;- Пункт списка&#10;- Ещё пункт&#10;&#10;---&#10;&#10;![Описание фото](url)" style="resize:vertical;font-family:monospace;font-size:0.88rem;"></textarea>
                   <div id="diaryPreview" style="display:none;padding:20px;background:rgba(255,255,255,0.7);border-radius:12px;border:1px solid var(--line);margin-top:8px;line-height:1.8;"></div>
                 </div>
+                <div style="margin-top:8px;padding:16px;background:rgba(26,46,34,0.04);border:1px solid rgba(26,46,34,0.12);border-radius:12px;display:flex;flex-direction:column;gap:10px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <span style="font-size:0.82rem;font-weight:700;color:var(--forest);">RO — Versiunea română</span>
+                    <button type="button" class="button button--ghost button--mini" id="diaryTranslateBtn">🌐 Перевести через DeepL</button>
+                  </div>
+                  <label class="field field--full">
+                    <span>Titlu (RO)</span>
+                    <input type="text" id="diaryEntryTitleRo" placeholder="Titlul articolului în română">
+                  </label>
+                  <label class="field field--full">
+                    <span>Text (RO) <span style="font-weight:400;color:var(--muted);font-size:0.78rem;">Markdown, ca în versiunea rusă</span></span>
+                    <textarea id="diaryEntryBodyRo" rows="8" placeholder="Conținutul în română..." style="resize:vertical;font-family:monospace;font-size:0.88rem;"></textarea>
+                  </label>
+                </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                   <button type="submit" class="button button--secondary">Сохранить запись</button>
                   <button type="button" class="button button--ghost" id="diaryEntryCancelBtn">Отмена</button>

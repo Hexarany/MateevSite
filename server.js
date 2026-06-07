@@ -4304,6 +4304,41 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/admin/diary/:id/translate — auto-translate to RO via DeepL
+  if (
+    request.method === "POST" &&
+    urlObject.pathname.startsWith("/api/admin/diary/") &&
+    urlObject.pathname.endsWith("/translate")
+  ) {
+    assertAdminPin(request);
+    const DEEPL_KEY = sanitizeEnv(process.env.DEEPL_API_KEY);
+    if (!DEEPL_KEY) {
+      sendJson(response, 503, { message: "DEEPL_API_KEY не задан в .env" });
+      return;
+    }
+    const entryId = urlObject.pathname.replace("/api/admin/diary/", "").replace("/translate", "");
+    const entries = normalizeDiary(await readJson("diary.json").catch(() => []));
+    const idx = entries.findIndex((e) => e.id === entryId);
+    if (idx === -1) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+    const entry = entries[idx];
+
+    async function deepl(text) {
+      const body = JSON.stringify({ text: [text], source_lang: "RU", target_lang: "RO" });
+      const resp = await requestJson("https://api-free.deepl.com/v2/translate", {
+        method: "POST",
+        headers: { Authorization: `DeepL-Auth-Key ${DEEPL_KEY}`, "Content-Type": "application/json" },
+        body
+      });
+      return resp?.translations?.[0]?.text || "";
+    }
+
+    const [titleRo, bodyRo] = await Promise.all([deepl(entry.title), deepl(entry.body)]);
+    entries[idx] = normalizeDiaryEntry({ ...entry, titleRo, bodyRo }, idx);
+    await writeJson("diary.json", entries);
+    sendJson(response, 200, { titleRo, bodyRo });
+    return;
+  }
+
   // DELETE /api/admin/diary/:id — delete entry
   if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/diary/")) {
     assertAdminPin(request);
@@ -4366,12 +4401,16 @@ async function notifyDiarySubscribers(entry) {
 
 function normalizeDiaryEntry(entry, index) {
   const id = sanitizeText(entry?.id) || `diary-${Date.now()}-${index}`;
+  const titleRo = sanitizeText(entry?.titleRo);
+  const bodyRo = sanitizeText(entry?.bodyRo);
   return {
     id,
     title: sanitizeText(entry?.title) || "",
     body: sanitizeText(entry?.body) || "",
     publishedAt: sanitizeText(entry?.publishedAt) || new Date().toISOString().slice(0, 10),
-    published: entry?.published !== false
+    published: entry?.published !== false,
+    ...(titleRo && { titleRo }),
+    ...(bodyRo && { bodyRo })
   };
 }
 
