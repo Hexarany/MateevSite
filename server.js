@@ -4,6 +4,7 @@ const path = require("node:path");
 const fs = require("node:fs/promises");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
+const { exec } = require("node:child_process");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PIN = process.env.ADMIN_PIN;
@@ -45,6 +46,7 @@ const HTTP_OUTBOUND_TIMEOUT_MS = Math.max(1000, Number(process.env.HTTP_OUTBOUND
 const COOKIE_FORCE_SECURE = process.env.COOKIE_SECURE === "true";
 const CANCEL_CUTOFF_HOURS = Math.max(0, Number(process.env.CANCEL_CUTOFF_HOURS) || 2);
 const SITE_URL = sanitizeEnv(process.env.SITE_URL).replace(/\/$/, "");
+const GITHUB_WEBHOOK_SECRET = sanitizeEnv(process.env.GITHUB_WEBHOOK_SECRET);
 const rateLimitBuckets = new Map();
 
 const STATIC_FILES = {
@@ -4351,6 +4353,37 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/github/webhook — auto-deploy on push to main
+  if (request.method === "POST" && urlObject.pathname === "/api/github/webhook") {
+    if (!GITHUB_WEBHOOK_SECRET) {
+      sendJson(response, 503, { message: "Webhook not configured." });
+      return;
+    }
+    const raw = await new Promise((resolve, reject) => {
+      const chunks = [];
+      request.on("data", c => chunks.push(c));
+      request.on("end", () => resolve(Buffer.concat(chunks)));
+      request.on("error", reject);
+    });
+    const sig = request.headers["x-hub-signature-256"] || "";
+    const expected = "sha256=" + crypto.createHmac("sha256", GITHUB_WEBHOOK_SECRET).update(raw).digest("hex");
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+      sendJson(response, 401, { message: "Bad signature." });
+      return;
+    }
+    const event = request.headers["x-github-event"];
+    if (event !== "push") { sendJson(response, 200, { message: "Ignored." }); return; }
+    let payload;
+    try { payload = JSON.parse(raw.toString()); } catch { sendJson(response, 400, { message: "Bad JSON." }); return; }
+    if (payload.ref !== "refs/heads/main") { sendJson(response, 200, { message: "Not main branch." }); return; }
+    sendJson(response, 200, { message: "Deploy started." });
+    exec("git pull origin main && pm2 restart all", { cwd: ROOT_DIR }, (err, stdout, stderr) => {
+      if (err) process.stderr.write(`[webhook] deploy error: ${err.message}\n`);
+      else process.stdout.write(`[webhook] deployed: ${stdout.trim()}\n`);
+    });
+    return;
+  }
+
   sendJson(response, 404, {
     message: "API route not found."
   });
@@ -5105,11 +5138,16 @@ function renderBlogListPage(entries, site, lang = "ru") {
   const locale = isRo ? "ro-RO" : "ru-RU";
   const t = (ru, ro) => isRo ? ro : ru;
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const GA_ID = process.env.GA_MEASUREMENT_ID || "";
+  const gaSnippet = GA_ID
+    ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');</script>`
+    : "";
   const sharedHead = `
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+    ${gaSnippet}`;
   const sharedStyle = `
     <style>
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -5154,13 +5192,22 @@ function renderBlogListPage(entries, site, lang = "ru") {
 
   const homeLink = isRo ? "/?lang=ro" : "/";
 
+  const blogDesc = t("Заметки о работе с телом: техники массажа, наблюдения из практики, советы по восстановлению от Дениса Матиевича.", "Note despre lucrul cu corpul: tehnici de masaj, observații din practică, sfaturi de recuperare de la Denis Matievici.");
   return `<!DOCTYPE html>
 <html lang="${isRo ? "ro" : "ru"}">
 <head>
   ${sharedHead}
   <title>${t("Дневник практики", "Jurnalul practicii")} — Mateev Spa Studio</title>
-  <meta name="description" content="${t("Заметки о работе с телом: техники массажа, наблюдения из практики, советы по восстановлению от Дениса Матиевича.", "Note despre lucrul cu corpul: tehnici de masaj, observații din practică, sfaturi de recuperare de la Denis Matievici.")}">
+  <meta name="description" content="${blogDesc}">
   <link rel="canonical" href="${base}/blog">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${t("Дневник практики", "Jurnalul practicii")} — Mateev Spa Studio">
+  <meta property="og:description" content="${blogDesc}">
+  <meta property="og:url" content="${base}/blog">
+  <meta property="og:image" content="${base}/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${t("Дневник практики", "Jurnalul practicii")} — Mateev Spa Studio">
+  <meta name="twitter:description" content="${blogDesc}">
   ${sharedStyle}
 </head>
 <body>
@@ -5424,8 +5471,10 @@ function renderBlogEntryPage(entry, lang = "ru") {
   });
   const bodyHtml = parseMarkdown(body);
 
+  const GA_ID_entry = process.env.GA_MEASUREMENT_ID || "";
+  const gaEntry = GA_ID_entry ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID_entry}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID_entry}');</script>` : "";
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${isRo ? "ro" : "ru"}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -5437,8 +5486,14 @@ function renderBlogEntryPage(entry, lang = "ru") {
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="Mateev Spa Studio">
-  <meta property="og:image" content="${url}/og.svg">
+  <meta property="og:image" content="${base}/og-image.jpg">
+  <meta property="og:locale" content="${isRo ? "ro_RO" : "ru_RU"}">
   <meta property="article:published_time" content="${entry.publishedAt}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${base}/og-image.jpg">
+  ${gaEntry}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
