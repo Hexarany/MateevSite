@@ -5100,7 +5100,10 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
 </html>`;
 }
 
-function renderBlogListPage(entries, site) {
+function renderBlogListPage(entries, site, lang = "ru") {
+  const isRo = lang === "ro";
+  const locale = isRo ? "ro-RO" : "ru-RU";
+  const t = (ru, ro) => isRo ? ro : ru;
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const sharedHead = `
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -5135,23 +5138,28 @@ function renderBlogListPage(entries, site) {
 
   const entriesHtml = entries.length
     ? entries.map((e) => {
-        const date = new Date(e.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+        const eTitle = isRo ? (e.titleRo || e.title) : e.title;
+        const eBody  = isRo ? (e.bodyRo  || e.body)  : e.body;
+        const date = new Date(e.publishedAt + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+        const langParam = isRo ? "?lang=ro" : "";
         return `
-          <a href="${base}/blog/${escapeHtml(e.id)}" class="entry-card">
+          <a href="${base}/blog/${escapeHtml(e.id)}${langParam}" class="entry-card">
             <div class="entry-card__date">${date}</div>
-            <div class="entry-card__title">${escapeHtml(e.title)}</div>
-            <div class="entry-card__excerpt">${escapeHtml(stripMarkdown(e.body))}</div>
-            <span class="entry-card__link">Читать полностью →</span>
+            <div class="entry-card__title">${escapeHtml(eTitle)}</div>
+            <div class="entry-card__excerpt">${escapeHtml(stripMarkdown(eBody))}</div>
+            <span class="entry-card__link">${t("Читать полностью →", "Citește tot →")}</span>
           </a>`;
       }).join("")
-    : `<div class="empty">Записей пока нет</div>`;
+    : `<div class="empty">${t("Записей пока нет", "Nu există înregistrări")}</div>`;
+
+  const homeLink = isRo ? "/?lang=ro" : "/";
 
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${isRo ? "ro" : "ru"}">
 <head>
   ${sharedHead}
-  <title>Дневник практики — Mateev Spa Studio</title>
-  <meta name="description" content="Заметки о работе с телом: техники массажа, наблюдения из практики, советы по восстановлению от Дениса Матиевича.">
+  <title>${t("Дневник практики", "Jurnalul practicii")} — Mateev Spa Studio</title>
+  <meta name="description" content="${t("Заметки о работе с телом: техники массажа, наблюдения из практики, советы по восстановлению от Дениса Матиевича.", "Note despre lucrul cu corpul: tehnici de masaj, observații din practică, sfaturi de recuperare de la Denis Matievici.")}">
   <link rel="canonical" href="${base}/blog">
   ${sharedStyle}
 </head>
@@ -5159,27 +5167,27 @@ function renderBlogListPage(entries, site) {
   <header class="topbar">
     <div class="topbar__inner">
       <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/" class="topbar__back">← На главную</a>
+      <a href="${homeLink}" class="topbar__back">← ${t("На главную", "Pagina principală")}</a>
     </div>
   </header>
   <main>
     <div class="container">
       <div class="page">
-        <p class="page__kicker">Дневник практики</p>
-        <h1 class="page__title">Заметки о работе с телом</h1>
-        <p class="page__subtitle">Техники, наблюдения и случаи из практики — от Дениса Матиевича</p>
+        <p class="page__kicker">${t("Дневник практики", "Jurnalul practicii")}</p>
+        <h1 class="page__title">${t("Заметки о работе с телом", "Note despre lucrul cu corpul")}</h1>
+        <p class="page__subtitle">${t("Техники, наблюдения и случаи из практики — от Дениса Матиевича", "Tehnici, observații și cazuri din practică — de Denis Matievici")}</p>
         <div class="entries">${entriesHtml}</div>
 
         <div style="margin-top:56px;padding:36px;background:rgba(26,46,34,0.06);border:1px solid rgba(26,46,34,0.12);border-radius:20px;text-align:center;">
-          <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:8px;">Подписка</p>
-          <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#1a2e22;margin-bottom:8px;">Новые записи — на почту</h2>
-          <p style="color:#7d6d60;font-size:0.9rem;margin-bottom:20px;">Один email когда выйдет новая заметка. Без спама.</p>
+          <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:8px;">${t("Подписка", "Abonament")}</p>
+          <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#1a2e22;margin-bottom:8px;">${t("Новые записи — на почту", "Articole noi — pe email")}</h2>
+          <p style="color:#7d6d60;font-size:0.9rem;margin-bottom:20px;">${t("Один email когда выйдет новая заметка. Без спама.", "Un email când apare un articol nou. Fără spam.")}</p>
           <form id="subscribeForm" style="display:flex;gap:10px;max-width:400px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
-            <input type="email" id="subscribeEmail" placeholder="ваш@email.com" required
+            <input type="email" id="subscribeEmail" placeholder="${t("ваш@email.com", "email@dvs.com")}" required
               style="flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid rgba(71,49,28,0.2);background:#fff;font-size:0.9rem;font-family:inherit;">
             <button type="submit"
               style="padding:12px 24px;background:#1a2e22;color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;">
-              Подписаться
+              ${t("Подписаться", "Abonați-vă")}
             </button>
           </form>
           <p id="subscribeMsg" style="margin-top:12px;font-size:0.85rem;color:#6b8d6b;display:none;"></p>
@@ -5641,7 +5649,8 @@ function createServer() {
         const entries = normalizeDiary(raw)
           .filter((e) => e.published && e.publishedAt <= today)
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-        const html = renderBlogListPage(entries, site);
+        const lang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderBlogListPage(entries, site, lang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
