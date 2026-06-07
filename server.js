@@ -4323,11 +4323,11 @@ async function routeApi(request, response, urlObject) {
     const entry = entries[idx];
 
     async function deepl(text) {
-      const body = JSON.stringify({ text: [text], source_lang: "RU", target_lang: "RO" });
+      // requestJson does JSON.stringify(body) internally — pass object, not string
       const resp = await requestJson("https://api-free.deepl.com/v2/translate", {
         method: "POST",
-        headers: { Authorization: `DeepL-Auth-Key ${DEEPL_KEY}`, "Content-Type": "application/json" },
-        body
+        headers: { Authorization: `DeepL-Auth-Key ${DEEPL_KEY}` },
+        body: { text: [text], source_lang: "RU", target_lang: "RO" }
       });
       return resp?.translations?.[0]?.text || "";
     }
