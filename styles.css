@@ -3712,6 +3712,8 @@ p {
 /* Force date input to respect container width on WebKit */
 input[type="date"],
 input[type="time"] {
+  width: -webkit-fill-available;
+  width: stretch;
   max-width: 100%;
   min-width: 0;
 }
