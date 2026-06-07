@@ -813,6 +813,11 @@ p {
   font-weight: 700;
 }
 
+.show-all-btn {
+  display: block;
+  margin: 20px auto 0;
+}
+
 .faq-item {
   padding: 20px 24px;
 }
