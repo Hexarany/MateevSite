@@ -708,16 +708,26 @@ function normalizeSiteContent(siteInput = {}) {
     method: (() => {
       const m = input.method && typeof input.method === "object" ? input.method : {};
       const dm = defaults.method;
+      const taglineRo = sanitizeText(m.taglineRo);
+      const principles = (Array.isArray(m.principles) ? m.principles : dm.principles)
+        .slice(0, 6)
+        .map((p, i) => {
+          const titleRo = sanitizeText(p?.titleRo);
+          const textRo = sanitizeText(p?.textRo);
+          return {
+            title: sanitizeText(p?.title, dm.principles[i]?.title || ""),
+            text: sanitizeText(p?.text, dm.principles[i]?.text || ""),
+            ...(titleRo && { titleRo }),
+            ...(textRo && { textRo })
+          };
+        })
+        .filter((p) => p.title);
+
       return {
         enabled: m.enabled !== false,
         tagline: sanitizeText(m.tagline, dm.tagline),
-        principles: (Array.isArray(m.principles) ? m.principles : dm.principles)
-          .slice(0, 6)
-          .map((p, i) => ({
-            title: sanitizeText(p?.title, dm.principles[i]?.title || ""),
-            text: sanitizeText(p?.text, dm.principles[i]?.text || "")
-          }))
-          .filter((p) => p.title)
+        principles,
+        ...(taglineRo && { taglineRo })
       };
     })(),
     translations: input.translations || defaults.translations || {},
@@ -755,6 +765,11 @@ function normalizeServices(servicesInput = []) {
       }
       usedIds.add(id);
 
+      const nameRo = sanitizeText(service?.nameRo);
+      const categoryRo = sanitizeText(service?.categoryRo);
+      const descriptionRo = sanitizeText(service?.descriptionRo);
+      const benefitsRo = sanitizeStringArray(service?.benefitsRo, []);
+
       return {
         id,
         name: name || `Услуга ${index + 1}`,
@@ -762,7 +777,11 @@ function normalizeServices(servicesInput = []) {
         duration: sanitizeInteger(service?.duration, 60) || 60,
         price: sanitizeInteger(service?.price, 0),
         description,
-        benefits
+        benefits,
+        ...(nameRo && { nameRo }),
+        ...(categoryRo && { categoryRo }),
+        ...(descriptionRo && { descriptionRo }),
+        ...(benefitsRo.length && { benefitsRo })
       };
     })
     .filter(Boolean);
@@ -806,6 +825,9 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         .filter((day, itemIndex, array) => day >= 0 && day <= 6 && array.indexOf(day) === itemIndex)
         .sort((left, right) => left - right);
 
+      const roleRo = sanitizeText(specialist?.roleRo);
+      const bioRo = sanitizeText(specialist?.bioRo);
+
       return {
         id,
         name: name || `Специалист ${index + 1}`,
@@ -815,7 +837,9 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         specialties,
         workDays: workDays.length ? workDays : [1, 2, 3, 4, 5],
         initials: sanitizeText(specialist?.initials) || buildInitials(name),
-        photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null
+        photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null,
+        ...(roleRo && { roleRo }),
+        ...(bioRo && { bioRo })
       };
     })
     .filter(Boolean);

@@ -459,13 +459,13 @@ function injectServicesSchema() {
 function renderMethodBlock() {
   const method = state.site?.method;
   if (!method || method.enabled === false || !elements.methodGrid) return;
-  if (elements.methodTagline) elements.methodTagline.textContent = method.tagline || "";
+  if (elements.methodTagline) elements.methodTagline.textContent = tr(method.tagline, method.taglineRo) || "";
   elements.methodGrid.innerHTML = (method.principles || [])
     .map((p, i) => `
       <div class="method-card reveal">
         <span class="method-card__num">0${i + 1}</span>
-        <h3 class="method-card__title">${escapeHtml(p.title)}</h3>
-        <p class="method-card__text">${escapeHtml(p.text)}</p>
+        <h3 class="method-card__title">${escapeHtml(tr(p.title, p.titleRo))}</h3>
+        <p class="method-card__text">${escapeHtml(tr(p.text, p.textRo))}</p>
       </div>
     `)
     .join("");
@@ -843,7 +843,7 @@ function renderStaticContent() {
     <div class="contact-list">
       <div class="contact-item">
         <strong>${escapeHtml(trSite('ui.contactAddressLabel') || "Адрес")}</strong>
-        <span>${escapeHtml(site.brand.city)}, ${escapeHtml(site.brand.address)}</span>
+        <span>${escapeHtml(trSite('brand.address') || `${site.brand.city}, ${site.brand.address}`)}</span>
       </div>
       <div class="contact-item">
         <strong>${escapeHtml(trSite('ui.contactPhoneLabel') || "Телефон")}</strong>
@@ -855,7 +855,7 @@ function renderStaticContent() {
       </div>
       <div class="contact-item">
         <strong>${escapeHtml(trSite('ui.contactHoursLabel') || "График")}</strong>
-        <span>${escapeHtml(site.brand.hours)}</span>
+        <span>${escapeHtml(trSite('brand.hours') || site.brand.hours)}</span>
       </div>
     </div>
   `;
