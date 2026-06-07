@@ -4167,11 +4167,15 @@ async function showVacationModal() {
 
     if (!start || !end || start > end) { showToast("Укажите корректный период.", "error"); return; }
 
+    // Build date list using local date parts to avoid UTC timezone shift
     const dates = [];
-    const cur = new Date(start + "T00:00:00");
-    const last = new Date(end + "T00:00:00");
+    const cur = new Date(start + "T12:00:00");
+    const last = new Date(end + "T12:00:00");
     while (cur <= last) {
-      dates.push(cur.toISOString().slice(0, 10));
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, "0");
+      const d = String(cur.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
       cur.setDate(cur.getDate() + 1);
     }
 
@@ -4180,12 +4184,13 @@ async function showVacationModal() {
     btn.textContent = "Закрываю...";
 
     try {
-      await Promise.all(dates.map(date =>
-        fetchJson("/api/admin/blocks", {
+      // Sequential — parallel writes cause race condition on schedule.json.tmp
+      for (const date of dates) {
+        await fetchJson("/api/admin/blocks", {
           method: "POST",
           body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason, force: true })
-        })
-      ));
+        });
+      }
       showToast(`Закрыто ${dates.length} дн. (${start} — ${end}). Проверь записи клиентов.`, "success");
       backdrop.querySelector("#vmStart").value = "";
       backdrop.querySelector("#vmEnd").value = "";
