@@ -3758,6 +3758,14 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/schedule") {
+    assertAdminPin(request);
+    const { specialists } = await loadStudioData();
+    const schedule = normalizeScheduleData(await readJson("schedule.json").catch(() => ({})), specialists);
+    sendJson(response, 200, { schedule });
+    return;
+  }
+
   if (request.method === "GET" && urlObject.pathname === "/api/admin/clients") {
     await handleAdminClients(request, response);
     return;
