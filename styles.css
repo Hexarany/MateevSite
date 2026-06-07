@@ -2093,6 +2093,10 @@ p {
   font-family: inherit;
   font-size: 0.9rem;
   outline: none;
+  max-width: 100%;
+  min-width: 0;
+  width: -webkit-fill-available;
+  width: stretch;
 }
 
 .admin-date-input:focus {
