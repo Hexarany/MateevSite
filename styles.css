@@ -813,9 +813,14 @@ p {
   font-weight: 700;
 }
 
+.review-card--hidden {
+  display: none;
+}
+
 .show-all-btn {
   display: block;
   margin: 20px auto 0;
+  width: fit-content;
 }
 
 .faq-item {

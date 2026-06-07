@@ -777,7 +777,7 @@ function renderStaticContent() {
   elements.reviewsGrid.innerHTML = reviews
     .map(
       (review, i) => `
-        <article class="review-card reveal"${i >= REVIEWS_VISIBLE ? ' hidden' : ''}>
+        <article class="review-card reveal${i >= REVIEWS_VISIBLE ? ' review-card--hidden' : ''}">
           <h3>${escapeHtml(review.author)}</h3>
           <div class="review-card__meta">${escapeHtml(review.meta)}</div>
           <p>${escapeHtml(review.text)}</p>
@@ -791,10 +791,10 @@ function renderStaticContent() {
     btn.className = "button button--ghost show-all-btn";
     btn.textContent = `Показать все отзывы (${reviews.length})`;
     btn.addEventListener("click", () => {
-      elements.reviewsGrid.querySelectorAll("article[hidden]").forEach(el => el.removeAttribute("hidden"));
+      elements.reviewsGrid.querySelectorAll("article.review-card--hidden").forEach(el => el.classList.remove("review-card--hidden"));
       btn.remove();
     });
-    elements.reviewsGrid.after(btn);
+    elements.reviewsGrid.appendChild(btn);
   }
 
   elements.faqList.innerHTML = trArr("faq")
