@@ -3713,9 +3713,11 @@ p {
   overflow: hidden;
 }
 
-/* Force date input to respect container width on WebKit */
-input[type="date"],
-input[type="time"] {
+/* Force date input to respect container width on WebKit.
+   More specific than .field input { width:100% } so iOS actually applies it. */
+.field input[type="date"],
+.field input[type="time"],
+.admin-inline-actions input[type="date"] {
   width: -webkit-fill-available;
   width: stretch;
   max-width: 100%;
