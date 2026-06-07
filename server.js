@@ -5167,7 +5167,13 @@ function renderBlogListPage(entries, site, lang = "ru") {
   <header class="topbar">
     <div class="topbar__inner">
       <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="${homeLink}" class="topbar__back">← ${t("На главную", "Pagina principală")}</a>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;gap:4px;">
+          <a href="/blog" style="padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;text-decoration:none;${!isRo ? 'background:#1a2e22;color:#fff;' : 'color:#7d6d60;'}">RU</a>
+          <a href="/blog?lang=ro" style="padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;text-decoration:none;${isRo ? 'background:#1a2e22;color:#fff;' : 'color:#7d6d60;'}">RO</a>
+        </div>
+        <a href="${homeLink}" class="topbar__back">← ${t("На главную", "Pagina principală")}</a>
+      </div>
     </div>
   </header>
   <main>
@@ -5474,7 +5480,13 @@ function renderBlogEntryPage(entry, lang = "ru") {
   <header class="topbar">
     <div class="topbar__inner">
       <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/${isRo ? '?lang=ro#diary' : '#diary'}" class="topbar__back">← ${isRo ? 'Jurnalul practicii' : 'Дневник практики'}</a>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;gap:4px;">
+          <a href="/blog/${entry.id}" style="padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;text-decoration:none;${!isRo ? 'background:#1a2e22;color:#fff;' : 'color:#7d6d60;'}">RU</a>
+          <a href="/blog/${entry.id}?lang=ro" style="padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;text-decoration:none;${isRo ? 'background:#1a2e22;color:#fff;' : 'color:#7d6d60;'}${!entry.titleRo ? ';opacity:0.4;pointer-events:none;' : ''}">RO${!entry.titleRo ? ' ·' : ''}</a>
+        </div>
+        <a href="/${isRo ? '?lang=ro#diary' : '#diary'}" class="topbar__back">← ${isRo ? 'Jurnalul practicii' : 'Дневник практики'}</a>
+      </div>
     </div>
   </header>
 
