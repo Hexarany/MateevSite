@@ -1493,6 +1493,7 @@ async function loadAdminData() {
   loadInventory();
   initBroadcast();
   loadGallery();
+  initBackupWidget();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -5420,4 +5421,49 @@ function bindGalleryEvents() {
       catch {}
     }
   }, true);
+}
+
+// ─── Backup Widget ───────────────────────────────────────────────────────────
+
+async function initBackupWidget() {
+  // Load status
+  try {
+    const status = await fetchJson("/api/admin/backup/status");
+    const el = document.getElementById("backupLastDate");
+    if (el) {
+      if (status.lastDate) {
+        const d = new Date(status.lastDate);
+        el.textContent = `Последний бэкап: ${d.toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${status.count} копий`;
+      } else {
+        el.textContent = "Бэкапов ещё нет";
+      }
+    }
+  } catch {
+    const el = document.getElementById("backupLastDate");
+    if (el) el.textContent = "Статус недоступен";
+  }
+
+  // Download button — needs PIN in URL
+  document.getElementById("backupDownloadBtn")?.addEventListener("click", (e) => {
+    const pin = document.getElementById("adminPin")?.value || sessionStorage.getItem("adminPin") || "";
+    if (!pin) { e.preventDefault(); showToast("Введите PIN для скачивания бэкапа."); return; }
+    e.currentTarget.href = `/api/admin/backup/download?pin=${encodeURIComponent(pin)}`;
+  });
+
+  // Manual backup button
+  document.getElementById("backupNowBtn")?.addEventListener("click", async () => {
+    const btn = document.getElementById("backupNowBtn");
+    btn.disabled = true;
+    btn.textContent = "Запускаем...";
+    try {
+      const res = await fetchJson("/api/admin/backup/now", { method: "POST", body: JSON.stringify({}) });
+      showToast(res.message || "Бэкап запущен.", "success");
+      setTimeout(() => initBackupWidget(), 5000);
+    } catch (e) {
+      showToast(e.message || "Ошибка запуска бэкапа.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "🔄 Создать сейчас";
+    }
+  });
 }

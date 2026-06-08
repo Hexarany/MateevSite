@@ -117,6 +117,18 @@
 
         <div class="admin-panel" id="adminPanel" hidden>
 
+          <!-- Backup widget -->
+          <div class="admin-widget reveal" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 24px;margin-bottom:0;" id="backupWidget">
+            <div>
+              <p class="section-kicker" style="margin-bottom:2px;">Резервная копия</p>
+              <p style="font-size:0.85rem;color:var(--forest);font-weight:600;" id="backupLastDate">Проверяем...</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <a href="/api/admin/backup/download" class="button button--ghost button--mini" id="backupDownloadBtn" download>⬇ Скачать</a>
+              <button type="button" class="button button--ghost button--mini" id="backupNowBtn">🔄 Создать сейчас</button>
+            </div>
+          </div>
+
           <!-- GA4 Analytics widget -->
           <section class="admin-section-block reveal" id="analyticsWidget">
             <div class="admin-section-block__head">

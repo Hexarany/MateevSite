@@ -4411,6 +4411,60 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // ─── Backup ───────────────────────────────────────────────────────────────
+  // GET /api/admin/backup/download — download full data bundle as JSON
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/backup/download") {
+    assertAdminPin(request);
+    const files = (await fs.readdir(DATA_DIR)).filter(f => f.endsWith(".json"));
+    const bundle = {};
+    for (const file of files) {
+      const key = file.replace(".json", "");
+      try { bundle[key] = await readJson(file); } catch { bundle[key] = []; }
+    }
+    bundle._meta = { exportedAt: new Date().toISOString(), files: files.length };
+    const json     = JSON.stringify(bundle, null, 2);
+    const date     = new Date().toISOString().slice(0, 10);
+    const filename = `mateev-backup-${date}.json`;
+    response.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": Buffer.byteLength(json),
+      "Cache-Control": "no-store"
+    });
+    response.end(json);
+    return;
+  }
+
+  // POST /api/admin/backup/now — trigger backup + email
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/backup/now") {
+    assertAdminPin(request);
+    const { execFile } = await import("node:child_process");
+    const scriptPath = path.join(ROOT_DIR, "scripts", "backup-data.js");
+    execFile(process.execPath, [scriptPath, "manual"], { timeout: 30000 }, (err) => {
+      if (err) console.error("Manual backup error:", err.message);
+    });
+    sendJson(response, 200, { ok: true, message: "Бэкап запущен. Email придёт в течение минуты." });
+    return;
+  }
+
+  // GET /api/admin/backup/status — last backup file info
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/backup/status") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    try {
+      const files = (await fs.readdir(BACKUP_DIR))
+        .filter(f => f.startsWith("backup-") && f.endsWith(".json"))
+        .sort();
+      const last = files[files.length - 1] || null;
+      let lastDate = null;
+      if (last) {
+        const stat = await fs.stat(path.join(BACKUP_DIR, last));
+        lastDate = stat.mtime.toISOString();
+      }
+      sendJson(response, 200, { count: files.length, lastFile: last, lastDate });
+    } catch { sendJson(response, 200, { count: 0, lastFile: null, lastDate: null }); }
+    return;
+  }
+
   // ─── Broadcast ────────────────────────────────────────────────────────────
   // GET /api/admin/broadcast/preview?segment=all|vip|inactive|has_package
   if (request.method === "GET" && urlObject.pathname === "/api/admin/broadcast/preview") {
