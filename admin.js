@@ -3985,30 +3985,35 @@ function renderClientDetail(client) {
 
       ${(() => {
         const clientPkgs = (state.packages||[]).filter(p => p.clientName === client.clientName || (client.phone && p.phone === client.phone));
-        if (!clientPkgs.length) return "";
+        const pkgRows = clientPkgs.map(p => {
+          const rem = p.totalSessions - p.usedSessions;
+          const pct = p.totalSessions > 0 ? Math.round(p.usedSessions / p.totalSessions * 100) : 0;
+          const color = p.status === "active" ? "var(--success)" : "var(--muted)";
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
+            <div style="flex:1;min-width:0;">
+              <strong style="font-size:0.88rem;">${escapeHtml(p.code)}</strong>
+              <span style="display:block;font-size:0.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.serviceName||p.title)}</span>
+              <div style="height:4px;background:var(--line);border-radius:2px;width:100%;max-width:120px;margin-top:5px;">
+                <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;"></div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <strong style="color:${color};">${rem} ост.</strong>
+              <span style="display:block;font-size:0.75rem;color:var(--muted);">${p.usedSessions}/${p.totalSessions}</span>
+            </div>
+            ${p.status === "active" ? `<button class="button button--ghost button--mini" data-use-pkg="${escapeHtml(p.id)}" style="flex-shrink:0;">−1</button>` : ""}
+          </div>`;
+        }).join("");
+
         return `<div class="admin-editor-item" style="margin-bottom:16px;">
           <div class="admin-editor-item__toolbar">
             <span class="admin-editor-item__index">Абонементы</span>
+            <button class="button button--ghost button--mini"
+              data-new-pkg-client="${escapeHtml(client.clientName)}"
+              data-new-pkg-phone="${escapeHtml(client.phone||'')}">+ Новый</button>
           </div>
-          <div style="display:grid;gap:8px;padding:12px 16px;">
-            ${clientPkgs.map(p => {
-              const rem = p.totalSessions - p.usedSessions;
-              const pct = p.totalSessions > 0 ? Math.round(p.usedSessions / p.totalSessions * 100) : 0;
-              const color = p.status === "active" ? "var(--success)" : "var(--muted)";
-              return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
-                <div style="flex:1;">
-                  <strong style="font-size:0.88rem;">${escapeHtml(p.code)}</strong>
-                  <span style="display:block;font-size:0.78rem;color:var(--muted);">${escapeHtml(p.serviceName||p.title)}</span>
-                  <div style="height:4px;background:var(--line);border-radius:2px;width:120px;margin-top:5px;">
-                    <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;"></div>
-                  </div>
-                </div>
-                <div style="text-align:right;">
-                  <strong style="color:${color};">${rem} ост.</strong>
-                  <span style="display:block;font-size:0.75rem;color:var(--muted);">${p.usedSessions}/${p.totalSessions}</span>
-                </div>
-              </div>`;
-            }).join("")}
+          <div style="padding:${clientPkgs.length?'0 16px':'12px 16px'};">
+            ${pkgRows || '<p style="font-size:0.82rem;color:var(--muted);">Абонементов нет. Нажмите «+ Новый».</p>'}
           </div>
         </div>`;
       })()}
@@ -4044,6 +4049,38 @@ function renderClientDetail(client) {
 }
 
 function handleClientDetailClick(event) {
+  // Quick use package from client card
+  const useBtn = event.target.closest("[data-use-pkg]");
+  if (useBtn) {
+    const id = useBtn.dataset.usePkg;
+    const pkg = (state.packages||[]).find(p => p.id === id);
+    if (!pkg) return;
+    if (!confirm(`Списать 1 сеанс из ${pkg.code}? Останется: ${pkg.totalSessions - pkg.usedSessions - 1}`)) return;
+    fetchJson(`/api/admin/packages/${id}/use`, { method: "POST", body: JSON.stringify({ date: new Date().toISOString().slice(0,10) }) })
+      .then(res => {
+        const idx = state.packages.findIndex(p => p.id === id);
+        if (idx !== -1) state.packages[idx] = res.package;
+        const selectedClient = state.clients.find(c => c.id === state.selectedClientId);
+        if (selectedClient) renderClientDetail(selectedClient);
+        showToast(`Сеанс списан. Остаток: ${res.package.totalSessions - res.package.usedSessions}`, "success");
+      }).catch(e => showToast(e.message||"Ошибка.","error"));
+    return;
+  }
+
+  // Create new package for this client
+  const newPkgBtn = event.target.closest("[data-new-pkg-client]");
+  if (newPkgBtn) {
+    activateSection("packages");
+    setTimeout(() => {
+      document.getElementById("showCreatePackageBtn")?.click();
+      const nameEl = document.getElementById("pkgClientName");
+      const phoneEl = document.getElementById("pkgClientPhone");
+      if (nameEl) nameEl.value = newPkgBtn.dataset.newPkgClient;
+      if (phoneEl) phoneEl.value = newPkgBtn.dataset.newPkgPhone || "";
+    }, 100);
+    return;
+  }
+
   const btn = event.target.closest("[data-rebook-client]");
   if (!btn) return;
 
