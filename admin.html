@@ -361,6 +361,13 @@
                 </div>
 
                 <div class="admin-table-controls">
+                  <div style="display:flex;gap:4px;align-items:center;" id="periodBtns">
+                    <button class="button button--ghost button--mini period-btn" data-period="today">Сегодня</button>
+                    <button class="button button--ghost button--mini period-btn" data-period="week">Неделя</button>
+                    <button class="button button--ghost button--mini period-btn is-active" data-period="month">Месяц</button>
+                    <button class="button button--ghost button--mini period-btn" data-period="all">Все</button>
+                  </div>
+
                   <label class="field field--compact">
                     <span>Статус</span>
                     <select id="statusFilter">
@@ -379,6 +386,11 @@
 
                   <button type="button" class="button button--ghost" id="exportCsvBtn">Скачать CSV</button>
                 </div>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 0;gap:12px;">
+                <span id="bookingCount" style="font-size:0.78rem;color:var(--muted);"></span>
+                <button type="button" id="sortDirBtn" class="button button--ghost button--mini" title="Сортировка">↓ Новые первыми</button>
               </div>
 
               <div class="table-wrap">

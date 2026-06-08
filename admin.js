@@ -17,7 +17,9 @@ const state = {
   currency: "MDL",
   filters: {
     status: "all",
-    search: ""
+    search: "",
+    period: "month",
+    sortDir: "desc"
   },
   clientFilters: {
     search: ""
@@ -227,6 +229,23 @@ function bindEvents() {
   elements.adminLoginBtn.addEventListener("click", handleAdminLogin);
   elements.adminLogoutBtn.addEventListener("click", handleAdminLogout);
   document.getElementById("expenseMonth")?.addEventListener("change", loadExpenses);
+
+  document.getElementById("periodBtns")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".period-btn");
+    if (!btn) return;
+    document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    state.filters.period = btn.dataset.period;
+    state.bookingPage = 0;
+    renderAdminTable();
+  });
+
+  document.getElementById("sortDirBtn")?.addEventListener("click", () => {
+    state.filters.sortDir = state.filters.sortDir === "desc" ? "asc" : "desc";
+    const btn = document.getElementById("sortDirBtn");
+    if (btn) btn.textContent = state.filters.sortDir === "desc" ? "↓ Новые первыми" : "↑ Старые первыми";
+    renderAdminTable();
+  });
   elements.statusFilter.addEventListener("change", () => {
     state.filters.status = elements.statusFilter.value;
     state.bookingPage = 0;
@@ -4524,41 +4543,41 @@ function handleScheduleBoardClick(event) {
 
 function renderAdminTable() {
   const bookings = state.adminData?.bookings || [];
+
+  // Period filter
+  const now = new Date();
+  const today = getLocalDateString();
+  let periodFrom = null;
+  if (state.filters.period === "today") {
+    periodFrom = today;
+  } else if (state.filters.period === "week") {
+    const d = new Date(now); d.setDate(d.getDate() - 6);
+    periodFrom = d.toISOString().slice(0, 10);
+  } else if (state.filters.period === "month") {
+    periodFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  }
+
   const filtered = bookings.filter((booking) => {
-    const matchesStatus =
-      state.filters.status === "all" || booking.status === state.filters.status;
-
-    if (!matchesStatus) {
-      return false;
-    }
-
-    if (!state.filters.search) {
-      return true;
-    }
-
-    const haystack = [
-      booking.reference,
-      booking.clientName,
-      booking.phone,
-      booking.email,
-      booking.serviceName,
-      booking.specialistName,
-      booking.notes
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(state.filters.search);
+    if (state.filters.status !== "all" && booking.status !== state.filters.status) return false;
+    if (periodFrom && booking.date < periodFrom) return false;
+    if (!state.filters.search) return true;
+    return [booking.reference, booking.clientName, booking.phone, booking.email, booking.serviceName, booking.specialistName, booking.notes]
+      .filter(Boolean).join(" ").toLowerCase().includes(state.filters.search);
   });
+
+  // Sort
+  filtered.sort((a, b) => {
+    const ta = getBookingTimestamp(a), tb = getBookingTimestamp(b);
+    return state.filters.sortDir === "desc" ? tb - ta : ta - tb;
+  });
+
+  // Counter
+  const countEl = document.getElementById("bookingCount");
+  if (countEl) countEl.textContent = `${filtered.length} из ${bookings.length} заявок`;
 
   if (!filtered.length) {
     elements.adminTableBody.innerHTML = `
-      <tr>
-        <td colspan="6">
-          <div class="empty-state">По текущим фильтрам ничего не найдено.</div>
-        </td>
-      </tr>
+      <tr><td colspan="6"><div class="empty-state">По текущим фильтрам ничего не найдено.</div></td></tr>
     `;
     return;
   }
@@ -4586,11 +4605,9 @@ function renderAdminTable() {
           <td>
             <select class="status-select" data-booking-id="${escapeHtml(booking.id)}">
               ${Object.entries(statusLabels)
-                .map(
-                  ([value, label]) =>
-                    `<option value="${escapeHtml(value)}" ${booking.status === value ? "selected" : ""}>${escapeHtml(label)}</option>`
-                )
-                .join("")}
+                .map(([value, label]) =>
+                  `<option value="${escapeHtml(value)}" ${booking.status === value ? "selected" : ""}>${escapeHtml(label)}</option>`
+                ).join("")}
             </select>
           </td>
           <td>
