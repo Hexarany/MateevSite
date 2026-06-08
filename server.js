@@ -1485,7 +1485,7 @@ async function sendClientConfirmationEmail(booking) {
             <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(26,46,34,0.05);border:1px solid rgba(26,46,34,0.12);border-radius:12px;overflow:hidden;margin-bottom:20px;">
               <tr><td style="padding:14px 18px;">
                 <table cellpadding="0" cellspacing="0"><tr>
-                  <td style="padding-right:16px;"><img src="https://chart.googleapis.com/chart?cht=qr&chs=80x80&chl=${encodeURIComponent((SITE_URL || 'https://mateevmassage.com') + '/intake')}&choe=UTF-8" width="80" height="80" alt="QR" style="border-radius:8px;display:block;"></td>
+                  <td style="padding-right:16px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent((SITE_URL || 'https://mateevmassage.com') + '/intake')}&bgcolor=ffffff&margin=4" width="80" height="80" alt="QR" style="border-radius:8px;display:block;"></td>
                   <td><p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#1a2e22;">Впервые у нас?</p>
                   <p style="margin:0;font-size:12px;color:${muted};line-height:1.5;">Заполните персональную карту пациента за 2–3 минуты до визита — это поможет специалисту лучше подготовиться.</p></td>
                 </tr></table>
