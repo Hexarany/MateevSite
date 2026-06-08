@@ -1048,9 +1048,31 @@
                     <span>Дата</span>
                     <input type="date" id="diaryEntryDate">
                   </label>
+                  <label class="field">
+                    <span>Категория</span>
+                    <select id="diaryEntryCategory">
+                      <option value="">— без категории —</option>
+                      <option value="Техники">Техники</option>
+                      <option value="Советы">Советы</option>
+                      <option value="Школа">Школа</option>
+                      <option value="Новости">Новости</option>
+                      <option value="Клиенты">Клиенты</option>
+                      <option value="Прочее">Прочее</option>
+                    </select>
+                  </label>
                   <label class="field admin-check-option" style="flex-direction:row;align-items:center;gap:8px;padding:10px 14px;">
                     <input type="checkbox" id="diaryEntryPublished" checked>
                     <span>Опубликована</span>
+                  </label>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Теги <span style="font-weight:400;color:var(--muted);font-size:0.78rem;">через запятую</span></span>
+                    <input type="text" id="diaryEntryTags" placeholder="массаж, спина, расслабление">
+                  </label>
+                  <label class="field">
+                    <span>Обложка <span style="font-weight:400;color:var(--muted);font-size:0.78rem;">URL или загрузите ниже</span></span>
+                    <input type="text" id="diaryEntryCoverImage" placeholder="/uploads/blog/blog-123.jpg">
                   </label>
                 </div>
                 <div class="field field--full">

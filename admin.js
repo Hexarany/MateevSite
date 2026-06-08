@@ -393,12 +393,18 @@ function bindEvents() {
           method: "POST",
           body: JSON.stringify({ image: reader.result })
         });
-        const ta = elements.diaryEntryBody;
-        const pos = ta.selectionStart;
-        const mdImg = `\n![Описание фото](${data.url})\n`;
-        ta.setRangeText(mdImg, pos, pos, "end");
-        ta.focus();
-        showToast("Фото загружено — вставлено в текст.", "success");
+        const coverEl = document.getElementById("diaryEntryCoverImage");
+        if (coverEl && !coverEl.value) {
+          coverEl.value = data.url;
+          showToast("Фото загружено — установлено как обложка.", "success");
+        } else {
+          const ta = elements.diaryEntryBody;
+          const pos = ta.selectionStart;
+          const mdImg = `\n![Описание фото](${data.url})\n`;
+          ta.setRangeText(mdImg, pos, pos, "end");
+          ta.focus();
+          showToast("Фото загружено — вставлено в текст.", "success");
+        }
       } catch {
         showToast("Не удалось загрузить фото.", "error");
       }
@@ -1958,9 +1964,12 @@ function renderDiaryEntriesList() {
       const date = new Date(entry.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", {
         day: "numeric", month: "long", year: "numeric"
       });
+      const catChip = entry.category ? `<span style="font-size:0.72rem;font-weight:600;padding:2px 7px;border-radius:10px;background:rgba(179,109,44,0.12);color:#7a4800;">${escapeHtml(entry.category)}</span>` : "";
+      const tagsChips = (entry.tags||[]).map(t => `<span style="font-size:0.72rem;padding:2px 7px;border-radius:10px;background:rgba(26,46,34,0.07);color:#1a2e22;">#${escapeHtml(t)}</span>`).join("");
+      const readChip = `<span style="font-size:0.72rem;color:var(--muted);">${entry.readTime||1} мин</span>`;
       return `
         <div class="diary-admin-card">
-          <div class="diary-admin-card__meta">${date}${entry.published ? "" : " · <em>Черновик</em>"}</div>
+          <div class="diary-admin-card__meta" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">${date}${entry.published ? "" : " · <em>Черновик</em>"} ${catChip} ${tagsChips} ${readChip}</div>
           <div class="diary-admin-card__title">${escapeHtml(entry.title)}</div>
           <div class="diary-admin-card__excerpt">${escapeHtml(entry.body)}</div>
           <div class="diary-admin-card__actions">
@@ -1993,6 +2002,12 @@ function handleDiaryEntryCancel() {
   elements.diaryEntryTitle.value = "";
   elements.diaryEntryBody.value = "";
   elements.diaryEntryPublished.checked = true;
+  const catEl = document.getElementById("diaryEntryCategory");
+  if (catEl) catEl.value = "";
+  const tagsEl = document.getElementById("diaryEntryTags");
+  if (tagsEl) tagsEl.value = "";
+  const coverEl = document.getElementById("diaryEntryCoverImage");
+  if (coverEl) coverEl.value = "";
   if (diaryRoTitle()) diaryRoTitle().value = "";
   if (diaryRoBody())  diaryRoBody().value  = "";
 }
@@ -2002,11 +2017,17 @@ async function handleDiaryEntrySubmit(event) {
   const id = elements.diaryEntryId.value;
   const titleRo = diaryRoTitle()?.value.trim() || undefined;
   const bodyRo  = diaryRoBody()?.value.trim()  || undefined;
+  const tagsRaw = document.getElementById("diaryEntryTags")?.value.trim() || "";
+  const coverImage = document.getElementById("diaryEntryCoverImage")?.value.trim() || "";
+  const category = document.getElementById("diaryEntryCategory")?.value || "";
   const payload = {
     title: elements.diaryEntryTitle.value.trim(),
     body: elements.diaryEntryBody.value.trim(),
     publishedAt: elements.diaryEntryDate.value || new Date().toISOString().slice(0, 10),
     published: elements.diaryEntryPublished.checked,
+    category,
+    tags: tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [],
+    ...(coverImage && { coverImage }),
     ...(titleRo && { titleRo }),
     ...(bodyRo  && { bodyRo  })
   };
@@ -2038,6 +2059,12 @@ async function handleDiaryListClick(event) {
     elements.diaryEntryDate.value = entry.publishedAt;
     elements.diaryEntryBody.value = entry.body;
     elements.diaryEntryPublished.checked = entry.published;
+    const catEl = document.getElementById("diaryEntryCategory");
+    if (catEl) catEl.value = entry.category || "";
+    const tagsEl = document.getElementById("diaryEntryTags");
+    if (tagsEl) tagsEl.value = (entry.tags || []).join(", ");
+    const coverEl = document.getElementById("diaryEntryCoverImage");
+    if (coverEl) coverEl.value = entry.coverImage || "";
     if (diaryRoTitle()) diaryRoTitle().value = entry.titleRo || "";
     if (diaryRoBody())  diaryRoBody().value  = entry.bodyRo  || "";
     elements.diaryEntryForm.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -5094,16 +5094,35 @@ async function notifyDiarySubscribers(entry) {
   } catch {}
 }
 
+function calcReadTime(body = "") {
+  const words = body.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+function normalizeTags(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map(t => sanitizeText(t)).filter(Boolean);
+  return String(raw).split(",").map(t => sanitizeText(t.trim())).filter(Boolean);
+}
+
 function normalizeDiaryEntry(entry, index) {
   const id = sanitizeText(entry?.id) || `diary-${Date.now()}-${index}`;
   const titleRo = sanitizeText(entry?.titleRo);
   const bodyRo = sanitizeText(entry?.bodyRo);
+  const body = sanitizeText(entry?.body) || "";
+  const coverImage = sanitizeText(entry?.coverImage);
+  const category = sanitizeText(entry?.category) || "";
+  const tags = normalizeTags(entry?.tags);
   return {
     id,
     title: sanitizeText(entry?.title) || "",
-    body: sanitizeText(entry?.body) || "",
+    body,
     publishedAt: sanitizeText(entry?.publishedAt) || new Date().toISOString().slice(0, 10),
     published: entry?.published !== false,
+    category,
+    tags,
+    readTime: calcReadTime(body),
+    ...(coverImage && { coverImage }),
     ...(titleRo && { titleRo }),
     ...(bodyRo && { bodyRo })
   };
@@ -5795,11 +5814,13 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
 </html>`;
 }
 
-function renderBlogListPage(entries, site, lang = "ru") {
+function renderBlogListPage(entries, site, lang = "ru", catFilter = "") {
   const isRo = lang === "ro";
   const locale = isRo ? "ro-RO" : "ru-RU";
   const t = (ru, ro) => isRo ? ro : ru;
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const categories = [...new Set(entries.map(e => e.category).filter(Boolean))];
+  const filtered = catFilter ? entries.filter(e => e.category === catFilter) : entries;
   const GA_ID = process.env.GA_MEASUREMENT_ID || "";
   const gaSnippet = GA_ID
     ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');</script>`
@@ -5832,19 +5853,41 @@ function renderBlogListPage(entries, site, lang = "ru") {
       .entry-card__title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:#1a2e22;margin-bottom:10px;line-height:1.3}
       .entry-card__excerpt{font-size:0.9rem;color:#5a4e45;line-height:1.7;margin-bottom:16px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
       .entry-card__link{font-size:0.85rem;font-weight:600;color:#6b8d6b}
+      .entry-card__cover{width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:16px;display:block}
+      .entry-card__meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+      .chip{display:inline-block;font-size:0.72rem;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(26,46,34,0.08);color:#1a2e22;letter-spacing:0.04em}
+      .chip--cat{background:rgba(179,109,44,0.12);color:#7a4800}
+      .chip--read{background:rgba(107,141,107,0.12);color:#2d5a3d}
+      .filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+      .filter-btn{padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;border:1.5px solid rgba(26,46,34,0.15);background:transparent;color:#7d6d60;cursor:pointer;text-decoration:none;transition:all 0.15s}
+      .filter-btn.is-active,.filter-btn:hover{background:#1a2e22;color:#fff;border-color:#1a2e22}
       .empty{text-align:center;padding:80px 0;color:#7d6d60}
       footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
     </style>`;
 
-  const entriesHtml = entries.length
-    ? entries.map((e) => {
+  const filterBarHtml = categories.length ? `
+    <div class="filter-bar">
+      <a href="/blog${isRo ? '?lang=ro' : ''}" class="filter-btn${!catFilter ? ' is-active' : ''}">${t("Все", "Toate")}</a>
+      ${categories.map(cat => `<a href="/blog?cat=${encodeURIComponent(cat)}${isRo ? '&lang=ro' : ''}" class="filter-btn${catFilter === cat ? ' is-active' : ''}">${escapeHtml(cat)}</a>`).join("")}
+    </div>` : "";
+
+  const entriesHtml = filtered.length
+    ? filtered.map((e) => {
         const eTitle = isRo ? (e.titleRo || e.title) : e.title;
         const eBody  = isRo ? (e.bodyRo  || e.body)  : e.body;
         const date = new Date(e.publishedAt + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
         const langParam = isRo ? "?lang=ro" : "";
+        const coverHtml = e.coverImage ? `<img class="entry-card__cover" src="${escapeHtml(e.coverImage)}" alt="${escapeHtml(eTitle)}" loading="lazy">` : "";
+        const metaChips = [
+          e.category ? `<span class="chip chip--cat">${escapeHtml(e.category)}</span>` : "",
+          `<span class="chip">${date}</span>`,
+          `<span class="chip chip--read">${e.readTime} ${t("мин", "min")}</span>`,
+          ...(e.tags||[]).map(tag => `<span class="chip">#${escapeHtml(tag)}</span>`)
+        ].filter(Boolean).join("");
         return `
           <a href="${base}/blog/${escapeHtml(e.id)}${langParam}" class="entry-card">
-            <div class="entry-card__date">${date}</div>
+            ${coverHtml}
+            <div class="entry-card__meta">${metaChips}</div>
             <div class="entry-card__title">${escapeHtml(eTitle)}</div>
             <div class="entry-card__excerpt">${escapeHtml(stripMarkdown(eBody))}</div>
             <span class="entry-card__link">${t("Читать полностью →", "Citește tot →")}</span>
@@ -5891,6 +5934,7 @@ function renderBlogListPage(entries, site, lang = "ru") {
         <p class="page__kicker">${t("Дневник практики", "Jurnalul practicii")}</p>
         <h1 class="page__title">${t("Заметки о работе с телом", "Note despre lucrul cu corpul")}</h1>
         <p class="page__subtitle">${t("Техники, наблюдения и случаи из практики — от Дениса Матиевича", "Tehnici, observații și cazuri din practică — de Denis Matievici")}</p>
+        ${filterBarHtml}
         <div class="entries">${entriesHtml}</div>
 
         <div style="margin-top:56px;padding:36px;background:rgba(26,46,34,0.06);border:1px solid rgba(26,46,34,0.12);border-radius:20px;text-align:center;">
@@ -6120,7 +6164,7 @@ function stripMarkdown(text) {
     .trim();
 }
 
-function renderBlogEntryPage(entry, lang = "ru") {
+function renderBlogEntryPage(entry, lang = "ru", related = []) {
   const isRo = lang === "ro" && (entry.titleRo || entry.bodyRo);
   const title = isRo ? (entry.titleRo || entry.title) : entry.title;
   const body = isRo ? (entry.bodyRo || entry.body) : entry.body;
@@ -6181,7 +6225,18 @@ function renderBlogEntryPage(entry, lang = "ru") {
     .article { padding: 56px 0 80px; }
     .article__kicker { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #b36d2c; margin-bottom: 16px; }
     .article__title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 600; line-height: 1.2; color: #1a2e22; margin-bottom: 12px; }
+    .article__cover { width: 100%; max-height: 420px; object-fit: cover; border-radius: 16px; margin-bottom: 32px; display: block; }
     .article__date { font-size: 0.82rem; color: #7d6d60; font-weight: 500; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(71,49,28,0.1); }
+    .article__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(71,49,28,0.1); }
+    .tag-chip { font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: rgba(26,46,34,0.07); color: #1a2e22; text-decoration: none; }
+    .tag-chip:hover { background: #1a2e22; color: #fff; text-decoration: none; }
+    .related { margin-top: 48px; }
+    .related__title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: #1a2e22; margin-bottom: 16px; }
+    .related__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .related-card { display: block; background: rgba(255,255,255,0.7); border: 1px solid rgba(71,49,28,0.1); border-radius: 14px; padding: 18px 20px; transition: box-shadow 0.2s; }
+    .related-card:hover { box-shadow: 0 6px 20px rgba(36,28,23,0.08); text-decoration: none; }
+    .related-card__date { font-size: 0.72rem; color: #7d6d60; margin-bottom: 6px; font-weight: 600; }
+    .related-card__title { font-size: 0.92rem; font-weight: 600; color: #1a2e22; line-height: 1.4; }
     .article__body p { margin-bottom: 20px; font-size: 1rem; color: #3a2e26; }
     .article__body p:last-child { margin-bottom: 0; }
     .cta-block { margin-top: 56px; padding: 32px; background: #1a2e22; border-radius: 20px; text-align: center; }
@@ -6210,10 +6265,28 @@ function renderBlogEntryPage(entry, lang = "ru") {
   <main>
     <div class="container">
       <article class="article">
-        <p class="article__kicker">${isRo ? 'Jurnalul practicii' : 'Дневник практики'}</p>
+        <p class="article__kicker">${entry.category ? escapeHtml(entry.category) : (isRo ? 'Jurnalul practicii' : 'Дневник практики')}</p>
         <h1 class="article__title">${escapeHtml(title)}</h1>
-        <p class="article__date">${dateFormatted} · Denis Matievici</p>
+        <p class="article__date">${dateFormatted} · Denis Matievici · ${entry.readTime} ${isRo ? 'min citire' : 'мин чтения'}</p>
+        ${entry.coverImage ? `<img class="article__cover" src="${escapeHtml(entry.coverImage)}" alt="${escapeHtml(title)}" loading="lazy">` : ""}
         <div class="article__body">${bodyHtml}</div>
+
+        ${(entry.tags||[]).length ? `<div class="article__tags">${(entry.tags||[]).map(tag => `<a href="/blog?cat=${encodeURIComponent(entry.category||'')}&tag=${encodeURIComponent(tag)}" class="tag-chip">#${escapeHtml(tag)}</a>`).join("")}</div>` : ""}
+
+        ${related.length ? `<div class="related">
+          <p class="related__title">${isRo ? 'Articole similare' : 'Похожие статьи'}</p>
+          <div class="related__grid">
+            ${related.map(r => {
+              const rTitle = isRo ? (r.titleRo || r.title) : r.title;
+              const rDate = new Date(r.publishedAt + "T00:00:00").toLocaleDateString(isRo ? "ro-RO" : "ru-RU", { day: "numeric", month: "long" });
+              const langParam = isRo ? "?lang=ro" : "";
+              return `<a href="/blog/${escapeHtml(r.id)}${langParam}" class="related-card">
+                <div class="related-card__date">${rDate}</div>
+                <div class="related-card__title">${escapeHtml(rTitle)}</div>
+              </a>`;
+            }).join("")}
+          </div>
+        </div>` : ""}
 
         <div class="cta-block">
           <p class="cta-block__title">${isRo ? 'Programare la ședință' : 'Записаться на сеанс'}</p>
@@ -6379,7 +6452,8 @@ function createServer() {
           .filter((e) => e.published && e.publishedAt <= today)
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
         const lang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
-        const html = renderBlogListPage(entries, site, lang);
+        const catFilter = sanitizeText(urlObject.searchParams.get("cat") || "");
+        const html = renderBlogListPage(entries, site, lang, catFilter);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
@@ -6443,7 +6517,12 @@ function createServer() {
           return;
         }
         const lang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
-        const html = renderBlogEntryPage(entry, lang);
+        const allEntries = normalizeDiary(raw).filter(e => e.published && e.publishedAt <= today && e.id !== entryId);
+        const related = allEntries.filter(e =>
+          (entry.category && e.category === entry.category) ||
+          (entry.tags?.length && e.tags?.some(t => entry.tags.includes(t)))
+        ).slice(0, 3);
+        const html = renderBlogEntryPage(entry, lang, related);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
