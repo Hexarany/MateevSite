@@ -166,6 +166,24 @@ async function init() {
   } catch (error) {
     showToast(error.message || "Не удалось загрузить информацию о студии.", "error");
   }
+
+  loadPublicGallery();
+}
+
+async function loadPublicGallery() {
+  try {
+    const items = await fetchJson("/api/gallery");
+    if (!items.length) return;
+    const section = document.getElementById("gallery-section");
+    const grid = document.getElementById("siteGalleryGrid");
+    if (!section || !grid) return;
+    grid.innerHTML = items.map(item => `
+      <div class="gallery-grid__item">
+        <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.alt || 'Mateev Spa Studio')}" loading="lazy">
+      </div>
+    `).join("");
+    section.hidden = false;
+  } catch {}
 }
 
 function applyUrlPrefill() {

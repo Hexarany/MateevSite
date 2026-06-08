@@ -1486,6 +1486,7 @@ async function loadAdminData() {
   loadPackages();
   loadInventory();
   initBroadcast();
+  loadGallery();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -5265,4 +5266,131 @@ function initBroadcast() {
 function hideBroadcastPreview() {
   const el = document.getElementById("broadcastPreview");
   if (el) el.style.display = "none";
+}
+
+// ─── Gallery ────────────────────────────────────────────────────────────────
+
+let _galleryItems = [];
+
+async function loadGallery() {
+  try {
+    _galleryItems = await fetchJson("/api/admin/gallery");
+    renderGalleryGrid();
+    bindGalleryEvents();
+  } catch (e) { console.error("loadGallery", e); }
+}
+
+function renderGalleryGrid() {
+  const grid = document.getElementById("galleryGrid");
+  const empty = document.getElementById("galleryEmpty");
+  if (!grid) return;
+
+  if (!_galleryItems.length) {
+    grid.innerHTML = "";
+    if (empty) empty.style.display = "";
+    return;
+  }
+  if (empty) empty.style.display = "none";
+
+  grid.innerHTML = _galleryItems.map((item, idx) => `
+    <div class="admin-gallery-card" data-gallery-id="${escapeHtml(item.id)}">
+      <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.alt || '')}">
+      <span class="admin-gallery-card__order">${idx + 1}</span>
+      <div class="admin-gallery-card__actions">
+        <div style="display:flex;gap:6px;">
+          ${idx > 0 ? `<button class="button button--ghost button--mini" style="background:#fff;color:var(--forest);" data-gal-move="${escapeHtml(item.id)}" data-dir="-1">←</button>` : ""}
+          ${idx < _galleryItems.length - 1 ? `<button class="button button--ghost button--mini" style="background:#fff;color:var(--forest);" data-gal-move="${escapeHtml(item.id)}" data-dir="1">→</button>` : ""}
+        </div>
+        <button class="button button--ghost button--mini" style="background:#fff;color:var(--danger);border-color:var(--danger-soft);" data-gal-delete="${escapeHtml(item.id)}">Удалить</button>
+        <input type="text" value="${escapeHtml(item.alt || '')}" placeholder="Подпись к фото" data-gal-alt="${escapeHtml(item.id)}"
+          style="font-size:0.75rem;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.9);color:var(--forest);width:130px;text-align:center;"
+          onclick="event.stopPropagation()">
+      </div>
+    </div>
+  `).join("");
+}
+
+function bindGalleryEvents() {
+  const fileInput = document.getElementById("galleryFileInput");
+  fileInput?.addEventListener("change", async () => {
+    const files = Array.from(fileInput.files || []);
+    if (!files.length) return;
+    const progressEl = document.getElementById("galleryUploadProgress");
+    const statusEl = document.getElementById("galleryUploadStatus");
+    if (progressEl) progressEl.style.display = "";
+    for (let i = 0; i < files.length; i++) {
+      if (statusEl) statusEl.textContent = `${i + 1} / ${files.length}`;
+      const file = files[i];
+      if (file.size > 8 * 1024 * 1024) { showToast(`${file.name}: файл слишком большой (макс. 8MB).`); continue; }
+      try {
+        const base64 = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = rej;
+          reader.readAsDataURL(file);
+        });
+        const result = await fetchJson("/api/admin/gallery/upload", {
+          method: "POST",
+          body: JSON.stringify({ photo: base64, alt: "" })
+        });
+        _galleryItems.push(result.item);
+        renderGalleryGrid();
+      } catch (e) { showToast(e.message || `Ошибка загрузки ${file.name}.`); }
+    }
+    if (progressEl) progressEl.style.display = "none";
+    fileInput.value = "";
+    showToast(`Загружено ${files.length} фото.`, "success");
+  });
+
+  // Event delegation for grid actions
+  document.getElementById("galleryGrid")?.addEventListener("click", async (e) => {
+    // Move order
+    const moveBtn = e.target.closest("[data-gal-move]");
+    if (moveBtn) {
+      const id = moveBtn.dataset.galMove;
+      const dir = parseInt(moveBtn.dataset.dir);
+      const idx = _galleryItems.findIndex(i => i.id === id);
+      if (idx === -1) return;
+      const swapIdx = idx + dir;
+      if (swapIdx < 0 || swapIdx >= _galleryItems.length) return;
+      [_galleryItems[idx], _galleryItems[swapIdx]] = [_galleryItems[swapIdx], _galleryItems[idx]];
+      _galleryItems.forEach((it, i) => { it.order = i; });
+      try {
+        await Promise.all(_galleryItems.map((it, i) =>
+          fetchJson(`/api/admin/gallery/${it.id}`, { method: "PATCH", body: JSON.stringify({ order: i }) })
+        ));
+      } catch {}
+      renderGalleryGrid();
+      return;
+    }
+
+    // Delete
+    const deleteBtn = e.target.closest("[data-gal-delete]");
+    if (deleteBtn) {
+      const id = deleteBtn.dataset.galDelete;
+      const item = _galleryItems.find(i => i.id === id);
+      if (!confirm(`Удалить фото${item?.alt ? ` «${item.alt}»` : ""}?`)) return;
+      try {
+        await fetchJson(`/api/admin/gallery/${id}`, { method: "DELETE" });
+        _galleryItems = _galleryItems.filter(i => i.id !== id);
+        _galleryItems.forEach((it, i) => { it.order = i; });
+        renderGalleryGrid();
+        showToast("Фото удалено.");
+      } catch (e) { showToast(e.message || "Ошибка."); }
+    }
+  });
+
+  // Save alt text on blur
+  document.getElementById("galleryGrid")?.addEventListener("blur", async (e) => {
+    const altInput = e.target.closest("[data-gal-alt]");
+    if (!altInput) return;
+    const id = altInput.dataset.galAlt;
+    const alt = altInput.value.trim();
+    const item = _galleryItems.find(i => i.id === id);
+    if (item && item.alt !== alt) {
+      item.alt = alt;
+      try { await fetchJson(`/api/admin/gallery/${id}`, { method: "PATCH", body: JSON.stringify({ alt }) }); }
+      catch {}
+    }
+  }, true);
 }

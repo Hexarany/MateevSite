@@ -18,6 +18,7 @@ const DATA_DIR = path.join(ROOT_DIR, "data");
 const BACKUP_DIR = path.join(ROOT_DIR, "backups");
 const UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "specialists");
 const BLOG_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "blog");
+const GALLERY_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "gallery");
 const ADMIN_SESSION_COOKIE_NAME = "mateev_admin_session";
 const ADMIN_SESSION_TTL_HOURS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_HOURS) || 12);
 const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000;
@@ -881,7 +882,8 @@ async function ensureDataFiles() {
     ["expenses.json", "[]"],
     ["packages.json", "[]"],
     ["inventory.json", "[]"],
-    ["portal-tokens.json", "[]"]
+    ["portal-tokens.json", "[]"],
+    ["gallery.json", "[]"]
   ];
 
   await Promise.all(
@@ -1014,7 +1016,7 @@ function sendText(response, statusCode, message) {
 async function serveStaticFile(requestPath, response) {
   if (requestPath.startsWith("/uploads/")) {
     const safeName = path.basename(requestPath);
-    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : "specialists";
+    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : "specialists";
     const fullPath = path.join(ROOT_DIR, "uploads", subDir, safeName);
     try {
       const fileBuffer = await fs.readFile(fullPath);
@@ -4503,6 +4505,76 @@ async function routeApi(request, response, urlObject) {
       } catch { failed++; }
     }
     sendJson(response, 200, { ok: true, sent, failed, total: matched.length });
+    return;
+  }
+
+  // ─── Gallery ──────────────────────────────────────────────────────────────
+  // GET /api/gallery — public
+  if (request.method === "GET" && urlObject.pathname === "/api/gallery") {
+    const items = await readJson("gallery.json");
+    sendJson(response, 200, items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+    return;
+  }
+
+  // GET /api/admin/gallery — admin
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/gallery") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const items = await readJson("gallery.json");
+    sendJson(response, 200, items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+    return;
+  }
+
+  // POST /api/admin/gallery/upload — upload photo (base64)
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/gallery/upload") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 10 * 1024 * 1024);
+    const { photo, alt } = payload;
+    if (!photo || typeof photo !== "string") { sendJson(response, 400, { message: "Поле photo обязательно." }); return; }
+    const match = photo.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/);
+    if (!match) { sendJson(response, 400, { message: "Неверный формат. Поддерживаются JPEG, PNG, WebP." }); return; }
+    const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+    const buffer = Buffer.from(match[3], "base64");
+    if (buffer.length > 8 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой. Максимум 8MB." }); return; }
+    await fs.mkdir(GALLERY_UPLOADS_DIR, { recursive: true });
+    const id = crypto.randomUUID();
+    const filename = `gallery-${id}.${ext}`;
+    await fs.writeFile(path.join(GALLERY_UPLOADS_DIR, filename), buffer);
+    const items = await readJson("gallery.json");
+    const item = { id, filename, url: `/uploads/gallery/${filename}`, alt: sanitizeText(alt || ""), order: items.length, createdAt: new Date().toISOString() };
+    items.push(item);
+    await writeJson("gallery.json", items);
+    sendJson(response, 201, { ok: true, item });
+    return;
+  }
+
+  // PATCH /api/admin/gallery/:id — update alt or order
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/gallery/")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/gallery/", "");
+    const payload = await parseJsonBody(request);
+    const items = await readJson("gallery.json");
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Фото не найдено." }); return; }
+    if (payload.alt !== undefined) items[idx].alt = sanitizeText(payload.alt);
+    if (payload.order !== undefined) items[idx].order = parseInt(payload.order) || 0;
+    await writeJson("gallery.json", items);
+    sendJson(response, 200, { ok: true, item: items[idx] });
+    return;
+  }
+
+  // DELETE /api/admin/gallery/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/gallery/")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/gallery/", "");
+    const items = await readJson("gallery.json");
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Фото не найдено." }); return; }
+    const filename = items[idx].filename;
+    items.splice(idx, 1);
+    items.forEach((it, i) => { it.order = i; });
+    await writeJson("gallery.json", items);
+    try { await fs.unlink(path.join(GALLERY_UPLOADS_DIR, filename)); } catch {}
+    sendJson(response, 200, { ok: true });
     return;
   }
 
