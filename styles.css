@@ -1984,12 +1984,16 @@ p {
 .admin-queue-item__meta {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .admin-list-item__body span,
 .admin-queue-item span,
 .admin-alert-item span {
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-pill {
