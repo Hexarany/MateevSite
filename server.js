@@ -1447,6 +1447,19 @@ function verifyClientConfirmToken(bookingId, token) {
   return typeof token === "string" && token.length === 32 && token === expected;
 }
 
+async function getOrCreatePortalToken(booking) {
+  try {
+    const clientId = createClientProfileId({ clientName: booking.clientName, phone: booking.phone || "", email: booking.email || "" });
+    const tokens = await readJson("portal-tokens.json");
+    const existing = tokens.find(t => t.clientId === clientId);
+    if (existing) return existing.token;
+    const token = crypto.randomBytes(24).toString("hex");
+    tokens.push({ token, clientId, clientName: booking.clientName, phone: booking.phone || "", createdAt: new Date().toISOString() });
+    await writeJson("portal-tokens.json", tokens);
+    return token;
+  } catch { return null; }
+}
+
 async function sendClientConfirmationEmail(booking) {
   if (!RESEND_API_KEY || !EMAIL_FROM || !booking.email) {
     return { channel: "client-email", skipped: true };
@@ -1459,6 +1472,9 @@ async function sendClientConfirmationEmail(booking) {
   const confirmUrl = SITE_URL
     ? `${SITE_URL}/confirm?id=${encodeURIComponent(booking.id)}&token=${generateClientConfirmToken(booking.id)}`
     : null;
+
+  const portalToken = SITE_URL ? await getOrCreatePortalToken(booking) : null;
+  const portalUrl = portalToken ? `${SITE_URL}/client?token=${portalToken}` : null;
 
   const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
   const dateLabel = ru.format(new Date(`${booking.date}T12:00:00`)).replace(" г.", "");
@@ -1554,6 +1570,20 @@ async function sendClientConfirmationEmail(booking) {
           </td>
         </tr>
 
+        ${portalUrl ? `<tr>
+          <td style="padding:0 36px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(26,46,34,0.04);border:1px solid rgba(26,46,34,0.10);border-radius:12px;overflow:hidden;">
+              <tr>
+                <td style="padding:16px 20px;">
+                  <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:${muted};">Ваш личный кабинет</p>
+                  <p style="margin:0 0 12px;font-size:13px;color:${ink};line-height:1.5;">История визитов, абонементы и ближайшие записи — в одном месте.</p>
+                  <a href="${portalUrl}" style="display:inline-block;padding:10px 20px;background:#1a2e22;color:#fff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">Открыть кабинет →</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>` : ""}
+
         <tr>
           <td style="padding:24px 36px;border-top:1px solid rgba(68,50,36,0.10);background:rgba(179,109,44,0.04);">
             <p style="margin:0;font-size:12px;color:${muted};line-height:1.6;">
@@ -1579,6 +1609,7 @@ async function sendClientConfirmationEmail(booking) {
     `Стоимость: ${booking.totalPrice} MDL`,
     confirmUrl ? `\nПодтвердить визит: ${confirmUrl}` : "",
     cancelUrl ? `Отменить запись: ${cancelUrl}` : "",
+    portalUrl ? `\nЛичный кабинет: ${portalUrl}` : "",
     "",
     "Ждём вас. До встречи!"
   ].join("\n");
