@@ -3089,6 +3089,7 @@ async function handleAvailability(urlObject, response) {
   const date = urlObject.searchParams.get("date");
   const excludeBookingId = sanitizeText(urlObject.searchParams.get("excludeBookingId"));
   const customDuration = parseInt(urlObject.searchParams.get("customDuration") || "0", 10) || 0;
+  const adminMode = urlObject.searchParams.get("admin") === "true";
 
   if (!serviceId || !specialistId || !date) {
     sendJson(response, 400, {
@@ -3097,7 +3098,7 @@ async function handleAvailability(urlObject, response) {
     return;
   }
 
-  if (!isFutureOrToday(date)) {
+  if (!adminMode && !isFutureOrToday(date)) {
     sendJson(response, 400, {
       message: "Нельзя получить доступность для прошедшей даты."
     });

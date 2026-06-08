@@ -4011,7 +4011,8 @@ async function refreshBookingSlots(preserveCurrent = false) {
   const query = new URLSearchParams({
     serviceId: bookingForm.serviceId,
     specialistId: bookingForm.specialistId,
-    date: bookingForm.date
+    date: bookingForm.date,
+    admin: "true"
   });
 
   if (customDuration > 0) query.set("customDuration", String(customDuration));
