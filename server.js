@@ -2210,7 +2210,7 @@ function getDayIntervals({ date, specialist, bookings, schedule, excludeBookingI
   };
 }
 
-function calculateAvailability({ date, service, specialist, bookings, schedule = { blocks: [] }, excludeBookingId = "" }) {
+function calculateAvailability({ date, service, specialist, bookings, schedule = { blocks: [] }, excludeBookingId = "", adminMode = false }) {
   const daySchedule = getDayIntervals({
     date,
     specialist,
@@ -2248,7 +2248,7 @@ function calculateAvailability({ date, service, specialist, bookings, schedule =
     const candidateStart = current;
     const candidateEnd = current + service.duration;
 
-    if (candidateStart <= nowMinutes) {
+    if (!adminMode && candidateStart <= nowMinutes) {
       continue;
     }
 
@@ -3133,7 +3133,8 @@ async function handleAvailability(urlObject, response) {
     specialist,
     bookings,
     schedule,
-    excludeBookingId
+    excludeBookingId,
+    adminMode
   });
 
   sendJson(response, 200, availability);
