@@ -63,6 +63,8 @@ const STATIC_FILES = {
   "/og-image.jpg": "og-image.jpg",
   "/og-image.jpg": "og-image.jpg",
   "/founder.png": "founder.png",
+  "/client": "client.html",
+  "/client.html": "client.html",
   "/diploma-bg.png": "diploma-bg.png",
   "/mateev_logo.png": "mateev_logo.png",
   "/mateev_logo.jpg": "mateev_logo.jpg",
@@ -878,7 +880,8 @@ async function ensureDataFiles() {
     ["diplomas.json", "[]"],
     ["expenses.json", "[]"],
     ["packages.json", "[]"],
-    ["inventory.json", "[]"]
+    ["inventory.json", "[]"],
+    ["portal-tokens.json", "[]"]
   ];
 
   await Promise.all(
@@ -4372,6 +4375,60 @@ async function routeApi(request, response, urlObject) {
     items.splice(idx, 1);
     await writeJson("inventory.json", items);
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // ─── Client Portal ────────────────────────────────────────────────────────
+  // POST /api/admin/clients/:id/portal-link — generate or refresh portal link
+  if (request.method === "POST" && urlObject.pathname.endsWith("/portal-link") && urlObject.pathname.startsWith("/api/admin/clients/")) {
+    assertAdminPin(request);
+    const clientId = urlObject.pathname.replace("/api/admin/clients/", "").replace("/portal-link", "");
+    const { bookings, clients } = await loadStudioData();
+    const allClients = buildAdminClients(bookings, clients);
+    const client = allClients.find(c => c.id === clientId);
+    if (!client) { sendJson(response, 404, { message: "Клиент не найден." }); return; }
+    const tokens = await readJson("portal-tokens.json");
+    const filtered = tokens.filter(t => t.clientId !== clientId);
+    const token = crypto.randomBytes(24).toString("hex");
+    filtered.push({ token, clientId, clientName: client.clientName, phone: client.phone || "", createdAt: new Date().toISOString() });
+    await writeJson("portal-tokens.json", filtered);
+    sendJson(response, 200, { ok: true, token });
+    return;
+  }
+
+  // GET /api/client-portal?token=xxx — public client portal data
+  if (request.method === "GET" && urlObject.pathname === "/api/client-portal") {
+    const token = urlObject.searchParams.get("token") || "";
+    if (!token) { sendJson(response, 400, { message: "Токен не указан." }); return; }
+    const tokens = await readJson("portal-tokens.json");
+    const entry = tokens.find(t => t.token === token);
+    if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна или истекла." }); return; }
+    const { bookings, clients } = await loadStudioData();
+    const allClients = buildAdminClients(bookings, clients);
+    const client = allClients.find(c => c.id === entry.clientId);
+    if (!client) { sendJson(response, 404, { message: "Данные клиента не найдены." }); return; }
+    const packages = await readJson("packages.json");
+    const clientPkgs = packages.filter(p =>
+      (entry.phone && p.phone && normalizePhoneDigits(p.phone) === normalizePhoneDigits(entry.phone)) ||
+      p.clientName === entry.clientName
+    ).filter(p => p.status === "active");
+    const now = new Date().toISOString().slice(0, 10);
+    const upcoming = client.history.filter(b => b.date >= now && b.status !== "cancelled")
+      .sort((a, b) => a.date.localeCompare(b.date) || a.slot.localeCompare(b.slot));
+    const past = client.history.filter(b => b.date < now || b.status === "completed")
+      .sort((a, b) => b.date.localeCompare(a.date) || b.slot.localeCompare(a.slot))
+      .slice(0, 15);
+    sendJson(response, 200, {
+      clientName: client.clientName,
+      totalVisits: client.completedVisits,
+      upcoming,
+      past,
+      packages: clientPkgs.map(p => ({
+        code: p.code, title: p.title, serviceName: p.serviceName,
+        remaining: p.totalSessions - p.usedSessions, total: p.totalSessions,
+        expiresAt: p.expiresAt || null
+      }))
+    });
     return;
   }
 

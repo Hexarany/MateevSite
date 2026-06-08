@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Личный кабинет — Mateev Spa Studio</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest: #1a2e22;
+      --sage: #6b8d6b;
+      --sand: #f7f0e6;
+      --warm: #e8ddd0;
+      --line: rgba(26,46,34,0.12);
+      --muted: #7d6d60;
+      --accent: #b36d2c;
+      --success: #2d6a4f;
+      --radius: 16px;
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--sand);
+      color: var(--forest);
+      min-height: 100svh;
+    }
+
+    .page { max-width: 640px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* Header */
+    .portal-header {
+      text-align: center;
+      padding: 40px 0 32px;
+    }
+    .portal-header__logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--forest);
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+    .portal-header__eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 6px;
+    }
+    .portal-header__name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      line-height: 1.1;
+      color: var(--forest);
+      margin-bottom: 8px;
+    }
+    .portal-header__sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card span { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+    .stat-card strong { font-size: 1.4rem; font-weight: 700; color: var(--forest); }
+
+    /* Card */
+    .portal-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .portal-card__head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .portal-card__title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--sage);
+    }
+    .portal-card__body { padding: 0; }
+
+    /* Next booking */
+    .next-booking {
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .next-booking__date-box {
+      flex-shrink: 0;
+      width: 56px;
+      height: 60px;
+      background: var(--forest);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .next-booking__date-box .day { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .next-booking__date-box .month { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.8; }
+    .next-booking__info { flex: 1; min-width: 0; }
+    .next-booking__service { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .next-booking__meta { font-size: 0.82rem; color: var(--muted); }
+    .next-booking__empty { padding: 24px 20px; text-align: center; color: var(--muted); font-size: 0.88rem; }
+
+    /* Visit row */
+    .visit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .visit-row:last-child { border-bottom: none; }
+    .visit-row__date { flex-shrink: 0; width: 44px; text-align: center; }
+    .visit-row__date .vday { font-size: 1.1rem; font-weight: 700; color: var(--forest); line-height: 1; }
+    .visit-row__date .vmonth { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
+    .visit-row__info { flex: 1; min-width: 0; }
+    .visit-row__service { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .visit-row__sub { font-size: 0.78rem; color: var(--muted); }
+    .visit-row__status { flex-shrink: 0; font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+    .status--completed { background: rgba(45,106,79,0.1); color: var(--success); }
+    .status--confirmed { background: rgba(179,109,44,0.1); color: var(--accent); }
+    .status--cancelled { background: rgba(180,50,50,0.1); color: #b43232; }
+
+    /* Package row */
+    .pkg-row {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .pkg-row:last-child { border-bottom: none; }
+    .pkg-row__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .pkg-row__name { font-size: 0.9rem; font-weight: 600; }
+    .pkg-row__remaining { font-size: 0.9rem; font-weight: 700; color: var(--success); }
+    .pkg-progress { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
+    .pkg-progress__fill { height: 100%; background: var(--sage); border-radius: 3px; transition: width 0.3s; }
+    .pkg-row__sub { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+
+    /* CTA */
+    .portal-cta {
+      text-align: center;
+      padding: 24px 16px;
+    }
+    .button-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--forest);
+      color: #fff;
+      font-family: 'Manrope', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: 50px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .button-main:hover { opacity: 0.85; }
+
+    /* States */
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--muted);
+    }
+    .error-state { color: #b43232; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--line);
+      border-top-color: var(--sage);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .portal-footer {
+      text-align: center;
+      padding: 24px 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .portal-footer a { color: var(--sage); text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="page" id="app">
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Загружаем ваш кабинет...</p>
+  </div>
+</div>
+
+<script>
+const MONTH_SHORT = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+const STATUS_LABELS = { completed: "Завершён", confirmed: "Запланирован", cancelled: "Отменён", new: "Новый" };
+
+function fmtDate(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return { day: d.getDate(), month: MONTH_SHORT[d.getMonth()], full: `${d.getDate()} ${MONTH_SHORT[d.getMonth()]}` };
+}
+
+function escHtml(s) {
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function renderPortal(data) {
+  const app = document.getElementById("app");
+
+  const nextBooking = data.upcoming[0];
+  let nextHtml;
+  if (nextBooking) {
+    const d = fmtDate(nextBooking.date);
+    nextHtml = `<div class="next-booking">
+      <div class="next-booking__date-box">
+        <span class="day">${d.day}</span>
+        <span class="month">${d.month}</span>
+      </div>
+      <div class="next-booking__info">
+        <p class="next-booking__service">${escHtml(nextBooking.serviceName)}</p>
+        <p class="next-booking__meta">${escHtml(nextBooking.slot)} · ${escHtml(nextBooking.specialistName)}</p>
+      </div>
+    </div>`;
+  } else {
+    nextHtml = `<div class="next-booking__empty">Нет запланированных визитов.<br>Запишитесь ниже!</div>`;
+  }
+
+  const upcomingOther = data.upcoming.slice(1);
+  const allVisits = [...upcomingOther, ...data.past];
+  const visitsHtml = allVisits.length ? allVisits.map(b => {
+    const d = fmtDate(b.date);
+    const statusClass = { completed: "status--completed", confirmed: "status--confirmed", cancelled: "status--cancelled" }[b.status] || "";
+    return `<div class="visit-row">
+      <div class="visit-row__date">
+        <p class="vday">${d.day}</p>
+        <p class="vmonth">${d.month}</p>
+      </div>
+      <div class="visit-row__info">
+        <p class="visit-row__service">${escHtml(b.serviceName)}</p>
+        <p class="visit-row__sub">${escHtml(b.slot)} · ${escHtml(b.specialistName)}</p>
+      </div>
+      <span class="visit-row__status ${statusClass}">${STATUS_LABELS[b.status] || b.status}</span>
+    </div>`;
+  }).join("") : `<div class="next-booking__empty">История визитов пока пуста.</div>`;
+
+  const pkgsHtml = data.packages.length ? data.packages.map(p => {
+    const used = p.total - p.remaining;
+    const pct = p.total > 0 ? Math.round(used / p.total * 100) : 0;
+    const expText = p.expiresAt ? ` · до ${fmtDate(p.expiresAt).full}` : "";
+    return `<div class="pkg-row">
+      <div class="pkg-row__head">
+        <span class="pkg-row__name">${escHtml(p.title || p.serviceName)}</span>
+        <span class="pkg-row__remaining">${p.remaining} из ${p.total}</span>
+      </div>
+      <div class="pkg-progress"><div class="pkg-progress__fill" style="width:${pct}%"></div></div>
+      <p class="pkg-row__sub">${escHtml(p.code)}${expText}</p>
+    </div>`;
+  }).join("") : `<div class="next-booking__empty">Активных абонементов нет.</div>`;
+
+  app.innerHTML = `
+    <div class="portal-header">
+      <a class="portal-header__logo" href="/">Mateev Spa Studio</a>
+      <p class="portal-header__eyebrow">Личный кабинет</p>
+      <h1 class="portal-header__name">${escHtml(data.clientName)}</h1>
+      <p class="portal-header__sub">Добро пожаловать в ваш персональный кабинет</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <span>Визитов</span>
+        <strong>${data.totalVisits}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Запланировано</span>
+        <strong>${data.upcoming.length}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Абонементы</span>
+        <strong>${data.packages.length}</strong>
+      </div>
+    </div>
+
+    <div class="portal-card">
+      <div class="portal-card__head">
+        <span class="portal-card__title">Ближайший визит</span>
+      </div>
+      <div class="portal-card__body">${nextHtml}</div>
+    </div>
+
+    ${data.packages.length ? `<div class="portal-card">
+      <div class="portal-card__head">
+        <span class="portal-card__title">Мои абонементы</span>
+      </div>
+      <div class="portal-card__body">${pkgsHtml}</div>
+    </div>` : ""}
+
+    <div class="portal-card">
+      <div class="portal-card__head">
+        <span class="portal-card__title">История визитов</span>
+      </div>
+      <div class="portal-card__body">${visitsHtml}</div>
+    </div>
+
+    <div class="portal-cta">
+      <a class="button-main" href="/#booking">Записаться на процедуру</a>
+    </div>
+
+    <div class="portal-footer">
+      <a href="/">mateevmassage.com</a> &nbsp;·&nbsp; Кишинёв, Молдова
+    </div>
+  `;
+}
+
+async function init() {
+  const token = new URLSearchParams(location.search).get("token");
+  if (!token) {
+    document.getElementById("app").innerHTML = `<div class="error-state">Ссылка недействительна.<br>Обратитесь к администратору.</div>`;
+    return;
+  }
+  try {
+    const res = await fetch(`/api/client-portal?token=${encodeURIComponent(token)}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Ошибка загрузки.");
+    }
+    const data = await res.json();
+    renderPortal(data);
+  } catch (e) {
+    document.getElementById("app").innerHTML = `<div class="error-state">${escHtml(e.message)}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

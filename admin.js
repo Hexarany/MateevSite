@@ -3811,11 +3811,17 @@ function renderClientDetail(client) {
               <p class="section-kicker">Карточка клиента</p>
               <h3 class="admin-widget__title">${escapeHtml(client.clientName)}</h3>
             </div>
-            <button type="button" class="button button--secondary button--mini"
-              data-rebook-client="${escapeHtml(client.id)}"
-              style="flex-shrink:0;">
-              + Записать снова
-            </button>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button type="button" class="button button--ghost button--mini"
+                data-portal-link="${escapeHtml(client.id)}"
+                title="Скопировать ссылку личного кабинета клиента">
+                🔗 Ссылка
+              </button>
+              <button type="button" class="button button--secondary button--mini"
+                data-rebook-client="${escapeHtml(client.id)}">
+                + Записать снова
+              </button>
+            </div>
           </div>
           <div class="client-detail__meta">
             <span class="meta-chip">${escapeHtml(statusLabel)}</span>
@@ -4050,6 +4056,26 @@ function renderClientDetail(client) {
 }
 
 function handleClientDetailClick(event) {
+  // Generate and copy portal link
+  const portalBtn = event.target.closest("[data-portal-link]");
+  if (portalBtn) {
+    const clientId = portalBtn.dataset.portalLink;
+    portalBtn.disabled = true;
+    portalBtn.textContent = "...";
+    fetchJson(`/api/admin/clients/${clientId}/portal-link`, { method: "POST", body: JSON.stringify({}) })
+      .then(res => {
+        const url = `${location.origin}/client?token=${res.token}`;
+        navigator.clipboard.writeText(url).then(() => {
+          showToast("Ссылка скопирована в буфер обмена!", "success");
+        }).catch(() => {
+          prompt("Скопируйте ссылку:", url);
+        });
+      })
+      .catch(e => showToast(e.message || "Ошибка генерации ссылки.", "error"))
+      .finally(() => { portalBtn.disabled = false; portalBtn.innerHTML = "🔗 Ссылка"; });
+    return;
+  }
+
   // Quick use package from client card
   const useBtn = event.target.closest("[data-use-pkg]");
   if (useBtn) {
