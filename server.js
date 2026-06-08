@@ -4411,6 +4411,200 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // ─── Financial Report ─────────────────────────────────────────────────────
+  // GET /api/admin/report/financial?from=YYYY-MM&to=YYYY-MM
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/report/financial") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const fromParam = urlObject.searchParams.get("from") || new Date().toISOString().slice(0, 7);
+    const toParam   = urlObject.searchParams.get("to")   || fromParam;
+
+    const bookings = await readJson("bookings.json");
+    const allExpenses = await readJson("expenses.json");
+    const packages = await readJson("packages.json");
+
+    // Filter bookings: completed or confirmed, within date range
+    const revenueBookings = bookings.filter(b =>
+      (b.status === "completed" || b.status === "confirmed") &&
+      b.date >= fromParam + "-01" &&
+      b.date <= toParam + "-31"
+    );
+
+    const totalRevenue = revenueBookings.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0);
+
+    // Revenue by service
+    const byService = {};
+    revenueBookings.forEach(b => {
+      const key = b.serviceName || "Прочее";
+      byService[key] = (byService[key] || { count: 0, total: 0 });
+      byService[key].count++;
+      byService[key].total += Number(b.totalPrice) || 0;
+    });
+
+    // Revenue by month
+    const byMonth = {};
+    revenueBookings.forEach(b => {
+      const m = b.date.slice(0, 7);
+      byMonth[m] = (byMonth[m] || { count: 0, total: 0 });
+      byMonth[m].count++;
+      byMonth[m].total += Number(b.totalPrice) || 0;
+    });
+
+    // Package revenue (issued packages in range)
+    const pkgRevenue = packages.filter(p =>
+      p.issuedAt && p.issuedAt.slice(0, 7) >= fromParam && p.issuedAt.slice(0, 7) <= toParam
+    ).reduce((s, p) => s + (Number(p.priceTotal) || 0), 0);
+
+    // Expenses from expenses.json
+    const months = [];
+    let cur = new Date(fromParam + "-01T00:00:00");
+    const end = new Date(toParam + "-01T00:00:00");
+    while (cur <= end) {
+      months.push(cur.toISOString().slice(0, 7));
+      cur.setMonth(cur.getMonth() + 1);
+    }
+
+    let totalExpenses = 0;
+    const expensesByCategory = {};
+    const expensesByMonth = {};
+    months.forEach(m => {
+      const rec = allExpenses.find(r => r.month === m);
+      if (!rec) return;
+      expensesByMonth[m] = { total: 0, items: rec.items || [] };
+      (rec.items || []).forEach(item => {
+        const amt = Number(item.amount) || 0;
+        totalExpenses += amt;
+        expensesByMonth[m].total += amt;
+        const cat = item.category || "other";
+        expensesByCategory[cat] = (expensesByCategory[cat] || 0) + amt;
+      });
+    });
+
+    sendJson(response, 200, {
+      period: { from: fromParam, to: toParam },
+      revenue: {
+        total: totalRevenue,
+        bookingCount: revenueBookings.length,
+        packageRevenue: pkgRevenue,
+        byService: Object.entries(byService).sort((a, b) => b[1].total - a[1].total).map(([name, v]) => ({ name, ...v })),
+        byMonth: Object.entries(byMonth).sort().map(([month, v]) => ({ month, ...v }))
+      },
+      expenses: {
+        total: totalExpenses,
+        byCategory: Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).map(([cat, total]) => ({ cat, total })),
+        byMonth: Object.entries(expensesByMonth).sort().map(([month, v]) => ({ month, ...v }))
+      },
+      net: totalRevenue - totalExpenses
+    });
+    return;
+  }
+
+  // POST /api/admin/report/financial/send — email report to accountant
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/report/financial/send") {
+    assertAdminPin(request);
+    if (!RESEND_API_KEY || !EMAIL_FROM) { sendJson(response, 503, { message: "Email не настроен." }); return; }
+    const payload = await parseJsonBody(request);
+    const toEmail  = sanitizeText(payload.email || "").trim();
+    const fromDate = sanitizeText(payload.from || "");
+    const toDate   = sanitizeText(payload.to   || fromDate);
+    if (!toEmail || !fromDate) { sendJson(response, 400, { message: "Укажите email и период." }); return; }
+
+    // Fetch report data internally
+    const bookings = await readJson("bookings.json");
+    const allExpenses = await readJson("expenses.json");
+    const revenueBookings = bookings.filter(b =>
+      (b.status === "completed" || b.status === "confirmed") &&
+      b.date >= fromDate + "-01" && b.date <= toDate + "-31"
+    );
+    const totalRevenue = revenueBookings.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0);
+    const byService = {};
+    revenueBookings.forEach(b => {
+      const k = b.serviceName || "Прочее";
+      if (!byService[k]) byService[k] = { count: 0, total: 0 };
+      byService[k].count++; byService[k].total += Number(b.totalPrice) || 0;
+    });
+    const months = [];
+    let mc = new Date(fromDate + "-01T00:00:00");
+    const me = new Date(toDate + "-01T00:00:00");
+    while (mc <= me) { months.push(mc.toISOString().slice(0, 7)); mc.setMonth(mc.getMonth() + 1); }
+    let totalExpenses = 0;
+    const expCat = {};
+    months.forEach(m => {
+      const rec = allExpenses.find(r => r.month === m);
+      (rec?.items || []).forEach(it => {
+        const amt = Number(it.amount) || 0;
+        totalExpenses += amt;
+        expCat[it.name || "Прочее"] = (expCat[it.name || "Прочее"] || 0) + amt;
+      });
+    });
+    const net = totalRevenue - totalExpenses;
+    const periodLabel = fromDate === toDate ? fromDate : `${fromDate} — ${toDate}`;
+    const fmt = n => `${n.toLocaleString("ru-RU")} MDL`;
+    const netColor = net >= 0 ? "#2d6a4f" : "#b43232";
+
+    const serviceRows = Object.entries(byService).sort((a,b)=>b[1].total-a[1].total)
+      .map(([name,v]) => `<tr><td style="padding:8px 12px;border-bottom:1px solid #f0e8de;">${escapeHtml(name)}</td><td style="padding:8px 12px;border-bottom:1px solid #f0e8de;text-align:center;">${v.count}</td><td style="padding:8px 12px;border-bottom:1px solid #f0e8de;text-align:right;font-weight:600;">${fmt(v.total)}</td></tr>`).join("");
+    const expRows = Object.entries(expCat).sort((a,b)=>b[1]-a[1])
+      .map(([name,total]) => `<tr><td style="padding:8px 12px;border-bottom:1px solid #f0e8de;">${escapeHtml(name)}</td><td style="padding:8px 12px;border-bottom:1px solid #f0e8de;text-align:right;font-weight:600;">${fmt(total)}</td></tr>`).join("");
+
+    const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f7f0e6;font-family:'Helvetica Neue',Arial,sans-serif;color:#241c17;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f0e6;padding:40px 16px;"><tr><td align="center">
+<table width="100%" style="max-width:600px;background:#fffaf4;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(54,35,20,0.10);">
+<tr><td style="background:#1a2e22;padding:24px 36px;">
+  <p style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);">Финансовый отчёт</p>
+  <p style="margin:6px 0 0;font-size:20px;font-weight:700;color:#fff;">Mateev Spa Studio</p>
+  <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.7);">Период: ${escapeHtml(periodLabel)}</p>
+</td></tr>
+<tr><td style="padding:28px 36px 0;">
+  <table width="100%" cellpadding="0" cellspacing="8" style="margin-bottom:24px;">
+    <tr>
+      <td style="background:#f0f7f0;border-radius:12px;padding:16px 20px;text-align:center;width:33%;">
+        <p style="margin:0 0 4px;font-size:11px;color:#7d6d60;text-transform:uppercase;letter-spacing:0.06em;">Выручка</p>
+        <p style="margin:0;font-size:20px;font-weight:700;color:#2d6a4f;">${fmt(totalRevenue)}</p>
+        <p style="margin:4px 0 0;font-size:11px;color:#7d6d60;">${revenueBookings.length} визитов</p>
+      </td>
+      <td width="8"></td>
+      <td style="background:#fff5f5;border-radius:12px;padding:16px 20px;text-align:center;width:33%;">
+        <p style="margin:0 0 4px;font-size:11px;color:#7d6d60;text-transform:uppercase;letter-spacing:0.06em;">Расходы</p>
+        <p style="margin:0;font-size:20px;font-weight:700;color:#b43232;">${fmt(totalExpenses)}</p>
+      </td>
+      <td width="8"></td>
+      <td style="background:${net>=0?'#f0f7f0':'#fff5f5'};border-radius:12px;padding:16px 20px;text-align:center;width:33%;">
+        <p style="margin:0 0 4px;font-size:11px;color:#7d6d60;text-transform:uppercase;letter-spacing:0.06em;">Прибыль</p>
+        <p style="margin:0;font-size:20px;font-weight:700;color:${netColor};">${fmt(net)}</p>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+${serviceRows ? `<tr><td style="padding:0 36px 24px;">
+  <p style="font-size:13px;font-weight:700;color:#1a2e22;margin:0 0 10px;">Выручка по услугам</p>
+  <table width="100%" style="border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#f3ece3;"><th style="padding:8px 12px;text-align:left;">Услуга</th><th style="padding:8px 12px;text-align:center;">Визиты</th><th style="padding:8px 12px;text-align:right;">Сумма</th></tr></thead>
+    <tbody>${serviceRows}</tbody>
+    <tfoot><tr style="background:#f3ece3;font-weight:700;"><td style="padding:8px 12px;">Итого</td><td style="padding:8px 12px;text-align:center;">${revenueBookings.length}</td><td style="padding:8px 12px;text-align:right;">${fmt(totalRevenue)}</td></tr></tfoot>
+  </table>
+</td></tr>` : ""}
+${expRows ? `<tr><td style="padding:0 36px 28px;">
+  <p style="font-size:13px;font-weight:700;color:#1a2e22;margin:0 0 10px;">Расходы</p>
+  <table width="100%" style="border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#f3ece3;"><th style="padding:8px 12px;text-align:left;">Статья</th><th style="padding:8px 12px;text-align:right;">Сумма</th></tr></thead>
+    <tbody>${expRows}</tbody>
+    <tfoot><tr style="background:#f3ece3;font-weight:700;"><td style="padding:8px 12px;">Итого расходов</td><td style="padding:8px 12px;text-align:right;">${fmt(totalExpenses)}</td></tr></tfoot>
+  </table>
+</td></tr>` : ""}
+<tr><td style="padding:16px 36px;border-top:1px solid rgba(68,50,36,0.10);background:rgba(179,109,44,0.04);">
+  <p style="margin:0;font-size:12px;color:#7d6d60;">Mateev Spa Studio · Кишинёв, Молдова · Сформировано ${new Date().toLocaleDateString("ru-RU")}</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+    await requestJson("https://api.resend.com/emails", {
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+      body: { from: EMAIL_FROM, to: [toEmail], subject: `Финансовый отчёт Mateev Spa Studio — ${periodLabel}`, html }
+    });
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // ─── Backup ───────────────────────────────────────────────────────────────
   // GET /api/admin/backup/download — download full data bundle as JSON
   if (request.method === "GET" && urlObject.pathname === "/api/admin/backup/download") {

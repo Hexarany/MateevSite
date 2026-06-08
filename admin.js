@@ -1494,6 +1494,7 @@ async function loadAdminData() {
   initBroadcast();
   loadGallery();
   initBackupWidget();
+  initFinancialReport();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -5466,4 +5467,157 @@ async function initBackupWidget() {
       btn.textContent = "🔄 Создать сейчас";
     }
   });
+}
+
+// ─── Financial Report ────────────────────────────────────────────────────────
+
+function initFinancialReport() {
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0, 7);
+  const fromEl = document.getElementById("reportFrom");
+  const toEl   = document.getElementById("reportTo");
+  if (fromEl) fromEl.value = thisMonth;
+  if (toEl)   toEl.value   = thisMonth;
+
+  // Quick period buttons
+  document.querySelectorAll(".report-quick-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const d = new Date();
+      let from, to;
+      if (btn.dataset.quick === "month") {
+        from = to = d.toISOString().slice(0, 7);
+      } else if (btn.dataset.quick === "last") {
+        d.setMonth(d.getMonth() - 1);
+        from = to = d.toISOString().slice(0, 7);
+      } else if (btn.dataset.quick === "quarter") {
+        const q = Math.floor(d.getMonth() / 3);
+        from = `${d.getFullYear()}-${String(q * 3 + 1).padStart(2, "0")}`;
+        to   = `${d.getFullYear()}-${String(q * 3 + 3).padStart(2, "0")}`;
+      } else if (btn.dataset.quick === "year") {
+        from = `${d.getFullYear()}-01`;
+        to   = `${d.getFullYear()}-12`;
+      }
+      if (fromEl) fromEl.value = from;
+      if (toEl)   toEl.value   = to;
+    });
+  });
+
+  document.getElementById("reportLoadBtn")?.addEventListener("click", loadFinancialReport);
+  document.getElementById("reportSendBtn")?.addEventListener("click", sendFinancialReport);
+}
+
+async function loadFinancialReport() {
+  const from = document.getElementById("reportFrom")?.value;
+  const to   = document.getElementById("reportTo")?.value || from;
+  if (!from) { showToast("Выберите период."); return; }
+
+  const btn = document.getElementById("reportLoadBtn");
+  btn.disabled = true; btn.textContent = "Загружаем...";
+
+  try {
+    const data = await fetchJson(`/api/admin/report/financial?from=${from}&to=${to}`);
+    renderFinancialReport(data);
+    document.getElementById("reportSummary").style.display = "";
+    document.getElementById("reportEmpty").style.display   = "none";
+  } catch (e) {
+    showToast(e.message || "Ошибка загрузки отчёта.", "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Сформировать";
+  }
+}
+
+function renderFinancialReport(data) {
+  const fmt = n => `${Number(n).toLocaleString("ru-RU")} MDL`;
+  const netColor = data.net >= 0 ? "var(--success)" : "var(--danger,#b43232)";
+
+  // Summary cards
+  document.getElementById("reportCards").innerHTML = `
+    <div class="admin-mini-card" style="text-align:center;">
+      <span>Выручка</span>
+      <strong style="font-size:1.3rem;color:var(--success);">${fmt(data.revenue.total)}</strong>
+      <span style="font-size:0.75rem;">${data.revenue.bookingCount} визитов</span>
+    </div>
+    <div class="admin-mini-card" style="text-align:center;">
+      <span>Расходы</span>
+      <strong style="font-size:1.3rem;color:#b43232;">${fmt(data.expenses.total)}</strong>
+    </div>
+    <div class="admin-mini-card" style="text-align:center;">
+      <span>Прибыль</span>
+      <strong style="font-size:1.3rem;color:${netColor};">${fmt(data.net)}</strong>
+    </div>
+    <div class="admin-mini-card" style="text-align:center;">
+      <span>Маржа</span>
+      <strong style="font-size:1.3rem;">${data.revenue.total > 0 ? Math.round(data.net / data.revenue.total * 100) : 0}%</strong>
+    </div>
+  `;
+
+  // Revenue by service table
+  const serviceRows = data.revenue.byService.map(s =>
+    `<tr><td style="padding:7px 10px;border-bottom:1px solid var(--line);">${escapeHtml(s.name)}</td>
+     <td style="padding:7px 10px;border-bottom:1px solid var(--line);text-align:center;">${s.count}</td>
+     <td style="padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;font-weight:600;">${fmt(s.total)}</td></tr>`
+  ).join("") || `<tr><td colspan="3" style="padding:12px;color:var(--muted);text-align:center;">Нет данных</td></tr>`;
+
+  // Expenses table
+  const expRows = data.expenses.byCategory.map(e =>
+    `<tr><td style="padding:7px 10px;border-bottom:1px solid var(--line);">${escapeHtml(e.cat)}</td>
+     <td style="padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;font-weight:600;">${fmt(e.total)}</td></tr>`
+  ).join("") || `<tr><td colspan="2" style="padding:12px;color:var(--muted);text-align:center;">Расходов нет</td></tr>`;
+
+  document.getElementById("reportTables").innerHTML = `
+    <div class="admin-widget" style="padding:0;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--line);">
+        <p class="section-kicker" style="margin:0;">Выручка по услугам</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead><tr style="background:rgba(26,46,34,0.04);">
+          <th style="padding:8px 10px;text-align:left;font-weight:600;">Услуга</th>
+          <th style="padding:8px 10px;text-align:center;font-weight:600;">Визиты</th>
+          <th style="padding:8px 10px;text-align:right;font-weight:600;">Сумма</th>
+        </tr></thead>
+        <tbody>${serviceRows}</tbody>
+        <tfoot><tr style="background:rgba(26,46,34,0.04);font-weight:700;">
+          <td style="padding:8px 10px;">Итого</td>
+          <td style="padding:8px 10px;text-align:center;">${data.revenue.bookingCount}</td>
+          <td style="padding:8px 10px;text-align:right;">${fmt(data.revenue.total)}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div class="admin-widget" style="padding:0;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--line);">
+        <p class="section-kicker" style="margin:0;">Расходы</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead><tr style="background:rgba(26,46,34,0.04);">
+          <th style="padding:8px 10px;text-align:left;font-weight:600;">Статья</th>
+          <th style="padding:8px 10px;text-align:right;font-weight:600;">Сумма</th>
+        </tr></thead>
+        <tbody>${expRows}</tbody>
+        <tfoot><tr style="background:rgba(26,46,34,0.04);font-weight:700;">
+          <td style="padding:8px 10px;">Итого расходов</td>
+          <td style="padding:8px 10px;text-align:right;">${fmt(data.expenses.total)}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+  `;
+}
+
+async function sendFinancialReport() {
+  const email = document.getElementById("reportAccountantEmail")?.value.trim();
+  const from  = document.getElementById("reportFrom")?.value;
+  const to    = document.getElementById("reportTo")?.value || from;
+  if (!email) { showToast("Введите email бухгалтера."); return; }
+  if (!from)  { showToast("Сначала сформируйте отчёт."); return; }
+  const btn = document.getElementById("reportSendBtn");
+  btn.disabled = true; btn.textContent = "Отправляем...";
+  try {
+    await fetchJson("/api/admin/report/financial/send", {
+      method: "POST", body: JSON.stringify({ email, from, to })
+    });
+    showToast(`Отчёт отправлен на ${email}`, "success");
+  } catch (e) {
+    showToast(e.message || "Ошибка отправки.", "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Отправить отчёт";
+  }
 }

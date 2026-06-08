@@ -51,6 +51,7 @@
         <a href="#clients" data-section="clients">Клиенты</a>
         <a href="#operations" data-section="operations">Операции</a>
         <a href="#expenses" data-section="expenses">Расходы</a>
+        <a href="#financial-report" data-section="financial-report">Отчёт P&amp;L</a>
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <a href="#inventory" data-section="inventory">Инвентарь</a>
@@ -603,6 +604,59 @@
               </article>
 
             </div>
+          </section>
+
+          <!-- ═══════════════ FINANCIAL REPORT ═══════════════ -->
+          <section class="admin-section-block reveal" id="financial-report">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Финансы</p>
+                <h2 class="admin-section-block__title">Отчёт P&amp;L</h2>
+              </div>
+            </div>
+
+            <!-- Period selector -->
+            <div class="admin-widget" style="padding:20px 24px;margin-bottom:0;">
+              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+                <label class="field" style="flex:0 0 auto;">
+                  <span>С месяца</span>
+                  <input type="month" id="reportFrom" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:0.88rem;font-family:inherit;background:#fafafa;">
+                </label>
+                <label class="field" style="flex:0 0 auto;">
+                  <span>По месяц</span>
+                  <input type="month" id="reportTo" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:0.88rem;font-family:inherit;background:#fafafa;">
+                </label>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:2px;">
+                  <button class="button button--ghost button--mini report-quick-btn" data-quick="month">Этот месяц</button>
+                  <button class="button button--ghost button--mini report-quick-btn" data-quick="last">Прошлый</button>
+                  <button class="button button--ghost button--mini report-quick-btn" data-quick="quarter">Квартал</button>
+                  <button class="button button--ghost button--mini report-quick-btn" data-quick="year">Год</button>
+                </div>
+                <button type="button" class="button button--secondary" id="reportLoadBtn">Сформировать</button>
+              </div>
+            </div>
+
+            <!-- Summary cards -->
+            <div id="reportSummary" style="display:none;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px;" id="reportCards"></div>
+
+              <!-- Tables -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;" id="reportTables"></div>
+
+              <!-- Send to accountant -->
+              <div class="admin-widget" style="padding:20px 24px;">
+                <p class="section-kicker" style="margin-bottom:8px;">Отправить бухгалтеру</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                  <label class="field" style="flex:1;min-width:220px;">
+                    <span>Email бухгалтера</span>
+                    <input type="email" id="reportAccountantEmail" placeholder="accountant@example.com">
+                  </label>
+                  <button type="button" class="button button--secondary" id="reportSendBtn">Отправить отчёт</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="reportEmpty" style="color:var(--muted);font-size:0.88rem;padding:24px 0;display:none;">Нажмите «Сформировать» для загрузки данных.</div>
           </section>
 
           <section class="admin-section-block reveal" id="team">
