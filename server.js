@@ -874,7 +874,9 @@ async function ensureDataFiles() {
       { id: "vera-mateeva", name: "Вера Матеева", role: "Преподаватель косметологии", experience: "6 лет в косметологии", bio: "Медицинское образование — врач-терапевт. 6 лет в практической косметологии. Ведёт обучение уходу за кожей, косметологическим процедурам и работе с клиентом.", directions: ["cosmetology"], initials: "ВМ", photo: null }
     ], null, 2)],
     ["enrollments.json", "[]"],
-    ["certificates.json", "[]"]
+    ["certificates.json", "[]"],
+    ["diplomas.json", "[]"],
+    ["expenses.json", "[]"]
   ];
 
   await Promise.all(
@@ -4049,6 +4051,37 @@ async function routeApi(request, response, urlObject) {
     if (allowed.includes(payload.status)) certs[idx].status = payload.status;
     await writeJson("certificates.json", certs);
     sendJson(response, 200, { ok: true, certificate: certs[idx] });
+    return;
+  }
+
+  // ─── Expenses ─────────────────────────────────────────────────────────────
+  // GET /api/admin/expenses?month=YYYY-MM
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/expenses") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const month = urlObject.searchParams.get("month") || new Date().toISOString().slice(0, 7);
+    const all = await readJson("expenses.json");
+    const record = all.find(r => r.month === month) || { month, items: [] };
+    sendJson(response, 200, record);
+    return;
+  }
+
+  // POST /api/admin/expenses — save month's expenses
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/expenses") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const month = sanitizeText(payload.month || new Date().toISOString().slice(0, 7));
+    const items = (payload.items || []).map(it => ({
+      id: sanitizeText(it.id || crypto.randomUUID()),
+      name: sanitizeText(it.name || ""),
+      amount: Math.max(0, parseFloat(it.amount) || 0),
+      category: sanitizeText(it.category || "other")
+    }));
+    const all = await readJson("expenses.json");
+    const idx = all.findIndex(r => r.month === month);
+    const record = { month, items, updatedAt: new Date().toISOString() };
+    if (idx === -1) all.push(record); else all[idx] = record;
+    await writeJson("expenses.json", all);
+    sendJson(response, 200, { ok: true, record });
     return;
   }
 

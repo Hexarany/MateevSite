@@ -50,6 +50,7 @@
         <a href="#requests" data-section="requests">Журнал заявок</a>
         <a href="#clients" data-section="clients">Клиенты</a>
         <a href="#operations" data-section="operations">Операции</a>
+        <a href="#expenses" data-section="expenses">Расходы</a>
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
@@ -486,6 +487,64 @@
                 </div>
                 <div id="attentionBoard"></div>
               </article>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="expenses">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Финансы</p>
+                <h2 class="admin-section-block__title">Калькулятор расходов</h2>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <input type="month" id="expenseMonth" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:0.88rem;font-family:inherit;background:#fafafa;color:var(--ink);">
+                <button type="button" class="button button--secondary" onclick="saveExpenses()">Сохранить</button>
+              </div>
+            </div>
+
+            <div class="admin-two-column admin-two-column--balanced" style="align-items:start;">
+
+              <!-- Left: expense table -->
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div><p class="section-kicker">Статьи</p><h3 class="admin-widget__title">Расходы за месяц</h3></div>
+                  <button type="button" class="button button--ghost button--mini" onclick="addExpenseRow()">+ Добавить</button>
+                </div>
+                <div id="expenseRows" style="padding:16px;display:grid;gap:8px;"></div>
+                <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="button button--ghost button--mini" onclick="addPreset('Аренда помещения')">+ Аренда</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Простыни и белье')">+ Белье</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Масла и расходники')">+ Масла</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Коммунальные услуги')">+ КУ</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Реклама')">+ Реклама</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Зарплата')">+ Зарплата</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Налоги')">+ Налоги</button>
+                  <button class="button button--ghost button--mini" onclick="addPreset('Прочее')">+ Прочее</button>
+                </div>
+              </article>
+
+              <!-- Right: summary -->
+              <article class="admin-widget">
+                <div class="admin-widget__head">
+                  <div><p class="section-kicker">Итог</p><h3 class="admin-widget__title">Баланс месяца</h3></div>
+                </div>
+                <div style="padding:20px;display:grid;gap:12px;">
+                  <div class="admin-kpi-card">
+                    <p class="admin-kpi-card__label">Расходы</p>
+                    <p class="admin-kpi-card__value" id="expTotalDisplay">0 MDL</p>
+                  </div>
+                  <div class="admin-kpi-card">
+                    <p class="admin-kpi-card__label">Выручка (из записей)</p>
+                    <p class="admin-kpi-card__value" id="expRevenueDisplay">— MDL</p>
+                  </div>
+                  <div class="admin-kpi-card" id="expProfitCard">
+                    <p class="admin-kpi-card__label">Прибыль</p>
+                    <p class="admin-kpi-card__value" id="expProfitDisplay">— MDL</p>
+                  </div>
+                  <div id="expBreakdown" style="margin-top:4px;display:grid;gap:6px;"></div>
+                </div>
+              </article>
+
             </div>
           </section>
 

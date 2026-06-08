@@ -226,6 +226,7 @@ function initSectionNav() {
 function bindEvents() {
   elements.adminLoginBtn.addEventListener("click", handleAdminLogin);
   elements.adminLogoutBtn.addEventListener("click", handleAdminLogout);
+  document.getElementById("expenseMonth")?.addEventListener("change", loadExpenses);
   elements.statusFilter.addEventListener("change", () => {
     state.filters.status = elements.statusFilter.value;
     state.bookingPage = 0;
@@ -1416,6 +1417,7 @@ async function loadAdminData() {
     state.diplomas = await fetchJson("/api/admin/diplomas");
     renderDiplomasTable();
   } catch {}
+  loadExpenses();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -1463,6 +1465,118 @@ function renderCertificatesTable() {
         </td>
       </tr>`;
     }).join("");
+}
+
+// ─── Expense Calculator ───────────────────────────────────────────────────────
+let expenseItems = [];
+
+function expCurrentMonth() {
+  return document.getElementById("expenseMonth")?.value || new Date().toISOString().slice(0, 7);
+}
+
+async function loadExpenses() {
+  const monthEl = document.getElementById("expenseMonth");
+  if (!monthEl) return;
+  const today = new Date().toISOString().slice(0, 7);
+  if (!monthEl.value) monthEl.value = today;
+  try {
+    const data = await fetchJson(`/api/admin/expenses?month=${expCurrentMonth()}`);
+    expenseItems = data.items || [];
+  } catch { expenseItems = []; }
+  renderExpenseRows();
+  renderExpenseSummary();
+}
+
+function addExpenseRow(name = "") {
+  expenseItems.push({ id: crypto.randomUUID(), name, amount: 0, category: "other" });
+  renderExpenseRows();
+  renderExpenseSummary();
+}
+
+function addPreset(name) { addExpenseRow(name); }
+
+function removeExpenseRow(id) {
+  expenseItems = expenseItems.filter(i => i.id !== id);
+  renderExpenseRows();
+  renderExpenseSummary();
+}
+
+function renderExpenseRows() {
+  const container = document.getElementById("expenseRows");
+  if (!container) return;
+  if (!expenseItems.length) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:4px 0;">Нет статей. Нажмите «+ Добавить» или выберите из быстрых кнопок.</p>';
+    return;
+  }
+  container.innerHTML = expenseItems.map(item => `
+    <div style="display:grid;grid-template-columns:1fr 130px 32px;gap:8px;align-items:center;">
+      <input type="text" value="${escapeHtml(item.name)}" placeholder="Название статьи"
+        style="border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:0.85rem;font-family:inherit;background:#fafafa;width:100%;"
+        oninput="expenseItems.find(i=>i.id==='${item.id}').name=this.value;">
+      <div style="position:relative;">
+        <input type="number" value="${item.amount || ""}" placeholder="0" min="0"
+          style="border:1px solid var(--line);border-radius:8px;padding:8px 32px 8px 10px;font-size:0.85rem;font-family:inherit;background:#fafafa;width:100%;text-align:right;"
+          oninput="expenseItems.find(i=>i.id==='${item.id}').amount=parseFloat(this.value)||0;renderExpenseSummary();">
+        <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:var(--muted);pointer-events:none;">MDL</span>
+      </div>
+      <button onclick="removeExpenseRow('${item.id}')"
+        style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:4px;border-radius:6px;line-height:1;"
+        title="Удалить">×</button>
+    </div>
+  `).join("");
+}
+
+function renderExpenseSummary() {
+  const total = expenseItems.reduce((s, i) => s + (i.amount || 0), 0);
+  const totalEl = document.getElementById("expTotalDisplay");
+  if (totalEl) totalEl.textContent = total.toLocaleString("ru") + " MDL";
+
+  // revenue from bookings for the selected month
+  const month = expCurrentMonth();
+  const bookings = state.adminData?.bookings || [];
+  const revenue = bookings
+    .filter(b => b.status === "done" && b.date?.startsWith(month))
+    .reduce((s, b) => s + (b.price || 0), 0);
+
+  const revEl = document.getElementById("expRevenueDisplay");
+  if (revEl) revEl.textContent = revenue ? revenue.toLocaleString("ru") + " MDL" : "— MDL";
+
+  const profit = revenue ? revenue - total : null;
+  const profitEl = document.getElementById("expProfitDisplay");
+  const profitCard = document.getElementById("expProfitCard");
+  if (profitEl) {
+    profitEl.textContent = profit !== null ? profit.toLocaleString("ru") + " MDL" : "— MDL";
+    if (profitCard) profitCard.style.setProperty("--kpi-color", profit !== null ? (profit >= 0 ? "var(--success)" : "var(--danger)") : "");
+    if (profitEl) profitEl.style.color = profit !== null ? (profit >= 0 ? "var(--success)" : "var(--danger)") : "";
+  }
+
+  // breakdown by category
+  const breakdown = document.getElementById("expBreakdown");
+  if (breakdown && expenseItems.length) {
+    const sorted = [...expenseItems].sort((a, b) => b.amount - a.amount);
+    breakdown.innerHTML = sorted.map(i => {
+      const pct = total > 0 ? Math.round(i.amount / total * 100) : 0;
+      return `<div style="display:grid;gap:3px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;">
+          <span style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;">${escapeHtml(i.name||"—")}</span>
+          <span style="font-weight:600;">${(i.amount||0).toLocaleString("ru")} MDL <span style="color:var(--muted);font-weight:400;">${pct}%</span></span>
+        </div>
+        <div style="height:4px;background:var(--line);border-radius:2px;">
+          <div style="height:100%;width:${pct}%;background:var(--brand);border-radius:2px;"></div>
+        </div>
+      </div>`;
+    }).join("");
+  } else if (breakdown) { breakdown.innerHTML = ""; }
+}
+
+async function saveExpenses() {
+  try {
+    await fetchJson("/api/admin/expenses", {
+      method: "POST",
+      body: JSON.stringify({ month: expCurrentMonth(), items: expenseItems })
+    });
+    showToast("Расходы сохранены.", "success");
+  } catch (e) { showToast(e.message || "Ошибка сохранения.", "error"); }
 }
 
 function renderDiplomasTable() {
