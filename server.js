@@ -3292,7 +3292,8 @@ async function handleAdminBookingCreate(request, response) {
       service: effectiveService,
       specialist,
       bookings,
-      schedule
+      schedule,
+      adminMode: true
     });
     if (!availability.slots.some((entry) => entry.time === safePayload.slot)) {
       sendJson(response, 409, {
