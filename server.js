@@ -73,6 +73,8 @@ const STATIC_FILES = {
   "/admin.js": "admin.js",
   "/certificate": "certificate.html",
   "/certificate.html": "certificate.html",
+  "/diploma": "diploma.html",
+  "/diploma.html": "diploma.html",
   "/manifest.json": "manifest.json",
   "/manifest-admin.json": "manifest-admin.json",
   "/service-worker.js": "service-worker.js",
