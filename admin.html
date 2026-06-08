@@ -53,6 +53,7 @@
         <a href="#expenses" data-section="expenses">Расходы</a>
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
+        <a href="#packages" data-section="packages">Абонементы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
         <a href="#diplomas" data-section="diplomas">Дипломы</a>
         <a href="#intakes" data-section="intakes">Анкеты пациентов</a>
@@ -237,6 +238,13 @@
                         <input type="email" id="adminBookingEmail" placeholder="name@example.com">
                       </label>
                     </div>
+
+                    <label class="field field--full">
+                      <span>Абонемент (необязательно)</span>
+                      <select id="adminBookingPackage">
+                        <option value="">— без абонемента —</option>
+                      </select>
+                    </label>
 
                     <label class="field field--full">
                       <span>Комментарий</span>
@@ -643,6 +651,91 @@
                     </tr>
                   </thead>
                   <tbody id="enrollmentsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="packages">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Лояльность</p>
+                <h2 class="admin-section-block__title">Абонементы клиентов</h2>
+              </div>
+              <button type="button" class="button button--secondary" id="showCreatePackageBtn">+ Новый абонемент</button>
+            </div>
+
+            <!-- Create package form -->
+            <div id="createPackageForm" style="display:none;background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:16px;">
+              <p class="section-kicker">Новый абонемент</p>
+              <h3 style="font-size:1rem;font-weight:600;margin:4px 0 16px;">Оформить пакет сеансов</h3>
+              <div class="field-grid" style="margin-bottom:12px;">
+                <label class="field">
+                  <span>Клиент *</span>
+                  <input type="text" id="pkgClientName" placeholder="Имя клиента" autocomplete="off" list="pkgClientSuggestions">
+                  <datalist id="pkgClientSuggestions"></datalist>
+                </label>
+                <label class="field">
+                  <span>Телефон</span>
+                  <input type="tel" id="pkgClientPhone" placeholder="+373...">
+                </label>
+              </div>
+              <div class="field-grid" style="margin-bottom:12px;">
+                <label class="field">
+                  <span>Услуга *</span>
+                  <select id="pkgServiceSelect">
+                    <option value="">— выберите —</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Название пакета</span>
+                  <input type="text" id="pkgTitle" placeholder="5 классических массажей">
+                </label>
+              </div>
+              <div class="field-grid" style="margin-bottom:12px;">
+                <label class="field">
+                  <span>Количество сеансов *</span>
+                  <input type="number" id="pkgSessions" min="1" max="50" value="5">
+                </label>
+                <label class="field">
+                  <span>Цена пакета, MDL *</span>
+                  <input type="number" id="pkgPrice" min="0" step="50" placeholder="3000">
+                </label>
+                <label class="field">
+                  <span>Действителен до (необяз.)</span>
+                  <input type="date" id="pkgExpires">
+                </label>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="button button--secondary" id="savePackageBtn">Сохранить абонемент</button>
+                <button type="button" class="button button--ghost" id="cancelPackageBtn">Отмена</button>
+              </div>
+            </div>
+
+            <!-- Packages table -->
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head admin-widget__head--toolbar">
+                <div><p class="section-kicker">Выданные</p><h3 class="admin-widget__title">Все абонементы</h3></div>
+                <div style="display:flex;gap:6px;">
+                  <button class="button button--ghost button--mini pkg-filter-btn is-active" data-filter="all">Все</button>
+                  <button class="button button--ghost button--mini pkg-filter-btn" data-filter="active">Активные</button>
+                  <button class="button button--ghost button--mini pkg-filter-btn" data-filter="exhausted">Исчерпаны</button>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="booking-table">
+                  <thead>
+                    <tr>
+                      <th>Код</th>
+                      <th>Клиент</th>
+                      <th>Услуга</th>
+                      <th>Прогресс</th>
+                      <th>Цена</th>
+                      <th>Статус</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="packagesTableBody"></tbody>
                 </table>
               </div>
             </div>

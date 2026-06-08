@@ -876,7 +876,8 @@ async function ensureDataFiles() {
     ["enrollments.json", "[]"],
     ["certificates.json", "[]"],
     ["diplomas.json", "[]"],
-    ["expenses.json", "[]"]
+    ["expenses.json", "[]"],
+    ["packages.json", "[]"]
   ];
 
   await Promise.all(
@@ -4098,6 +4099,99 @@ async function routeApi(request, response, urlObject) {
     if (allowed.includes(payload.status)) certs[idx].status = payload.status;
     await writeJson("certificates.json", certs);
     sendJson(response, 200, { ok: true, certificate: certs[idx] });
+    return;
+  }
+
+  // ─── Packages (Абонементы) ────────────────────────────────────────────────
+  // GET /api/admin/packages
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/packages") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const packages = await readJson("packages.json");
+    sendJson(response, 200, packages);
+    return;
+  }
+
+  // POST /api/admin/packages — create
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/packages") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const total = Math.max(1, parseInt(payload.totalSessions || "5", 10));
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const packages = await readJson("packages.json");
+    const seq = String(packages.length + 1).padStart(3, "0");
+    const pkg = {
+      id: crypto.randomUUID(),
+      code: `PKG-${year}${month}-${seq}`,
+      title: sanitizeText(payload.title || ""),
+      clientId: sanitizeText(payload.clientId || ""),
+      clientName: sanitizeText(payload.clientName || ""),
+      phone: sanitizeText(payload.phone || ""),
+      serviceId: sanitizeText(payload.serviceId || ""),
+      serviceName: sanitizeText(payload.serviceName || ""),
+      totalSessions: total,
+      usedSessions: 0,
+      priceTotal: Math.max(0, parseFloat(payload.priceTotal || "0") || 0),
+      expiresAt: sanitizeText(payload.expiresAt || ""),
+      issuedAt: now.toISOString(),
+      status: "active",
+      usageHistory: []
+    };
+    packages.push(pkg);
+    await writeJson("packages.json", packages);
+    sendJson(response, 201, { ok: true, package: pkg });
+    return;
+  }
+
+  // PATCH /api/admin/packages/:id — update status / cancel
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/packages/") && !urlObject.pathname.endsWith("/use")) {
+    assertAdminPin(request);
+    const pkgId = urlObject.pathname.replace("/api/admin/packages/", "");
+    const payload = await parseJsonBody(request);
+    const packages = await readJson("packages.json");
+    const idx = packages.findIndex(p => p.id === pkgId);
+    if (idx === -1) { sendJson(response, 404, { message: "Абонемент не найден." }); return; }
+    if (["active","exhausted","cancelled"].includes(payload.status)) packages[idx].status = payload.status;
+    if (payload.expiresAt !== undefined) packages[idx].expiresAt = sanitizeText(payload.expiresAt);
+    await writeJson("packages.json", packages);
+    sendJson(response, 200, { ok: true, package: packages[idx] });
+    return;
+  }
+
+  // POST /api/admin/packages/:id/use — deduct one session
+  if (request.method === "POST" && urlObject.pathname.endsWith("/use") && urlObject.pathname.includes("/api/admin/packages/")) {
+    assertAdminPin(request);
+    const pkgId = urlObject.pathname.replace("/api/admin/packages/", "").replace("/use", "");
+    const payload = await parseJsonBody(request);
+    const packages = await readJson("packages.json");
+    const idx = packages.findIndex(p => p.id === pkgId);
+    if (idx === -1) { sendJson(response, 404, { message: "Абонемент не найден." }); return; }
+    const pkg = packages[idx];
+    if (pkg.status !== "active") { sendJson(response, 409, { message: "Абонемент неактивен." }); return; }
+    if (pkg.usedSessions >= pkg.totalSessions) { sendJson(response, 409, { message: "Все сеансы использованы." }); return; }
+    pkg.usedSessions += 1;
+    pkg.usageHistory.push({
+      bookingId: sanitizeText(payload.bookingId || ""),
+      date: sanitizeText(payload.date || new Date().toISOString().slice(0, 10)),
+      usedAt: new Date().toISOString()
+    });
+    if (pkg.usedSessions >= pkg.totalSessions) pkg.status = "exhausted";
+    await writeJson("packages.json", packages);
+    sendJson(response, 200, { ok: true, package: pkg });
+    return;
+  }
+
+  // DELETE /api/admin/packages/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/packages/")) {
+    assertAdminPin(request);
+    const pkgId = urlObject.pathname.replace("/api/admin/packages/", "");
+    const packages = await readJson("packages.json");
+    const idx = packages.findIndex(p => p.id === pkgId);
+    if (idx === -1) { sendJson(response, 404, { message: "Абонемент не найден." }); return; }
+    packages.splice(idx, 1);
+    await writeJson("packages.json", packages);
+    sendJson(response, 200, { ok: true });
     return;
   }
 

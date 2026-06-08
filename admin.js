@@ -5,6 +5,7 @@ const state = {
   enrollments: [],
   certificates: [],
   diplomas: [],
+  packages: [],
   diary: [],
   daySchedule: null,
   clients: [],
@@ -229,6 +230,15 @@ function bindEvents() {
   elements.adminLoginBtn.addEventListener("click", handleAdminLogin);
   elements.adminLogoutBtn.addEventListener("click", handleAdminLogout);
   document.getElementById("expenseMonth")?.addEventListener("change", loadExpenses);
+  bindPackageEvents();
+  document.getElementById("pkgFilterBtns")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pkg-filter-btn");
+    if (!btn) return;
+    document.querySelectorAll(".pkg-filter-btn").forEach(b => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    pkgFilter = btn.dataset.filter;
+    renderPackagesTable();
+  });
 
   // New client form
   document.getElementById("addClientBtn")?.addEventListener("click", () => {
@@ -1473,6 +1483,7 @@ async function loadAdminData() {
     renderDiplomasTable();
   } catch {}
   loadExpenses();
+  loadPackages();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -1632,6 +1643,176 @@ async function saveExpenses() {
     });
     showToast("Расходы сохранены.", "success");
   } catch (e) { showToast(e.message || "Ошибка сохранения.", "error"); }
+}
+
+// ─── Packages (Абонементы) ────────────────────────────────────────────────────
+let pkgFilter = "all";
+
+async function loadPackages() {
+  try {
+    state.packages = await fetchJson("/api/admin/packages");
+  } catch { state.packages = []; }
+  renderPackagesTable();
+  updatePackageSelectInBookingForm();
+}
+
+function renderPackagesTable() {
+  const tbody = document.getElementById("packagesTableBody");
+  if (!tbody) return;
+  const packages = (state.packages || []).filter(p => pkgFilter === "all" || p.status === pkgFilter);
+  if (!packages.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Абонементов пока нет.</div></td></tr>`;
+    return;
+  }
+  const statusLabel = { active: "Активен", exhausted: "Исчерпан", cancelled: "Отменён" };
+  const statusColor = { active: "var(--success)", exhausted: "var(--muted)", cancelled: "var(--danger)" };
+  tbody.innerHTML = packages.slice().reverse().map(p => {
+    const pct = p.totalSessions > 0 ? Math.round(p.usedSessions / p.totalSessions * 100) : 0;
+    const rem = p.totalSessions - p.usedSessions;
+    const expires = p.expiresAt ? new Date(p.expiresAt).toLocaleDateString("ru-RU") : "—";
+    return `<tr>
+      <td><span class="table-main" style="font-family:monospace;font-size:0.8rem;">${escapeHtml(p.code)}</span></td>
+      <td>
+        <span class="table-main">${escapeHtml(p.clientName)}</span>
+        <span class="table-sub">${escapeHtml(p.phone||"")}</span>
+      </td>
+      <td><span class="table-main">${escapeHtml(p.serviceName||p.title||"—")}</span></td>
+      <td>
+        <span class="table-main">${p.usedSessions}/${p.totalSessions} сеансов</span>
+        <div style="height:5px;background:var(--line);border-radius:3px;margin-top:5px;width:100px;">
+          <div style="height:100%;width:${pct}%;background:${p.status==='active'?'var(--success)':'var(--muted)'};border-radius:3px;"></div>
+        </div>
+      </td>
+      <td><span class="table-main">${(p.priceTotal||0).toLocaleString("ru")} MDL</span>
+        <span class="table-sub">до ${expires}</span>
+      </td>
+      <td><span style="color:${statusColor[p.status]||''};font-weight:700;font-size:0.82rem;">${statusLabel[p.status]||p.status}</span></td>
+      <td>
+        ${p.status==="active" ? `<button class="button button--ghost button--mini" data-use-pkg="${escapeHtml(p.id)}" title="Списать сеанс">−1 сеанс</button>` : ""}
+        ${p.status==="active" ? `<button class="button button--ghost button--mini" data-cancel-pkg="${escapeHtml(p.id)}" style="color:var(--danger);">Отменить</button>` : ""}
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function updatePkgClientSuggestions() {
+  const dl = document.getElementById("pkgClientSuggestions");
+  if (!dl) return;
+  dl.innerHTML = (state.clients||[]).map(c =>
+    `<option value="${escapeHtml(c.clientName)}" data-phone="${escapeHtml(c.phone||'')}" data-id="${escapeHtml(c.id||'')}"></option>`
+  ).join("");
+}
+
+function updatePackageSelectInBookingForm() {
+  const sel = document.getElementById("adminBookingPackage");
+  if (!sel) return;
+  const name = elements.adminBookingClientName?.value?.trim() || "";
+  const active = (state.packages||[]).filter(p =>
+    p.status === "active" && (!name || p.clientName.toLowerCase().includes(name.toLowerCase()))
+  );
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">— без абонемента —</option>` +
+    active.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.code)} · ${escapeHtml(p.serviceName||p.title)} · ${p.totalSessions-p.usedSessions} ост.</option>`).join("");
+  if (prev) sel.value = prev;
+}
+
+function bindPackageEvents() {
+  document.getElementById("showCreatePackageBtn")?.addEventListener("click", () => {
+    document.getElementById("createPackageForm").style.display = "block";
+    updatePkgClientSuggestions();
+    const svcSel = document.getElementById("pkgServiceSelect");
+    svcSel.innerHTML = `<option value="">— выберите —</option>` +
+      (state.services||[]).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join("");
+  });
+
+  document.getElementById("cancelPackageBtn")?.addEventListener("click", () => {
+    document.getElementById("createPackageForm").style.display = "none";
+  });
+
+  document.getElementById("pkgClientName")?.addEventListener("change", () => {
+    const val = document.getElementById("pkgClientName").value.trim();
+    const client = (state.clients||[]).find(c => c.clientName === val);
+    if (client && !document.getElementById("pkgClientPhone").value) {
+      document.getElementById("pkgClientPhone").value = client.phone || "";
+    }
+  });
+
+  document.getElementById("savePackageBtn")?.addEventListener("click", async () => {
+    const clientName = document.getElementById("pkgClientName").value.trim();
+    const phone = document.getElementById("pkgClientPhone").value.trim();
+    const serviceId = document.getElementById("pkgServiceSelect").value;
+    const sessions = parseInt(document.getElementById("pkgSessions").value || "5", 10);
+    const price = parseFloat(document.getElementById("pkgPrice").value || "0");
+    const title = document.getElementById("pkgTitle").value.trim();
+    const expiresAt = document.getElementById("pkgExpires").value;
+    if (!clientName) { showToast("Введите имя клиента.", "error"); return; }
+    if (!serviceId) { showToast("Выберите услугу.", "error"); return; }
+    if (!price) { showToast("Укажите цену пакета.", "error"); return; }
+    const client = (state.clients||[]).find(c => c.clientName === clientName);
+    const service = (state.services||[]).find(s => s.id === serviceId);
+    try {
+      const result = await fetchJson("/api/admin/packages", { method: "POST", body: JSON.stringify({
+        clientId: client?.id || "", clientName, phone, serviceId,
+        serviceName: service?.name || "", title: title || `${sessions} × ${service?.name||""}`,
+        totalSessions: sessions, priceTotal: price, expiresAt
+      })});
+      state.packages = state.packages || [];
+      state.packages.push(result.package);
+      renderPackagesTable();
+      updatePackageSelectInBookingForm();
+      document.getElementById("createPackageForm").style.display = "none";
+      showToast(`Абонемент ${result.package.code} создан.`, "success");
+      ["pkgClientName","pkgClientPhone","pkgTitle","pkgPrice","pkgExpires"].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = "";
+      });
+      document.getElementById("pkgSessions").value = "5";
+      document.getElementById("pkgServiceSelect").value = "";
+    } catch (e) { showToast(e.message || "Ошибка.", "error"); }
+  });
+
+  document.getElementById("packagesTableBody")?.addEventListener("click", async (e) => {
+    const useBtn = e.target.closest("[data-use-pkg]");
+    const cancelBtn = e.target.closest("[data-cancel-pkg]");
+    if (useBtn) {
+      const id = useBtn.dataset.usePkg;
+      const pkg = (state.packages||[]).find(p => p.id === id);
+      if (!pkg) return;
+      if (!confirm(`Списать 1 сеанс из абонемента ${pkg.code}? Останется: ${pkg.totalSessions - pkg.usedSessions - 1}`)) return;
+      try {
+        const res = await fetchJson(`/api/admin/packages/${id}/use`, { method: "POST", body: JSON.stringify({ date: new Date().toISOString().slice(0,10) }) });
+        const idx = state.packages.findIndex(p => p.id === id);
+        if (idx !== -1) state.packages[idx] = res.package;
+        renderPackagesTable();
+        updatePackageSelectInBookingForm();
+        showToast(`Сеанс списан. Остаток: ${res.package.totalSessions - res.package.usedSessions}`, "success");
+      } catch (e) { showToast(e.message||"Ошибка.","error"); }
+    }
+    if (cancelBtn) {
+      const id = cancelBtn.dataset.cancelPkg;
+      if (!confirm("Отменить абонемент?")) return;
+      try {
+        await fetchJson(`/api/admin/packages/${id}`, { method: "PATCH", body: JSON.stringify({ status: "cancelled" }) });
+        const idx = state.packages.findIndex(p => p.id === id);
+        if (idx !== -1) state.packages[idx].status = "cancelled";
+        renderPackagesTable();
+        updatePackageSelectInBookingForm();
+        showToast("Абонемент отменён.", "success");
+      } catch (e) { showToast(e.message||"Ошибка.","error"); }
+    }
+  });
+
+  document.getElementById("pkgFilterBtns")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pkg-filter-btn");
+    if (!btn) return;
+    document.querySelectorAll(".pkg-filter-btn").forEach(b => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    pkgFilter = btn.dataset.filter;
+    renderPackagesTable();
+  });
+
+  elements.adminBookingClientName?.addEventListener("input", () => {
+    updatePackageSelectInBookingForm();
+  });
 }
 
 function renderDiplomasTable() {
@@ -3801,6 +3982,36 @@ function renderClientDetail(client) {
           <div class="admin-chip-row">${favoriteSpecialists}</div>
         </div>
       </div>
+
+      ${(() => {
+        const clientPkgs = (state.packages||[]).filter(p => p.clientName === client.clientName || (client.phone && p.phone === client.phone));
+        if (!clientPkgs.length) return "";
+        return `<div class="admin-editor-item" style="margin-bottom:16px;">
+          <div class="admin-editor-item__toolbar">
+            <span class="admin-editor-item__index">Абонементы</span>
+          </div>
+          <div style="display:grid;gap:8px;padding:12px 16px;">
+            ${clientPkgs.map(p => {
+              const rem = p.totalSessions - p.usedSessions;
+              const pct = p.totalSessions > 0 ? Math.round(p.usedSessions / p.totalSessions * 100) : 0;
+              const color = p.status === "active" ? "var(--success)" : "var(--muted)";
+              return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
+                <div style="flex:1;">
+                  <strong style="font-size:0.88rem;">${escapeHtml(p.code)}</strong>
+                  <span style="display:block;font-size:0.78rem;color:var(--muted);">${escapeHtml(p.serviceName||p.title)}</span>
+                  <div style="height:4px;background:var(--line);border-radius:2px;width:120px;margin-top:5px;">
+                    <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;"></div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <strong style="color:${color};">${rem} ост.</strong>
+                  <span style="display:block;font-size:0.75rem;color:var(--muted);">${p.usedSessions}/${p.totalSessions}</span>
+                </div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>`;
+      })()}
 
       <div class="admin-editor-item">
         <div class="admin-editor-item__toolbar">
