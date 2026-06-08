@@ -877,7 +877,8 @@ async function ensureDataFiles() {
     ["certificates.json", "[]"],
     ["diplomas.json", "[]"],
     ["expenses.json", "[]"],
-    ["packages.json", "[]"]
+    ["packages.json", "[]"],
+    ["inventory.json", "[]"]
   ];
 
   await Promise.all(
@@ -4288,6 +4289,89 @@ async function routeApi(request, response, urlObject) {
       ok: true,
       now: new Date().toISOString()
     });
+    return;
+  }
+
+  // ─── Inventory ────────────────────────────────────────────────────────────
+  // GET /api/admin/inventory
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/inventory") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    sendJson(response, 200, await readJson("inventory.json"));
+    return;
+  }
+
+  // POST /api/admin/inventory — create item
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/inventory") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const name = sanitizeText(payload.name || "").trim();
+    if (!name) { sendJson(response, 400, { message: "Название обязательно." }); return; }
+    const items = await readJson("inventory.json");
+    const item = {
+      id: crypto.randomUUID(),
+      name,
+      category: sanitizeText(payload.category || "Прочее"),
+      unit: sanitizeText(payload.unit || "шт"),
+      stock: Math.max(0, parseFloat(payload.stock) || 0),
+      minStock: Math.max(0, parseFloat(payload.minStock) || 0),
+      costPerUnit: Math.max(0, parseFloat(payload.costPerUnit) || 0),
+      notes: sanitizeText(payload.notes || ""),
+      createdAt: new Date().toISOString()
+    };
+    items.push(item);
+    await writeJson("inventory.json", items);
+    sendJson(response, 201, { ok: true, item });
+    return;
+  }
+
+  // PATCH /api/admin/inventory/:id — update properties
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/inventory/") && !urlObject.pathname.endsWith("/adjust")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/inventory/", "");
+    const payload = await parseJsonBody(request);
+    const items = await readJson("inventory.json");
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Позиция не найдена." }); return; }
+    if (payload.name !== undefined) items[idx].name = sanitizeText(payload.name);
+    if (payload.category !== undefined) items[idx].category = sanitizeText(payload.category);
+    if (payload.unit !== undefined) items[idx].unit = sanitizeText(payload.unit);
+    if (payload.stock !== undefined) items[idx].stock = Math.max(0, parseFloat(payload.stock) || 0);
+    if (payload.minStock !== undefined) items[idx].minStock = Math.max(0, parseFloat(payload.minStock) || 0);
+    if (payload.costPerUnit !== undefined) items[idx].costPerUnit = Math.max(0, parseFloat(payload.costPerUnit) || 0);
+    if (payload.notes !== undefined) items[idx].notes = sanitizeText(payload.notes);
+    items[idx].updatedAt = new Date().toISOString();
+    await writeJson("inventory.json", items);
+    sendJson(response, 200, { ok: true, item: items[idx] });
+    return;
+  }
+
+  // POST /api/admin/inventory/:id/adjust — add or subtract stock
+  if (request.method === "POST" && urlObject.pathname.endsWith("/adjust") && urlObject.pathname.includes("/api/admin/inventory/")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/inventory/", "").replace("/adjust", "");
+    const payload = await parseJsonBody(request);
+    const delta = parseFloat(payload.delta);
+    if (isNaN(delta)) { sendJson(response, 400, { message: "Укажите delta." }); return; }
+    const items = await readJson("inventory.json");
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Позиция не найдена." }); return; }
+    items[idx].stock = Math.max(0, (items[idx].stock || 0) + delta);
+    items[idx].updatedAt = new Date().toISOString();
+    await writeJson("inventory.json", items);
+    sendJson(response, 200, { ok: true, item: items[idx] });
+    return;
+  }
+
+  // DELETE /api/admin/inventory/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/inventory/")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/inventory/", "");
+    const items = await readJson("inventory.json");
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Позиция не найдена." }); return; }
+    items.splice(idx, 1);
+    await writeJson("inventory.json", items);
+    sendJson(response, 200, { ok: true });
     return;
   }
 

@@ -53,6 +53,7 @@
         <a href="#expenses" data-section="expenses">Расходы</a>
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
+        <a href="#inventory" data-section="inventory">Инвентарь</a>
         <a href="#packages" data-section="packages">Абонементы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
         <a href="#diplomas" data-section="diplomas">Дипломы</a>
@@ -651,6 +652,108 @@
                     </tr>
                   </thead>
                   <tbody id="enrollmentsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══════════════ INVENTORY ═══════════════ -->
+          <section class="admin-section-block reveal" id="inventory">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Склад</p>
+                <h2 class="admin-section-block__title">Инвентарь</h2>
+              </div>
+              <button type="button" class="button button--secondary" id="showAddInvItemBtn">+ Добавить позицию</button>
+            </div>
+
+            <!-- Low stock alert -->
+            <div id="invLowStockAlert" style="display:none;background:#fff4e0;border:1px solid #e8a84c;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:0.88rem;color:#7a4800;">
+              <strong>⚠ Заканчивается:</strong> <span id="invLowStockList"></span>
+            </div>
+
+            <!-- Add form -->
+            <div id="addInvItemForm" style="display:none;background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:16px;">
+              <p class="section-kicker">Новая позиция</p>
+              <h3 style="font-size:1rem;font-weight:600;margin:4px 0 16px;">Добавить в склад</h3>
+              <div class="field-grid" style="margin-bottom:12px;">
+                <label class="field">
+                  <span>Название *</span>
+                  <input type="text" id="invName" placeholder="Масло миндальное">
+                </label>
+                <label class="field">
+                  <span>Категория</span>
+                  <select id="invCategory">
+                    <option value="Масла">Масла</option>
+                    <option value="Простыни">Простыни</option>
+                    <option value="Косметика">Косметика</option>
+                    <option value="Расходники">Расходники</option>
+                    <option value="Оборудование">Оборудование</option>
+                    <option value="Прочее" selected>Прочее</option>
+                  </select>
+                </label>
+              </div>
+              <div class="field-grid" style="margin-bottom:12px;">
+                <label class="field">
+                  <span>Единица</span>
+                  <select id="invUnit">
+                    <option value="шт">шт</option>
+                    <option value="мл">мл</option>
+                    <option value="г">г</option>
+                    <option value="л">л</option>
+                    <option value="кг">кг</option>
+                    <option value="упак">упак</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Остаток</span>
+                  <input type="number" id="invStock" min="0" step="1" value="0">
+                </label>
+                <label class="field">
+                  <span>Минимум (порог)</span>
+                  <input type="number" id="invMinStock" min="0" step="1" value="0" placeholder="0 = без порога">
+                </label>
+                <label class="field">
+                  <span>Цена за ед., MDL</span>
+                  <input type="number" id="invCost" min="0" step="0.5" placeholder="0">
+                </label>
+              </div>
+              <label class="field" style="margin-bottom:16px;">
+                <span>Примечание</span>
+                <input type="text" id="invNotes" placeholder="Поставщик, ссылка...">
+              </label>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="button button--secondary" id="saveInvItemBtn">Сохранить</button>
+                <button type="button" class="button button--ghost" id="cancelInvItemBtn">Отмена</button>
+              </div>
+            </div>
+
+            <!-- Filter chips -->
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+              <button class="button button--ghost button--mini inv-cat-btn is-active" data-cat="all">Все</button>
+              <button class="button button--ghost button--mini inv-cat-btn" data-cat="Масла">Масла</button>
+              <button class="button button--ghost button--mini inv-cat-btn" data-cat="Простыни">Простыни</button>
+              <button class="button button--ghost button--mini inv-cat-btn" data-cat="Косметика">Косметика</button>
+              <button class="button button--ghost button--mini inv-cat-btn" data-cat="Расходники">Расходники</button>
+              <button class="button button--ghost button--mini inv-cat-btn" data-cat="Оборудование">Оборудование</button>
+              <button class="button button--ghost button--mini inv-cat-btn" data-cat="Прочее">Прочее</button>
+            </div>
+
+            <!-- Table -->
+            <div class="admin-widget admin-widget--table">
+              <div class="table-wrap">
+                <table class="booking-table">
+                  <thead>
+                    <tr>
+                      <th>Позиция</th>
+                      <th>Категория</th>
+                      <th>Остаток</th>
+                      <th>Цена/ед.</th>
+                      <th>Статус</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventoryTableBody"></tbody>
                 </table>
               </div>
             </div>

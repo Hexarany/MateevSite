@@ -1484,6 +1484,7 @@ async function loadAdminData() {
   } catch {}
   loadExpenses();
   loadPackages();
+  loadInventory();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -4988,4 +4989,178 @@ function renderEnrollmentsTable() {
       </td>
     </tr>
   `).join("");
+}
+
+// ─── Inventory ──────────────────────────────────────────────────────────────
+
+let _invItems = [];
+let _invCatFilter = "all";
+
+async function loadInventory() {
+  try {
+    _invItems = await fetchJson("/api/admin/inventory");
+    renderInventoryTable();
+    bindInventoryEvents();
+  } catch (e) {
+    console.error("loadInventory", e);
+  }
+}
+
+function renderInventoryTable() {
+  const tbody = document.getElementById("inventoryTableBody");
+  if (!tbody) return;
+
+  const filtered = _invCatFilter === "all"
+    ? _invItems
+    : _invItems.filter(i => i.category === _invCatFilter);
+
+  // Low stock alert
+  const low = _invItems.filter(i => i.minStock > 0 && i.stock <= i.minStock);
+  const alertEl = document.getElementById("invLowStockAlert");
+  const listEl = document.getElementById("invLowStockList");
+  if (alertEl && listEl) {
+    if (low.length) {
+      listEl.textContent = low.map(i => `${i.name} (${i.stock} ${i.unit})`).join(", ");
+      alertEl.style.display = "";
+    } else {
+      alertEl.style.display = "none";
+    }
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Позиций нет. Нажмите «+ Добавить позицию».</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => {
+    let statusBadge;
+    if (item.minStock > 0 && item.stock === 0) {
+      statusBadge = `<span class="status-badge status-badge--cancelled">Закончился</span>`;
+    } else if (item.minStock > 0 && item.stock <= item.minStock) {
+      statusBadge = `<span class="status-badge status-badge--pending">Мало</span>`;
+    } else {
+      statusBadge = `<span class="status-badge status-badge--confirmed">OK</span>`;
+    }
+    const stockLine = item.minStock > 0
+      ? `${item.stock} / ${item.minStock} ${escapeHtml(item.unit)}`
+      : `${item.stock} ${escapeHtml(item.unit)}`;
+    const cost = item.costPerUnit ? `${item.costPerUnit} MDL` : "—";
+    return `<tr>
+      <td>
+        <span class="table-main">${escapeHtml(item.name)}</span>
+        ${item.notes ? `<span class="table-sub">${escapeHtml(item.notes)}</span>` : ""}
+      </td>
+      <td><span class="table-sub">${escapeHtml(item.category)}</span></td>
+      <td>
+        <span class="table-main">${stockLine}</span>
+        <div style="display:flex;gap:4px;margin-top:4px;">
+          <button class="button button--ghost button--mini" data-inv-adjust="${escapeHtml(item.id)}" data-delta="-1" title="−1">−</button>
+          <button class="button button--ghost button--mini" data-inv-adjust="${escapeHtml(item.id)}" data-delta="1" title="+1">+</button>
+          <button class="button button--ghost button--mini" data-inv-custom="${escapeHtml(item.id)}" title="Ввести вручную">✎</button>
+        </div>
+      </td>
+      <td><span class="table-sub">${cost}</span></td>
+      <td>${statusBadge}</td>
+      <td>
+        <button class="button button--ghost button--mini" data-inv-delete="${escapeHtml(item.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Удалить</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function bindInventoryEvents() {
+  // Show/hide add form
+  document.getElementById("showAddInvItemBtn")?.addEventListener("click", () => {
+    const form = document.getElementById("addInvItemForm");
+    if (form) form.style.display = form.style.display === "none" ? "" : "none";
+  });
+  document.getElementById("cancelInvItemBtn")?.addEventListener("click", () => {
+    const form = document.getElementById("addInvItemForm");
+    if (form) form.style.display = "none";
+  });
+
+  // Save new item
+  document.getElementById("saveInvItemBtn")?.addEventListener("click", async () => {
+    const name = document.getElementById("invName")?.value.trim();
+    if (!name) { showToast("Введите название позиции."); return; }
+    const payload = {
+      name,
+      category: document.getElementById("invCategory")?.value || "Прочее",
+      unit: document.getElementById("invUnit")?.value || "шт",
+      stock: parseFloat(document.getElementById("invStock")?.value) || 0,
+      minStock: parseFloat(document.getElementById("invMinStock")?.value) || 0,
+      costPerUnit: parseFloat(document.getElementById("invCost")?.value) || 0,
+      notes: document.getElementById("invNotes")?.value.trim() || ""
+    };
+    try {
+      const res = await fetchJson("/api/admin/inventory", { method: "POST", body: JSON.stringify(payload) });
+      _invItems.push(res.item);
+      renderInventoryTable();
+      document.getElementById("addInvItemForm").style.display = "none";
+      ["invName","invNotes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+      ["invStock","invMinStock","invCost"].forEach(id => { const el = document.getElementById(id); if (el) el.value = "0"; });
+      showToast("Позиция добавлена.");
+    } catch (e) { showToast(e.message || "Ошибка сохранения."); }
+  });
+
+  // Category filter
+  document.querySelectorAll(".inv-cat-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".inv-cat-btn").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      _invCatFilter = btn.dataset.cat;
+      renderInventoryTable();
+    });
+  });
+
+  // Table actions (event delegation)
+  document.getElementById("inventoryTableBody")?.addEventListener("click", async (e) => {
+    // Quick ±1
+    const adjustBtn = e.target.closest("[data-inv-adjust]");
+    if (adjustBtn) {
+      const id = adjustBtn.dataset.invAdjust;
+      const delta = parseFloat(adjustBtn.dataset.delta);
+      try {
+        const res = await fetchJson(`/api/admin/inventory/${id}/adjust`, { method: "POST", body: JSON.stringify({ delta }) });
+        const idx = _invItems.findIndex(i => i.id === id);
+        if (idx !== -1) _invItems[idx] = res.item;
+        renderInventoryTable();
+      } catch (e) { showToast(e.message || "Ошибка."); }
+      return;
+    }
+
+    // Custom value
+    const customBtn = e.target.closest("[data-inv-custom]");
+    if (customBtn) {
+      const id = customBtn.dataset.invCustom;
+      const item = _invItems.find(i => i.id === id);
+      if (!item) return;
+      const val = prompt(`Новый остаток для «${item.name}» (${item.unit}):`, item.stock);
+      if (val === null) return;
+      const newStock = parseFloat(val);
+      if (isNaN(newStock) || newStock < 0) { showToast("Некорректное значение."); return; }
+      const delta = newStock - item.stock;
+      try {
+        const res = await fetchJson(`/api/admin/inventory/${id}/adjust`, { method: "POST", body: JSON.stringify({ delta }) });
+        const idx = _invItems.findIndex(i => i.id === id);
+        if (idx !== -1) _invItems[idx] = res.item;
+        renderInventoryTable();
+      } catch (e) { showToast(e.message || "Ошибка."); }
+      return;
+    }
+
+    // Delete
+    const deleteBtn = e.target.closest("[data-inv-delete]");
+    if (deleteBtn) {
+      const id = deleteBtn.dataset.invDelete;
+      const item = _invItems.find(i => i.id === id);
+      if (!confirm(`Удалить «${item?.name}»?`)) return;
+      try {
+        await fetchJson(`/api/admin/inventory/${id}`, { method: "DELETE" });
+        _invItems = _invItems.filter(i => i.id !== id);
+        renderInventoryTable();
+        showToast("Позиция удалена.");
+      } catch (e) { showToast(e.message || "Ошибка."); }
+    }
+  });
 }
