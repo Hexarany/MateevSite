@@ -4409,6 +4409,103 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // ─── Broadcast ────────────────────────────────────────────────────────────
+  // GET /api/admin/broadcast/preview?segment=all|vip|inactive|has_package
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/broadcast/preview") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const segment = urlObject.searchParams.get("segment") || "all";
+    const { bookings, clients } = await loadStudioData();
+    const allClients = buildAdminClients(bookings, clients);
+    const packages = await readJson("packages.json");
+    const now = new Date();
+    const cutoff = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const matched = allClients.filter(c => {
+      if (!c.email) return false;
+      if (segment === "vip") return c.status === "vip";
+      if (segment === "inactive") {
+        const lastDate = c.lastBooking?.date || "";
+        return lastDate < cutoff;
+      }
+      if (segment === "has_package") {
+        return packages.some(p => p.status === "active" && (
+          (c.phone && p.phone && normalizePhoneDigits(p.phone) === normalizePhoneDigits(c.phone)) ||
+          p.clientName === c.clientName
+        ));
+      }
+      return true; // all
+    });
+    sendJson(response, 200, {
+      count: matched.length,
+      segment,
+      preview: matched.slice(0, 5).map(c => ({ name: c.clientName, email: c.email }))
+    });
+    return;
+  }
+
+  // POST /api/admin/broadcast — send emails
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/broadcast") {
+    assertAdminPin(request);
+    if (!RESEND_API_KEY || !EMAIL_FROM) { sendJson(response, 503, { message: "Email не настроен." }); return; }
+    const payload = await parseJsonBody(request);
+    const segment = sanitizeText(payload.segment || "all");
+    const subject = sanitizeText(payload.subject || "").trim();
+    const bodyText = sanitizeText(payload.body || "").trim();
+    if (!subject || !bodyText) { sendJson(response, 400, { message: "Укажите тему и текст письма." }); return; }
+    const { bookings, clients } = await loadStudioData();
+    const allClients = buildAdminClients(bookings, clients);
+    const packages = await readJson("packages.json");
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const matched = allClients.filter(c => {
+      if (!c.email) return false;
+      if (segment === "vip") return c.status === "vip";
+      if (segment === "inactive") { const d = c.lastBooking?.date || ""; return d < cutoff; }
+      if (segment === "has_package") return packages.some(p => p.status === "active" && (
+        (c.phone && p.phone && normalizePhoneDigits(p.phone) === normalizePhoneDigits(c.phone)) || p.clientName === c.clientName
+      ));
+      return true;
+    });
+    if (!matched.length) { sendJson(response, 400, { message: "Нет клиентов с email в этом сегменте." }); return; }
+    const brandColor = "#b36d2c";
+    const bg = "#f7f0e6";
+    const ink = "#241c17";
+    const muted = "#7d6d60";
+    let sent = 0, failed = 0;
+    for (const client of matched) {
+      const personalised = bodyText.replace(/\{имя\}/gi, client.clientName);
+      const htmlBody = personalised.split("\n").map(l => l.trim() ? `<p style="margin:0 0 14px;font-size:14px;color:${ink};line-height:1.6;">${escapeHtml(l)}</p>` : "<br>").join("");
+      const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:${bg};font-family:'Helvetica Neue',Arial,sans-serif;color:${ink};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${bg};padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:520px;background:#fffaf4;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(54,35,20,0.10);">
+        <tr><td style="background:${brandColor};padding:28px 36px;">
+          <p style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.75);">Студия массажа в Кишиневе</p>
+          <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#fff;">Mateev Spa Studio</p>
+        </td></tr>
+        <tr><td style="padding:32px 36px 24px;">${htmlBody}</td></tr>
+        <tr><td style="padding:0 36px 28px;">
+          <a href="${SITE_URL}/#booking" style="display:inline-block;padding:12px 24px;background:${brandColor};color:#fff;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;">Записаться →</a>
+        </td></tr>
+        <tr><td style="padding:20px 36px;border-top:1px solid rgba(68,50,36,0.10);">
+          <p style="margin:0;font-size:11px;color:${muted};">Mateev Spa Studio · Кишинёв, Молдова</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+      try {
+        await requestJson("https://api.resend.com/emails", {
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+          body: { from: EMAIL_FROM, to: [client.email], subject, html, text: personalised }
+        });
+        sent++;
+        if (sent % 5 === 0) await new Promise(r => setTimeout(r, 500));
+      } catch { failed++; }
+    }
+    sendJson(response, 200, { ok: true, sent, failed, total: matched.length });
+    return;
+  }
+
   // ─── Client Portal ────────────────────────────────────────────────────────
   // POST /api/admin/clients/:id/portal-link — generate or refresh portal link
   if (request.method === "POST" && urlObject.pathname.endsWith("/portal-link") && urlObject.pathname.startsWith("/api/admin/clients/")) {

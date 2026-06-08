@@ -1485,6 +1485,7 @@ async function loadAdminData() {
   loadExpenses();
   loadPackages();
   loadInventory();
+  initBroadcast();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -5189,4 +5190,79 @@ function bindInventoryEvents() {
       } catch (e) { showToast(e.message || "Ошибка."); }
     }
   });
+}
+
+// ─── Broadcast ──────────────────────────────────────────────────────────────
+
+let _broadcastSegment = "all";
+
+function initBroadcast() {
+  // Segment buttons
+  document.querySelectorAll(".bc-seg-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".bc-seg-btn").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      _broadcastSegment = btn.dataset.seg;
+      hideBroadcastPreview();
+    });
+  });
+
+  // Preview button
+  document.getElementById("broadcastPreviewBtn")?.addEventListener("click", async () => {
+    const btn = document.getElementById("broadcastPreviewBtn");
+    btn.disabled = true;
+    btn.textContent = "Загружаем...";
+    try {
+      const res = await fetchJson(`/api/admin/broadcast/preview?segment=${_broadcastSegment}`);
+      const previewEl = document.getElementById("broadcastPreview");
+      const countEl = document.getElementById("broadcastCount");
+      const namesEl = document.getElementById("broadcastPreviewNames");
+      if (previewEl) previewEl.style.display = "";
+      if (countEl) countEl.textContent = res.count;
+      if (namesEl) {
+        const names = res.preview.map(c => `${escapeHtml(c.name)} <${escapeHtml(c.email)}>`).join(", ");
+        namesEl.textContent = res.count > 5 ? `Например: ${names} и ещё ${res.count - 5}...` : names;
+      }
+    } catch (e) { showToast(e.message || "Ошибка предпросмотра."); }
+    finally { btn.disabled = false; btn.textContent = "Предпросмотр получателей"; }
+  });
+
+  // Send button
+  document.getElementById("broadcastSendBtn")?.addEventListener("click", async () => {
+    const subject = document.getElementById("broadcastSubject")?.value.trim();
+    const body = document.getElementById("broadcastBody")?.value.trim();
+    if (!subject) { showToast("Укажите тему письма."); return; }
+    if (!body) { showToast("Введите текст письма."); return; }
+
+    const statusEl = document.getElementById("broadcastStatus");
+    const countEl = document.getElementById("broadcastCount");
+    const total = countEl ? parseInt(countEl.textContent) || "?" : "?";
+
+    if (!confirm(`Отправить письмо ${total} клиентам?\n\nТема: ${subject}\n\nЭто действие нельзя отменить.`)) return;
+
+    const sendBtn = document.getElementById("broadcastSendBtn");
+    sendBtn.disabled = true;
+    sendBtn.textContent = "Отправляем...";
+    if (statusEl) statusEl.textContent = "Идёт отправка, не закрывайте страницу...";
+
+    try {
+      const res = await fetchJson("/api/admin/broadcast", {
+        method: "POST",
+        body: JSON.stringify({ segment: _broadcastSegment, subject, body })
+      });
+      showToast(`Отправлено: ${res.sent}${res.failed ? `, ошибок: ${res.failed}` : ""}`, "success");
+      if (statusEl) statusEl.textContent = `Готово: ${res.sent} из ${res.total} доставлено.`;
+    } catch (e) {
+      showToast(e.message || "Ошибка отправки.", "error");
+      if (statusEl) statusEl.textContent = "";
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = "Отправить рассылку";
+    }
+  });
+}
+
+function hideBroadcastPreview() {
+  const el = document.getElementById("broadcastPreview");
+  if (el) el.style.display = "none";
 }
