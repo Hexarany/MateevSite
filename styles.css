@@ -629,8 +629,6 @@ p {
   color: rgba(255, 250, 244, 0.8);
 }
 
-.feature-grid,
-.service-grid,
 /* Gallery */
 .gallery-section { background: var(--sand); }
 .gallery-grid {
@@ -685,6 +683,8 @@ p {
   padding: 2px 6px; border-radius: 6px;
 }
 
+.feature-grid,
+.service-grid,
 .specialist-grid,
 .process-grid,
 .review-grid,
