@@ -730,6 +730,17 @@
 
     </div>
 
+    <div style="display:flex;gap:6px;padding:0 20px 12px;">
+      <button onclick="setLang('ru')" id="langBtnRu"
+        style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #e5e7eb;background:#2d4a35;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.06em;">
+        RU
+      </button>
+      <button onclick="setLang('ro')" id="langBtnRo"
+        style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #e5e7eb;background:transparent;color:#9ca3af;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.06em;">
+        RO
+      </button>
+    </div>
+
     <div class="cert-sidebar__footer">
       <button class="cert-action-btn cert-action-btn--primary" id="saveCertBtn">
         Сохранить сертификат
@@ -763,7 +774,7 @@
         <img src="/mateev_logo.png" alt="Mateev Spa Studio" class="cert-logo-img" id="certLogoImg">
 
         <div class="cert-badge">
-          <p class="cert-badge__text">Подарочный сертификат</p>
+          <p class="cert-badge__text" id="certBadgeText">Подарочный сертификат</p>
         </div>
 
         <p class="cert-validity" id="certValidityText">Действителен 6 месяцев</p>
@@ -821,7 +832,7 @@
           <div class="cert-rule"></div>
 
           <div class="cert-recipient-row">
-            <span class="cert-label">Для</span>
+            <span class="cert-label" id="certForLabel">Для</span>
             <span class="cert-recipient-name" id="certRecipientDisplay">Получатель</span>
           </div>
         </div>
@@ -837,17 +848,17 @@
           <div class="cert-bottom-row">
             <div class="cert-bottom-field">
               <div class="cert-bottom-field__line"></div>
-              <span class="cert-label">Дата выдачи</span>
+              <span class="cert-label" id="certIssuedLabel">Дата выдачи</span>
               <span class="cert-bottom-field__val" id="certDateDisplay">—</span>
             </div>
             <div class="cert-bottom-field">
               <div class="cert-bottom-field__line"></div>
-              <span class="cert-label">Подпись</span>
+              <span class="cert-label" id="certSignLabel">Подпись</span>
               <span class="cert-bottom-field__val" style="opacity:0.3;">____________</span>
             </div>
             <div class="cert-bottom-field">
               <div class="cert-bottom-field__line"></div>
-              <span class="cert-label">Номер</span>
+              <span class="cert-label" id="certNumLabel">Номер</span>
               <span class="cert-bottom-field__val" id="certCodeDisplay" style="font-family:'DM Mono',monospace; font-size:0.6rem;">—</span>
             </div>
           </div>
@@ -862,6 +873,66 @@
 
   <script>
     // ── State ─────────────────────────────────────────
+    let certLang = 'ru';
+
+    const CERT_TRANSLATIONS = {
+      ru: {
+        badge:         'Подарочный сертификат',
+        forLabel:      'Для',
+        recipientPh:   'Получатель',
+        procedurePh:   'Любая процедура студии',
+        issuedLabel:   'Дата выдачи',
+        signLabel:     'Подпись',
+        numLabel:      'Номер',
+        stampBottom:   'ОРИГИНАЛЬНЫЙ СЕРТИФИКАТ',
+        validityFn:    m => `Действителен ${m} ${m===1?'месяц':m<5?'месяца':'месяцев'}`,
+      },
+      ro: {
+        badge:         'Certificat Cadou',
+        forLabel:      'Pentru',
+        recipientPh:   'Destinatar',
+        procedurePh:   'Orice procedură a studioului',
+        issuedLabel:   'Data emiterii',
+        signLabel:     'Semnătură',
+        numLabel:      'Număr',
+        stampBottom:   'CERTIFICAT ORIGINAL',
+        validityFn:    m => `Valabil ${m} ${m===1?'lună':'luni'}`,
+      }
+    };
+
+    function setLang(l) {
+      certLang = l;
+      const t = CERT_TRANSLATIONS[l];
+      document.getElementById('langBtnRu').style.background = l === 'ru' ? '#2d4a35' : 'transparent';
+      document.getElementById('langBtnRu').style.color      = l === 'ru' ? '#fff' : '#9ca3af';
+      document.getElementById('langBtnRo').style.background = l === 'ro' ? '#2d4a35' : 'transparent';
+      document.getElementById('langBtnRo').style.color      = l === 'ro' ? '#fff' : '#9ca3af';
+      document.getElementById('certBadgeText').textContent  = t.badge;
+      document.getElementById('certForLabel').textContent   = t.forLabel;
+      document.getElementById('certIssuedLabel').textContent = t.issuedLabel;
+      document.getElementById('certSignLabel').textContent  = t.signLabel;
+      document.getElementById('certNumLabel').textContent   = t.numLabel;
+      // stamp bottom text
+      const stampBottom = document.querySelector('#certStamp textPath[href="#st-inner-b"]');
+      if (stampBottom) stampBottom.textContent = t.stampBottom;
+      // update validity text
+      updateValidityText();
+      // update placeholder displays if empty
+      const recip = document.getElementById('certRecipientDisplay');
+      if (recip && (recip.textContent === CERT_TRANSLATIONS['ru'].recipientPh || recip.textContent === CERT_TRANSLATIONS['ro'].recipientPh)) {
+        recip.textContent = t.recipientPh;
+      }
+      const proc = document.getElementById('certProcedureDisplay');
+      if (proc && (proc.textContent === CERT_TRANSLATIONS['ru'].procedurePh || proc.textContent === CERT_TRANSLATIONS['ro'].procedurePh)) {
+        proc.textContent = t.procedurePh;
+      }
+    }
+
+    function updateValidityText() {
+      const el = document.getElementById('certValidityText');
+      if (el) el.textContent = CERT_TRANSLATIONS[certLang].validityFn(state.validityMonths);
+    }
+
     const state = {
       theme: "dark",
       amount: 0,
@@ -1022,12 +1093,7 @@
       codeDisp.textContent = state.code || "—";
 
       // Validity text
-      const m = state.validityMonths;
-      let validityLabel;
-      if (m === 1) validityLabel = "1 месяц";
-      else if (m >= 2 && m <= 4) validityLabel = `${m} месяца`;
-      else validityLabel = `${m} месяцев`;
-      validityText.textContent = `Действителен ${validityLabel}`;
+      updateValidityText();
 
       updateTheme();
     }

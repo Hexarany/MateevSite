@@ -105,6 +105,31 @@
     }
     .code-badge strong { color: var(--ink); font-family: monospace; font-size: 0.88rem; letter-spacing: 0.04em; }
 
+    .lang-toggle {
+      display: flex;
+      gap: 6px;
+      padding: 16px 24px 0;
+    }
+    .lang-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1.5px solid var(--line);
+      background: transparent;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--muted);
+      transition: all 0.15s;
+      letter-spacing: 0.06em;
+    }
+    .lang-btn.is-active {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+    }
+
     .dip-actions {
       padding: 16px 24px 24px;
       display: flex;
@@ -368,6 +393,11 @@
 
     </div>
 
+    <div class="lang-toggle">
+      <button class="lang-btn is-active" onclick="setLang('ru')">RU</button>
+      <button class="lang-btn" onclick="setLang('ro')">RO</button>
+    </div>
+
     <div class="dip-actions">
       <button class="btn btn--primary" id="saveDiplomaBtn" onclick="saveDiploma()">
         Сохранить диплом
@@ -385,28 +415,28 @@
   <main class="dip-main">
     <div class="diploma-sheet" id="diplomaSheet">
       <div class="diploma-sheet__inner">
-        <p class="diploma-kicker">Mateev Spa Studio · Школа массажа</p>
-        <h2 class="diploma-heading">ДИПЛОМ</h2>
-        <p class="diploma-subtitle">Настоящим подтверждается, что</p>
+        <p class="diploma-kicker" id="dpKicker">Mateev Spa Studio · Школа массажа</p>
+        <h2 class="diploma-heading" id="dpHeading">ДИПЛОМ</h2>
+        <p class="diploma-subtitle" id="dpSubtitle">Настоящим подтверждается, что</p>
         <p class="diploma-name" id="dpName">Имя Выпускника</p>
-        <p class="diploma-course-label">успешно завершил(а) курс</p>
+        <p class="diploma-course-label" id="dpCourseLabel">успешно завершил(а) курс</p>
         <p class="diploma-course" id="dpCourse">Название курса</p>
 
         <div class="diploma-meta">
           <div class="diploma-meta__item">
-            <span class="diploma-meta__label">Дата окончания</span>
+            <span class="diploma-meta__label" id="dpDateLabel">Дата окончания</span>
             <span class="diploma-meta__value" id="dpDate">—</span>
           </div>
           <div class="diploma-meta__item">
-            <span class="diploma-meta__label">Место проведения</span>
-            <span class="diploma-meta__value">Кишинёв, Молдова</span>
+            <span class="diploma-meta__label" id="dpPlaceLabel">Место проведения</span>
+            <span class="diploma-meta__value" id="dpPlace">Кишинёв, Молдова</span>
           </div>
         </div>
 
         <div class="diploma-signature">
           <div class="diploma-signature__line"></div>
-          <p class="diploma-signature__name">Денис Матиевич</p>
-          <p class="diploma-signature__role">Основатель · Преподаватель</p>
+          <p class="diploma-signature__name" id="dpSigName">Денис Матиевич</p>
+          <p class="diploma-signature__role" id="dpSigRole">Основатель · Преподаватель</p>
         </div>
       </div>
       <span class="diploma-code" id="dpCode"></span>
@@ -418,6 +448,42 @@
     let currentDiploma = null;
     let courses = [];
     let enrollments = [];
+    let lang = 'ru';
+
+    const TRANSLATIONS = {
+      ru: {
+        kicker:      'Mateev Spa Studio · Школа массажа',
+        heading:     'ДИПЛОМ',
+        subtitle:    'Настоящим подтверждается, что',
+        namePlaceholder: 'Имя Выпускника',
+        courseLabel: 'успешно завершил(а) курс',
+        coursePlaceholder: 'Название курса',
+        dateLabel:   'Дата окончания',
+        placeLabel:  'Место проведения',
+        place:       'Кишинёв, Молдова',
+        sigName:     'Денис Матиевич',
+        sigRole:     'Основатель · Преподаватель',
+      },
+      ro: {
+        kicker:      'Mateev Spa Studio · Școala de masaj',
+        heading:     'DIPLOMĂ',
+        subtitle:    'Prin prezenta se confirmă că',
+        namePlaceholder: 'Numele Absolventului',
+        courseLabel: 'a finalizat cu succes cursul',
+        coursePlaceholder: 'Denumirea cursului',
+        dateLabel:   'Data finalizării',
+        placeLabel:  'Locul desfășurării',
+        place:       'Chișinău, Moldova',
+        sigName:     'Denis Matievici',
+        sigRole:     'Fondator · Instructor',
+      }
+    };
+
+    function setLang(l) {
+      lang = l;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('is-active', b.textContent.toLowerCase() === l));
+      renderDiploma();
+    }
 
     async function fetchJson(url, opts = {}) {
       const res = await fetch(url, { credentials: "include", ...opts,
@@ -437,12 +503,22 @@
     }
 
     function renderDiploma() {
-      const name = document.getElementById("graduateName").value.trim() || "Имя Выпускника";
-      const course = document.getElementById("courseName").value.trim() || "Название курса";
+      const t = TRANSLATIONS[lang];
+      const name = document.getElementById("graduateName").value.trim() || t.namePlaceholder;
+      const course = document.getElementById("courseName").value.trim() || t.coursePlaceholder;
       const date = document.getElementById("completionDate").value;
 
-      document.getElementById("dpName").textContent = name;
-      document.getElementById("dpCourse").textContent = course;
+      document.getElementById("dpKicker").textContent   = t.kicker;
+      document.getElementById("dpHeading").textContent  = t.heading;
+      document.getElementById("dpSubtitle").textContent = t.subtitle;
+      document.getElementById("dpName").textContent     = name;
+      document.getElementById("dpCourseLabel").textContent = t.courseLabel;
+      document.getElementById("dpCourse").textContent   = course;
+      document.getElementById("dpDateLabel").textContent  = t.dateLabel;
+      document.getElementById("dpPlaceLabel").textContent = t.placeLabel;
+      document.getElementById("dpPlace").textContent    = t.place;
+      document.getElementById("dpSigName").textContent  = t.sigName;
+      document.getElementById("dpSigRole").textContent  = t.sigRole;
       document.getElementById("dpDate").textContent = date ? formatDate(date) : "—";
       if (currentDiploma) {
         document.getElementById("dpCode").textContent = currentDiploma.code;
