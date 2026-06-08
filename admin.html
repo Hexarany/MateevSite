@@ -222,7 +222,8 @@
                       </label>
                       <label class="field">
                         <span>Клиент</span>
-                        <input type="text" id="adminBookingClientName" placeholder="Имя клиента">
+                        <input type="text" id="adminBookingClientName" placeholder="Имя клиента" autocomplete="off" list="clientNameSuggestions">
+                        <datalist id="clientNameSuggestions"></datalist>
                       </label>
                     </div>
 
@@ -417,7 +418,28 @@
                   <p class="section-kicker">Клиенты</p>
                   <h2 class="admin-section-block__title">Карточки клиентов, история визитов и заметки администратора</h2>
                 </div>
-                <button type="button" class="button button--ghost" id="exportClientsCsvBtn">Скачать CSV</button>
+                <div style="display:flex;gap:8px;">
+                  <button type="button" class="button button--secondary" id="addClientBtn">+ Новый клиент</button>
+                  <button type="button" class="button button--ghost" id="exportClientsCsvBtn">Скачать CSV</button>
+                </div>
+              </div>
+
+              <!-- New client modal -->
+              <div id="newClientModal" style="display:none;background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:16px;">
+                <p class="section-kicker">Новый клиент</p>
+                <h3 style="font-size:1rem;font-weight:600;margin:4px 0 16px;">Добавить клиента вручную</h3>
+                <div class="field-grid" style="margin-bottom:12px;">
+                  <label class="field"><span>Имя *</span><input type="text" id="newClientName" placeholder="Имя Фамилия"></label>
+                  <label class="field"><span>Телефон *</span><input type="tel" id="newClientPhone" placeholder="+373..."></label>
+                </div>
+                <div class="field-grid" style="margin-bottom:16px;">
+                  <label class="field"><span>Email</span><input type="email" id="newClientEmail" placeholder="email@example.com"></label>
+                  <label class="field"><span>Примечание</span><input type="text" id="newClientNote" placeholder="Источник, особенности..."></label>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <button type="button" class="button button--secondary" id="saveNewClientBtn">Сохранить клиента</button>
+                  <button type="button" class="button button--ghost" id="cancelNewClientBtn">Отмена</button>
+                </div>
               </div>
 
               <div class="admin-clients-layout">

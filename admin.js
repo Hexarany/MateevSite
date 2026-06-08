@@ -230,6 +230,42 @@ function bindEvents() {
   elements.adminLogoutBtn.addEventListener("click", handleAdminLogout);
   document.getElementById("expenseMonth")?.addEventListener("change", loadExpenses);
 
+  // New client form
+  document.getElementById("addClientBtn")?.addEventListener("click", () => {
+    document.getElementById("newClientModal").style.display = "block";
+    document.getElementById("newClientName").focus();
+  });
+  document.getElementById("cancelNewClientBtn")?.addEventListener("click", () => {
+    document.getElementById("newClientModal").style.display = "none";
+  });
+  document.getElementById("saveNewClientBtn")?.addEventListener("click", async () => {
+    const name = document.getElementById("newClientName").value.trim();
+    const phone = document.getElementById("newClientPhone").value.trim();
+    const email = document.getElementById("newClientEmail").value.trim();
+    const note = document.getElementById("newClientNote").value.trim();
+    if (!name || !phone) { showToast("Введите имя и телефон.", "error"); return; }
+    try {
+      await fetchJson("/api/admin/clients", { method: "POST", body: JSON.stringify({ clientName: name, phone, email, note }) });
+      showToast(`Клиент ${name} добавлен.`, "success");
+      document.getElementById("newClientModal").style.display = "none";
+      document.getElementById("newClientName").value = "";
+      document.getElementById("newClientPhone").value = "";
+      document.getElementById("newClientEmail").value = "";
+      document.getElementById("newClientNote").value = "";
+      await loadClientsData();
+    } catch (e) { showToast(e.message || "Ошибка.", "error"); }
+  });
+
+  // Client autocomplete — autofill phone/email when name selected
+  elements.adminBookingClientName?.addEventListener("change", () => {
+    const val = elements.adminBookingClientName.value.trim();
+    const client = state.clients.find(c => c.clientName === val);
+    if (client) {
+      if (elements.adminBookingPhone && !elements.adminBookingPhone.value) elements.adminBookingPhone.value = client.phone || "";
+      if (elements.adminBookingEmail && !elements.adminBookingEmail.value) elements.adminBookingEmail.value = client.email || "";
+    }
+  });
+
   document.getElementById("periodBtns")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".period-btn");
     if (!btn) return;
@@ -3239,8 +3275,17 @@ function renderOperationsWorkspace() {
   void refreshBookingSlots(true);
 }
 
+function updateClientSuggestions() {
+  const dl = document.getElementById("clientNameSuggestions");
+  if (!dl) return;
+  dl.innerHTML = state.clients.map(c =>
+    `<option value="${escapeHtml(c.clientName)}" data-phone="${escapeHtml(c.phone||'')}" data-email="${escapeHtml(c.email||'')}"></option>`
+  ).join("");
+}
+
 function renderOperationsSelects() {
   const bookingForm = state.operations.bookingForm;
+  updateClientSuggestions();
   const blockForm = state.operations.blockForm;
   const scheduleForm = state.operations.scheduleForm;
 
@@ -3816,8 +3861,8 @@ function handleClientDetailClick(event) {
     if (sp) bookingForm.specialistId = sp.id;
   }
 
-  // Switch to operations section and populate form fields
-  activateSection("operations");
+  // Switch to schedule section and populate form fields
+  activateSection("schedule");
   setTimeout(() => {
     renderOperationsSelects();
     // Populate form fields directly

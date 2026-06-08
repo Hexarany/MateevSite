@@ -2656,7 +2656,24 @@ function buildAdminClients(bookings, profiles = []) {
         ? new Date(`${right.lastBooking.date}T${right.lastBooking.slot}:00`).getTime()
         : 0;
       return rightStamp - leftStamp;
-    });
+    })
+    .concat(
+      // Manual clients with no bookings
+      profiles
+        .filter(p => p.manuallyAdded && !clientMap.has(p.id))
+        .map(p => ({
+          id: p.id,
+          clientName: p.clientName,
+          phone: p.phone,
+          email: p.email || "",
+          status: p.status || "new",
+          note: p.note || "",
+          tag: p.tag || "",
+          totalVisits: 0, completedVisits: 0, cancelledVisits: 0, upcomingVisits: 0, totalSpent: 0,
+          lastBooking: null, upcomingBooking: null,
+          favoriteServices: [], favoriteSpecialists: [], history: [], medCard: p.medCard || null
+        }))
+    );
 }
 
 function buildAdminStats(bookings) {
@@ -3249,7 +3266,8 @@ async function handleAdminBookingCreate(request, response) {
     specialists,
     {
       defaultStatus: "confirmed",
-      adminMode: true
+      adminMode: true,
+      allowPast: true
     }
   );
 
@@ -3265,19 +3283,21 @@ async function handleAdminBookingCreate(request, response) {
     : service;
 
   const safePayload = { ...payload, slot };
-  const availability = calculateAvailability({
-    date: safePayload.date,
-    service: effectiveService,
-    specialist,
-    bookings,
-    schedule
-  });
-
-  if (!availability.slots.some((entry) => entry.time === safePayload.slot)) {
-    sendJson(response, 409, {
-      message: "Выбранный слот недоступен. Обновите расписание и попробуйте снова."
+  const isPastDate = safePayload.date < new Date().toISOString().slice(0, 10);
+  if (!isPastDate) {
+    const availability = calculateAvailability({
+      date: safePayload.date,
+      service: effectiveService,
+      specialist,
+      bookings,
+      schedule
     });
-    return;
+    if (!availability.slots.some((entry) => entry.time === safePayload.slot)) {
+      sendJson(response, 409, {
+        message: "Выбранный слот недоступен. Обновите расписание и попробуйте снова."
+      });
+      return;
+    }
   }
 
   const booking = createBookingRecord({
@@ -3804,6 +3824,30 @@ async function routeApi(request, response, urlObject) {
 
   if (request.method === "GET" && urlObject.pathname === "/api/admin/clients") {
     await handleAdminClients(request, response);
+    return;
+  }
+
+  // POST /api/admin/clients — manually add client
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/clients") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const name = sanitizeText(payload.clientName || "");
+    const phone = sanitizeText(payload.phone || "");
+    if (!name || !phone) { sendJson(response, 400, { message: "Имя и телефон обязательны." }); return; }
+    const profiles = await readJson("clients.json");
+    const id = createClientProfileId({ clientName: name, phone, email: payload.email || "" });
+    const existing = profiles.find(p => p.id === id);
+    if (!existing) {
+      profiles.push({
+        id, clientName: name, phone,
+        email: sanitizeText(payload.email || ""),
+        note: sanitizeText(payload.note || ""),
+        status: "new", manuallyAdded: true,
+        createdAt: new Date().toISOString()
+      });
+      await writeJson("clients.json", profiles);
+    }
+    sendJson(response, 201, { ok: true, id });
     return;
   }
 
