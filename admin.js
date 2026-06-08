@@ -4,6 +4,7 @@ const state = {
   adminData: null,
   enrollments: [],
   certificates: [],
+  diplomas: [],
   diary: [],
   daySchedule: null,
   clients: [],
@@ -1412,6 +1413,10 @@ async function loadAdminData() {
     renderCertificatesTable();
   } catch {}
   try {
+    state.diplomas = await fetchJson("/api/admin/diplomas");
+    renderDiplomasTable();
+  } catch {}
+  try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
     renderDiaryEntriesList();
@@ -1455,6 +1460,34 @@ function renderCertificatesTable() {
           <select class="cert-status-select" data-cert-id="${escapeHtml(c.id)}" style="font-size:0.82rem;color:${statusColors[c.status]||''};">
             ${["active","used","cancelled"].map(s => `<option value="${s}"${c.status===s?" selected":""}>${statusLabels[s]}</option>`).join("")}
           </select>
+        </td>
+      </tr>`;
+    }).join("");
+}
+
+function renderDiplomasTable() {
+  const tbody = document.getElementById("diplomasTableBody");
+  if (!tbody) return;
+  if (!state.diplomas.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Дипломов пока нет. Нажмите «Создать диплом».</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.diplomas
+    .slice().reverse()
+    .map(d => {
+      const date = d.completionDate
+        ? new Date(d.completionDate + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" })
+        : "—";
+      return `<tr>
+        <td><span class="table-main" style="font-family:monospace;">${escapeHtml(d.code)}</span></td>
+        <td><span class="table-main">${escapeHtml(d.graduateName || "—")}</span></td>
+        <td><span class="table-main">${escapeHtml(d.courseName || "—")}</span></td>
+        <td><span class="table-main">${date}</span></td>
+        <td>
+          <a href="/diploma.html?code=${encodeURIComponent(d.code)}" target="_blank"
+             class="button button--ghost" style="font-size:0.78rem;padding:5px 10px;">
+            Открыть
+          </a>
         </td>
       </tr>`;
     }).join("");

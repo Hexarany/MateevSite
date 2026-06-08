@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Диплом — Mateev Spa Studio</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #1a1a1a;
+      --muted: #6b7280;
+      --line: rgba(0,0,0,0.10);
+      --brand: #b36d2c;
+      --green: #2d4a35;
+      --sidebar-w: 320px;
+    }
+
+    body {
+      font-family: 'Manrope', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0ebe3;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── Sidebar ──────────────────────────────────── */
+    .dip-sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: #fff;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .dip-sidebar__brand {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .dip-sidebar__eyebrow {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .dip-sidebar__title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .dip-sidebar__form {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field span { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .field input, .field select, .field textarea {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--ink);
+      background: #fafafa;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--brand);
+      background: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 64px; }
+
+    .code-badge {
+      background: #f5f0e8;
+      border: 1px solid #e0d5c5;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .code-badge strong { color: var(--ink); font-family: monospace; font-size: 0.88rem; letter-spacing: 0.04em; }
+
+    .dip-actions {
+      padding: 16px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+      font-family: inherit;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn--primary { background: var(--brand); color: #fff; }
+    .btn--ghost { background: transparent; border: 1.5px solid var(--line); color: var(--ink); }
+    .btn--danger { background: transparent; border: 1.5px solid #fca5a5; color: #dc2626; }
+
+    /* ── Main / Preview ───────────────────────────── */
+    .dip-main {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 40px;
+      overflow-y: auto;
+    }
+
+    /* ── Diploma sheet ────────────────────────────── */
+    .diploma-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      position: relative;
+      background: #f5f0e4 url('/diploma-bg.jpg') center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60mm 22mm 40mm;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    }
+
+    .diploma-sheet__inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+    }
+
+    .diploma-kicker {
+      font-family: 'Manrope', sans-serif;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #4a6b52;
+      margin-bottom: 14pt;
+    }
+
+    .diploma-heading {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 38pt;
+      font-weight: 600;
+      color: #2d4a35;
+      line-height: 1;
+      margin-bottom: 22pt;
+      letter-spacing: 0.04em;
+    }
+
+    .diploma-subtitle {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 13pt;
+      font-style: italic;
+      color: #5a6e5c;
+      margin-bottom: 10pt;
+    }
+
+    .diploma-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 32pt;
+      font-weight: 700;
+      color: #2d1a0a;
+      line-height: 1.1;
+      margin-bottom: 18pt;
+      border-bottom: 1.5pt solid rgba(179,109,44,0.4);
+      padding-bottom: 10pt;
+      width: 80%;
+    }
+
+    .diploma-course-label {
+      font-family: 'Manrope', sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #7a8c7c;
+      margin-bottom: 6pt;
+    }
+
+    .diploma-course {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 18pt;
+      font-weight: 600;
+      color: #2d4a35;
+      margin-bottom: 28pt;
+    }
+
+    .diploma-meta {
+      display: flex;
+      justify-content: center;
+      gap: 40pt;
+      width: 80%;
+      margin-bottom: 30pt;
+    }
+
+    .diploma-meta__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4pt;
+    }
+
+    .diploma-meta__label {
+      font-family: 'Manrope', sans-serif;
+      font-size: 6.5pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9aab9c;
+    }
+
+    .diploma-meta__value {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 13pt;
+      color: #2d1a0a;
+    }
+
+    .diploma-signature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4pt;
+      margin-top: 4pt;
+    }
+
+    .diploma-signature__line {
+      width: 100pt;
+      height: 1pt;
+      background: rgba(45,74,53,0.3);
+      margin-bottom: 4pt;
+    }
+
+    .diploma-signature__name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 11pt;
+      font-weight: 600;
+      color: #2d4a35;
+    }
+
+    .diploma-signature__role {
+      font-family: 'Manrope', sans-serif;
+      font-size: 6.5pt;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9aab9c;
+    }
+
+    .diploma-code {
+      position: absolute;
+      bottom: 14mm;
+      right: 18mm;
+      font-family: 'Manrope', monospace;
+      font-size: 6.5pt;
+      letter-spacing: 0.06em;
+      color: rgba(45,74,53,0.45);
+    }
+
+    /* ── Print ────────────────────────────────────── */
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body { display: block; background: none; }
+      .dip-sidebar { display: none; }
+      .dip-main { padding: 0; display: block; }
+      .diploma-sheet {
+        width: 210mm;
+        min-height: 297mm;
+        height: 297mm;
+        box-shadow: none;
+        margin: 0;
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="dip-sidebar">
+    <div class="dip-sidebar__brand">
+      <p class="dip-sidebar__eyebrow">Mateev Spa Studio</p>
+      <h1 class="dip-sidebar__title">Диплом выпускника</h1>
+    </div>
+
+    <div class="dip-sidebar__form">
+
+      <div class="field">
+        <span>Имя выпускника</span>
+        <input type="text" id="graduateName" placeholder="Имя Фамилия" oninput="renderDiploma()">
+      </div>
+
+      <div class="field">
+        <span>Курс</span>
+        <select id="courseSelect" onchange="onCourseChange()">
+          <option value="">— выберите курс —</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <span>Или введите вручную</span>
+        <input type="text" id="courseName" placeholder="Название курса" oninput="renderDiploma()">
+      </div>
+
+      <div class="field">
+        <span>Дата окончания</span>
+        <input type="date" id="completionDate" oninput="renderDiploma()">
+      </div>
+
+      <div class="field">
+        <span>Заявка (необязательно)</span>
+        <select id="enrollmentSelect" onchange="onEnrollmentChange()">
+          <option value="">— не привязывать —</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <span>Примечания</span>
+        <textarea id="notes" placeholder="Дополнительно..."></textarea>
+      </div>
+
+      <div class="code-badge" id="codeBadge" style="display:none;">
+        <span>Код диплома</span>
+        <strong id="codeDisplay"></strong>
+      </div>
+
+    </div>
+
+    <div class="dip-actions">
+      <button class="btn btn--primary" id="saveDiplomaBtn" onclick="saveDiploma()">
+        Сохранить диплом
+      </button>
+      <button class="btn btn--ghost" id="printDiplomaBtn" onclick="window.print()">
+        Распечатать / PDF
+      </button>
+      <button class="btn btn--danger" id="deleteDiplomaBtn" onclick="deleteDiploma()" style="display:none;">
+        Удалить диплом
+      </button>
+    </div>
+  </aside>
+
+  <!-- Diploma preview -->
+  <main class="dip-main">
+    <div class="diploma-sheet" id="diplomaSheet">
+      <div class="diploma-sheet__inner">
+        <p class="diploma-kicker">Mateev Spa Studio · Школа массажа</p>
+        <h2 class="diploma-heading">ДИПЛОМ</h2>
+        <p class="diploma-subtitle">Настоящим подтверждается, что</p>
+        <p class="diploma-name" id="dpName">Имя Выпускника</p>
+        <p class="diploma-course-label">успешно завершил(а) курс</p>
+        <p class="diploma-course" id="dpCourse">Название курса</p>
+
+        <div class="diploma-meta">
+          <div class="diploma-meta__item">
+            <span class="diploma-meta__label">Дата окончания</span>
+            <span class="diploma-meta__value" id="dpDate">—</span>
+          </div>
+          <div class="diploma-meta__item">
+            <span class="diploma-meta__label">Место проведения</span>
+            <span class="diploma-meta__value">Кишинёв, Молдова</span>
+          </div>
+        </div>
+
+        <div class="diploma-signature">
+          <div class="diploma-signature__line"></div>
+          <p class="diploma-signature__name">Денис Матиевич</p>
+          <p class="diploma-signature__role">Основатель · Преподаватель</p>
+        </div>
+      </div>
+      <span class="diploma-code" id="dpCode"></span>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    let currentDiploma = null;
+    let courses = [];
+    let enrollments = [];
+
+    async function fetchJson(url, opts = {}) {
+      const res = await fetch(url, { credentials: "include", ...opts,
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+      return res.json();
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso + (iso.length === 10 ? "T00:00:00" : ""));
+      return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+    }
+
+    function renderDiploma() {
+      const name = document.getElementById("graduateName").value.trim() || "Имя Выпускника";
+      const course = document.getElementById("courseName").value.trim() || "Название курса";
+      const date = document.getElementById("completionDate").value;
+
+      document.getElementById("dpName").textContent = name;
+      document.getElementById("dpCourse").textContent = course;
+      document.getElementById("dpDate").textContent = date ? formatDate(date) : "—";
+      if (currentDiploma) {
+        document.getElementById("dpCode").textContent = currentDiploma.code;
+        document.getElementById("codeDisplay").textContent = currentDiploma.code;
+        document.getElementById("codeBadge").style.display = "flex";
+      }
+    }
+
+    function onCourseChange() {
+      const sel = document.getElementById("courseSelect");
+      const courseId = sel.value;
+      const course = courses.find(c => c.id === courseId);
+      if (course) document.getElementById("courseName").value = course.name;
+      renderDiploma();
+    }
+
+    function onEnrollmentChange() {
+      const sel = document.getElementById("enrollmentSelect");
+      const enrId = sel.value;
+      const enr = enrollments.find(e => e.id === enrId);
+      if (enr) {
+        if (enr.name) document.getElementById("graduateName").value = enr.name;
+        const courseMatch = courses.find(c => c.id === enr.courseId);
+        if (courseMatch) {
+          document.getElementById("courseSelect").value = courseMatch.id;
+          document.getElementById("courseName").value = courseMatch.name;
+        }
+      }
+      renderDiploma();
+    }
+
+    async function saveDiploma() {
+      const graduateName = document.getElementById("graduateName").value.trim();
+      const courseName = document.getElementById("courseName").value.trim();
+      const completionDate = document.getElementById("completionDate").value;
+      const courseId = document.getElementById("courseSelect").value;
+      const enrollmentId = document.getElementById("enrollmentSelect").value;
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!graduateName) { alert("Введите имя выпускника"); return; }
+      if (!courseName) { alert("Введите название курса"); return; }
+      if (!completionDate) { alert("Укажите дату окончания"); return; }
+
+      try {
+        const result = await fetchJson("/api/admin/diplomas", {
+          method: "POST",
+          body: JSON.stringify({ graduateName, courseName, courseId, completionDate, enrollmentId, notes })
+        });
+        currentDiploma = result.diploma;
+        document.getElementById("codeBadge").style.display = "flex";
+        document.getElementById("codeDisplay").textContent = currentDiploma.code;
+        document.getElementById("dpCode").textContent = currentDiploma.code;
+        document.getElementById("deleteDiplomaBtn").style.display = "flex";
+        document.getElementById("saveDiplomaBtn").textContent = "Сохранено ✓";
+        setTimeout(() => { document.getElementById("saveDiplomaBtn").textContent = "Сохранить диплом"; }, 2000);
+        history.replaceState(null, "", "?code=" + currentDiploma.code);
+      } catch (e) {
+        alert("Ошибка: " + e.message);
+      }
+    }
+
+    async function deleteDiploma() {
+      if (!currentDiploma) return;
+      if (!confirm(`Удалить диплом ${currentDiploma.code}?`)) return;
+      try {
+        await fetchJson("/api/admin/diplomas/" + currentDiploma.id, { method: "DELETE" });
+        currentDiploma = null;
+        document.getElementById("codeBadge").style.display = "none";
+        document.getElementById("deleteDiplomaBtn").style.display = "none";
+        document.getElementById("dpCode").textContent = "";
+        history.replaceState(null, "", "/diploma.html");
+      } catch (e) {
+        alert("Ошибка: " + e.message);
+      }
+    }
+
+    async function init() {
+      // set today as default date
+      document.getElementById("completionDate").value = new Date().toISOString().slice(0, 10);
+      renderDiploma();
+
+      // load courses
+      try {
+        courses = await fetchJson("/api/courses");
+        const sel = document.getElementById("courseSelect");
+        courses.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          sel.appendChild(opt);
+        });
+      } catch (_) {}
+
+      // load enrollments
+      try {
+        enrollments = await fetchJson("/api/admin/enrollments");
+        const sel = document.getElementById("enrollmentSelect");
+        enrollments.forEach(e => {
+          const opt = document.createElement("option");
+          opt.value = e.id;
+          opt.textContent = `${e.name || "Без имени"} — ${e.courseName || e.courseId || ""}`;
+          sel.appendChild(opt);
+        });
+      } catch (_) {}
+
+      // load existing diploma by code from URL
+      const code = params.get("code");
+      if (code) {
+        try {
+          currentDiploma = await fetchJson("/api/diplomas/" + code);
+          document.getElementById("graduateName").value = currentDiploma.graduateName;
+          document.getElementById("courseName").value = currentDiploma.courseName;
+          document.getElementById("completionDate").value = currentDiploma.completionDate;
+          document.getElementById("notes").value = currentDiploma.notes || "";
+          if (currentDiploma.courseId) document.getElementById("courseSelect").value = currentDiploma.courseId;
+          if (currentDiploma.enrollmentId) document.getElementById("enrollmentSelect").value = currentDiploma.enrollmentId;
+          document.getElementById("codeBadge").style.display = "flex";
+          document.getElementById("codeDisplay").textContent = currentDiploma.code;
+          document.getElementById("deleteDiplomaBtn").style.display = "flex";
+          document.getElementById("saveDiplomaBtn").textContent = "Уже сохранён";
+          renderDiploma();
+        } catch (_) {}
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

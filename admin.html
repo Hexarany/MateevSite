@@ -53,6 +53,7 @@
         <a href="#team" data-section="team">Команда и услуги</a>
         <a href="#school-enrollments" data-section="school-enrollments">Заявки на курсы</a>
         <a href="#certificates" data-section="certificates">Сертификаты</a>
+        <a href="#diplomas" data-section="diplomas">Дипломы</a>
         <a href="#intakes" data-section="intakes">Анкеты пациентов</a>
         <a href="#diary" data-section="diary">Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">Отзывы на сайте</a>
@@ -582,6 +583,38 @@
                     </tr>
                   </thead>
                   <tbody id="certificatesTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-section-block reveal" id="diplomas">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Школа</p>
+                <h2 class="admin-section-block__title">Дипломы выпускников</h2>
+              </div>
+              <a href="/diploma.html" target="_blank" class="button button--secondary">Создать диплом</a>
+            </div>
+            <div class="admin-widget admin-widget--table">
+              <div class="admin-widget__head admin-widget__head--toolbar">
+                <div>
+                  <p class="section-kicker">Выданные</p>
+                  <h3 class="admin-widget__title">История дипломов</h3>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="booking-table">
+                  <thead>
+                    <tr>
+                      <th>Код</th>
+                      <th>Выпускник</th>
+                      <th>Курс</th>
+                      <th>Дата окончания</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="diplomasTableBody"></tbody>
                 </table>
               </div>
             </div>

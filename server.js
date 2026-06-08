@@ -4049,6 +4049,63 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // ─── Diplomas ─────────────────────────────────────────────────────────────
+  // GET /api/admin/diplomas
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/diplomas") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    sendJson(response, 200, await readJson("diplomas.json"));
+    return;
+  }
+
+  // POST /api/admin/diplomas
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/diplomas") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const diplomas = await readJson("diplomas.json");
+    const seq = String(diplomas.length + 1).padStart(3, "0");
+    const diploma = {
+      id: crypto.randomUUID(),
+      code: `DIP-${year}${month}-${seq}`,
+      graduateName: sanitizeText(payload.graduateName || ""),
+      courseName: sanitizeText(payload.courseName || ""),
+      courseId: sanitizeText(payload.courseId || ""),
+      completionDate: sanitizeText(payload.completionDate || now.toISOString().slice(0, 10)),
+      enrollmentId: sanitizeText(payload.enrollmentId || ""),
+      notes: sanitizeText(payload.notes || ""),
+      issuedAt: now.toISOString()
+    };
+    diplomas.push(diploma);
+    await writeJson("diplomas.json", diplomas);
+    sendJson(response, 201, { ok: true, diploma });
+    return;
+  }
+
+  // DELETE /api/admin/diplomas/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/diplomas/")) {
+    assertAdminPin(request);
+    const dipId = urlObject.pathname.replace("/api/admin/diplomas/", "");
+    const diplomas = await readJson("diplomas.json");
+    const idx = diplomas.findIndex(d => d.id === dipId);
+    if (idx === -1) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
+    diplomas.splice(idx, 1);
+    await writeJson("diplomas.json", diplomas);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // GET /api/diplomas/:code — public
+  if (request.method === "GET" && urlObject.pathname.startsWith("/api/diplomas/")) {
+    const code = urlObject.pathname.replace("/api/diplomas/", "").toUpperCase();
+    const diplomas = await readJson("diplomas.json");
+    const diploma = diplomas.find(d => d.code.toUpperCase() === code);
+    if (!diploma) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
+    sendJson(response, 200, diploma);
+    return;
+  }
+
   if (request.method === "GET" && urlObject.pathname === "/api/health") {
     sendJson(response, 200, {
       ok: true,
