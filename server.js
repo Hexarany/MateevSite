@@ -3955,7 +3955,7 @@ async function routeApi(request, response, urlObject) {
 
   // GET /api/admin/enrollments - admin
   if (request.method === "GET" && urlObject.pathname === "/api/admin/enrollments") {
-    assertAdminPin(request);
+    if (!getAdminSession(request)) { assertAdminPin(request); }
     const enrollments = await readJson("enrollments.json");
     sendJson(response, 200, { enrollments });
     return;

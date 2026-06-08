@@ -526,7 +526,8 @@
 
       // load courses
       try {
-        courses = await fetchJson("/api/courses");
+        const schoolData = await fetchJson("/api/school/data");
+        courses = schoolData.courses || [];
         const sel = document.getElementById("courseSelect");
         courses.forEach(c => {
           const opt = document.createElement("option");
