@@ -2570,7 +2570,16 @@ function normalizeClientProfiles(profilesInput = []) {
         id,
         status: ["new", "regular", "vip", "attention"].includes(status) ? status : "regular",
         note: sanitizeText(profile?.note),
-        tag: sanitizeText(profile?.tag)
+        tag: sanitizeText(profile?.tag),
+        ...(profile?.manuallyAdded && {
+          manuallyAdded: true,
+          clientName: sanitizeText(profile?.clientName || ""),
+          phone: sanitizeText(profile?.phone || ""),
+          email: sanitizeText(profile?.email || ""),
+          createdAt: sanitizeText(profile?.createdAt || "")
+        }),
+        ...(profile?.medCard && { medCard: profile.medCard }),
+        ...(profile?.portalToken && { portalToken: profile.portalToken })
       };
     })
     .filter(Boolean);
