@@ -68,7 +68,7 @@ const STATIC_FILES = {
   "/client.html": "client.html",
   "/card": "card.html",
   "/card.html": "card.html",
-  "/denis.jpg": "denis.jpg",
+  "/denis.png": "denis.png",
   "/diploma-bg.png": "diploma-bg.png",
   "/mateev_logo.png": "mateev_logo.png",
   "/mateev_logo.jpg": "mateev_logo.jpg",

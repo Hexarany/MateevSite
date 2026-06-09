@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>MateevSpa — Редактор визиток</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&family=Italiana&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --accent: #C4915A; --f-serif: 'Cormorant Garamond',serif; --f-sans: 'Montserrat',sans-serif; --radius: 0mm; }
+body { font-family: 'Instrument Sans',sans-serif; background: #1a1a1a; display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: 280px; min-width: 280px; background: #111; border-right: 1px solid #222;
+  padding: 20px 18px; display: flex; flex-direction: column; gap: 12px;
+  height: 100vh; position: sticky; top: 0; overflow-y: auto;
+}
+#sidebar h1 { font-family: 'Italiana',serif; font-size: 20px; color: #c49e5a; }
+#sidebar h1 span { display: block; font-size: 10px; color: #444; font-family: 'Instrument Sans',sans-serif; letter-spacing: .14em; text-transform: uppercase; margin-top: 2px; }
+.lbl { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: #444; margin-bottom: 5px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #666; }
+input[type="text"], input[type="url"] {
+  background: #1c1c1c; border: 1px solid #2e2e2e; border-radius: 4px;
+  color: #ddd; padding: 7px 10px; font-size: 12px; font-family: 'Instrument Sans',sans-serif; outline: none; width: 100%;
+}
+input:focus { border-color: #c49e5a55; }
+hr { border: none; border-top: 1px solid #1f1f1f; }
+.btn-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.btn { padding: 7px 10px; border: 1px solid #2a2a2a; border-radius: 4px; background: #1a1a1a; color: #666; font-size: 10px; cursor: pointer; font-family: 'Instrument Sans',sans-serif; transition: all .15s; }
+.btn:hover { border-color: #444; color: #aaa; }
+.btn.on { border-color: #c49e5a; color: #c49e5a; background: #1c1610; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; }
+.toggle-row span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #666; }
+.toggle { position: relative; width: 36px; height: 19px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.tslider { position: absolute; inset: 0; background: #222; border-radius: 20px; cursor: pointer; border: 1px solid #333; transition: all .2s; }
+.tslider::after { content: ''; position: absolute; left: 3px; top: 2px; width: 11px; height: 11px; border-radius: 50%; background: #444; transition: all .2s; }
+.toggle input:checked + .tslider { background: #1c1610; border-color: #c49e5a; }
+.toggle input:checked + .tslider::after { transform: translateX(17px); background: #c49e5a; }
+#btn-print { margin-top: auto; background: #c49e5a; color: #111; border: none; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; font-family: 'Instrument Sans',sans-serif; }
+#btn-print:hover { background: #d4ae6a; }
+
+/* ── PREVIEW ── */
+#preview-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 40px; overflow: auto; }
+.prev-lbl { font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: #444; text-align: center; margin-bottom: 8px; }
+.cshadow { box-shadow: 0 8px 40px rgba(0,0,0,.75); }
+
+/* ── CARD FRONT ── */
+.card-front { width: 90mm; height: 55mm; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); }
+.front-bg  { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, #2e1a0a 0%, #0e0704 100%); border-radius: var(--radius); }
+.front-cnt { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 3mm; }
+.front-logo { width: 28mm; height: auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,.6)); }
+.front-tag  { font-family: var(--f-sans); font-size: 5.5pt; font-weight: 400; letter-spacing: 2.5px; color: rgba(220,185,140,.65); text-transform: uppercase; }
+
+/* ── CARD BACK ── */
+.card-back { width: 90mm; height: 55mm; position: relative; overflow: hidden; background: #FBF4EC; border-radius: var(--radius); }
+.top-bar { position: absolute; top: 0; left: 0; right: 0; height: 2.5mm; background: linear-gradient(90deg,#8B5E3C,#C4915A,#D4A574,#C4915A,#8B5E3C); z-index: 2; }
+.back-wm { position: absolute; top: 50%; left: 40%; transform: translate(-50%,-50%); width: 28mm; opacity: .06; pointer-events: none; z-index: 0; }
+
+/* Main flex row */
+.back-body { position: absolute; inset: 0; top: 2.5mm; display: flex; padding: 2.5mm 3mm 2.5mm 3mm; gap: 2mm; z-index: 1; }
+
+/* Left column */
+.back-col-left { display: flex; flex-direction: column; gap: 1mm; flex: 1; min-width: 0; }
+.back-logo-wrap { width: 16mm; height: 11mm; overflow: hidden; flex-shrink: 0; }
+.back-logo { width: 16mm; height: auto; display: block; }
+.back-name { font-family: var(--f-serif); font-weight: 600; font-size: 14pt; color: #2e1a0a; letter-spacing: .02em; line-height: 1; }
+.back-pos  { font-family: var(--f-sans); font-size: 7pt; letter-spacing: .14em; text-transform: uppercase; color: #8B6B50; }
+.back-sep  { width: 100%; height: .25mm; background: var(--accent); opacity: .5; margin: 1mm 0; }
+.back-svc  { font-family: var(--f-sans); font-size: 7pt; letter-spacing: .3px; color: #8B6B50; font-weight: 300; }
+.back-contacts { display: flex; flex-direction: column; gap: 1mm; margin-top: 1mm; }
+.cline  { display: flex; align-items: center; gap: 1.5mm; font-family: var(--f-sans); font-size: 8pt; color: #3a2510; }
+.cicon  { font-size: 8pt; color: #B8835A; width: 3mm; flex-shrink: 0; text-align: center; }
+
+/* Right column */
+.back-col-right { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex-shrink: 0; }
+.qr-img { width: 19mm; height: 19mm; display: block; image-rendering: pixelated; }
+
+/* ── PRINT ── */
+.print-pages { display: none; }
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { display: block !important; background: white !important; }
+  #sidebar, #preview-area { display: none !important; }
+  .print-pages { display: block !important; }
+  .print-page { width: 210mm; height: 297mm; padding: 10mm; display: grid !important; gap: 4mm; break-after: page; }
+  /* Front */
+  .pf { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .pf-bg  { position: absolute; inset: 0; }
+  .pf-cnt { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 3mm; }
+  .pf-logo{ width: 28mm; height: auto; }
+  .pf-tag { font-size: 5.5pt; letter-spacing: 2.5px; text-transform: uppercase; }
+  /* Back */
+  .pb { position: relative; overflow: hidden; }
+  .pb-bar { position: absolute; top: 0; left: 0; right: 0; height: 2.5mm; z-index: 2; }
+  .pb-wm  { position: absolute; top: 50%; left: 40%; transform: translate(-50%,-50%); width: 28mm; opacity: .06; }
+  .pb-body{ position: absolute; inset: 0; top: 2.5mm; display: flex; padding: 2.5mm 3mm 2.5mm 3mm; gap: 2mm; z-index: 1; }
+  .pb-left{ display: flex; flex-direction: column; gap: 1mm; flex: 1; min-width: 0; }
+  .pb-lwrap { width: 16mm; height: 11mm; overflow: hidden; flex-shrink: 0; }
+  .pb-logo{ width: 16mm; height: auto; display: block; }
+  .pb-name{ font-size: 14pt; font-weight: 600; letter-spacing: .02em; line-height: 1; }
+  .pb-pos { font-size: 7pt; letter-spacing: .14em; text-transform: uppercase; }
+  .pb-sep { width: 100%; height: .25mm; opacity: .5; margin: 1mm 0; }
+  .pb-svc { font-size: 7pt; letter-spacing: .3px; font-weight: 300; }
+  .pb-contacts { display: flex; flex-direction: column; gap: 1mm; margin-top: 1mm; }
+  .pb-cline { display: flex; align-items: center; gap: 1.5mm; font-size: 8pt; }
+  .pb-cicon { font-size: 8pt; width: 3mm; flex-shrink: 0; text-align: center; }
+  .pb-right{ display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex-shrink: 0; }
+  .pb-qr  { width: 19mm; height: 19mm; display: block; image-rendering: pixelated; }
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h1>MateevSpa<span>Редактор визиток</span></h1>
+  <hr>
+  <div>
+    <div class="lbl">Тема</div>
+    <div class="btn-row">
+      <button class="btn on" onclick="setTheme('classic',this)">Контраст</button>
+      <button class="btn"    onclick="setTheme('noir',this)">Ноир</button>
+      <button class="btn"    onclick="setTheme('blanc',this)">Бланк</button>
+    </div>
+  </div>
+  <hr>
+  <div>
+    <div class="lbl">Лицевая</div>
+    <label class="field">Слоган
+      <input type="text" id="inp-tagline" value="RESTORE · RENEW · RADIATE" oninput="sync()">
+    </label>
+  </div>
+  <hr>
+  <div>
+    <div class="lbl">Обратная</div>
+    <div style="display:flex;flex-direction:column;gap:7px;">
+      <label class="field">Имя <input type="text" id="inp-name" value="Denis Matievici" oninput="sync()"></label>
+      <label class="field">Должность <input type="text" id="inp-pos" value="Massage Therapist &amp; Educator" oninput="sync()"></label>
+      <label class="field">Специализации <input type="text" id="inp-svc" value="Massage · Body Care · Aesthetics" oninput="sync()"></label>
+      <label class="field">Телефон <input type="text" id="inp-phone" value="+373 69 158 475" oninput="sync()"></label>
+      <label class="field" style="opacity:.45;" title="В QR-коде"><s>Instagram</s> — в QR <input type="text" id="inp-ig" value="" style="display:none"></label>
+      <label class="field" style="opacity:.45;" title="В QR-коде"><s>Сайт</s> — в QR <input type="text" id="inp-site" value="" style="display:none"></label>
+      <label class="field">QR — ссылка <input type="url" id="inp-qr" value="https://mateevmassage.com/card" oninput="updateQR()"></label>
+      <label class="field">Подпись QR <input type="text" id="inp-qrlbl" value="Визитка" oninput="sync()"></label>
+    </div>
+  </div>
+  <hr>
+  <div>
+    <div class="lbl">Параметры печати</div>
+    <div style="display:flex;flex-direction:column;gap:9px;">
+      <div class="toggle-row">
+        <span>Скруглённые углы</span>
+        <label class="toggle"><input type="checkbox" id="tog-radius" onchange="toggleRadius(this.checked)"><span class="tslider"></span></label>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:4px;">Карточек на листе</div>
+        <div class="btn-row">
+          <button class="btn"    onclick="setCount(6,this)">6 шт</button>
+          <button class="btn"    onclick="setCount(8,this)">8 шт</button>
+          <button class="btn on" onclick="setCount(10,this)">10 шт</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr>
+  <button id="btn-print" onclick="window.print()">🖨 Распечатать (A4)</button>
+</div>
+
+<div id="preview-area">
+  <div>
+    <div class="prev-lbl">Лицевая сторона</div>
+    <div class="cshadow">
+      <div class="card-front" id="prev-front">
+        <div class="front-bg" id="pv-front-bg"></div>
+        <div class="front-cnt">
+          <img class="front-logo" src="https://mateevmassage.com/mateev_logo.png" id="pv-front-logo">
+          <div class="front-tag" id="pv-tag">RESTORE · RENEW · RADIATE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="prev-lbl">Обратная сторона</div>
+    <div class="cshadow">
+      <div class="card-back" id="prev-back">
+        <div class="top-bar" id="pv-topbar"></div>
+        <img class="back-wm" src="https://mateevmassage.com/mateev_logo.png" id="pv-wm">
+        <div class="back-body">
+          <div class="back-col-left">
+            <div class="back-logo-wrap"><img class="back-logo" src="https://mateevmassage.com/mateev_logo.png" id="pv-back-logo"></div>
+            <div class="back-name" id="pv-name">Denis Matievici</div>
+            <div class="back-pos"  id="pv-pos">Massage Therapist &amp; Educator</div>
+            <div class="back-sep"  id="pv-sep"></div>
+            <div class="back-svc"  id="pv-svc">Massage · Body Care · Aesthetics</div>
+            <div class="back-contacts" id="pv-contacts"></div>
+          </div>
+          <div class="back-col-right">
+            <canvas id="qr-canvas" width="190" height="190" style="width:19mm;height:19mm;image-rendering:pixelated;display:block;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="print-pages" id="print-pages"></div>
+
+<script>
+const LOGO = 'https://mateevmassage.com/mateev_logo.png';
+let cardCount = 10;
+let currentTheme = 'classic';
+let qrDataUrl = '';
+
+const THEMES = {
+  classic: { frontBg:'radial-gradient(ellipse at 50% 60%,#2e1a0a 0%,#0e0704 100%)', frontTag:'rgba(220,185,140,.65)', frontFilter:'drop-shadow(0 2px 8px rgba(0,0,0,.6))', backBg:'#FBF4EC', topBar:'linear-gradient(90deg,#8B5E3C,#C4915A,#D4A574,#C4915A,#8B5E3C)', name:'#2e1a0a', pos:'#8B6B50', accent:'#C4915A', text:'#3a2510', muted:'#8B6B50', icon:'#B8835A', qrDark:'#1a1a1a' },
+  noir:    { frontBg:'radial-gradient(ellipse at 50% 60%,#2e1a0a 0%,#0e0704 100%)', frontTag:'rgba(220,185,140,.65)', frontFilter:'drop-shadow(0 2px 8px rgba(0,0,0,.6))', backBg:'#0f1a15', topBar:'linear-gradient(90deg,#8B5E3C,#C4915A,#D4A574,#C4915A,#8B5E3C)', name:'#e0c280', pos:'#766e5c', accent:'#c49e5a', text:'#c8b89a', muted:'#766e5c', icon:'#c49e5a', qrDark:'#c49e5a' },
+  blanc:   { frontBg:'linear-gradient(145deg,#fdf8f0 0%,#ede0cc 100%)', frontTag:'#8B6B50', frontFilter:'none', backBg:'#fdf9f3', topBar:'linear-gradient(90deg,#8B5E3C,#C4915A,#D4A574,#C4915A,#8B5E3C)', name:'#2e1a0a', pos:'#8B6B50', accent:'#C4915A', text:'#3a2510', muted:'#8B6B50', icon:'#B8835A', qrDark:'#1a1a1a' },
+};
+
+/* ── Minimal QR code generator (no deps) ── */
+// Uses qrcode-generator by kazuhikoarase, inlined below
+function drawQR(canvas, text, darkColor) {
+  if (typeof qrcode === 'undefined') return;
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const size = qr.getModuleCount();
+  const ctx = canvas.getContext('2d');
+  const scale = canvas.width / size;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = darkColor || '#1a1a1a';
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(Math.floor(c * scale), Math.floor(r * scale), Math.ceil(scale), Math.ceil(scale));
+      }
+    }
+  }
+  qrDataUrl = canvas.toDataURL('image/png');
+  buildPrint();
+}
+
+function updateQR() {
+  const url = document.getElementById('inp-qr').value.trim() || 'https://mateevmassage.com/card';
+  const T = THEMES[currentTheme];
+  const canvas = document.getElementById('qr-canvas');
+  if (canvas && typeof qrcode !== 'undefined') {
+    drawQR(canvas, url, T.qrDark);
+  }
+}
+
+/* ── Theme ── */
+function setTheme(t, btn) {
+  currentTheme = t;
+  btn.closest('.btn-row').querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  applyTheme();
+}
+
+function applyTheme() {
+  const T = THEMES[currentTheme];
+  document.getElementById('pv-front-bg').style.background = T.frontBg;
+  document.getElementById('pv-tag').style.color = T.frontTag;
+  document.getElementById('pv-front-logo').style.filter = T.frontFilter;
+  document.getElementById('prev-back').style.background = T.backBg;
+  document.getElementById('pv-topbar').style.background = T.topBar;
+  document.getElementById('pv-name').style.color = T.name;
+  document.getElementById('pv-pos').style.color  = T.pos;
+  document.getElementById('pv-sep').style.background = T.accent;
+  document.getElementById('pv-svc').style.color  = T.muted;
+  updateQR();
+  buildPrint();
+}
+
+/* ── Sync preview ── */
+function sync() {
+  document.getElementById('pv-tag').textContent  = document.getElementById('inp-tagline').value;
+  document.getElementById('pv-name').textContent = document.getElementById('inp-name').value;
+  document.getElementById('pv-pos').textContent  = document.getElementById('inp-pos').value;
+  document.getElementById('pv-svc').textContent  = document.getElementById('inp-svc').value;
+
+  const wrap = document.getElementById('pv-contacts');
+  wrap.innerHTML = '';
+  [
+    { icon:'☎', val: document.getElementById('inp-phone').value },
+    { icon:'◎', val: document.getElementById('inp-ig').value },
+    { icon:'⊕', val: document.getElementById('inp-site').value },
+  ].filter(l => l.val.trim()).forEach(l => {
+    wrap.insertAdjacentHTML('beforeend',
+      `<div class="cline"><span class="cicon">${l.icon}</span><span>${l.val}</span></div>`);
+  });
+
+  buildPrint();
+}
+
+/* ── Radius / Count ── */
+function toggleRadius(on) {
+  document.documentElement.style.setProperty('--radius', on ? '2.5mm' : '0mm');
+  buildPrint();
+}
+
+function setCount(n, btn) {
+  cardCount = n;
+  btn.closest('.btn-row').querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  buildPrint();
+}
+
+/* ── Build print pages ── */
+function buildPrint() {
+  const T      = THEMES[currentTheme];
+  const radius = document.getElementById('tog-radius').checked ? '2.5mm' : '0mm';
+  const GRID   = { 6:{cols:2,rows:3}, 8:{cols:2,rows:4}, 10:{cols:2,rows:5} }[cardCount];
+  const gs     = `grid-template-columns:repeat(${GRID.cols},1fr);grid-template-rows:repeat(${GRID.rows},1fr)`;
+  const tag    = document.getElementById('inp-tagline').value;
+  const name   = document.getElementById('inp-name').value;
+  const pos    = document.getElementById('inp-pos').value;
+  const svc    = document.getElementById('inp-svc').value;
+  const phone  = document.getElementById('inp-phone').value.trim();
+  const ig     = document.getElementById('inp-ig').value.trim();
+  const site   = document.getElementById('inp-site').value.trim();
+  const qrlbl  = document.getElementById('inp-qrlbl').value;
+  const qr     = qrDataUrl;
+
+  const clines = [
+    phone && `<div class="pb-cline" style="color:${T.text}"><span class="pb-cicon" style="color:${T.icon}">☎</span>${phone}</div>`,
+    ig    && `<div class="pb-cline" style="color:${T.text}"><span class="pb-cicon" style="color:${T.icon}">◎</span>${ig}</div>`,
+    site  && `<div class="pb-cline" style="color:${T.text}"><span class="pb-cicon" style="color:${T.icon}">⊕</span>${site}</div>`,
+  ].filter(Boolean).join('');
+
+  function front() {
+    return `<div class="pf" style="background:${T.frontBg};border-radius:${radius};">
+  <div class="pf-bg" style="background:${T.frontBg};position:absolute;inset:0;border-radius:${radius};"></div>
+  <div class="pf-cnt">
+    <img class="pf-logo" src="${LOGO}" style="filter:${T.frontFilter};">
+    <div class="pf-tag" style="font-family:'Montserrat',sans-serif;color:${T.frontTag};">${tag}</div>
+  </div>
+</div>`;
+  }
+
+  function back() {
+    return `<div class="pb" style="background:${T.backBg};border-radius:${radius};">
+  <div class="pb-bar" style="background:${T.topBar};"></div>
+  <img class="pb-wm" src="${LOGO}">
+  <div class="pb-body">
+    <div class="pb-left">
+      <div class="pb-lwrap"><img class="pb-logo" src="${LOGO}"></div>
+      <div class="pb-name" style="color:${T.name};font-family:'Cormorant Garamond',serif;">${name}</div>
+      <div class="pb-pos"  style="color:${T.pos};font-family:'Montserrat',sans-serif;">${pos}</div>
+      <div class="pb-sep"  style="background:${T.accent};width:100%;height:.25mm;opacity:.5;margin:.5mm 0;"></div>
+      <div class="pb-svc"  style="color:${T.muted};font-family:'Montserrat',sans-serif;">${svc}</div>
+      <div class="pb-contacts">${clines}</div>
+    </div>
+    <div class="pb-right">
+      ${qr ? `<img class="pb-qr" src="${qr}">` : ''}
+    </div>
+  </div>
+</div>`;
+  }
+
+  let p1 = `<div class="print-page" style="${gs}">`;
+  for (let i = 0; i < cardCount; i++) p1 += front();
+  p1 += '</div>';
+
+  let p2 = `<div class="print-page" style="${gs}">`;
+  for (let i = 0; i < cardCount; i++) p2 += back();
+  p2 += '</div>';
+
+  document.getElementById('print-pages').innerHTML = p1 + p2;
+}
+
+/* ── Load QR library then init ── */
+const s = document.createElement('script');
+s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+s.onload = () => { sync(); updateQR(); };
+s.onerror = () => {
+  // Fallback: show QR as external image
+  const canvas = document.getElementById('qr-canvas');
+  if (!canvas) return;
+  const url = document.getElementById('inp-qr').value.trim() || 'https://mateevmassage.com/card';
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    qrDataUrl = canvas.toDataURL();
+    buildPrint();
+  };
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}`;
+};
+document.head.appendChild(s);
+
+// Init without QR (fills in after library loads)
+applyTheme();
+sync();
+</script>
+</body>
+</html>
