@@ -3,12 +3,14 @@
  * Cron: 0 3 * * * cd /opt/MateevSite && node scripts/backup-data.js >> /var/log/mateev-backup.log 2>&1
  */
 
-const fs    = require("node:fs");
-const path  = require("node:path");
-const https = require("node:https");
+const fs     = require("node:fs");
+const path   = require("node:path");
+const https  = require("node:https");
+const { execSync } = require("node:child_process");
 
-const ROOT     = path.join(__dirname, "..");
-const DATA_DIR = path.join(ROOT, "data");
+const ROOT        = path.join(__dirname, "..");
+const DATA_DIR    = path.join(ROOT, "data");
+const UPLOADS_DIR = path.join(ROOT, "uploads");
 
 // ── Load .env ──────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -66,29 +68,51 @@ async function buildBundle() {
   return { bundle, files };
 }
 
+// ── Backup uploads as tar.gz ───────────────────────────────────────────────
+async function backupUploads(backupDir, date, label) {
+  try {
+    const tarFile = path.join(backupDir, `uploads-${date}-${label}.tar.gz`);
+    execSync(`tar -czf "${tarFile}" -C "${ROOT}" uploads`, { stdio: "pipe" });
+    const stat = await fs.promises.stat(tarFile);
+    console.log(`Uploads archived: ${tarFile} (${Math.round(stat.size / 1024)}KB)`);
+    return tarFile;
+  } catch (e) {
+    console.error("Uploads backup failed:", e.message);
+    return null;
+  }
+}
+
 // ── Local snapshot ─────────────────────────────────────────────────────────
 async function saveLocalSnapshot(bundle, label) {
   const BACKUP_DIR = path.join(ROOT, "backups");
   await fs.promises.mkdir(BACKUP_DIR, { recursive: true });
   const date = new Date().toISOString().slice(0, 10);
+
+  // Save JSON data bundle
   const filename = path.join(BACKUP_DIR, `backup-${date}-${label}.json`);
   await fs.promises.writeFile(filename, JSON.stringify(bundle, null, 2), "utf8");
 
-  // Keep only last 30 backup bundles
-  const allBackups = (await fs.promises.readdir(BACKUP_DIR))
-    .filter(f => f.startsWith("backup-") && f.endsWith(".json"))
-    .sort();
-  if (allBackups.length > 30) {
-    for (const old of allBackups.slice(0, allBackups.length - 30)) {
-      await fs.promises.unlink(path.join(BACKUP_DIR, old)).catch(() => {});
+  // Save uploads archive
+  const uploadsFile = await backupUploads(BACKUP_DIR, date, label);
+
+  // Keep only last 30 backups of each type
+  for (const prefix of ["backup-", "uploads-"]) {
+    const ext = prefix === "backup-" ? ".json" : ".tar.gz";
+    const all = (await fs.promises.readdir(BACKUP_DIR))
+      .filter(f => f.startsWith(prefix) && f.endsWith(ext))
+      .sort();
+    if (all.length > 30) {
+      for (const old of all.slice(0, all.length - 30)) {
+        await fs.promises.unlink(path.join(BACKUP_DIR, old)).catch(() => {});
+      }
     }
   }
 
-  return filename;
+  return { filename, uploadsFile };
 }
 
 // ── Send email ─────────────────────────────────────────────────────────────
-async function sendBackupEmail(bundle, fileCount) {
+async function sendBackupEmail(bundle, fileCount, uploadsFile) {
   if (!RESEND_API_KEY || !EMAIL_FROM || !BACKUP_EMAIL) {
     console.log("Email backup skipped: RESEND_API_KEY, EMAIL_FROM or BACKUP_EMAIL not set");
     return;
@@ -100,6 +124,20 @@ async function sendBackupEmail(bundle, fileCount) {
   const filename  = `mateev-backup-${new Date().toISOString().slice(0, 10)}.json`;
   const totalKeys = Object.keys(bundle).length;
   const totalRecs = Object.values(bundle).reduce((sum, v) => sum + (Array.isArray(v) ? v.length : 0), 0);
+
+  // Prepare uploads attachment if available and under 5MB
+  const attachments = [{ filename, content: b64 }];
+  if (uploadsFile) {
+    try {
+      const uploadsBuf = await fs.promises.readFile(uploadsFile);
+      if (uploadsBuf.length < 5 * 1024 * 1024) {
+        attachments.push({
+          filename: path.basename(uploadsFile),
+          content: uploadsBuf.toString("base64")
+        });
+      }
+    } catch {}
+  }
 
   const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f7f0e6;font-family:'Helvetica Neue',Arial,sans-serif;color:#241c17;">
@@ -134,7 +172,7 @@ async function sendBackupEmail(bundle, fileCount) {
       to: [BACKUP_EMAIL],
       subject: `Бэкап данных ${new Date().toISOString().slice(0, 10)} — Mateev Spa Studio`,
       html,
-      attachments: [{ filename, content: b64 }]
+      attachments
     },
     { Authorization: `Bearer ${RESEND_API_KEY}` }
   );
@@ -152,10 +190,10 @@ async function main() {
   console.log(`[${new Date().toISOString()}] Starting backup (${label})...`);
 
   const { bundle, files } = await buildBundle();
-  const localFile = await saveLocalSnapshot(bundle, label);
+  const { filename: localFile, uploadsFile } = await saveLocalSnapshot(bundle, label);
   console.log(`Local snapshot: ${path.basename(localFile)} (${files.length} files)`);
 
-  await sendBackupEmail(bundle, files.length);
+  await sendBackupEmail(bundle, files.length, uploadsFile);
   console.log(`[${new Date().toISOString()}] Backup complete.`);
 }
 
