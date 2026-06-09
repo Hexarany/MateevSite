@@ -5472,6 +5472,18 @@ async function initBackupWidget() {
 
 // ─── Financial Report ────────────────────────────────────────────────────────
 
+function showCardQR() {
+  const overlay = document.getElementById("cardQrOverlay");
+  if (overlay) overlay.style.display = "flex";
+}
+
+function copyCardLink() {
+  const url = "https://mateevmassage.com/card";
+  navigator.clipboard.writeText(url)
+    .then(() => showToast("Ссылка скопирована!", "success"))
+    .catch(() => prompt("Скопируйте ссылку:", url));
+}
+
 function initFinancialReport() {
   const now = new Date();
   const thisMonth = now.toISOString().slice(0, 7);
