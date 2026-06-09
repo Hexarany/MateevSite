@@ -5874,33 +5874,47 @@ function render404Page() {
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Страница не найдена — Mateev Spa Studio</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
-    .num{font-family:'Cormorant Garamond',serif;font-size:clamp(6rem,20vw,12rem);font-weight:700;color:#1a2e22;line-height:1;opacity:0.12;margin-bottom:-20px}
-    .title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:600;color:#1a2e22;margin-bottom:12px}
-    .sub{color:#7d6d60;font-size:0.95rem;margin-bottom:36px;max-width:400px}
-    .btn{display:inline-block;padding:14px 32px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem;text-decoration:none}
-    .btn:hover{background:#9a5c22}
-    .links{margin-top:24px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-    .link{font-size:0.88rem;color:#6b8d6b;text-decoration:none;font-weight:500}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+    .logo{width:64px;height:64px;object-fit:contain;margin-bottom:24px;opacity:0.6}
+    .kicker{font-size:0.72rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
+    .title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:600;color:#1a2e22;line-height:1.15;margin-bottom:14px}
+    .sub{color:#7d6d60;font-size:0.92rem;line-height:1.7;margin-bottom:32px;max-width:380px}
+    .btn-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .btn-primary{display:inline-block;padding:14px 36px;background:#1a2e22;color:#fff;border-radius:50px;font-weight:700;font-size:0.92rem;text-decoration:none;transition:opacity .2s}
+    .btn-primary:hover{opacity:0.85}
+    .btn-book{display:inline-block;padding:12px 28px;background:#b36d2c;color:#fff;border-radius:50px;font-weight:600;font-size:0.88rem;text-decoration:none;transition:opacity .2s}
+    .btn-book:hover{opacity:0.85}
+    .divider{width:40px;height:1px;background:rgba(26,46,34,0.15);margin:28px auto}
+    .links{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+    .link{font-size:0.82rem;color:#6b8d6b;text-decoration:none;font-weight:500}
     .link:hover{text-decoration:underline}
+    .num{font-family:'Cormorant Garamond',serif;font-size:6rem;font-weight:700;color:#1a2e22;opacity:0.07;position:fixed;bottom:-10px;right:16px;line-height:1;pointer-events:none;user-select:none}
   </style>
 </head>
 <body>
-  <div class="num">404</div>
-  <h1 class="title">Страница не найдена</h1>
-  <p class="sub">Возможно, ссылка устарела или адрес введён с ошибкой</p>
-  <a href="${base}/" class="btn">На главную</a>
+  <img class="logo" src="${base}/mateev_logo.png" alt="Mateev Spa Studio">
+  <p class="kicker">Ошибка 404</p>
+  <h1 class="title">Эта страница<br>не существует</h1>
+  <p class="sub">Возможно, ссылка устарела или адрес введён с опечаткой. Но мы здесь — и всегда рады вас принять.</p>
+  <div class="btn-wrap">
+    <a href="${base}/" class="btn-primary">На главную</a>
+    <a href="${base}/#booking" class="btn-book">Записаться на сеанс →</a>
+  </div>
+  <div class="divider"></div>
   <div class="links">
-    <a href="${base}/#booking" class="link">Записаться</a>
-    <a href="${base}/blog" class="link">Дневник</a>
+    <a href="${base}/blog" class="link">Дневник практики</a>
     <a href="${base}/school" class="link">Школа</a>
     <a href="${base}/certificates" class="link">Сертификаты</a>
+    <a href="${base}/card" class="link">Визитка</a>
   </div>
+  <div class="num">404</div>
 </body>
 </html>`;
 }
