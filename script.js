@@ -144,6 +144,29 @@ const elements = {
   superUserCancelBtn: document.getElementById("superUserCancelBtn")
 };
 
+// ── Cookie Consent ──────────────────────────────────────────────────────────
+function cookieConsent(choice) {
+  localStorage.setItem("cookieConsent", choice);
+  document.getElementById("cookieBanner").style.display = "none";
+  if (choice === "all" && typeof gtag === "function") {
+    gtag("consent", "update", { analytics_storage: "granted" });
+    gtag("event", "page_view");
+  }
+}
+
+function initCookieBanner() {
+  const stored = localStorage.getItem("cookieConsent");
+  if (!stored) {
+    setTimeout(() => {
+      const banner = document.getElementById("cookieBanner");
+      if (banner) banner.style.display = "";
+    }, 1500);
+  } else if (stored === "all" && typeof gtag === "function") {
+    gtag("consent", "update", { analytics_storage: "granted" });
+    gtag("event", "page_view");
+  }
+}
+
 document.addEventListener("DOMContentLoaded", init);
 
 if ("serviceWorker" in navigator) {
@@ -153,6 +176,7 @@ if ("serviceWorker" in navigator) {
 }
 
 async function init() {
+  initCookieBanner();
   bindEvents();
   setDateConstraints();
   initRevealObserver();

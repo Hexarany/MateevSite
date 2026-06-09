@@ -40,9 +40,15 @@
     rel="stylesheet"
   >
   <link rel="stylesheet" href="styles.css">
-  <!-- Google Analytics 4 — замени G-XXXXXXXXXX на свой Measurement ID -->
+  <!-- Google Analytics 4 — loads only after cookie consent -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('consent', 'default', { analytics_storage: 'denied' });
+    gtag('js', new Date());
+    gtag('config', 'G-VVEHNYL4KZ', { send_page_view: false });
+  </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VVEHNYL4KZ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-VVEHNYL4KZ');</script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -409,6 +415,20 @@
       </div>
     </div>
   </footer>
+
+  <!-- Cookie consent banner -->
+  <div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#1a2e22;color:#f7f0e6;padding:16px 24px;box-shadow:0 -4px 24px rgba(0,0,0,0.25);">
+    <div style="max-width:960px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <p style="flex:1;min-width:240px;font-size:0.82rem;line-height:1.6;color:rgba(247,240,230,0.8);margin:0;">
+        Мы используем cookies для аналитики (Google Analytics) и улучшения работы сайта. Продолжая использование, вы соглашаетесь с нашей
+        <a href="/first-visit" style="color:#c49e5a;text-decoration:underline;">политикой конфиденциальности</a>.
+      </p>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button onclick="cookieConsent('essential')" style="padding:9px 16px;background:transparent;border:1px solid rgba(247,240,230,0.25);border-radius:8px;color:rgba(247,240,230,0.6);font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;">Только необходимые</button>
+        <button onclick="cookieConsent('all')" style="padding:9px 20px;background:#c49e5a;border:none;border-radius:8px;color:#111;font-size:0.82rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;">Принять все</button>
+      </div>
+    </div>
+  </div>
 
   <div class="admin-access-modal" id="adminAccessModal" hidden>
     <div class="admin-access-modal__backdrop" data-close-admin-modal></div>
