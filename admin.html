@@ -46,6 +46,7 @@
 
       <nav class="admin-sidebar__nav">
         <a href="#overview" data-section="overview">Обзор</a>
+        <a href="#peakHours" data-section="peakHours">Пик-часы</a>
         <a href="#schedule" data-section="schedule">Расписание</a>
         <a href="#requests" data-section="requests">Журнал заявок</a>
         <a href="#clients" data-section="clients">Клиенты</a>
@@ -173,6 +174,37 @@
                 <p style="font-size:0.82rem;font-weight:700;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">Топ страниц</p>
                 <div id="gaTopPages" style="display:grid;gap:6px;"></div>
               </div>
+            </div>
+          </section>
+
+          <!-- Peak hours widget -->
+          <section class="admin-section-block reveal" id="peakHours">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Аналитика записей</p>
+                <h2 class="admin-section-block__title">Загруженность по времени</h2>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="button button--ghost button--mini peak-period-btn is-active" data-period="all">Всё время</button>
+                <button class="button button--ghost button--mini peak-period-btn" data-period="3m">3 месяца</button>
+                <button class="button button--ghost button--mini peak-period-btn" data-period="1m">Месяц</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="peakChartsGrid">
+              <div class="admin-widget" style="padding:20px;">
+                <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">По часам дня</p>
+                <div id="peakHoursChart" style="display:flex;align-items:flex-end;gap:3px;height:80px;"></div>
+                <div id="peakHoursLabels" style="display:flex;gap:3px;margin-top:4px;"></div>
+              </div>
+              <div class="admin-widget" style="padding:20px;">
+                <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">По дням недели</p>
+                <div id="peakDaysChart" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div>
+                <div id="peakDaysLabels" style="display:flex;gap:4px;margin-top:4px;"></div>
+              </div>
+            </div>
+            <div class="admin-widget" style="padding:20px;margin-top:16px;">
+              <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Топ услуг по выручке</p>
+              <div id="peakServicesChart" style="display:flex;flex-direction:column;gap:8px;"></div>
             </div>
           </section>
 

@@ -1482,6 +1482,7 @@ async function loadAdminData() {
 
   state.adminData = payload;
   state.currency = payload.currency || state.currency;
+  renderPeakHours("all");
   await Promise.all([loadDaySchedule(), loadClientsData(), loadEnrollments()]);
   try {
     const certData = await fetchJson("/api/admin/certificates");
@@ -1499,6 +1500,8 @@ async function loadAdminData() {
   loadGallery();
   initBackupWidget();
   initFinancialReport();
+  // Peak hours rendered after admin data loads
+  initPeakHours();
   try {
     const diaryData = await fetchJson("/api/admin/diary");
     state.diary = diaryData.entries || [];
@@ -5475,6 +5478,107 @@ async function initBackupWidget() {
 
 // ─── Financial Report ────────────────────────────────────────────────────────
 
+// ─── Peak Hours Analytics ────────────────────────────────────────────────────
+
+function initPeakHours() {
+  document.querySelectorAll(".peak-period-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".peak-period-btn").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      renderPeakHours(btn.dataset.period);
+    });
+  });
+  renderPeakHours("all");
+}
+
+function renderPeakHours(period) {
+  const all = state.adminData?.bookings || [];
+  const bookings = all.filter(b => {
+    if (b.status === "cancelled") return false;
+    if (period === "all") return true;
+    const cutoff = new Date();
+    if (period === "3m") cutoff.setMonth(cutoff.getMonth() - 3);
+    if (period === "1m") cutoff.setMonth(cutoff.getMonth() - 1);
+    return new Date(b.date + "T00:00:00") >= cutoff;
+  });
+
+  // Hours chart (8–20)
+  const hourCounts = Array(24).fill(0);
+  bookings.forEach(b => {
+    const h = parseInt((b.slot || "").split(":")[0]);
+    if (!isNaN(h)) hourCounts[h]++;
+  });
+  const activeHours = hourCounts.slice(8, 21);
+  const maxH = Math.max(...activeHours, 1);
+
+  const hoursChart = document.getElementById("peakHoursChart");
+  const hoursLabels = document.getElementById("peakHoursLabels");
+  if (hoursChart) {
+    hoursChart.innerHTML = activeHours.map((count, i) => {
+      const h = i + 8;
+      const pct = Math.round(count / maxH * 100);
+      const isTop = count === maxH && count > 0;
+      return `<div title="${h}:00 — ${count} записей" style="flex:1;background:${isTop ? 'var(--accent)' : 'rgba(107,141,107,0.25)'};height:${Math.max(pct, 2)}%;border-radius:3px 3px 0 0;transition:height .3s;cursor:default;"></div>`;
+    }).join("");
+  }
+  if (hoursLabels) {
+    hoursLabels.innerHTML = activeHours.map((_, i) => {
+      const h = i + 8;
+      return `<div style="flex:1;text-align:center;font-size:0.6rem;color:var(--muted);">${h % 2 === 0 ? h : ""}</div>`;
+    }).join("");
+  }
+
+  // Days chart
+  const DAY_NAMES = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+  const dayCounts = Array(7).fill(0);
+  bookings.forEach(b => {
+    const d = new Date(b.date + "T00:00:00").getDay();
+    dayCounts[d]++;
+  });
+  // Reorder Mon-Sun
+  const orderedDays = [1,2,3,4,5,6,0];
+  const maxD = Math.max(...dayCounts, 1);
+  const daysChart = document.getElementById("peakDaysChart");
+  const daysLabels = document.getElementById("peakDaysLabels");
+  if (daysChart) {
+    daysChart.innerHTML = orderedDays.map(d => {
+      const count = dayCounts[d];
+      const pct = Math.round(count / maxD * 100);
+      const isTop = count === maxD && count > 0;
+      return `<div title="${DAY_NAMES[d]} — ${count} записей" style="flex:1;background:${isTop ? 'var(--accent)' : 'rgba(107,141,107,0.25)'};height:${Math.max(pct, 2)}%;border-radius:3px 3px 0 0;transition:height .3s;cursor:default;"></div>`;
+    }).join("");
+  }
+  if (daysLabels) {
+    daysLabels.innerHTML = orderedDays.map(d =>
+      `<div style="flex:1;text-align:center;font-size:0.7rem;color:var(--muted);font-weight:600;">${DAY_NAMES[d]}</div>`
+    ).join("");
+  }
+
+  // Top services by revenue
+  const svcRevenue = {};
+  bookings.filter(b => b.status === "completed" || b.status === "confirmed").forEach(b => {
+    const k = b.serviceName || "Прочее";
+    if (!svcRevenue[k]) svcRevenue[k] = { count: 0, total: 0 };
+    svcRevenue[k].count++;
+    svcRevenue[k].total += Number(b.totalPrice) || 0;
+  });
+  const sorted = Object.entries(svcRevenue).sort((a, b) => b[1].total - a[1].total).slice(0, 6);
+  const maxRev = sorted[0]?.[1].total || 1;
+  const svcEl = document.getElementById("peakServicesChart");
+  if (svcEl) {
+    svcEl.innerHTML = sorted.length ? sorted.map(([name, v]) => {
+      const pct = Math.round(v.total / maxRev * 100);
+      return `<div style="display:grid;grid-template-columns:140px 1fr 80px;align-items:center;gap:10px;">
+        <span style="font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--forest);font-weight:500;">${escapeHtml(name)}</span>
+        <div style="height:8px;background:rgba(107,141,107,0.15);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:var(--sage);border-radius:4px;"></div>
+        </div>
+        <span style="font-size:0.78rem;text-align:right;color:var(--muted);">${v.total.toLocaleString("ru-RU")} MDL · ${v.count}</span>
+      </div>`;
+    }).join("") : `<p style="color:var(--muted);font-size:0.85rem;">Нет данных за выбранный период.</p>`;
+  }
+}
+
 function checkDuplicateBooking() {
   const warn = document.getElementById("duplicateBookingWarning");
   if (!warn) return;
@@ -5486,7 +5590,7 @@ function checkDuplicateBooking() {
 
   if (!name || !date) { warn.style.display = "none"; return; }
 
-  const dupes = (state.bookings || []).filter(b => {
+  const dupes = (state.adminData?.bookings || []).filter(b => {
     if (b.id === editId) return false; // не считаем текущую при редактировании
     if (b.status === "cancelled") return false;
     if (b.date !== date) return false;
