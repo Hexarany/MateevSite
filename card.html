@@ -6,197 +6,136 @@
   <meta name="robots" content="noindex">
   <title>Denis Matievici — Mateev Spa Studio</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Denis Matievici — Mateev Spa Studio">
+  <meta property="og:description" content="Массажный терапевт и преподаватель. Запись онлайн.">
+  <meta property="og:image" content="https://mateevmassage.com/denis.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --forest: #1a2e22;
-      --sage:   #6b8d6b;
-      --sand:   #f7f0e6;
-      --warm:   #e8ddd0;
-      --accent: #b36d2c;
-      --muted:  #7d6d60;
-      --ink:    #241c17;
+      --forest: #1a2e22; --sage: #6b8d6b; --sand: #f7f0e6;
+      --warm: #e8ddd0; --accent: #b36d2c; --muted: #7d6d60; --ink: #241c17;
     }
+    html, body { min-height: 100svh; background: var(--forest); font-family: 'Manrope', sans-serif; color: var(--ink); }
 
-    html, body {
-      min-height: 100svh;
-      background: var(--forest);
-      font-family: 'Manrope', sans-serif;
-      color: var(--ink);
-    }
-
-    .page {
-      min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0 0 40px;
-    }
+    .page { min-height: 100svh; display: flex; flex-direction: column; align-items: center; padding: 0 0 48px; }
 
     /* ─── Header ─── */
     .card-header {
-      width: 100%;
-      background: var(--forest);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 48px 24px 32px;
-      text-align: center;
+      width: 100%; background: var(--forest);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 48px 24px 36px; text-align: center;
     }
-    .card-logo {
-      width: 72px;
-      height: 72px;
-      object-fit: contain;
-      margin-bottom: 16px;
-      filter: brightness(0) invert(1) opacity(0.9);
+    .avatar-wrap {
+      width: 96px; height: 96px; border-radius: 50%;
+      overflow: hidden; border: 3px solid rgba(179,109,44,.5);
+      margin-bottom: 18px; flex-shrink: 0;
+      box-shadow: 0 4px 24px rgba(0,0,0,.4);
     }
+    .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
     .card-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 600;
-      color: #fff;
-      line-height: 1.1;
-      margin-bottom: 6px;
+      font-family: 'Cormorant Garamond', serif; font-size: 2rem;
+      font-weight: 600; color: #fff; line-height: 1.1; margin-bottom: 6px;
     }
     .card-title {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.55);
-      margin-bottom: 4px;
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.16em;
+      text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 16px;
     }
-    .card-services {
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.4);
-      letter-spacing: 0.04em;
+    .card-bio {
+      font-size: 0.88rem; color: rgba(255,255,255,.65); line-height: 1.7;
+      max-width: 320px; font-style: italic;
     }
 
     /* ─── Body card ─── */
     .card-body {
-      width: calc(100% - 32px);
-      max-width: 420px;
-      background: var(--sand);
-      border-radius: 24px;
-      margin-top: -20px;
-      overflow: hidden;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+      width: calc(100% - 32px); max-width: 420px;
+      background: var(--sand); border-radius: 24px;
+      margin-top: -16px; overflow: hidden;
+      box-shadow: 0 12px 48px rgba(0,0,0,.3);
     }
 
-    /* ─── Action buttons ─── */
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--warm);
+    /* ─── Stats strip ─── */
+    .stats {
+      display: flex; border-bottom: 1px solid var(--warm);
     }
+    .stat {
+      flex: 1; padding: 16px 8px; text-align: center;
+      border-right: 1px solid var(--warm);
+    }
+    .stat:last-child { border-right: none; }
+    .stat__num { font-size: 1.2rem; font-weight: 700; color: var(--forest); display: block; }
+    .stat__lbl { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 2px; display: block; }
+
+    /* ─── Action buttons ─── */
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--warm); }
     .action-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 20px 12px;
-      background: var(--sand);
-      text-decoration: none;
-      color: var(--ink);
-      transition: background 0.15s;
-      cursor: pointer;
-      border: none;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 6px; padding: 18px 12px;
+      background: var(--sand); text-decoration: none; color: var(--ink);
+      transition: background 0.15s; cursor: pointer; border: none;
       font-family: 'Manrope', sans-serif;
     }
     .action-btn:hover, .action-btn:active { background: var(--warm); }
     .action-btn__icon {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
     }
-    .action-btn__label {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .action-btn--call   .action-btn__icon { background: rgba(26,46,34,0.1); }
-    .action-btn--wa     .action-btn__icon { background: rgba(37,211,102,0.12); }
-    .action-btn--ig     .action-btn__icon { background: rgba(225,48,108,0.1); }
-    .action-btn--book   .action-btn__icon { background: rgba(179,109,44,0.12); }
+    .action-btn__label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .action-btn--call .action-btn__icon { background: rgba(26,46,34,0.08); }
+    .action-btn--wa   .action-btn__icon { background: rgba(37,211,102,0.1); }
+    .action-btn--ig   .action-btn__icon { background: rgba(225,48,108,0.08); }
+    .action-btn--book .action-btn__icon { background: rgba(179,109,44,0.1); }
 
     /* ─── Save contact ─── */
     .save-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      padding: 18px 24px;
-      background: var(--forest);
-      color: #fff;
-      font-family: 'Manrope', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 18px 24px; background: var(--forest); color: #fff;
+      font-family: 'Manrope', sans-serif; font-size: 0.9rem; font-weight: 600;
+      letter-spacing: 0.04em; border: none; cursor: pointer; transition: opacity 0.2s;
     }
     .save-btn:hover { opacity: 0.88; }
 
     /* ─── Info rows ─── */
-    .info-rows {
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      border-top: 1px solid var(--warm);
-    }
-    .info-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.88rem;
-      color: var(--ink);
-      text-decoration: none;
-    }
-    .info-row__icon {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: rgba(26,46,34,0.07);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem;
-      flex-shrink: 0;
-    }
+    .info-rows { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--warm); }
+    .info-row { display: flex; align-items: center; gap: 12px; font-size: 0.88rem; color: var(--ink); text-decoration: none; }
+    .info-row__icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(26,46,34,0.07); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
     .info-row span { font-weight: 500; }
 
     /* ─── Footer ─── */
-    .card-footer {
-      margin-top: 28px;
-      text-align: center;
-      font-size: 0.72rem;
-      color: rgba(255,255,255,0.25);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .card-footer a { color: rgba(255,255,255,0.35); text-decoration: none; }
+    .card-footer { margin-top: 28px; text-align: center; font-size: 0.7rem; color: rgba(255,255,255,.2); letter-spacing: 0.08em; text-transform: uppercase; }
+    .card-footer a { color: rgba(255,255,255,.3); text-decoration: none; }
   </style>
 </head>
 <body>
 <div class="page">
 
   <div class="card-header">
-    <img class="card-logo" src="/mateev_logo.png" alt="Mateev Spa Studio">
+    <div class="avatar-wrap">
+      <img src="/denis.jpg" alt="Denis Matievici">
+    </div>
     <h1 class="card-name">Denis Matievici</h1>
     <p class="card-title">Massage Therapist &amp; Educator</p>
-    <p class="card-services">Massage · Body Care · Aesthetics</p>
+    <p class="card-bio">Более 10 лет в практическом массаже. Работаю с болью, напряжением и восстановлением тела. Веду обучение и авторские программы для специалистов.</p>
   </div>
 
   <div class="card-body">
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat__num">10+</span>
+        <span class="stat__lbl">Лет опыта</span>
+      </div>
+      <div class="stat">
+        <span class="stat__num">3 093</span>
+        <span class="stat__lbl">Подписчиков</span>
+      </div>
+      <div class="stat">
+        <span class="stat__num">107</span>
+        <span class="stat__lbl">Публикаций</span>
+      </div>
+    </div>
 
     <div class="actions">
       <a class="action-btn action-btn--call" href="tel:+37369158475">
@@ -252,25 +191,21 @@
 <script>
 function saveContact() {
   const vcard = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    "FN:Denis Matievici",
-    "N:Matievici;Denis;;;",
+    "BEGIN:VCARD", "VERSION:3.0",
+    "FN:Denis Matievici", "N:Matievici;Denis;;;",
     "ORG:Mateev Spa Studio",
     "TITLE:Massage Therapist & Educator",
     "TEL;TYPE=CELL:+37369158475",
     "URL:https://mateevmassage.com",
     "X-SOCIALPROFILE;TYPE=instagram:https://instagram.com/_mateevspa_",
     "NOTE:Massage · Body Care · Aesthetics",
+    "PHOTO;VALUE=URI:https://mateevmassage.com/denis.jpg",
     "END:VCARD"
   ].join("\r\n");
-
   const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
-  a.href     = url;
-  a.download = "Denis_Matievici.vcf";
-  a.click();
+  a.href = url; a.download = "Denis_Matievici.vcf"; a.click();
   URL.revokeObjectURL(url);
 }
 </script>
