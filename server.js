@@ -886,7 +886,8 @@ async function ensureDataFiles() {
     ["packages.json", "[]"],
     ["inventory.json", "[]"],
     ["portal-tokens.json", "[]"],
-    ["gallery.json", "[]"]
+    ["gallery.json", "[]"],
+    ["birthday-sent.json", "{}"]
   ];
 
   await Promise.all(
