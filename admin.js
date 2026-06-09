@@ -263,6 +263,7 @@ function bindEvents() {
       document.getElementById("newClientEmail").value = "";
       document.getElementById("newClientNote").value = "";
       await loadClientsData();
+      renderClientsWorkspace();
     } catch (e) { showToast(e.message || "Ошибка.", "error"); }
   });
 
