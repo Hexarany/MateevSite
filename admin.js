@@ -275,7 +275,10 @@ function bindEvents() {
       if (elements.adminBookingPhone && !elements.adminBookingPhone.value) elements.adminBookingPhone.value = client.phone || "";
       if (elements.adminBookingEmail && !elements.adminBookingEmail.value) elements.adminBookingEmail.value = client.email || "";
     }
+    checkDuplicateBooking();
   });
+
+  elements.adminBookingDate?.addEventListener("change", checkDuplicateBooking);
 
   document.getElementById("periodBtns")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".period-btn");
@@ -5471,6 +5474,37 @@ async function initBackupWidget() {
 }
 
 // ─── Financial Report ────────────────────────────────────────────────────────
+
+function checkDuplicateBooking() {
+  const warn = document.getElementById("duplicateBookingWarning");
+  if (!warn) return;
+
+  const name  = elements.adminBookingClientName?.value.trim() || "";
+  const phone = elements.adminBookingPhone?.value.trim() || "";
+  const date  = elements.adminBookingDate?.value || "";
+  const editId = state.operations?.bookingForm?.id || "";
+
+  if (!name || !date) { warn.style.display = "none"; return; }
+
+  const dupes = (state.bookings || []).filter(b => {
+    if (b.id === editId) return false; // не считаем текущую при редактировании
+    if (b.status === "cancelled") return false;
+    if (b.date !== date) return false;
+    const nameMatch  = b.clientName?.toLowerCase() === name.toLowerCase();
+    const phoneMatch = phone && b.phone && normalizePhone(b.phone) === normalizePhone(phone);
+    return nameMatch || phoneMatch;
+  });
+
+  if (!dupes.length) { warn.style.display = "none"; return; }
+
+  const times = dupes.map(b => b.slot).join(", ");
+  warn.style.display = "";
+  warn.textContent = `⚠ ${name} уже записан(а) на ${date}: ${times}. Проверьте перед сохранением.`;
+}
+
+function normalizePhone(p) {
+  return (p || "").replace(/\D/g, "");
+}
 
 function showCardQR() {
   const overlay = document.getElementById("cardQrOverlay");
