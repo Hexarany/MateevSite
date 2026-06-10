@@ -4137,8 +4137,8 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
 
 .bk-card__main {
   display: grid;
-  grid-template-columns: 88px 160px 1fr 110px 132px auto;
-  gap: 0 14px;
+  grid-template-columns: 82px 145px 1fr 104px 158px;
+  gap: 0 12px;
   align-items: center;
 }
 
@@ -4179,16 +4179,21 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
 }
 .bk-card__col--ref > span { font-size: 0.68rem; }
 
-.bk-card__col--status select {
+.bk-card__col--controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+.bk-card__col--controls select {
   width: 100%;
   font-size: 0.78rem;
 }
 
-.bk-card__col--actions {
+.bk-card__actions {
   display: flex;
   gap: 4px;
-  flex-shrink: 0;
-  align-items: center;
+  flex-wrap: wrap;
 }
 
 .bk-card__notes {
@@ -4225,6 +4230,5 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
-  .bk-card__col--actions { grid-column: 1 / -1; }
-  .bk-card__col--status  { grid-column: 1 / -1; }
+  .bk-card__col--controls { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; }
 }

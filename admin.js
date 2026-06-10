@@ -2850,17 +2850,17 @@ function renderAdminTable() {
               <strong>${escapeHtml(formatDate(booking.date))}</strong>
               <span>${escapeHtml(booking.slot)}–${escapeHtml(booking.endsAt)}</span>
             </div>
-            <div class="bk-card__col bk-card__col--status">
+            <div class="bk-card__col bk-card__col--controls">
               <select class="status-select" data-booking-id="${escapeHtml(booking.id)}">
                 ${Object.entries(statusLabels).map(([v, l]) =>
                   `<option value="${escapeHtml(v)}" ${booking.status === v ? "selected" : ""}>${escapeHtml(l)}</option>`
                 ).join("")}
               </select>
-            </div>
-            <div class="bk-card__col bk-card__col--actions">
-              <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Ред.</button>
-              <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(booking.id)}">Отменить</button>
-              <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(booking.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Уд.</button>
+              <div class="bk-card__actions">
+                <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Ред.</button>
+                <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(booking.id)}">Отменить</button>
+                <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(booking.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Уд.</button>
+              </div>
             </div>
           </div>
           ${booking.notes ? `<div class="bk-card__notes">${escapeHtml(booking.notes)}</div>` : ""}
