@@ -3873,3 +3873,219 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
     height: 18px;
   }
 }
+
+/* ─── Schedule Visual Calendar ───────────────────────────────────────────── */
+.sched-cal {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sched-cal__time {
+  flex-shrink: 0;
+  width: 46px;
+  border-right: 1px solid var(--line);
+  background: var(--off-white, #f9f5f0);
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+
+.sched-cal__time-hdr {
+  height: 54px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sched-cal__time-body {
+  position: relative;
+}
+
+.sched-cal__hour-label {
+  position: absolute;
+  left: 0;
+  right: 4px;
+  text-align: right;
+  font-size: 0.65rem;
+  color: var(--muted);
+  transform: translateY(-0.55em);
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.sched-cal__cols {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.sched-cal__col {
+  flex: 1;
+  min-width: 160px;
+  border-right: 1px solid var(--line);
+}
+.sched-cal__col:last-child { border-right: none; }
+.sched-cal__col--off { background: rgba(68, 50, 36, 0.02); }
+
+.sched-cal__col-hdr {
+  height: 54px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 1px solid var(--line);
+  background: var(--off-white, #f9f5f0);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.sched-cal__col-hdr strong {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--forest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sched-cal__col-hdr span {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.sched-cal__off-badge {
+  display: inline-block;
+  font-size: 0.68rem !important;
+  background: rgba(68, 50, 36, 0.08);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--muted) !important;
+}
+
+.sched-cal__col-body {
+  position: relative;
+  overflow: visible;
+}
+
+.sched-cal__hour-div {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(68, 50, 36, 0.07);
+  pointer-events: none;
+}
+
+.sched-cal__off-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(68, 50, 36, 0.035) 0px,
+    rgba(68, 50, 36, 0.035) 4px,
+    transparent 4px,
+    transparent 10px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sched-cal__event {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 8px;
+  padding: 4px 7px;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 1;
+  border: 1px solid transparent;
+  text-align: left;
+}
+
+.sched-cal__ev-time {
+  font-size: 0.63rem;
+  opacity: 0.65;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+.sched-cal__ev-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.sched-cal__ev-status {
+  font-size: 0.63rem;
+  opacity: 0.65;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.sched-cal__event--booking {
+  background: rgba(26, 46, 34, 0.09);
+  border-color: rgba(26, 46, 34, 0.18);
+  color: var(--forest);
+  cursor: pointer;
+  transition: background 0.12s;
+  width: 100%;
+}
+.sched-cal__event--booking:hover { background: rgba(26, 46, 34, 0.16); }
+
+.sched-cal__event--block {
+  background: rgba(186, 89, 73, 0.1);
+  border-color: rgba(186, 89, 73, 0.22);
+  color: #8b3a2a;
+  cursor: default;
+}
+
+.sched-cal__event--break {
+  background: rgba(107, 141, 107, 0.1);
+  border-color: rgba(107, 141, 107, 0.18);
+  color: var(--sage);
+  font-style: italic;
+  cursor: default;
+}
+
+.sched-cal__main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sched-cal__now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #e05a44;
+  z-index: 10;
+  pointer-events: none;
+}
+.sched-cal__now-line::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e05a44;
+}
+
+@media (max-width: 900px) {
+  .sched-cal__col { min-width: 130px; }
+  .sched-cal__ev-title { font-size: 0.68rem; }
+}

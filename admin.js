@@ -3681,73 +3681,133 @@ function renderScheduleSummary() {
     .join("");
 }
 
+function schedMins(t) {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
 function renderScheduleBoard() {
+  const ROW_H = 64;
+
   if (!state.daySchedule) {
-    elements.scheduleBoard.innerHTML = `
-      <div class="empty-state">Откройте админ-панель и выберите дату, чтобы увидеть календарь дня.</div>
-    `;
+    elements.scheduleBoard.innerHTML = `<div class="empty-state">Откройте админ-панель и выберите дату, чтобы увидеть календарь дня.</div>`;
     return;
   }
 
+  const { specialists, date } = state.daySchedule;
+  const working = specialists.filter(s => s.isWorkingDay);
+
+  let gridStartMins = 9 * 60;
+  let gridEndMins = 21 * 60;
+  if (working.length) {
+    gridStartMins = Math.min(...working.map(s => schedMins(s.workHours.start)));
+    gridEndMins   = Math.max(...working.map(s => schedMins(s.workHours.end)));
+  }
+  gridStartMins = Math.floor(gridStartMins / 60) * 60;
+  gridEndMins   = Math.ceil(gridEndMins / 60) * 60;
+  const totalHours  = (gridEndMins - gridStartMins) / 60;
+  const totalHeight = totalHours * ROW_H;
+
+  // Hour labels
+  const hourLabels = Array.from({ length: totalHours }, (_, h) => {
+    const label = `${String(Math.floor((gridStartMins + h * 60) / 60)).padStart(2, "0")}:00`;
+    return `<div class="sched-cal__hour-label" style="top:${h * ROW_H}px">${label}</div>`;
+  }).join("");
+
+  // Current time line (today only)
+  let nowLineTop = -1;
+  if (date === getLocalDateString()) {
+    const n = new Date();
+    const nowMins = n.getHours() * 60 + n.getMinutes();
+    if (nowMins >= gridStartMins && nowMins <= gridEndMins) {
+      nowLineTop = (nowMins - gridStartMins) / 60 * ROW_H;
+    }
+  }
+
+  // Specialist columns
+  const specCols = specialists.map(spec => {
+    const wStart = schedMins(spec.workHours.start);
+    const wEnd   = schedMins(spec.workHours.end);
+
+    // Off-hours hatching
+    let masks = "";
+    if (!spec.isWorkingDay) {
+      masks = `<div class="sched-cal__off-mask" style="top:0;height:${totalHeight}px"></div>`;
+    } else {
+      const preH  = Math.max(0, wStart - gridStartMins) / 60 * ROW_H;
+      const postH = Math.max(0, gridEndMins - wEnd) / 60 * ROW_H;
+      if (preH  > 0) masks += `<div class="sched-cal__off-mask" style="top:0;height:${preH}px"></div>`;
+      if (postH > 0) masks += `<div class="sched-cal__off-mask" style="top:${totalHeight - postH}px;height:${postH}px"></div>`;
+    }
+
+    // Events
+    const events = spec.events.map(ev => {
+      const top = Math.max(0, (schedMins(ev.start) - gridStartMins) / 60 * ROW_H);
+      const h   = Math.max(22, (schedMins(ev.end) - schedMins(ev.start)) / 60 * ROW_H - 2);
+      const cls = `sched-cal__event sched-cal__event--${ev.type}`;
+
+      if (ev.type === "booking") return `
+        <button type="button" class="${cls}" style="top:${top}px;height:${h}px"
+          data-edit-booking-id="${escapeHtml(ev.booking.id)}"
+          title="${escapeHtml(ev.title)}">
+          <span class="sched-cal__ev-time">${escapeHtml(ev.start)}–${escapeHtml(ev.end)}</span>
+          <span class="sched-cal__ev-title">${escapeHtml(ev.title)}</span>
+          <span class="sched-cal__ev-status">${escapeHtml(statusLabels[ev.status] || ev.status)}</span>
+        </button>`;
+
+      if (ev.type === "block") return `
+        <div class="${cls}" style="top:${top}px;height:${h}px" title="${escapeHtml(ev.title)}">
+          <span class="sched-cal__ev-time">${escapeHtml(ev.start)}–${escapeHtml(ev.end)}</span>
+          <span class="sched-cal__ev-title">${escapeHtml(ev.title)}</span>
+          <button type="button" class="button button--ghost button--mini sched-cal__del-block"
+            data-delete-block-id="${escapeHtml(ev.id)}" style="padding:1px 5px;font-size:0.65rem;margin-top:auto;">✕</button>
+        </div>`;
+
+      return `
+        <div class="${cls}" style="top:${top}px;height:${h}px" title="${escapeHtml(ev.title)}">
+          <span class="sched-cal__ev-time">${escapeHtml(ev.start)}–${escapeHtml(ev.end)}</span>
+          <span class="sched-cal__ev-title">${escapeHtml(ev.title)}</span>
+        </div>`;
+    }).join("");
+
+    // Hour grid lines
+    const divs = Array.from({ length: totalHours }, (_, h) =>
+      `<div class="sched-cal__hour-div" style="top:${h * ROW_H}px"></div>`
+    ).join("");
+
+    const hdr = spec.isWorkingDay
+      ? `<span>${escapeHtml(spec.workHours.start)}–${escapeHtml(spec.workHours.end)}</span>`
+      : `<span class="sched-cal__off-badge">Выходной</span>`;
+
+    return `
+      <div class="sched-cal__col${spec.isWorkingDay ? "" : " sched-cal__col--off"}">
+        <div class="sched-cal__col-hdr">
+          <strong>${escapeHtml(spec.name)}</strong>
+          ${hdr}
+        </div>
+        <div class="sched-cal__col-body" style="height:${totalHeight}px">
+          ${divs}${masks}${events}
+        </div>
+      </div>`;
+  }).join("");
+
+  const nowLineHtml = nowLineTop >= 0
+    ? `<div class="sched-cal__now-line" style="top:calc(54px + ${nowLineTop}px)"></div>`
+    : "";
+
   elements.scheduleBoard.innerHTML = `
-    <div class="admin-schedule-grid">
-      ${state.daySchedule.specialists
-        .map((specialist) => {
-          const headerMeta = specialist.isWorkingDay
-            ? `${specialist.workHours.start} - ${specialist.workHours.end}`
-            : "Выходной";
-
-          return `
-            <article class="admin-schedule-card ${specialist.isWorkingDay ? "" : "admin-schedule-card--off"}">
-              <div class="admin-schedule-card__head">
-                <div>
-                  <strong>${escapeHtml(specialist.name)}</strong>
-                  <span>${escapeHtml(specialist.role)}</span>
-                </div>
-                <div class="meta-chip">${escapeHtml(headerMeta)}</div>
-              </div>
-              ${
-                specialist.events.length
-                  ? `<div class="admin-schedule-events">
-                      ${specialist.events
-                        .map((event) => {
-                          if (event.type === "booking") {
-                            return `
-                              <button type="button" class="admin-schedule-event admin-schedule-event--booking" data-edit-booking-id="${escapeHtml(event.booking.id)}">
-                                <span>${escapeHtml(event.start)} - ${escapeHtml(event.end)}</span>
-                                <strong>${escapeHtml(event.title)}</strong>
-                                <small>${escapeHtml(statusLabels[event.status] || event.status)}</small>
-                              </button>
-                            `;
-                          }
-
-                          if (event.type === "block") {
-                            return `
-                              <div class="admin-schedule-event admin-schedule-event--block">
-                                <span>${escapeHtml(event.start)} - ${escapeHtml(event.end)}</span>
-                                <strong>${escapeHtml(event.title)}</strong>
-                                <button type="button" class="button button--ghost button--mini" data-delete-block-id="${escapeHtml(event.id)}">Удалить</button>
-                              </div>
-                            `;
-                          }
-
-                          return `
-                            <div class="admin-schedule-event admin-schedule-event--break">
-                              <span>${escapeHtml(event.start)} - ${escapeHtml(event.end)}</span>
-                              <strong>${escapeHtml(event.title)}</strong>
-                            </div>
-                          `;
-                        })
-                        .join("")}
-                    </div>`
-                  : `<div class="empty-state">На этот день событий нет.</div>`
-              }
-            </article>
-          `;
-        })
-        .join("")}
-    </div>
-  `;
+    <div class="sched-cal">
+      <div class="sched-cal__time">
+        <div class="sched-cal__time-hdr"></div>
+        <div class="sched-cal__time-body" style="height:${totalHeight}px">
+          ${hourLabels}
+        </div>
+      </div>
+      <div class="sched-cal__main">
+        <div class="sched-cal__cols">${specCols}</div>
+        ${nowLineHtml}
+      </div>
+    </div>`;
 }
 
 async function loadDaySchedule() {
