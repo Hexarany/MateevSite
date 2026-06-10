@@ -49,6 +49,7 @@
         <a href="#peakHours" data-section="peakHours">Пик-часы</a>
         <a href="#schedule" data-section="schedule">Расписание</a>
         <a href="#requests" data-section="requests">Журнал заявок</a>
+        <a href="#rec-templates" data-section="rec-templates">Шаблоны</a>
         <a href="#clients" data-section="clients">Клиенты</a>
         <a href="#operations" data-section="operations">Операции</a>
         <a href="#expenses" data-section="expenses">Расходы</a>
@@ -433,6 +434,41 @@
                 <div id="upcomingQueue"></div>
               </article>
             </div>
+          </section>
+
+          <!-- ═══════════════ REC TEMPLATES ═══════════════ -->
+          <section class="admin-section-block reveal" id="rec-templates">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">После сеанса</p>
+                <h2 class="admin-section-block__title">Шаблоны рекомендаций</h2>
+              </div>
+              <button type="button" class="button button--secondary" id="showAddTemplateBtn">+ Новый шаблон</button>
+            </div>
+
+            <!-- Add/Edit form -->
+            <div id="templateForm" style="display:none;background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:16px;">
+              <input type="hidden" id="templateEditId">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <label class="field">
+                  <span>Название шаблона *</span>
+                  <input type="text" id="templateName" placeholder="Классический массаж спины">
+                </label>
+                <label class="field">
+                  <span>Текст рекомендаций *</span>
+                  <textarea id="templateText" rows="8" placeholder="Здравствуйте, {имя}!&#10;&#10;Рада, что вы нашли время для себя.&#10;&#10;После сеанса рекомендую:&#10;• Пить больше воды&#10;• Избегать физических нагрузок 2-3 часа&#10;• При необходимости повторить через 2 недели"></textarea>
+                </label>
+                <p style="font-size:0.75rem;color:var(--muted);">{имя} — автоматически заменится на имя клиента</p>
+                <div style="display:flex;gap:8px;">
+                  <button type="button" class="button button--secondary" id="saveTemplateBtn">Сохранить шаблон</button>
+                  <button type="button" class="button button--ghost" id="cancelTemplateBtn">Отмена</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Templates list -->
+            <div id="templatesList" style="display:flex;flex-direction:column;gap:10px;"></div>
+            <p id="templatesEmpty" style="color:var(--muted);font-size:0.88rem;padding:16px 0;display:none;">Шаблонов пока нет. Создайте первый.</p>
           </section>
 
           <section class="admin-section-block reveal" id="requests">

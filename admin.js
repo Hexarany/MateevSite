@@ -1496,6 +1496,8 @@ async function loadAdminData() {
   loadExpenses();
   loadPackages();
   loadInventory();
+  loadRecTemplates();
+  initRecTemplates();
   initBroadcast();
   loadGallery();
   initBackupWidget();
@@ -2750,41 +2752,41 @@ function renderAttentionBoard(items) {
 
 function renderAdminTable() {
   const bookings = state.adminData?.bookings || [];
+
+  // Period filter
+  const now = new Date();
+  const today = getLocalDateString();
+  let periodFrom = null;
+  if (state.filters.period === "today") {
+    periodFrom = today;
+  } else if (state.filters.period === "week") {
+    const d = new Date(now); d.setDate(d.getDate() - 6);
+    periodFrom = d.toISOString().slice(0, 10);
+  } else if (state.filters.period === "month") {
+    periodFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  }
+
   const filtered = bookings.filter((booking) => {
-    const matchesStatus =
-      state.filters.status === "all" || booking.status === state.filters.status;
-
-    if (!matchesStatus) {
-      return false;
-    }
-
-    if (!state.filters.search) {
-      return true;
-    }
-
-    const haystack = [
-      booking.reference,
-      booking.clientName,
-      booking.phone,
-      booking.email,
-      booking.serviceName,
-      booking.specialistName,
-      booking.notes
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(state.filters.search);
+    if (state.filters.status !== "all" && booking.status !== state.filters.status) return false;
+    if (periodFrom && booking.date < periodFrom) return false;
+    if (!state.filters.search) return true;
+    return [booking.reference, booking.clientName, booking.phone, booking.email, booking.serviceName, booking.specialistName, booking.notes]
+      .filter(Boolean).join(" ").toLowerCase().includes(state.filters.search);
   });
+
+  // Sort
+  filtered.sort((a, b) => {
+    const ta = getBookingTimestamp(a), tb = getBookingTimestamp(b);
+    return state.filters.sortDir === "desc" ? tb - ta : ta - tb;
+  });
+
+  // Counter
+  const countEl = document.getElementById("bookingCount");
+  if (countEl) countEl.textContent = `${filtered.length} из ${bookings.length} заявок`;
 
   if (!filtered.length) {
     elements.adminTableBody.innerHTML = `
-      <tr>
-        <td colspan="6">
-          <div class="empty-state">По текущим фильтрам ничего не найдено.</div>
-        </td>
-      </tr>
+      <tr><td colspan="6"><div class="empty-state">По текущим фильтрам ничего не найдено.</div></td></tr>
     `;
     return;
   }
@@ -2812,11 +2814,9 @@ function renderAdminTable() {
           <td>
             <select class="status-select" data-booking-id="${escapeHtml(booking.id)}">
               ${Object.entries(statusLabels)
-                .map(
-                  ([value, label]) =>
-                    `<option value="${escapeHtml(value)}" ${booking.status === value ? "selected" : ""}>${escapeHtml(label)}</option>`
-                )
-                .join("")}
+                .map(([value, label]) =>
+                  `<option value="${escapeHtml(value)}" ${booking.status === value ? "selected" : ""}>${escapeHtml(label)}</option>`
+                ).join("")}
             </select>
           </td>
           <td>
@@ -2828,7 +2828,32 @@ function renderAdminTable() {
                 placeholder="Заметки специалиста: что делали, результат, рекомендации..."
                 style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:52px;font-family:inherit;">${escapeHtml(booking.sessionNotes || "")}</textarea>
               <button type="button" class="button button--ghost button--mini save-session-notes" data-booking-id="${escapeHtml(booking.id)}" style="margin-top:4px;">Сохранить</button>
-            </div>` : ""}
+            </div>
+            ${booking.email ? `
+            <div style="margin-top:8px;padding:10px 12px;background:rgba(107,141,107,0.07);border-radius:10px;border:1px solid rgba(107,141,107,0.2);">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--sage);">Рекомендации клиенту</span>
+                <select class="rec-template-select" data-booking-id="${escapeHtml(booking.id)}"
+                  style="font-size:0.72rem;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--forest);flex:1;max-width:180px;">
+                  <option value="">— выбрать шаблон —</option>
+                  ${(state.recTemplates||[]).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join("")}
+                </select>
+              </div>
+              <textarea class="rec-text-input" data-booking-id="${escapeHtml(booking.id)}"
+                placeholder="Текст рекомендаций для отправки клиенту на email..."
+                style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:60px;font-family:inherit;">${escapeHtml(booking.homeRecommendations || "")}</textarea>
+              <div style="display:flex;gap:6px;margin-top:4px;align-items:center;">
+                <button type="button" class="button button--ghost button--mini send-rec-btn" data-booking-id="${escapeHtml(booking.id)}" data-email="${escapeHtml(booking.email)}" data-name="${escapeHtml(booking.clientName)}">
+                  📧 Отправить клиенту
+                </button>
+                ${booking.homeRecommendations ? `<span style="font-size:0.72rem;color:var(--sage);">✓ Уже отправлено</span>` : ""}
+              </div>
+            </div>` : ""}` : ""}
+            <div class="table-actions">
+              <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Редактировать</button>
+              <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(booking.id)}">Отменить</button>
+              <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(booking.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Удалить</button>
+            </div>
           </td>
         </tr>
       `
@@ -2849,6 +2874,46 @@ function renderAdminTable() {
         if (booking) booking.sessionNotes = notes;
         showToast("Заметка сохранена.", "success");
       } catch { showToast("Ошибка сохранения.", "error"); }
+    });
+  });
+
+  // Rec template select — fill textarea with template text
+  elements.adminTableBody.querySelectorAll(".rec-template-select").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const tpl = (state.recTemplates || []).find(t => t.id === sel.value);
+      if (!tpl) return;
+      const booking = state.adminData?.bookings?.find(b => b.id === sel.dataset.bookingId);
+      const text = tpl.text.replace(/\{имя\}/gi, booking?.clientName || "");
+      const textarea = elements.adminTableBody.querySelector(`.rec-text-input[data-booking-id="${sel.dataset.bookingId}"]`);
+      if (textarea) textarea.value = text;
+    });
+  });
+
+  // Send recommendations button
+  elements.adminTableBody.querySelectorAll(".send-rec-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.bookingId;
+      const textarea = elements.adminTableBody.querySelector(`.rec-text-input[data-booking-id="${id}"]`);
+      const recommendations = textarea?.value?.trim() || "";
+      if (!recommendations) { showToast("Введите текст рекомендаций.", "error"); return; }
+      btn.disabled = true;
+      try {
+        const result = await fetchJson(`/api/admin/bookings/${id}/recommendations`, {
+          method: "PATCH",
+          body: JSON.stringify({ recommendations })
+        });
+        const booking = state.adminData?.bookings?.find(b => b.id === id);
+        if (booking) booking.homeRecommendations = recommendations;
+        const sentIndicator = btn.closest("div[style]")?.querySelector("span");
+        if (!sentIndicator) {
+          const span = document.createElement("span");
+          span.style.cssText = "font-size:0.72rem;color:var(--sage);";
+          span.textContent = "✓ Уже отправлено";
+          btn.closest("div[style]").appendChild(span);
+        }
+        showToast(result.emailed ? "Рекомендации отправлены клиенту на email." : "Рекомендации сохранены.", "success");
+      } catch { showToast("Ошибка отправки.", "error"); }
+      btn.disabled = false;
     });
   });
 }
@@ -4900,90 +4965,6 @@ function handleScheduleBoardClick(event) {
   })();
 }
 
-function renderAdminTable() {
-  const bookings = state.adminData?.bookings || [];
-
-  // Period filter
-  const now = new Date();
-  const today = getLocalDateString();
-  let periodFrom = null;
-  if (state.filters.period === "today") {
-    periodFrom = today;
-  } else if (state.filters.period === "week") {
-    const d = new Date(now); d.setDate(d.getDate() - 6);
-    periodFrom = d.toISOString().slice(0, 10);
-  } else if (state.filters.period === "month") {
-    periodFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  }
-
-  const filtered = bookings.filter((booking) => {
-    if (state.filters.status !== "all" && booking.status !== state.filters.status) return false;
-    if (periodFrom && booking.date < periodFrom) return false;
-    if (!state.filters.search) return true;
-    return [booking.reference, booking.clientName, booking.phone, booking.email, booking.serviceName, booking.specialistName, booking.notes]
-      .filter(Boolean).join(" ").toLowerCase().includes(state.filters.search);
-  });
-
-  // Sort
-  filtered.sort((a, b) => {
-    const ta = getBookingTimestamp(a), tb = getBookingTimestamp(b);
-    return state.filters.sortDir === "desc" ? tb - ta : ta - tb;
-  });
-
-  // Counter
-  const countEl = document.getElementById("bookingCount");
-  if (countEl) countEl.textContent = `${filtered.length} из ${bookings.length} заявок`;
-
-  if (!filtered.length) {
-    elements.adminTableBody.innerHTML = `
-      <tr><td colspan="6"><div class="empty-state">По текущим фильтрам ничего не найдено.</div></td></tr>
-    `;
-    return;
-  }
-
-  elements.adminTableBody.innerHTML = filtered
-    .map(
-      (booking) => `
-        <tr>
-          <td>
-            <span class="table-main">${escapeHtml(booking.reference)}</span>
-            <span class="table-sub">Создана ${escapeHtml(formatDateTime(booking.createdAt))}</span>
-          </td>
-          <td>
-            <span class="table-main">${escapeHtml(booking.clientName)}</span>
-            <span class="table-sub">${escapeHtml(booking.phone)}${booking.email ? `<br>${escapeHtml(booking.email)}` : ""}</span>
-          </td>
-          <td>
-            <span class="table-main">${escapeHtml(booking.serviceName)}</span>
-            <span class="table-sub">${escapeHtml(booking.specialistName)} · ${formatCurrency(booking.totalPrice)}</span>
-          </td>
-          <td>
-            <span class="table-main">${escapeHtml(formatDate(booking.date))}</span>
-            <span class="table-sub">${escapeHtml(booking.slot)} - ${escapeHtml(booking.endsAt)}</span>
-          </td>
-          <td>
-            <select class="status-select" data-booking-id="${escapeHtml(booking.id)}">
-              ${Object.entries(statusLabels)
-                .map(([value, label]) =>
-                  `<option value="${escapeHtml(value)}" ${booking.status === value ? "selected" : ""}>${escapeHtml(label)}</option>`
-                ).join("")}
-            </select>
-          </td>
-          <td>
-            <span class="table-main">${booking.notes ? escapeHtml(booking.notes) : "—"}</span>
-            <span class="table-sub">Статус: ${escapeHtml(statusLabels[booking.status])}</span>
-            <div class="table-actions">
-              <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Редактировать</button>
-              <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(booking.id)}">Отменить</button>
-              <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(booking.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Удалить</button>
-            </div>
-          </td>
-        </tr>
-      `
-    )
-    .join("");
-}
-
 function renderTablePagination(total, totalPages) {
   let el = document.getElementById("bookingPagination");
   if (!el) {
@@ -5226,6 +5207,106 @@ function bindInventoryEvents() {
         showToast("Позиция удалена.");
       } catch (e) { showToast(e.message || "Ошибка."); }
     }
+  });
+}
+
+// ─── Rec Templates ──────────────────────────────────────────────────────────
+
+async function loadRecTemplates() {
+  try {
+    state.recTemplates = await fetchJson("/api/admin/rec-templates");
+    renderTemplatesList();
+  } catch {}
+}
+
+function renderTemplatesList() {
+  const list = document.getElementById("templatesList");
+  const empty = document.getElementById("templatesEmpty");
+  if (!list) return;
+  const templates = state.recTemplates || [];
+  if (!templates.length) {
+    list.innerHTML = "";
+    if (empty) empty.style.display = "";
+    return;
+  }
+  if (empty) empty.style.display = "none";
+  list.innerHTML = templates.map(t => `
+    <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">${escapeHtml(t.name)}</div>
+        <div style="font-size:0.78rem;color:var(--muted);white-space:pre-line;max-height:60px;overflow:hidden;">${escapeHtml(t.text)}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button type="button" class="button button--ghost button--mini edit-template-btn" data-id="${escapeHtml(t.id)}">Изм.</button>
+        <button type="button" class="button button--ghost button--mini delete-template-btn" data-id="${escapeHtml(t.id)}" style="color:var(--error,#c0392b);">Уд.</button>
+      </div>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".edit-template-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const t = (state.recTemplates || []).find(x => x.id === btn.dataset.id);
+      if (!t) return;
+      document.getElementById("templateEditId").value = t.id;
+      document.getElementById("templateName").value = t.name;
+      document.getElementById("templateText").value = t.text;
+      document.getElementById("templateForm").style.display = "";
+    });
+  });
+
+  list.querySelectorAll(".delete-template-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Удалить шаблон?")) return;
+      try {
+        await fetchJson(`/api/admin/rec-templates/${btn.dataset.id}`, { method: "DELETE" });
+        state.recTemplates = (state.recTemplates || []).filter(x => x.id !== btn.dataset.id);
+        renderTemplatesList();
+        showToast("Шаблон удалён.", "success");
+      } catch { showToast("Ошибка удаления.", "error"); }
+    });
+  });
+}
+
+function initRecTemplates() {
+  const showBtn = document.getElementById("showAddTemplateBtn");
+  const cancelBtn = document.getElementById("cancelTemplateBtn");
+  const saveBtn = document.getElementById("saveTemplateBtn");
+  const form = document.getElementById("templateForm");
+  if (!showBtn || !form) return;
+
+  showBtn.addEventListener("click", () => {
+    document.getElementById("templateEditId").value = "";
+    document.getElementById("templateName").value = "";
+    document.getElementById("templateText").value = "";
+    form.style.display = "";
+    form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  cancelBtn?.addEventListener("click", () => { form.style.display = "none"; });
+
+  saveBtn?.addEventListener("click", async () => {
+    const id = document.getElementById("templateEditId").value;
+    const name = document.getElementById("templateName").value.trim();
+    const text = document.getElementById("templateText").value.trim();
+    if (!name || !text) { showToast("Заполните название и текст шаблона.", "error"); return; }
+    try {
+      if (id) {
+        const result = await fetchJson(`/api/admin/rec-templates/${id}`, {
+          method: "PATCH", body: JSON.stringify({ name, text })
+        });
+        const idx = (state.recTemplates || []).findIndex(x => x.id === id);
+        if (idx !== -1) state.recTemplates[idx] = result.template;
+      } else {
+        const result = await fetchJson("/api/admin/rec-templates", {
+          method: "POST", body: JSON.stringify({ name, text })
+        });
+        if (!state.recTemplates) state.recTemplates = [];
+        state.recTemplates.push(result.template);
+      }
+      renderTemplatesList();
+      form.style.display = "none";
+      showToast("Шаблон сохранён.", "success");
+    } catch { showToast("Ошибка сохранения.", "error"); }
   });
 }
 

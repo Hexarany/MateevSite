@@ -887,7 +887,8 @@ async function ensureDataFiles() {
     ["inventory.json", "[]"],
     ["portal-tokens.json", "[]"],
     ["gallery.json", "[]"],
-    ["birthday-sent.json", "{}"]
+    ["birthday-sent.json", "{}"],
+    ["rec-templates.json", "[]"]
   ];
 
   await Promise.all(
@@ -4669,6 +4670,50 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       }
       sendJson(response, 200, { count: files.length, lastFile: last, lastDate });
     } catch { sendJson(response, 200, { count: 0, lastFile: null, lastDate: null }); }
+    return;
+  }
+
+  // ─── Rec Templates ────────────────────────────────────────────────────────
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/rec-templates") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    sendJson(response, 200, await readJson("rec-templates.json"));
+    return;
+  }
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/rec-templates") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const name = sanitizeText(payload.name || "").trim();
+    const text = sanitizeText(payload.text || "").trim();
+    if (!name || !text) { sendJson(response, 400, { message: "Укажите название и текст." }); return; }
+    const templates = await readJson("rec-templates.json");
+    const tpl = { id: crypto.randomUUID(), name, text, createdAt: new Date().toISOString() };
+    templates.push(tpl);
+    await writeJson("rec-templates.json", templates);
+    sendJson(response, 201, { ok: true, template: tpl });
+    return;
+  }
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/rec-templates/")) {
+    assertAdminPin(request);
+    const tplId = urlObject.pathname.replace("/api/admin/rec-templates/", "");
+    const payload = await parseJsonBody(request);
+    const templates = await readJson("rec-templates.json");
+    const idx = templates.findIndex(t => t.id === tplId);
+    if (idx === -1) { sendJson(response, 404, { message: "Шаблон не найден." }); return; }
+    if (payload.name !== undefined) templates[idx].name = sanitizeText(payload.name);
+    if (payload.text !== undefined) templates[idx].text = sanitizeText(payload.text);
+    await writeJson("rec-templates.json", templates);
+    sendJson(response, 200, { ok: true, template: templates[idx] });
+    return;
+  }
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/rec-templates/")) {
+    assertAdminPin(request);
+    const tplId = urlObject.pathname.replace("/api/admin/rec-templates/", "");
+    const templates = await readJson("rec-templates.json");
+    const idx = templates.findIndex(t => t.id === tplId);
+    if (idx === -1) { sendJson(response, 404, { message: "Шаблон не найден." }); return; }
+    templates.splice(idx, 1);
+    await writeJson("rec-templates.json", templates);
+    sendJson(response, 200, { ok: true });
     return;
   }
 
