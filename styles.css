@@ -1665,7 +1665,17 @@ p {
 .table-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.booking-details-panel summary::-webkit-details-marker { display: none; }
+.booking-details-panel[open] .booking-details-arrow { transform: rotate(90deg); }
+.booking-details-arrow {
+  display: inline-block;
+  font-size: 0.6rem;
+  transition: transform 0.15s;
+  color: var(--muted);
 }
 
 .toast-stack {

@@ -2788,10 +2788,17 @@ function renderAdminTable() {
     elements.adminTableBody.innerHTML = `
       <tr><td colspan="6"><div class="empty-state">По текущим фильтрам ничего не найдено.</div></td></tr>
     `;
+    renderTablePagination(0, 0);
     return;
   }
 
-  elements.adminTableBody.innerHTML = filtered
+  // Pagination
+  const PAGE_SIZE = 15;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (state.bookingPage >= totalPages) state.bookingPage = Math.max(0, totalPages - 1);
+  const page = filtered.slice(state.bookingPage * PAGE_SIZE, (state.bookingPage + 1) * PAGE_SIZE);
+
+  elements.adminTableBody.innerHTML = page
     .map(
       (booking) => `
         <tr>
@@ -2821,36 +2828,39 @@ function renderAdminTable() {
           </td>
           <td>
             <span class="table-main">${booking.notes ? escapeHtml(booking.notes) : "—"}</span>
-            <span class="table-sub">Статус: ${escapeHtml(statusLabels[booking.status])}</span>
             ${booking.status === "completed" ? `
-            <div style="margin-top:6px;">
-              <textarea class="session-notes-input" data-booking-id="${escapeHtml(booking.id)}"
-                placeholder="Заметки специалиста: что делали, результат, рекомендации..."
-                style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:52px;font-family:inherit;">${escapeHtml(booking.sessionNotes || "")}</textarea>
-              <button type="button" class="button button--ghost button--mini save-session-notes" data-booking-id="${escapeHtml(booking.id)}" style="margin-top:4px;">Сохранить</button>
-            </div>
-            ${booking.email ? `
-            <div style="margin-top:8px;padding:10px 12px;background:rgba(107,141,107,0.07);border-radius:10px;border:1px solid rgba(107,141,107,0.2);">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--sage);">Рекомендации клиенту</span>
-                <select class="rec-template-select" data-booking-id="${escapeHtml(booking.id)}"
-                  style="font-size:0.72rem;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--forest);flex:1;max-width:180px;">
-                  <option value="">— выбрать шаблон —</option>
-                  ${(state.recTemplates||[]).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join("")}
-                </select>
+            <details class="booking-details-panel" style="margin-top:6px;">
+              <summary style="font-size:0.75rem;color:var(--muted);cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px;">
+                <span class="booking-details-arrow">▶</span>
+                Заметки${booking.sessionNotes ? " ✓" : ""}${booking.homeRecommendations ? " · рекомендации ✓" : ""}
+              </summary>
+              <div style="margin-top:8px;">
+                <textarea class="session-notes-input" data-booking-id="${escapeHtml(booking.id)}"
+                  placeholder="Заметки специалиста: что делали, результат..."
+                  style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:52px;font-family:inherit;">${escapeHtml(booking.sessionNotes || "")}</textarea>
+                <button type="button" class="button button--ghost button--mini save-session-notes" data-booking-id="${escapeHtml(booking.id)}" style="margin-top:4px;">Сохранить</button>
               </div>
-              <textarea class="rec-text-input" data-booking-id="${escapeHtml(booking.id)}"
-                placeholder="Текст рекомендаций для отправки клиенту на email..."
-                style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:60px;font-family:inherit;">${escapeHtml(booking.homeRecommendations || "")}</textarea>
-              <div style="display:flex;gap:6px;margin-top:4px;align-items:center;">
-                <button type="button" class="button button--ghost button--mini send-rec-btn" data-booking-id="${escapeHtml(booking.id)}" data-email="${escapeHtml(booking.email)}" data-name="${escapeHtml(booking.clientName)}">
-                  📧 Отправить клиенту
-                </button>
-                ${booking.homeRecommendations ? `<span style="font-size:0.72rem;color:var(--sage);">✓ Уже отправлено</span>` : ""}
-              </div>
-            </div>` : ""}` : ""}
+              ${booking.email ? `
+              <div style="margin-top:8px;padding:10px 12px;background:rgba(107,141,107,0.07);border-radius:10px;border:1px solid rgba(107,141,107,0.2);">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                  <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--sage);">Рекомендации</span>
+                  <select class="rec-template-select" data-booking-id="${escapeHtml(booking.id)}"
+                    style="font-size:0.72rem;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--forest);flex:1;max-width:180px;">
+                    <option value="">— шаблон —</option>
+                    ${(state.recTemplates||[]).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join("")}
+                  </select>
+                </div>
+                <textarea class="rec-text-input" data-booking-id="${escapeHtml(booking.id)}"
+                  placeholder="Текст рекомендаций для клиента..."
+                  style="width:100%;font-size:0.78rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);resize:vertical;min-height:52px;font-family:inherit;">${escapeHtml(booking.homeRecommendations || "")}</textarea>
+                <div style="display:flex;gap:6px;margin-top:4px;align-items:center;">
+                  <button type="button" class="button button--ghost button--mini send-rec-btn" data-booking-id="${escapeHtml(booking.id)}" data-email="${escapeHtml(booking.email)}" data-name="${escapeHtml(booking.clientName)}">📧 Отправить</button>
+                  ${booking.homeRecommendations ? `<span style="font-size:0.72rem;color:var(--sage);">✓ Отправлено</span>` : ""}
+                </div>
+              </div>` : ""}
+            </details>` : ""}
             <div class="table-actions">
-              <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Редактировать</button>
+              <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(booking.id)}">Ред.</button>
               <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(booking.id)}">Отменить</button>
               <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(booking.id)}" style="color:var(--danger);border-color:var(--danger-soft);">Удалить</button>
             </div>
@@ -2859,6 +2869,8 @@ function renderAdminTable() {
       `
     )
     .join("");
+
+  renderTablePagination(filtered.length, totalPages);
 
   // Session notes save handler
   elements.adminTableBody.querySelectorAll(".save-session-notes").forEach(btn => {
