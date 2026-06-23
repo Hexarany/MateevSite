@@ -228,19 +228,52 @@
 </div>
 
 <script>
-const MONTH_SHORT = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
-const STATUS_LABELS = { completed: "Завершён", confirmed: "Запланирован", cancelled: "Отменён", new: "Новый" };
+const MONTHS = {
+  ru: { short: ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"],
+        full: ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"] },
+  ro: { short: ["ian","feb","mar","apr","mai","iun","iul","aug","sep","oct","noi","dec"],
+        full: ["ianuarie","februarie","martie","aprilie","mai","iunie","iulie","august","septembrie","octombrie","noiembrie","decembrie"] }
+};
+const STATUS_LABELS = {
+  ru: { completed: "Завершён", confirmed: "Запланирован", cancelled: "Отменён", new: "Новый" },
+  ro: { completed: "Finalizat", confirmed: "Programat", cancelled: "Anulat", new: "Nou" }
+};
+
+let LANG = localStorage.getItem("portalLang") === "ro" ? "ro" : "ru";
+let currentData = null;
+const t = (ru, ro) => LANG === "ro" ? ro : ru;
+
+function setLang(lang) {
+  LANG = lang === "ro" ? "ro" : "ru";
+  localStorage.setItem("portalLang", LANG);
+  document.documentElement.lang = LANG;
+  if (currentData) renderPortal(currentData);
+  else renderLogin();
+}
 
 function fmtDate(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
-  return { day: d.getDate(), month: MONTH_SHORT[d.getMonth()], full: `${d.getDate()} ${MONTH_SHORT[d.getMonth()]}` };
+  const m = MONTHS[LANG].short;
+  return { day: d.getDate(), month: m[d.getMonth()], full: `${d.getDate()} ${m[d.getMonth()]}` };
 }
 
 function escHtml(s) {
   return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+function headerBar() {
+  const tab = (l) => `<button onclick="setLang('${l}')" style="padding:4px 10px;border:none;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;${LANG===l?'background:var(--forest);color:#fff;':'background:transparent;color:var(--muted);'}">${l.toUpperCase()}</button>`;
+  return `<header style="display:flex;align-items:center;justify-content:space-between;padding:18px 4px 8px;">
+    <a href="/" style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--forest);text-decoration:none;">Mateev Spa Studio</a>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="display:flex;gap:2px;">${tab("ru")}${tab("ro")}</div>
+      <a href="/" style="font-size:0.82rem;font-weight:600;color:var(--sage);text-decoration:none;white-space:nowrap;">← ${t("На главную","Acasă")}</a>
+    </div>
+  </header>`;
+}
+
 function renderPortal(data) {
+  currentData = data;
   const app = document.getElementById("app");
 
   const nextBooking = data.upcoming[0];
@@ -255,11 +288,11 @@ function renderPortal(data) {
       <div class="next-booking__info">
         <p class="next-booking__service">${escHtml(nextBooking.serviceName)}</p>
         <p class="next-booking__meta">${escHtml(nextBooking.slot)} · ${escHtml(nextBooking.specialistName)}</p>
-        ${nextBooking.reference ? `<a href="/cancel?ref=${encodeURIComponent(nextBooking.reference)}" style="display:inline-block;margin-top:10px;font-size:0.78rem;font-weight:600;color:#b43232;text-decoration:none;border:1px solid rgba(180,50,50,0.3);border-radius:8px;padding:5px 14px;">Отменить запись</a>` : ""}
+        ${nextBooking.reference ? `<a href="/cancel?ref=${encodeURIComponent(nextBooking.reference)}" style="display:inline-block;margin-top:10px;font-size:0.78rem;font-weight:600;color:#b43232;text-decoration:none;border:1px solid rgba(180,50,50,0.3);border-radius:8px;padding:5px 14px;">${t("Отменить запись","Anulează programarea")}</a>` : ""}
       </div>
     </div>`;
   } else {
-    nextHtml = `<div class="next-booking__empty">Нет запланированных визитов.<br>Запишитесь ниже!</div>`;
+    nextHtml = `<div class="next-booking__empty">${t("Нет запланированных визитов.","Nu aveți vizite programate.")}<br>${t("Запишитесь ниже!","Programați-vă mai jos!")}</div>`;
   }
 
   const upcomingOther = data.upcoming.slice(1);
@@ -276,36 +309,35 @@ function renderPortal(data) {
         <p class="visit-row__service">${escHtml(b.serviceName)}</p>
         <p class="visit-row__sub">${escHtml(b.slot)} · ${escHtml(b.specialistName)}</p>
       </div>
-      <span class="visit-row__status ${statusClass}">${STATUS_LABELS[b.status] || b.status}</span>
+      <span class="visit-row__status ${statusClass}">${STATUS_LABELS[LANG][b.status] || b.status}</span>
     </div>`;
-  }).join("") : `<div class="next-booking__empty">История визитов пока пуста.</div>`;
+  }).join("") : `<div class="next-booking__empty">${t("История визитов пока пуста.","Istoricul vizitelor este gol.")}</div>`;
 
   const pkgsHtml = data.packages.length ? data.packages.map(p => {
     const used = p.total - p.remaining;
     const pct = p.total > 0 ? Math.round(used / p.total * 100) : 0;
-    const expText = p.expiresAt ? ` · до ${fmtDate(p.expiresAt).full}` : "";
+    const expText = p.expiresAt ? ` · ${t("до","până la")} ${fmtDate(p.expiresAt).full}` : "";
     return `<div class="pkg-row">
       <div class="pkg-row__head">
         <span class="pkg-row__name">${escHtml(p.title || p.serviceName)}</span>
-        <span class="pkg-row__remaining">${p.remaining} из ${p.total}</span>
+        <span class="pkg-row__remaining">${p.remaining} ${t("из","din")} ${p.total}</span>
       </div>
       <div class="pkg-progress"><div class="pkg-progress__fill" style="width:${pct}%"></div></div>
       <p class="pkg-row__sub">${escHtml(p.code)}${expText}</p>
     </div>`;
-  }).join("") : `<div class="next-booking__empty">Активных абонементов нет.</div>`;
+  }).join("") : `<div class="next-booking__empty">${t("Активных абонементов нет.","Nu aveți abonamente active.")}</div>`;
 
-  const MONTHS_FULL = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
   const memberSinceLabel = data.memberSince
-    ? (() => { const d = new Date(data.memberSince + "T00:00:00"); return `${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`; })()
+    ? (() => { const d = new Date(data.memberSince + "T00:00:00"); return `${MONTHS[LANG].full[d.getMonth()]} ${d.getFullYear()}`; })()
     : null;
   const loyaltyRows = [
-    data.totalSpent ? { l: "Потрачено всего", v: `${data.totalSpent} L` } : null,
-    data.favoriteService ? { l: "Любимая процедура", v: data.favoriteService } : null,
-    data.favoriteSpecialist ? { l: "Ваш мастер", v: data.favoriteSpecialist } : null,
-    memberSinceLabel ? { l: "С нами с", v: memberSinceLabel } : null
+    data.totalSpent ? { l: t("Потрачено всего","Cheltuit total"), v: `${data.totalSpent} L` } : null,
+    data.favoriteService ? { l: t("Любимая процедура","Procedura preferată"), v: data.favoriteService } : null,
+    data.favoriteSpecialist ? { l: t("Ваш мастер","Maseurul dvs."), v: data.favoriteSpecialist } : null,
+    memberSinceLabel ? { l: t("С нами с","Cu noi din"), v: memberSinceLabel } : null
   ].filter(Boolean);
   const loyaltyHtml = loyaltyRows.length ? `<div class="portal-card">
-      <div class="portal-card__head"><span class="portal-card__title">Ваша статистика</span></div>
+      <div class="portal-card__head"><span class="portal-card__title">${t("Ваша статистика","Statistica dvs.")}</span></div>
       <div class="portal-card__body">
         ${loyaltyRows.map(r => `<div class="visit-row" style="justify-content:space-between;">
           <span style="font-size:0.85rem;color:var(--muted);">${escHtml(r.l)}</span>
@@ -315,24 +347,24 @@ function renderPortal(data) {
     </div>` : "";
 
   app.innerHTML = `
-    <div class="portal-header">
-      <a class="portal-header__logo" href="/">Mateev Spa Studio</a>
-      <p class="portal-header__eyebrow">Личный кабинет</p>
+    ${headerBar()}
+    <div class="portal-header" style="padding-top:20px;">
+      <p class="portal-header__eyebrow">${t("Личный кабинет","Cont personal")}</p>
       <h1 class="portal-header__name">${escHtml(data.clientName)}</h1>
-      <p class="portal-header__sub">Добро пожаловать в ваш персональный кабинет</p>
+      <p class="portal-header__sub">${t("Добро пожаловать в ваш персональный кабинет","Bine ați venit în contul dvs. personal")}</p>
     </div>
 
     <div class="stats-row">
       <div class="stat-card">
-        <span>Визитов</span>
+        <span>${t("Визитов","Vizite")}</span>
         <strong>${data.totalVisits}</strong>
       </div>
       <div class="stat-card">
-        <span>Запланировано</span>
+        <span>${t("Запланировано","Programate")}</span>
         <strong>${data.upcoming.length}</strong>
       </div>
       <div class="stat-card">
-        <span>Абонементы</span>
+        <span>${t("Абонементы","Abonamente")}</span>
         <strong>${data.packages.length}</strong>
       </div>
     </div>
@@ -341,43 +373,44 @@ function renderPortal(data) {
 
     <div class="portal-card">
       <div class="portal-card__head">
-        <span class="portal-card__title">Ближайший визит</span>
+        <span class="portal-card__title">${t("Ближайший визит","Următoarea vizită")}</span>
       </div>
       <div class="portal-card__body">${nextHtml}</div>
     </div>
 
     ${data.packages.length ? `<div class="portal-card">
       <div class="portal-card__head">
-        <span class="portal-card__title">Мои абонементы</span>
+        <span class="portal-card__title">${t("Мои абонементы","Abonamentele mele")}</span>
       </div>
       <div class="portal-card__body">${pkgsHtml}</div>
     </div>` : ""}
 
     <div class="portal-card">
       <div class="portal-card__head">
-        <span class="portal-card__title">История визитов</span>
+        <span class="portal-card__title">${t("История визитов","Istoric vizite")}</span>
       </div>
       <div class="portal-card__body">${visitsHtml}</div>
     </div>
 
     <div class="portal-cta">
-      <a class="button-main" href="/#booking">Записаться на процедуру</a>
+      <a class="button-main" href="/#booking">${t("Записаться на процедуру","Programare la procedură")}</a>
     </div>
 
     <div class="portal-footer">
-      <a href="/">mateevmassage.com</a> &nbsp;·&nbsp; Кишинёв, Молдова
+      <a href="/">mateevmassage.com</a> &nbsp;·&nbsp; ${t("Кишинёв, Молдова","Chișinău, Moldova")}
     </div>
   `;
 }
 
 function renderLogin(errorMsg) {
+  currentData = null;
   const app = document.getElementById("app");
   app.innerHTML = `
-    <div class="portal-header">
-      <a class="portal-header__logo" href="/">Mateev Spa Studio</a>
-      <p class="portal-header__eyebrow">Личный кабинет</p>
-      <h1 class="portal-header__name">Вход</h1>
-      <p class="portal-header__sub">Введите номер телефона, который указывали при записи</p>
+    ${headerBar()}
+    <div class="portal-header" style="padding-top:20px;">
+      <p class="portal-header__eyebrow">${t("Личный кабинет","Cont personal")}</p>
+      <h1 class="portal-header__name">${t("Вход","Autentificare")}</h1>
+      <p class="portal-header__sub">${t("Введите номер телефона, который указывали при записи","Introduceți numărul de telefon indicat la programare")}</p>
     </div>
     <div class="portal-card" style="padding:24px 20px;">
       <form id="loginForm" style="display:flex;flex-direction:column;gap:14px;">
@@ -385,14 +418,14 @@ function renderLogin(errorMsg) {
           placeholder="+373 60 000 000"
           style="width:100%;padding:14px 16px;font-size:1rem;font-family:'Manrope',sans-serif;border:1px solid var(--line);border-radius:12px;background:var(--sand);color:var(--forest);outline:none;">
         ${errorMsg ? `<p style="color:#b43232;font-size:0.85rem;text-align:center;">${escHtml(errorMsg)}</p>` : ""}
-        <button type="submit" class="button-main" style="width:100%;justify-content:center;" id="loginBtn">Войти</button>
+        <button type="submit" class="button-main" style="width:100%;justify-content:center;" id="loginBtn">${t("Войти","Intră")}</button>
       </form>
       <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin-top:16px;">
-        Ещё не были у нас? <a href="/#booking" style="color:var(--sage);font-weight:600;">Записаться</a>
+        ${t("Ещё не были у нас?","Nu ați fost încă la noi?")} <a href="/#booking" style="color:var(--sage);font-weight:600;">${t("Записаться","Programare")}</a>
       </p>
     </div>
     <div class="portal-footer">
-      <a href="/">mateevmassage.com</a> &nbsp;·&nbsp; Кишинёв, Молдова
+      <a href="/">mateevmassage.com</a> &nbsp;·&nbsp; ${t("Кишинёв, Молдова","Chișinău, Moldova")}
     </div>
   `;
   document.getElementById("loginForm").addEventListener("submit", handleLogin);
@@ -405,7 +438,7 @@ async function handleLogin(e) {
   if (!phone) return;
   const btn = document.getElementById("loginBtn");
   btn.disabled = true;
-  btn.textContent = "Проверяем…";
+  btn.textContent = t("Проверяем…","Se verifică…");
   try {
     const res = await fetch("/api/client-login", {
       method: "POST",
@@ -414,17 +447,18 @@ async function handleLogin(e) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      renderLogin(data.message || "Не удалось войти.");
+      renderLogin(data.message || t("Не удалось войти.","Autentificare eșuată."));
       return;
     }
     // Перезагружаем с токеном → откроется кабинет
     location.search = "?token=" + encodeURIComponent(data.token);
   } catch (err) {
-    renderLogin("Ошибка сети. Попробуйте ещё раз.");
+    renderLogin(t("Ошибка сети. Попробуйте ещё раз.","Eroare de rețea. Încercați din nou."));
   }
 }
 
 async function init() {
+  document.documentElement.lang = LANG;
   const token = new URLSearchParams(location.search).get("token");
   if (!token) {
     renderLogin();
@@ -434,12 +468,12 @@ async function init() {
     const res = await fetch(`/api/client-portal?token=${encodeURIComponent(token)}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Ошибка загрузки.");
+      throw new Error(err.message || t("Ошибка загрузки.","Eroare de încărcare."));
     }
     const data = await res.json();
     renderPortal(data);
   } catch (e) {
-    document.getElementById("app").innerHTML = `<div class="error-state">${escHtml(e.message)}</div>`;
+    document.getElementById("app").innerHTML = `${headerBar()}<div class="error-state">${escHtml(e.message)}</div>`;
   }
 }
 
