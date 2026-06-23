@@ -24,6 +24,7 @@ const {
   buildInitials
 } = require("./lib/text");
 const { requestJson } = require("./lib/http");
+const { createClientProfileId, normalizePhoneDigits, phonesMatch } = require("./lib/client");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PIN = process.env.ADMIN_PIN;
@@ -1494,15 +1495,6 @@ async function notifyBookingCancelledByClient(booking) {
   await Promise.allSettled(promises);
 }
 
-function phonesMatch(a, b) {
-  const na = String(a || "").replace(/\D/g, "");
-  const nb = String(b || "").replace(/\D/g, "");
-  if (!na || !nb) return false;
-  if (na === nb) return true;
-  const minLen = Math.min(na.length, nb.length);
-  return minLen >= 7 && na.slice(-minLen) === nb.slice(-minLen);
-}
-
 async function handleBookingCancel(request, response) {
   assertRateLimit({
     scope: "booking-cancel",
@@ -2155,18 +2147,6 @@ function buildDaySchedulePayload({ date, specialists, bookings, schedule }) {
   };
 }
 
-function createClientProfileId({ clientName = "", phone = "", email = "" }) {
-  const fingerprint = [
-    sanitizeText(phone).replace(/\D/g, ""),
-    sanitizeText(email).toLowerCase(),
-    sanitizeText(clientName).toLowerCase()
-  ]
-    .filter(Boolean)
-    .join("|");
-
-  return `client-${crypto.createHash("sha1").update(fingerprint || crypto.randomUUID()).digest("hex").slice(0, 12)}`;
-}
-
 function normalizeClientProfiles(profilesInput = []) {
   const source = Array.isArray(profilesInput) ? profilesInput : [];
   const usedIds = new Set();
@@ -2200,15 +2180,6 @@ function normalizeClientProfiles(profilesInput = []) {
       };
     })
     .filter(Boolean);
-}
-
-function normalizePhoneDigits(phone) {
-  let digits = sanitizeText(phone).replace(/\D/g, "");
-  // Moldova: 0XXXXXXXX → 373XXXXXXXX
-  if (digits.length >= 8 && digits.length <= 9 && digits.startsWith("0")) {
-    digits = "373" + digits.slice(1);
-  }
-  return digits;
 }
 
 function buildAdminClients(bookings, profiles = []) {
