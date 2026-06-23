@@ -4349,6 +4349,10 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     sendJson(response, 200, {
       clientName: client.clientName,
       totalVisits: client.completedVisits,
+      totalSpent: client.totalSpent,
+      favoriteService: client.favoriteServices?.[0]?.name || null,
+      favoriteSpecialist: client.favoriteSpecialists?.[0]?.name || null,
+      memberSince: client.history.length ? client.history[client.history.length - 1].date : null,
       upcoming,
       past,
       packages: clientPkgs.map(p => ({

@@ -255,6 +255,7 @@ function renderPortal(data) {
       <div class="next-booking__info">
         <p class="next-booking__service">${escHtml(nextBooking.serviceName)}</p>
         <p class="next-booking__meta">${escHtml(nextBooking.slot)} · ${escHtml(nextBooking.specialistName)}</p>
+        ${nextBooking.reference ? `<a href="/cancel?ref=${encodeURIComponent(nextBooking.reference)}" style="display:inline-block;margin-top:10px;font-size:0.78rem;font-weight:600;color:#b43232;text-decoration:none;border:1px solid rgba(180,50,50,0.3);border-radius:8px;padding:5px 14px;">Отменить запись</a>` : ""}
       </div>
     </div>`;
   } else {
@@ -293,6 +294,26 @@ function renderPortal(data) {
     </div>`;
   }).join("") : `<div class="next-booking__empty">Активных абонементов нет.</div>`;
 
+  const MONTHS_FULL = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  const memberSinceLabel = data.memberSince
+    ? (() => { const d = new Date(data.memberSince + "T00:00:00"); return `${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`; })()
+    : null;
+  const loyaltyRows = [
+    data.totalSpent ? { l: "Потрачено всего", v: `${data.totalSpent} L` } : null,
+    data.favoriteService ? { l: "Любимая процедура", v: data.favoriteService } : null,
+    data.favoriteSpecialist ? { l: "Ваш мастер", v: data.favoriteSpecialist } : null,
+    memberSinceLabel ? { l: "С нами с", v: memberSinceLabel } : null
+  ].filter(Boolean);
+  const loyaltyHtml = loyaltyRows.length ? `<div class="portal-card">
+      <div class="portal-card__head"><span class="portal-card__title">Ваша статистика</span></div>
+      <div class="portal-card__body">
+        ${loyaltyRows.map(r => `<div class="visit-row" style="justify-content:space-between;">
+          <span style="font-size:0.85rem;color:var(--muted);">${escHtml(r.l)}</span>
+          <strong style="font-size:0.9rem;color:var(--forest);">${escHtml(r.v)}</strong>
+        </div>`).join("")}
+      </div>
+    </div>` : "";
+
   app.innerHTML = `
     <div class="portal-header">
       <a class="portal-header__logo" href="/">Mateev Spa Studio</a>
@@ -315,6 +336,8 @@ function renderPortal(data) {
         <strong>${data.packages.length}</strong>
       </div>
     </div>
+
+    ${loyaltyHtml}
 
     <div class="portal-card">
       <div class="portal-card__head">
