@@ -39,17 +39,29 @@ const crypto = require("node:crypto");
 function generateConfirmToken(bookingId) {
   return crypto.createHmac("sha256", FORM_TOKEN_SECRET).update(`confirm:${bookingId}`).digest("hex").slice(0, 32);
 }
-function post(urlString, body) {
+function post(urlString, body, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     const url     = new URL(urlString);
     const payload = JSON.stringify(body);
     const req = https.request(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+        ...extraHeaders
+      }
     }, (res) => {
       const chunks = [];
       res.on("data", c => chunks.push(c));
-      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+      res.on("end", () => {
+        const responseText = Buffer.concat(chunks).toString("utf8");
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(responseText);
+        } else {
+          // Иначе провал (например, 401 без ключа) виден в логах, а не «молча ок».
+          reject(new Error(`HTTP ${res.statusCode}: ${responseText.slice(0, 200)}`));
+        }
+      });
     });
     req.on("error", reject);
     req.write(payload);
@@ -186,7 +198,7 @@ async function main() {
           subject: `Напоминание — ${booking.serviceName} завтра, ${dateLabel}`,
           html: buildReminderHtml(booking, dateLabel),
           text: `Напоминание о визите завтра!\n\nПроцедура: ${booking.serviceName}\nСпециалист: ${booking.specialistName}\nВремя: ${booking.slot}–${booking.endsAt}\n\nОтменить: ${SITE_URL}/cancel?ref=${booking.reference}`
-        });
+        }, { Authorization: `Bearer ${RESEND_API_KEY}` });
         emailsSent++;
         console.log(`  ✓ Email sent to ${booking.email} (${booking.reference})`);
       } catch (err) {

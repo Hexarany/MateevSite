@@ -1529,10 +1529,7 @@ async function notifyBookingCancelledByClient(booking) {
 
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
     promises.push(
-      makeOutboundRequest({
-        hostname: "api.telegram.org",
-        path: `/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-        method: "POST",
+      requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         body: { chat_id: TELEGRAM_CHAT_ID, text }
       }).catch((err) => console.error("Cancel telegram notify failed:", err))
     );
@@ -1541,10 +1538,7 @@ async function notifyBookingCancelledByClient(booking) {
   if (RESEND_API_KEY && EMAIL_FROM && EMAIL_NOTIFICATION_RECIPIENTS.length) {
     const html = text.split("\n").map((l) => `<p>${l}</p>`).join("");
     promises.push(
-      makeOutboundRequest({
-        hostname: "api.resend.com",
-        path: "/emails",
-        method: "POST",
+      requestJson("https://api.resend.com/emails", {
         headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
         body: {
           from: EMAIL_FROM,
