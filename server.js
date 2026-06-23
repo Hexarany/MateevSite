@@ -4335,6 +4335,75 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     return;
   }
 
+  // POST /api/client-reschedule — перенос своей записи по portal-токену
+  if (request.method === "POST" && urlObject.pathname === "/api/client-reschedule") {
+    return withLock("studio", async () => {
+      const payload = await parseJsonBody(request);
+      const token = sanitizeText(payload.token);
+      const ref = sanitizeText(payload.ref);
+      const newDate = sanitizeText(payload.date);
+      const newSlot = sanitizeTimeString(payload.slot);
+      if (!token || !ref || !newDate || !newSlot) {
+        sendJson(response, 400, { message: "Не хватает данных для переноса." });
+        return;
+      }
+      if (!isValidDateString(newDate) || !isFutureOrToday(newDate)) {
+        sendJson(response, 400, { message: "Выберите корректную будущую дату." });
+        return;
+      }
+      const tokens = await readJson("portal-tokens.json").catch(() => []);
+      const entry = tokens.find((tk) => tk.token === token);
+      if (!entry) { sendJson(response, 403, { message: "Сессия истекла. Войдите заново." }); return; }
+
+      const { services, specialists, bookings, schedule, clients } = await loadStudioData();
+      const booking = bookings.find((b) => b.reference === ref);
+      if (!booking) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+
+      // Бронь должна принадлежать владельцу токена
+      const client = buildAdminClients(bookings, clients).find((c) => c.id === entry.clientId);
+      if (!client || !client.history.some((b) => b.reference === ref)) {
+        sendJson(response, 403, { message: "Это не ваша запись." });
+        return;
+      }
+      if (booking.status === "cancelled") {
+        sendJson(response, 400, { message: "Запись отменена — перенос невозможен." });
+        return;
+      }
+
+      const service = services.find((s) => s.id === booking.serviceId);
+      const specialist = specialists.find((s) => s.id === booking.specialistId);
+      if (!service || !specialist) {
+        sendJson(response, 400, { message: "Услуга или специалист недоступны." });
+        return;
+      }
+
+      const duration = booking.durationMins || service.duration;
+      const availability = calculateAvailability({
+        date: newDate,
+        service: { ...service, duration },
+        specialist,
+        bookings,
+        schedule,
+        excludeBookingId: booking.id
+      });
+      if (!availability.slots.some((s) => s.time === newSlot)) {
+        sendJson(response, 409, { message: "Это время уже занято. Выберите другое." });
+        return;
+      }
+
+      const idx = bookings.findIndex((b) => b.id === booking.id);
+      bookings[idx] = {
+        ...booking,
+        date: newDate,
+        slot: newSlot,
+        endsAt: toTimeString(toMinutes(newSlot) + duration),
+        updatedAt: new Date().toISOString()
+      };
+      await writeJson("bookings.json", sortBookings(bookings));
+      sendJson(response, 200, { ok: true, date: newDate, slot: newSlot });
+    });
+  }
+
   // GET /api/unsubscribe?email=...
   if (request.method === "GET" && urlObject.pathname === "/api/unsubscribe") {
     const email = sanitizeText(urlObject.searchParams.get("email") || "").toLowerCase();

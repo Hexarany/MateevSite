@@ -241,7 +241,9 @@ const STATUS_LABELS = {
 
 let LANG = localStorage.getItem("portalLang") === "ro" ? "ro" : "ru";
 let currentData = null;
+let rsInfo = null; // данные переносимой записи
 const t = (ru, ro) => LANG === "ro" ? ro : ru;
+const getToken = () => new URLSearchParams(location.search).get("token") || "";
 
 function setLang(lang) {
   LANG = lang === "ro" ? "ro" : "ru";
@@ -288,7 +290,10 @@ function renderPortal(data) {
       <div class="next-booking__info">
         <p class="next-booking__service">${escHtml(nextBooking.serviceName)}</p>
         <p class="next-booking__meta">${escHtml(nextBooking.slot)} · ${escHtml(nextBooking.specialistName)}</p>
-        ${nextBooking.reference ? `<a href="/cancel?ref=${encodeURIComponent(nextBooking.reference)}" style="display:inline-block;margin-top:10px;font-size:0.78rem;font-weight:600;color:#b43232;text-decoration:none;border:1px solid rgba(180,50,50,0.3);border-radius:8px;padding:5px 14px;">${t("Отменить запись","Anulează programarea")}</a>` : ""}
+        ${nextBooking.reference ? `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button onclick="startReschedule()" style="font-size:0.78rem;font-weight:600;color:var(--forest);background:#fff;border:1px solid var(--sage);border-radius:8px;padding:5px 14px;cursor:pointer;font-family:inherit;">${t("Перенести","Reprogramează")}</button>
+          <a href="/cancel?ref=${encodeURIComponent(nextBooking.reference)}" style="font-size:0.78rem;font-weight:600;color:#b43232;text-decoration:none;border:1px solid rgba(180,50,50,0.3);border-radius:8px;padding:5px 14px;">${t("Отменить","Anulează")}</a>
+        </div>` : ""}
       </div>
     </div>`;
   } else {
@@ -453,6 +458,72 @@ async function handleLogin(e) {
     location.search = "?token=" + encodeURIComponent(data.token);
   } catch (err) {
     renderLogin(t("Ошибка сети. Попробуйте ещё раз.","Eroare de rețea. Încercați din nou."));
+  }
+}
+
+function startReschedule() {
+  const b = currentData && currentData.upcoming[0];
+  if (!b) return;
+  rsInfo = { ref: b.reference, serviceId: b.serviceId, specialistId: b.specialistId, bookingId: b.id, duration: b.durationMins || 0, serviceName: b.serviceName };
+  const today = new Date().toISOString().slice(0, 10);
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    ${headerBar()}
+    <div class="portal-header" style="padding-top:20px;">
+      <p class="portal-header__eyebrow">${t("Перенос записи","Reprogramare")}</p>
+      <h1 class="portal-header__name" style="font-size:1.5rem;">${escHtml(rsInfo.serviceName)}</h1>
+    </div>
+    <div class="portal-card" style="padding:24px 20px;">
+      <label style="display:block;font-size:0.85rem;color:var(--muted);margin-bottom:8px;">${t("Выберите дату","Alegeți data")}</label>
+      <input type="date" id="rsDate" min="${today}" value="${today}"
+        style="width:100%;padding:12px 14px;font-size:1rem;font-family:inherit;border:1px solid var(--line);border-radius:12px;background:var(--sand);color:var(--forest);margin-bottom:16px;">
+      <div id="rsSlots" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <p id="rsMsg" style="font-size:0.85rem;color:var(--muted);text-align:center;margin-top:10px;"></p>
+    </div>
+    <div class="portal-cta">
+      <a href="?token=${encodeURIComponent(getToken())}" style="color:var(--muted);font-size:0.85rem;text-decoration:none;">← ${t("Назад в кабинет","Înapoi în cont")}</a>
+    </div>
+  `;
+  document.getElementById("rsDate").addEventListener("change", loadRescheduleSlots);
+  loadRescheduleSlots();
+}
+
+async function loadRescheduleSlots() {
+  const date = document.getElementById("rsDate").value;
+  const slotsDiv = document.getElementById("rsSlots");
+  const msg = document.getElementById("rsMsg");
+  slotsDiv.innerHTML = "";
+  msg.textContent = t("Загружаем слоты…","Se încarcă orele…");
+  try {
+    const url = `/api/availability?serviceId=${encodeURIComponent(rsInfo.serviceId)}&specialistId=${encodeURIComponent(rsInfo.specialistId)}&date=${encodeURIComponent(date)}&excludeBookingId=${encodeURIComponent(rsInfo.bookingId)}${rsInfo.duration ? `&customDuration=${rsInfo.duration}` : ""}`;
+    const res = await fetch(url);
+    const data = await res.json().catch(() => ({ slots: [] }));
+    const slots = data.slots || [];
+    if (!slots.length) { msg.textContent = t("На эту дату нет свободных окон.","Nu sunt ore libere la această dată."); return; }
+    msg.textContent = "";
+    slotsDiv.innerHTML = slots.map(s =>
+      `<button onclick="confirmReschedule('${date}','${s.time}')" style="padding:10px 14px;border:1px solid var(--sage);border-radius:10px;background:#fff;color:var(--forest);font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;">${s.time}</button>`
+    ).join("");
+  } catch (e) {
+    msg.textContent = t("Ошибка загрузки слотов.","Eroare la încărcarea orelor.");
+  }
+}
+
+async function confirmReschedule(date, slot) {
+  if (!confirm(t(`Перенести запись на ${date}, ${slot}?`, `Reprogramați pe ${date}, ${slot}?`))) return;
+  const msg = document.getElementById("rsMsg");
+  msg.textContent = t("Переносим…","Se reprogramează…");
+  try {
+    const res = await fetch("/api/client-reschedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: getToken(), ref: rsInfo.ref, date, slot })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { msg.textContent = data.message || t("Не удалось перенести.","Reprogramare eșuată."); return; }
+    location.search = "?token=" + encodeURIComponent(getToken()); // вернёт в кабинет с обновлёнными данными
+  } catch (e) {
+    msg.textContent = t("Ошибка сети.","Eroare de rețea.");
   }
 }
 
