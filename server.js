@@ -4746,7 +4746,9 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     try { payload = JSON.parse(raw.toString()); } catch { sendJson(response, 400, { message: "Bad JSON." }); return; }
     if (payload.ref !== "refs/heads/main") { sendJson(response, 200, { message: "Not main branch." }); return; }
     sendJson(response, 200, { message: "Deploy started." });
-    exec("git pull origin main && pm2 restart all", { cwd: ROOT_DIR }, (err, stdout, stderr) => {
+    // force-sync к origin: сервер — чистая цель деплоя, локальных коммитов нет,
+    // поэтому reset --hard надёжнее git pull (никогда не расходится с origin).
+    exec("git fetch origin && git reset --hard origin/main && pm2 restart all", { cwd: ROOT_DIR }, (err, stdout, stderr) => {
       if (err) process.stderr.write(`[webhook] deploy error: ${err.message}\n`);
       else process.stdout.write(`[webhook] deployed: ${stdout.trim()}\n`);
     });
