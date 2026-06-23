@@ -347,10 +347,64 @@ function renderPortal(data) {
   `;
 }
 
+function renderLogin(errorMsg) {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="portal-header">
+      <a class="portal-header__logo" href="/">Mateev Spa Studio</a>
+      <p class="portal-header__eyebrow">Личный кабинет</p>
+      <h1 class="portal-header__name">Вход</h1>
+      <p class="portal-header__sub">Введите номер телефона, который указывали при записи</p>
+    </div>
+    <div class="portal-card" style="padding:24px 20px;">
+      <form id="loginForm" style="display:flex;flex-direction:column;gap:14px;">
+        <input type="tel" id="loginPhone" inputmode="tel" autocomplete="tel"
+          placeholder="+373 60 000 000"
+          style="width:100%;padding:14px 16px;font-size:1rem;font-family:'Manrope',sans-serif;border:1px solid var(--line);border-radius:12px;background:var(--sand);color:var(--forest);outline:none;">
+        ${errorMsg ? `<p style="color:#b43232;font-size:0.85rem;text-align:center;">${escHtml(errorMsg)}</p>` : ""}
+        <button type="submit" class="button-main" style="width:100%;justify-content:center;" id="loginBtn">Войти</button>
+      </form>
+      <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin-top:16px;">
+        Ещё не были у нас? <a href="/#booking" style="color:var(--sage);font-weight:600;">Записаться</a>
+      </p>
+    </div>
+    <div class="portal-footer">
+      <a href="/">mateevmassage.com</a> &nbsp;·&nbsp; Кишинёв, Молдова
+    </div>
+  `;
+  document.getElementById("loginForm").addEventListener("submit", handleLogin);
+  document.getElementById("loginPhone").focus();
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const phone = document.getElementById("loginPhone").value.trim();
+  if (!phone) return;
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.textContent = "Проверяем…";
+  try {
+    const res = await fetch("/api/client-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      renderLogin(data.message || "Не удалось войти.");
+      return;
+    }
+    // Перезагружаем с токеном → откроется кабинет
+    location.search = "?token=" + encodeURIComponent(data.token);
+  } catch (err) {
+    renderLogin("Ошибка сети. Попробуйте ещё раз.");
+  }
+}
+
 async function init() {
   const token = new URLSearchParams(location.search).get("token");
   if (!token) {
-    document.getElementById("app").innerHTML = `<div class="error-state">Ссылка недействительна.<br>Обратитесь к администратору.</div>`;
+    renderLogin();
     return;
   }
   try {

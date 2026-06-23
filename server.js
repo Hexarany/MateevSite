@@ -4275,6 +4275,55 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     return;
   }
 
+  // POST /api/client-login — вход клиента по номеру телефона (без пароля)
+  if (request.method === "POST" && urlObject.pathname === "/api/client-login") {
+    assertRateLimit({
+      scope: "client-login",
+      key: getRequestIp(request),
+      windowMs: 10 * 60 * 1000,
+      limit: 20,
+      message: "Слишком много попыток входа. Попробуйте через несколько минут."
+    });
+    const payload = await parseJsonBody(request);
+    const phoneDigits = normalizePhoneDigits(payload.phone || "");
+    if (phoneDigits.length < 8) {
+      sendJson(response, 400, { message: "Введите полный номер телефона." });
+      return;
+    }
+    // Сравниваем по последним 8 цифрам — устойчиво к коду страны (+373 / 0…).
+    const tail = phoneDigits.slice(-8);
+    const { bookings, clients } = await loadStudioData();
+    const allClients = buildAdminClients(bookings, clients);
+    const matches = allClients.filter((c) => {
+      const cd = normalizePhoneDigits(c.phone || "");
+      return cd && cd.slice(-8) === tail;
+    });
+    if (matches.length === 0) {
+      sendJson(response, 404, { message: "Записей с таким номером не найдено. Проверьте номер или запишитесь впервые." });
+      return;
+    }
+    if (matches.length > 1) {
+      sendJson(response, 409, { message: "Найдено несколько записей с этим номером. Свяжитесь со студией для доступа." });
+      return;
+    }
+    const client = matches[0];
+    const tokens = await readJson("portal-tokens.json").catch(() => []);
+    let entry = tokens.find((t) => t.clientId === client.id);
+    if (!entry) {
+      entry = {
+        token: crypto.randomBytes(24).toString("hex"),
+        clientId: client.id,
+        clientName: client.clientName,
+        phone: client.phone || "",
+        createdAt: new Date().toISOString()
+      };
+      tokens.push(entry);
+      await writeJson("portal-tokens.json", tokens);
+    }
+    sendJson(response, 200, { ok: true, token: entry.token });
+    return;
+  }
+
   // GET /api/client-portal?token=xxx — public client portal data
   if (request.method === "GET" && urlObject.pathname === "/api/client-portal") {
     const token = urlObject.searchParams.get("token") || "";
