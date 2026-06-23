@@ -23,6 +23,7 @@ const {
   createFallbackId,
   buildInitials
 } = require("./lib/text");
+const { requestJson } = require("./lib/http");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PIN = process.env.ADMIN_PIN;
@@ -60,7 +61,6 @@ const RESEND_API_KEY = sanitizeEnv(process.env.RESEND_API_KEY);
 const EMAIL_FROM = sanitizeEnv(process.env.EMAIL_FROM);
 const EMAIL_REPLY_TO = sanitizeEnv(process.env.EMAIL_REPLY_TO);
 const EMAIL_NOTIFICATION_RECIPIENTS = splitCommaList(process.env.EMAIL_NOTIFICATIONS_TO);
-const HTTP_OUTBOUND_TIMEOUT_MS = Math.max(1000, Number(process.env.HTTP_OUTBOUND_TIMEOUT_MS) || 8000);
 const COOKIE_FORCE_SECURE = process.env.COOKIE_SECURE === "true";
 const CANCEL_CUTOFF_HOURS = Math.max(0, Number(process.env.CANCEL_CUTOFF_HOURS) || 2);
 const SITE_URL = sanitizeEnv(process.env.SITE_URL).replace(/\/$/, "");
@@ -1146,67 +1146,6 @@ function buildExpiredAdminSessionCookie(request) {
 function hasLegacyAdminPin(request) {
   const providedPin = sanitizeEnv(request.headers["x-admin-pin"]);
   return Boolean(providedPin) && providedPin === ADMIN_PIN;
-}
-
-async function requestJson(urlString, { method = "POST", headers = {}, body } = {}) {
-  const urlObject = new URL(urlString);
-  const payload = body ? JSON.stringify(body) : "";
-
-  return new Promise((resolve, reject) => {
-    const outboundRequest = https.request(
-      urlObject,
-      {
-        method,
-        headers: {
-          Accept: "application/json",
-          ...(payload ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } : {}),
-          ...headers
-        },
-        timeout: HTTP_OUTBOUND_TIMEOUT_MS
-      },
-      (outboundResponse) => {
-        const chunks = [];
-
-        outboundResponse.on("data", (chunk) => {
-          chunks.push(chunk);
-        });
-
-        outboundResponse.on("end", () => {
-          const raw = Buffer.concat(chunks).toString("utf8");
-
-          if (outboundResponse.statusCode && outboundResponse.statusCode >= 400) {
-            reject(new Error(raw || `Upstream request failed with status ${outboundResponse.statusCode}`));
-            return;
-          }
-
-          if (!raw) {
-            resolve({});
-            return;
-          }
-
-          try {
-            resolve(JSON.parse(raw));
-          } catch {
-            resolve({ raw });
-          }
-        });
-      }
-    );
-
-    outboundRequest.on("timeout", () => {
-      outboundRequest.destroy(new Error("Upstream request timed out"));
-    });
-
-    outboundRequest.on("error", (error) => {
-      reject(error);
-    });
-
-    if (payload) {
-      outboundRequest.write(payload);
-    }
-
-    outboundRequest.end();
-  });
 }
 
 function buildBookingNotificationText(booking) {
