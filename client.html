@@ -331,7 +331,6 @@ function renderPortal(data) {
     ? (() => { const d = new Date(data.memberSince + "T00:00:00"); return `${MONTHS[LANG].full[d.getMonth()]} ${d.getFullYear()}`; })()
     : null;
   const loyaltyRows = [
-    data.totalSpent ? { l: t("Потрачено всего","Cheltuit total"), v: `${data.totalSpent} L` } : null,
     data.favoriteService ? { l: t("Любимая процедура","Procedura preferată"), v: data.favoriteService } : null,
     data.favoriteSpecialist ? { l: t("Ваш мастер","Maseurul dvs."), v: data.favoriteSpecialist } : null,
     memberSinceLabel ? { l: t("С нами с","Cu noi din"), v: memberSinceLabel } : null
