@@ -5,6 +5,13 @@ const fs = require("node:fs/promises");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const { exec } = require("node:child_process");
+const {
+  readJson,
+  writeJson,
+  withLock,
+  ensureBackupDir,
+  createTimestampSlug
+} = require("./lib/store");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PIN = process.env.ADMIN_PIN;
@@ -31,7 +38,6 @@ const FORM_TOKEN_TTL_MS = FORM_TOKEN_TTL_HOURS * 60 * 60 * 1000;
 const FORM_TOKEN_SECRET = process.env.FORM_TOKEN_SECRET || ADMIN_SESSION_SECRET;
 const FORM_MIN_SUBMIT_MS = Math.max(1500, Number(process.env.FORM_MIN_SUBMIT_MS) || 4000);
 const FORM_MAX_AGE_MS = Math.max(FORM_MIN_SUBMIT_MS * 2, Number(process.env.FORM_MAX_AGE_MS) || 12 * 60 * 60 * 1000);
-const BACKUP_RETENTION_PER_FILE = Math.max(3, Number(process.env.BACKUP_RETENTION_PER_FILE) || 30);
 const BOOKING_RATE_LIMIT = Math.max(1, Number(process.env.BOOKING_RATE_LIMIT) || 6);
 const BOOKING_RATE_WINDOW_MS = Math.max(60_000, Number(process.env.BOOKING_RATE_WINDOW_MS) || 10 * 60 * 1000);
 const ADMIN_LOGIN_RATE_LIMIT = Math.max(1, Number(process.env.ADMIN_LOGIN_RATE_LIMIT) || 8);
@@ -855,93 +861,6 @@ function splitCommaList(value) {
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
-}
-
-async function readJson(fileName) {
-  const fullPath = path.join(DATA_DIR, fileName);
-  const raw = await fs.readFile(fullPath, "utf8");
-  return JSON.parse(raw);
-}
-
-async function ensureBackupDir() {
-  await fs.mkdir(BACKUP_DIR, { recursive: true });
-}
-
-function createTimestampSlug(date = new Date()) {
-  return date.toISOString().replaceAll(":", "-").replaceAll(".", "-");
-}
-
-async function pruneBackupFiles(fileStem) {
-  try {
-    const entries = await fs.readdir(BACKUP_DIR, { withFileTypes: true });
-    const matchingFiles = entries
-      .filter(
-        (entry) => entry.isFile() && entry.name.startsWith(`${fileStem}-`) && entry.name.endsWith(".json")
-      )
-      .map((entry) => entry.name)
-      .sort()
-      .reverse();
-
-    await Promise.all(
-      matchingFiles
-        .slice(BACKUP_RETENTION_PER_FILE)
-        .map((fileName) => fs.unlink(path.join(BACKUP_DIR, fileName)).catch(() => undefined))
-    );
-  } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw error;
-    }
-  }
-}
-
-async function backupExistingFile(fileName) {
-  const fullPath = path.join(DATA_DIR, fileName);
-
-  try {
-    const fileBuffer = await fs.readFile(fullPath);
-    await ensureBackupDir();
-
-    const parsed = path.parse(fileName);
-    const backupName = `${parsed.name}-${createTimestampSlug()}${parsed.ext || ".json"}`;
-    await fs.writeFile(path.join(BACKUP_DIR, backupName), fileBuffer);
-    await pruneBackupFiles(parsed.name);
-  } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw error;
-    }
-  }
-}
-
-async function writeJson(fileName, value) {
-  await backupExistingFile(fileName);
-  const fullPath = path.join(DATA_DIR, fileName);
-  const tmpPath = `${fullPath}.tmp`;
-  await fs.writeFile(tmpPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-  await fs.rename(tmpPath, fullPath);
-}
-
-// ── Per-key async mutex ──────────────────────────────────────────────────
-// Сериализует критические секции «прочитать → изменить → записать», чтобы
-// два одновременных запроса не вклинились друг в друга. Без этого две
-// параллельные брони на один слот могут затереть запись друг друга
-// (двойная бронь + потерянная запись). Процесс один (PM2, 1 инстанс),
-// поэтому in-process блокировки достаточно.
-const lockChains = new Map();
-
-function withLock(key, fn) {
-  const previous = lockChains.get(key) || Promise.resolve();
-  // fn стартует только после того, как все прежние держатели ключа отработали.
-  const result = previous.then(fn, fn);
-  // Хвост проглатывает ошибки, чтобы одна упавшая секция не заклинила очередь.
-  const tail = result.then(() => {}, () => {});
-  lockChains.set(key, tail);
-  // Подчищаем запись, когда очередь по ключу опустела, чтобы Map не рос.
-  tail.then(() => {
-    if (lockChains.get(key) === tail) {
-      lockChains.delete(key);
-    }
-  });
-  return result;
 }
 
 async function createDataSnapshot(label = "manual") {
