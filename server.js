@@ -2247,11 +2247,13 @@ function normalizeClientProfiles(profilesInput = []) {
         status: ["new", "regular", "vip", "attention"].includes(status) ? status : "regular",
         note: sanitizeText(profile?.note),
         tag: sanitizeText(profile?.tag),
+        // Контактные поля: для ручных клиентов — основные данные, для остальных —
+        // override (правка имени/телефона/email из карточки поверх данных из броней).
+        ...(sanitizeText(profile?.clientName) && { clientName: sanitizeText(profile?.clientName) }),
+        ...(sanitizeText(profile?.phone) && { phone: sanitizeText(profile?.phone) }),
+        ...(sanitizeText(profile?.email) && { email: sanitizeText(profile?.email) }),
         ...(profile?.manuallyAdded && {
           manuallyAdded: true,
-          clientName: sanitizeText(profile?.clientName || ""),
-          phone: sanitizeText(profile?.phone || ""),
-          email: sanitizeText(profile?.email || ""),
           createdAt: sanitizeText(profile?.createdAt || "")
         }),
         ...(profile?.medCard && { medCard: profile.medCard }),
@@ -2355,9 +2357,9 @@ function buildAdminClients(bookings, profiles = []) {
 
       return {
         id: client.id,
-        clientName: client.clientName,
-        phone: client.phone,
-        email: client.email,
+        clientName: profile?.clientName || client.clientName,
+        phone: profile?.phone || client.phone,
+        email: profile?.email || client.email,
         status: profile?.status || (client.totalVisits <= 1 ? "new" : "regular"),
         note: profile?.note || "",
         tag: profile?.tag || "",
@@ -3097,6 +3099,11 @@ async function handleAdminClientUpdate(request, response, clientId) {
     status: ["new", "regular", "vip", "attention"].includes(status) ? status : "regular",
     note: sanitizeText(payload.note),
     tag: sanitizeText(payload.tag),
+    // Контактные override-поля. Если поле не пришло в payload — сохраняем текущее
+    // (fallback), пустая строка означает «убрать override и взять данные из броней».
+    clientName: sanitizeText(payload.clientName, profiles[profileIndex]?.clientName || ""),
+    phone: sanitizeText(payload.phone, profiles[profileIndex]?.phone || ""),
+    email: sanitizeText(payload.email, profiles[profileIndex]?.email || ""),
     medCard: payload.medCard && typeof payload.medCard === "object" ? payload.medCard : (profiles[profileIndex]?.medCard || null)
   };
 

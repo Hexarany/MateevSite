@@ -4038,6 +4038,22 @@ function renderClientDetail(client) {
       </div>
 
       <form class="admin-form-stack" data-client-profile-form>
+        <!-- ── Контактные данные ── -->
+        <div style="background:rgba(179,109,44,0.06);border:1px solid rgba(179,109,44,0.2);border-radius:16px;padding:20px 24px;display:grid;gap:16px;">
+          <div>
+            <p class="section-kicker" style="margin-bottom:4px;">Контактные данные</p>
+            <p style="font-size:0.82rem;color:var(--muted);">Можно исправить имя или добавить фамилию и email</p>
+          </div>
+          <div class="field-grid">
+            <label class="field"><span>Имя и фамилия</span>
+              <input type="text" name="clientName" value="${escapeHtml(client.clientName || "")}" placeholder="Ольга Иванова"></label>
+            <label class="field"><span>Телефон</span>
+              <input type="text" name="clientPhone" value="${escapeHtml(client.phone || "")}" placeholder="+373 60 000 000"></label>
+            <label class="field"><span>Email</span>
+              <input type="email" name="clientEmail" value="${escapeHtml(client.email || "")}" placeholder="client@example.com"></label>
+          </div>
+        </div>
+
         <!-- ── Медицинская карта ── -->
         <div style="background:rgba(26,46,34,0.05);border:1px solid rgba(26,46,34,0.15);border-radius:16px;padding:20px 24px;display:grid;gap:16px;">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -4354,6 +4370,9 @@ async function handleClientProfileSubmit(event) {
 
   const goals = [...form.querySelectorAll('[name="mc_goals"]:checked')].map(el => el.value);
   const payload = {
+    clientName: form.querySelector('[name="clientName"]')?.value.trim() || "",
+    phone: form.querySelector('[name="clientPhone"]')?.value.trim() || "",
+    email: form.querySelector('[name="clientEmail"]')?.value.trim() || "",
     status: form.querySelector('[name="status"]').value,
     tag: form.querySelector('[name="tag"]').value.trim(),
     note: form.querySelector('[name="note"]').value.trim(),
