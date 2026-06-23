@@ -978,6 +978,30 @@ async function writeJson(fileName, value) {
   await fs.rename(tmpPath, fullPath);
 }
 
+// ── Per-key async mutex ──────────────────────────────────────────────────
+// Сериализует критические секции «прочитать → изменить → записать», чтобы
+// два одновременных запроса не вклинились друг в друга. Без этого две
+// параллельные брони на один слот могут затереть запись друг друга
+// (двойная бронь + потерянная запись). Процесс один (PM2, 1 инстанс),
+// поэтому in-process блокировки достаточно.
+const lockChains = new Map();
+
+function withLock(key, fn) {
+  const previous = lockChains.get(key) || Promise.resolve();
+  // fn стартует только после того, как все прежние держатели ключа отработали.
+  const result = previous.then(fn, fn);
+  // Хвост проглатывает ошибки, чтобы одна упавшая секция не заклинила очередь.
+  const tail = result.then(() => {}, () => {});
+  lockChains.set(key, tail);
+  // Подчищаем запись, когда очередь по ключу опустела, чтобы Map не рос.
+  tail.then(() => {
+    if (lockChains.get(key) === tail) {
+      lockChains.delete(key);
+    }
+  });
+  return result;
+}
+
 async function createDataSnapshot(label = "manual") {
   await ensureDataFiles();
   await ensureBackupDir();
@@ -3840,12 +3864,12 @@ async function routeApi(request, response, urlObject) {
   }
 
   if (request.method === "POST" && urlObject.pathname === "/api/bookings") {
-    await handleBookingCreate(request, response);
+    await withLock("studio", () => handleBookingCreate(request, response));
     return;
   }
 
   if (request.method === "POST" && urlObject.pathname === "/api/cancel") {
-    await handleBookingCancel(request, response);
+    await withLock("studio", () => handleBookingCancel(request, response));
     return;
   }
 
@@ -3912,18 +3936,18 @@ async function routeApi(request, response, urlObject) {
   }
 
   if (request.method === "POST" && urlObject.pathname === "/api/admin/bookings") {
-    await handleAdminBookingCreate(request, response);
+    await withLock("studio", () => handleAdminBookingCreate(request, response));
     return;
   }
 
   if (request.method === "POST" && urlObject.pathname === "/api/admin/blocks") {
-    await handleAdminBlockCreate(request, response);
+    await withLock("studio", () => handleAdminBlockCreate(request, response));
     return;
   }
 
   if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/blocks/")) {
     const blockId = urlObject.pathname.replace("/api/admin/blocks/", "");
-    await handleAdminBlockDelete(request, response, blockId);
+    await withLock("studio", () => handleAdminBlockDelete(request, response, blockId));
     return;
   }
 
@@ -3936,7 +3960,7 @@ async function routeApi(request, response, urlObject) {
       .replace("/api/admin/specialists/", "")
       .replace("/schedule", "")
       .replace(/\/$/, "");
-    await handleSpecialistScheduleUpdate(request, response, specialistId);
+    await withLock("studio", () => handleSpecialistScheduleUpdate(request, response, specialistId));
     return;
   }
 
@@ -3959,18 +3983,20 @@ async function routeApi(request, response, urlObject) {
 
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/bookings/")) {
     const bookingId = urlObject.pathname.replace("/api/admin/bookings/", "");
-    await handleBookingStatusUpdate(request, response, bookingId);
+    await withLock("studio", () => handleBookingStatusUpdate(request, response, bookingId));
     return;
   }
 
   if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/bookings/")) {
     assertAdminPin(request);
     const bookingId = urlObject.pathname.replace("/api/admin/bookings/", "");
-    const { bookings } = await loadStudioData();
-    const next = bookings.filter(b => b.id !== bookingId);
-    if (next.length === bookings.length) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
-    await writeJson("bookings.json", next);
-    sendJson(response, 200, { ok: true });
+    await withLock("studio", async () => {
+      const { bookings } = await loadStudioData();
+      const next = bookings.filter(b => b.id !== bookingId);
+      if (next.length === bookings.length) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+      await writeJson("bookings.json", next);
+      sendJson(response, 200, { ok: true });
+    });
     return;
   }
 
@@ -6935,5 +6961,6 @@ module.exports = {
   calculateAvailability,
   createDataSnapshot,
   createServer,
-  ensureDataFiles
+  ensureDataFiles,
+  withLock
 };
