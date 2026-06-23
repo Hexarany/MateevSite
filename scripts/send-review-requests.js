@@ -38,7 +38,11 @@ function post(urlString, headers, body) {
     }, (res) => {
       const chunks = [];
       res.on("data", c => chunks.push(c));
-      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+      res.on("end", () => {
+        const text = Buffer.concat(chunks).toString("utf8");
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(text);
+        else reject(new Error(`HTTP ${res.statusCode}: ${text.slice(0, 200)}`));
+      });
     });
     req.on("error", reject);
     req.write(payload);
