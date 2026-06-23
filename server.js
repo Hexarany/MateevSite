@@ -3482,6 +3482,73 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/gift-certificate — публичный заказ подарочного сертификата (оплата офлайн)
+  if (request.method === "POST" && urlObject.pathname === "/api/gift-certificate") {
+    assertRateLimit({
+      scope: "gift-cert",
+      key: getRequestIp(request),
+      windowMs: 10 * 60 * 1000,
+      limit: 10,
+      message: "Слишком много заявок. Попробуйте через несколько минут."
+    });
+    const payload = await parseJsonBody(request);
+    const amount = Math.max(0, parseInt(payload.amount || "0", 10));
+    const buyerName = sanitizeText(payload.buyerName || "");
+    const buyerPhone = sanitizeText(payload.buyerPhone || "");
+    const buyerEmail = sanitizeText(payload.buyerEmail || "");
+    const recipient = sanitizeText(payload.recipient || "");
+    const message = sanitizeText(payload.message || "");
+    if (amount < 100 || amount > 100000) {
+      sendJson(response, 400, { message: "Укажите сумму от 100 до 100 000 MDL." });
+      return;
+    }
+    if (buyerName.length < 2 || buyerPhone.replace(/\D/g, "").length < 8) {
+      sendJson(response, 400, { message: "Укажите имя и телефон для связи." });
+      return;
+    }
+
+    const now = new Date();
+    const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const validityMonths = 12;
+    const cert = {
+      id: crypto.randomUUID(),
+      code: `GC-${ym}-${String(Math.floor(Math.random() * 900) + 100)}`,
+      recipient,
+      procedure: "",
+      amount,
+      validityMonths,
+      issuedAt: now.toISOString(),
+      expiresAt: new Date(Date.now() + validityMonths * 30 * 24 * 3600 * 1000).toISOString(),
+      status: "pending", // ждёт оплаты — админ активирует после получения денег
+      buyerName,
+      buyerPhone,
+      buyerEmail,
+      message,
+      usedAt: null,
+      usedInBooking: null
+    };
+    const certs = await readJson("certificates.json");
+    certs.push(cert);
+    await writeJson("certificates.json", certs);
+
+    // Уведомляем администратора в Telegram (заявка = лид на продажу)
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      const text = `🎁 Заказ подарочного сертификата\n\n`
+        + `Сумма: ${amount} MDL\nКод: ${cert.code}\n`
+        + (recipient ? `Получатель: ${recipient}\n` : "")
+        + `Покупатель: ${buyerName}\nТелефон: ${buyerPhone}\n`
+        + (buyerEmail ? `Email: ${buyerEmail}\n` : "")
+        + (message ? `Сообщение: ${message}\n` : "")
+        + `\nСвяжитесь для оплаты, затем активируйте (статус → active в админке).`;
+      requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        body: { chat_id: TELEGRAM_CHAT_ID, text }
+      }).catch(() => {});
+    }
+
+    sendJson(response, 201, { ok: true, code: cert.code });
+    return;
+  }
+
   // PATCH /api/admin/certificates/:id - update status
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/certificates/")) {
     assertAdminPin(request);
@@ -3490,7 +3557,7 @@ async function routeApi(request, response, urlObject) {
     const certs = await readJson("certificates.json");
     const idx = certs.findIndex(c => c.id === certId);
     if (idx === -1) { sendJson(response, 404, { message: "Сертификат не найден." }); return; }
-    const allowed = ["active", "used", "cancelled"];
+    const allowed = ["pending", "active", "used", "cancelled"];
     if (allowed.includes(payload.status)) certs[idx].status = payload.status;
     await writeJson("certificates.json", certs);
     sendJson(response, 200, { ok: true, certificate: certs[idx] });
@@ -5880,15 +5947,55 @@ function renderCertificatesPage(site) {
         </div>
       </div>
 
-      <div class="cta-block">
-        <div class="cta-block__title">Заказать сертификат</div>
-        <div class="cta-block__sub">Напишите нам — оформим и отправим в течение часа</div>
-        <a href="tel:${escapeHtml(phone)}" class="cta-btn">Позвонить</a>
-        ${telegram ? `<a href="https://t.me/${escapeHtml(telegram.replace("@", ""))}" class="cta-btn cta-btn--ghost">Написать в Telegram</a>` : ""}
+      <div class="cta-block" id="orderForm" style="text-align:left;">
+        <div class="cta-block__title" style="text-align:center;">Заказать сертификат</div>
+        <div class="cta-block__sub" style="text-align:center;">Заполните форму — мы свяжемся для оплаты и оформим сертификат</div>
+        <form id="giftForm" style="max-width:440px;margin:24px auto 0;display:grid;gap:14px;">
+          <div>
+            <label style="display:block;font-size:0.82rem;color:rgba(255,255,255,0.7);margin-bottom:6px;">Сумма (MDL)</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              ${[500,1000,1500,2000].map(v => `<button type="button" onclick="setAmount(${v})" style="flex:1;min-width:64px;padding:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;">${v}</button>`).join("")}
+            </div>
+            <input type="number" id="gAmount" min="100" max="100000" step="50" value="1000" required
+              style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:1rem;">
+          </div>
+          <input type="text" id="gRecipient" placeholder="Имя получателя (необязательно)" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <input type="text" id="gName" placeholder="Ваше имя *" required style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <input type="tel" id="gPhone" placeholder="Ваш телефон *" required style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <input type="email" id="gEmail" placeholder="Email (необязательно)" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <textarea id="gMessage" rows="2" placeholder="Пожелание получателю (необязательно)" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;resize:vertical;"></textarea>
+          <button type="submit" id="gSubmit" style="padding:14px;background:#b36d2c;color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;">Оформить заказ</button>
+          <p id="gMsg" style="text-align:center;font-size:0.85rem;margin:0;min-height:1em;"></p>
+        </form>
+        <p style="text-align:center;font-size:0.82rem;color:rgba(255,255,255,0.55);margin-top:18px;">
+          Или напрямую: <a href="tel:${escapeHtml(phone)}" style="color:#fff;font-weight:600;">позвонить</a>${telegram ? ` · <a href="https://t.me/${escapeHtml(telegram.replace("@", ""))}" style="color:#fff;font-weight:600;">Telegram</a>` : ""}
+        </p>
       </div>
     </div>
   </main>
   <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+  <script>
+    function setAmount(v){ document.getElementById("gAmount").value = v; }
+    document.getElementById("giftForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      var btn = document.getElementById("gSubmit"), msg = document.getElementById("gMsg");
+      var body = {
+        amount: document.getElementById("gAmount").value,
+        recipient: document.getElementById("gRecipient").value.trim(),
+        buyerName: document.getElementById("gName").value.trim(),
+        buyerPhone: document.getElementById("gPhone").value.trim(),
+        buyerEmail: document.getElementById("gEmail").value.trim(),
+        message: document.getElementById("gMessage").value.trim()
+      };
+      btn.disabled = true; btn.textContent = "Отправляем…"; msg.textContent = "";
+      try {
+        var res = await fetch("/api/gift-certificate", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) });
+        var data = await res.json().catch(function(){return {};});
+        if (!res.ok) { msg.style.color = "#ffb4a8"; msg.textContent = data.message || "Не удалось отправить заявку."; btn.disabled = false; btn.textContent = "Оформить заказ"; return; }
+        document.getElementById("orderForm").innerHTML = '<div style="text-align:center;padding:24px 8px;"><p style="font-size:2.6rem;margin:0;">🎁</p><h2 style="font-family:\\'Cormorant Garamond\\',serif;color:#fff;font-size:1.7rem;margin:10px 0;">Заявка принята!</h2><p style="color:rgba(255,255,255,0.75);font-size:0.95rem;">Мы свяжемся с вами в ближайшее время — согласуем оплату и оформим сертификат.</p></div>';
+      } catch (err) { msg.style.color = "#ffb4a8"; msg.textContent = "Ошибка сети. Попробуйте ещё раз."; btn.disabled = false; btn.textContent = "Оформить заказ"; }
+    });
+  </script>
 </body>
 </html>`;
 }

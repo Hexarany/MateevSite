@@ -1531,8 +1531,8 @@ function renderCertificatesTable() {
     tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Сертификатов пока нет. Нажмите «Создать сертификат».</div></td></tr>';
     return;
   }
-  const statusLabels = { active: "Активен", used: "Использован", cancelled: "Отменён" };
-  const statusColors = { active: "var(--success)", used: "var(--muted)", cancelled: "var(--danger)" };
+  const statusLabels = { pending: "⏳ Ждёт оплаты", active: "Активен", used: "Использован", cancelled: "Отменён" };
+  const statusColors = { pending: "#b36d2c", active: "var(--success)", used: "var(--muted)", cancelled: "var(--danger)" };
   tbody.innerHTML = state.certificates
     .slice().reverse()
     .map(c => {
@@ -1540,13 +1540,16 @@ function renderCertificatesTable() {
       const isExpired = new Date(c.expiresAt) < new Date() && c.status === "active";
       return `<tr>
         <td><span class="table-main" style="font-family:monospace;">${escapeHtml(c.code)}</span></td>
-        <td><span class="table-main">${escapeHtml(c.recipient || "—")}</span></td>
+        <td>
+          <span class="table-main">${escapeHtml(c.recipient || "—")}</span>
+          ${c.buyerName ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">🛒 ${escapeHtml(c.buyerName)}, ${escapeHtml(c.buyerPhone || "")}${c.buyerEmail ? ` · ${escapeHtml(c.buyerEmail)}` : ""}${c.message ? `<br>«${escapeHtml(c.message)}»` : ""}</div>` : ""}
+        </td>
         <td><span class="table-main">${escapeHtml(c.procedure || "Любая процедура")}</span></td>
         <td><span class="table-main">${escapeHtml(String(c.amount))} MDL</span></td>
         <td><span class="table-main${isExpired ? '" style="color:var(--danger)' : ''}">${expires}</span></td>
         <td>
           <select class="cert-status-select" data-cert-id="${escapeHtml(c.id)}" style="font-size:0.82rem;color:${statusColors[c.status]||''};">
-            ${["active","used","cancelled"].map(s => `<option value="${s}"${c.status===s?" selected":""}>${statusLabels[s]}</option>`).join("")}
+            ${["pending","active","used","cancelled"].map(s => `<option value="${s}"${c.status===s?" selected":""}>${statusLabels[s]}</option>`).join("")}
           </select>
         </td>
       </tr>`;
