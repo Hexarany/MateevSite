@@ -1,3 +1,9 @@
+// Реферальная ссылка: сохраняем код из ?ref= для будущей записи
+(function captureReferral() {
+  const ref = new URLSearchParams(location.search).get("ref");
+  if (ref && /^REF-[A-Z0-9]+$/i.test(ref)) localStorage.setItem("referralCode", ref.toUpperCase());
+})();
+
 const state = {
   services: [],
   specialists: [],
@@ -1141,7 +1147,8 @@ async function handleBookingSubmit(event) {
     ...(state.bookingDuration > 0 && svcForPayload && state.bookingDuration !== svcForPayload.duration
       ? { customDuration: state.bookingDuration }
       : {}),
-    ...(state.appliedCert ? { certificateCode: state.appliedCert.code } : {})
+    ...(state.appliedCert ? { certificateCode: state.appliedCert.code } : {}),
+    ...(localStorage.getItem("referralCode") ? { referralCode: localStorage.getItem("referralCode") } : {})
   };
 
   elements.submitBookingBtn.disabled = true;

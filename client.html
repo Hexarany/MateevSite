@@ -350,6 +350,18 @@ function renderPortal(data) {
       </div>
     </div>` : "";
 
+  const referralHtml = data.referralCode ? `<div class="portal-card">
+      <div class="portal-card__head"><span class="portal-card__title">${t("Приведи друга","Invită un prieten")}</span></div>
+      <div class="portal-card__body" style="padding:20px;text-align:center;">
+        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;line-height:1.5;">${t("Поделитесь ссылкой — вам и другу по −10% на визит","Distribuiți linkul — −10% pentru amândoi")}</p>
+        <div style="display:flex;gap:8px;align-items:center;background:var(--sand);border:1px solid var(--line);border-radius:10px;padding:8px 8px 8px 14px;">
+          <input id="refLink" readonly value="${escHtml(data.referralLink)}" style="flex:1;min-width:0;border:none;background:transparent;font-size:0.8rem;color:var(--forest);font-family:inherit;outline:none;">
+          <button onclick="copyRef()" id="refBtn" style="flex-shrink:0;padding:8px 14px;background:var(--forest);color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">${t("Копировать","Copiază")}</button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:10px;">${t("Ваш код","Codul")}: <strong>${escHtml(data.referralCode)}</strong></p>
+      </div>
+    </div>` : "";
+
   app.innerHTML = `
     ${headerBar()}
     <div class="portal-header" style="padding-top:20px;">
@@ -395,6 +407,8 @@ function renderPortal(data) {
       </div>
       <div class="portal-card__body">${visitsHtml}</div>
     </div>
+
+    ${referralHtml}
 
     <div class="portal-cta">
       <a class="button-main" href="/#booking">${t("Записаться на процедуру","Programare la procedură")}</a>
@@ -525,6 +539,15 @@ async function confirmReschedule(date, slot) {
   } catch (e) {
     msg.textContent = t("Ошибка сети.","Eroare de rețea.");
   }
+}
+
+function copyRef() {
+  const input = document.getElementById("refLink");
+  const btn = document.getElementById("refBtn");
+  input.select();
+  const done = () => { btn.textContent = t("Скопировано!","Copiat!"); setTimeout(() => { btn.textContent = t("Копировать","Copiază"); }, 1500); };
+  if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(done).catch(() => { document.execCommand("copy"); done(); });
+  else { document.execCommand("copy"); done(); }
 }
 
 async function init() {

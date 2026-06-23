@@ -1161,6 +1161,7 @@ function buildBookingNotificationText(booking) {
     `Дата: ${booking.date}`,
     `Время: ${booking.slot}-${booking.endsAt}`,
     `Сумма: ${booking.totalPrice} MDL`,
+    booking.referredByName ? `🎁 По реф-ссылке от: ${booking.referredByName} (−10% обоим)` : null,
     booking.notes ? `Комментарий: ${booking.notes}` : null
   ]
     .filter(Boolean)
@@ -2028,7 +2029,8 @@ function createBookingRecord({ payload, cleanPayload, service, specialist, meta 
     phone: cleanPayload.phone,
     email: cleanPayload.email,
     notes: cleanPayload.notes,
-    source: meta.source || "public"
+    source: meta.source || "public",
+    ...(meta.referredByCode ? { referredByCode: meta.referredByCode, referredByName: meta.referredByName } : {})
   };
 }
 
@@ -2560,13 +2562,25 @@ async function handleBookingCreate(request, response) {
     return;
   }
 
+  // Реферал: запись по реф-ссылке — находим, кто привёл (но не самого себя)
+  let referredBy = null;
+  const referralCode = sanitizeText(payload.referralCode || "");
+  if (referralCode) {
+    const referrals = await readJson("referrals.json").catch(() => []);
+    const ref = referrals.find((r) => r.code.toUpperCase() === referralCode.toUpperCase());
+    if (ref && normalizePhoneDigits(ref.phone) !== normalizePhoneDigits(cleanPayload.phone)) {
+      referredBy = { referredByCode: ref.code, referredByName: ref.clientName };
+    }
+  }
+
   const booking = createBookingRecord({
     payload: safePayload,
     cleanPayload,
     service: effectiveService,
     specialist,
     meta: {
-      source: "public"
+      source: "public",
+      ...(referredBy || {})
     }
   });
 
@@ -4384,6 +4398,22 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const past = client.history.filter(b => b.date < now || b.status === "completed")
       .sort((a, b) => b.date.localeCompare(a.date) || b.slot.localeCompare(a.slot))
       .slice(0, 15);
+
+    // Реферальный код клиента (get-or-create)
+    const referrals = await readJson("referrals.json").catch(() => []);
+    let refEntry = referrals.find(r => r.clientId === client.id);
+    if (!refEntry) {
+      refEntry = {
+        code: `REF-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
+        clientId: client.id,
+        clientName: client.clientName,
+        phone: client.phone || "",
+        createdAt: new Date().toISOString()
+      };
+      referrals.push(refEntry);
+      await writeJson("referrals.json", referrals);
+    }
+
     sendJson(response, 200, {
       clientName: client.clientName,
       totalVisits: client.completedVisits,
@@ -4391,6 +4421,8 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       favoriteService: client.favoriteServices?.[0]?.name || null,
       favoriteSpecialist: client.favoriteSpecialists?.[0]?.name || null,
       memberSince: client.history.length ? client.history[client.history.length - 1].date : null,
+      referralCode: refEntry.code,
+      referralLink: `${(SITE_URL || "https://mateevmassage.com").replace(/\/$/, "")}/?ref=${refEntry.code}`,
       upcoming,
       past,
       packages: clientPkgs.map(p => ({
