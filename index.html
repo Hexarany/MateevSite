@@ -95,9 +95,12 @@
         <a href="#services" class="nav__link" id="navServicesLink">Процедуры</a>
         <a href="#specialists" class="nav__link" id="navSpecialistsLink">Специалисты</a>
         <a href="#booking" class="nav__link" id="navBookingLink">Запись</a>
+        <a href="#gift" class="nav__link" data-ru="Сертификаты" data-ro="Certificate">Сертификаты</a>
         <a href="/school" class="nav__link" data-ru="Школа" data-ro="Școală">Школа</a>
         <a href="/blog" class="nav__link" data-ru="Дневник" data-ro="Jurnal">Дневник</a>
         <a href="/client" class="nav__link" data-ru="Кабинет" data-ro="Cont">Кабинет</a>
+        <a href="/first-visit" class="nav__link nav__link--mobile" data-ru="Первый визит" data-ro="Prima vizită">Первый визит</a>
+        <a href="#reviews" class="nav__link nav__link--mobile" data-ru="Отзывы" data-ro="Recenzii">Отзывы</a>
         <div class="lang-toggle">
           <button type="button" class="lang-btn is-active" data-lang="ru">RU</button>
           <button type="button" class="lang-btn" data-lang="ro">RO</button>
@@ -215,6 +218,22 @@
         </div>
 
         <div class="specialist-grid" id="specialistsGrid"></div>
+      </div>
+    </section>
+
+    <section class="section gift-section" id="gift">
+      <div class="container">
+        <div class="gift-band reveal">
+          <div class="gift-band__icon" aria-hidden="true">🎁</div>
+          <div class="gift-band__body">
+            <p class="section-kicker" data-ru="Подарочный сертификат" data-ro="Certificat cadou">Подарочный сертификат</p>
+            <h2 class="gift-band__title" data-ru="Подарите заботу и отдых близкому человеку" data-ro="Dăruiește grijă și relaxare unei persoane dragi">Подарите заботу и отдых близкому человеку</h2>
+            <p class="gift-band__copy" data-ru="Сертификат на массаж — тёплый подарок на день рождения, праздник или просто так. Получатель сам выберет удобное время и программу." data-ro="Un certificat la masaj este un cadou cald pentru zi de naștere, sărbătoare sau pur și simplu. Destinatarul alege singur ora și programul potrivit.">Сертификат на массаж — тёплый подарок на день рождения, праздник или просто так. Получатель сам выберет удобное время и программу.</p>
+          </div>
+          <div class="gift-band__actions">
+            <a href="/certificates" class="button button--primary" data-ru="Оформить сертификат →" data-ro="Comandă certificat →">Оформить сертификат →</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -374,6 +393,11 @@
           <div class="review-grid" id="reviewsGrid"></div>
           <div class="faq-list" id="faqList"></div>
         </div>
+
+        <div class="reviews-cta reveal">
+          <p class="reviews-cta__text" data-ru="Были у нас? Поделитесь впечатлением — это помогает другим решиться." data-ro="Ați fost la noi? Împărtășiți impresia — îi ajută pe alții să se decidă.">Были у нас? Поделитесь впечатлением — это помогает другим решиться.</p>
+          <a href="https://g.page/r/Cbye495fXWm7EBM/review" target="_blank" rel="noopener" class="button button--primary" data-ru="⭐ Оставить отзыв" data-ro="⭐ Lasă o recenzie">⭐ Оставить отзыв</a>
+        </div>
       </div>
     </section>
 
@@ -461,6 +485,11 @@
 
   <a href="#booking" class="fab-booking" id="fabBooking" aria-label="Записаться онлайн">
     Записаться
+  </a>
+
+  <a href="/certificates" class="fab-gift" id="fabGift" aria-label="Подарочный сертификат">
+    <span aria-hidden="true">🎁</span>
+    <span class="fab-gift__text" data-ru="Сертификат" data-ro="Certificat">Сертификат</span>
   </a>
 
   <div class="messenger-btns" id="messengerBtns">
