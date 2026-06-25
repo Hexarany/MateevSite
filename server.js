@@ -66,6 +66,9 @@ const COOKIE_FORCE_SECURE = process.env.COOKIE_SECURE === "true";
 const CANCEL_CUTOFF_HOURS = Math.max(0, Number(process.env.CANCEL_CUTOFF_HOURS) || 2);
 const SITE_URL = sanitizeEnv(process.env.SITE_URL).replace(/\/$/, "");
 const GITHUB_WEBHOOK_SECRET = sanitizeEnv(process.env.GITHUB_WEBHOOK_SECRET);
+// Платформа обучения (Anatomia): выдача доступа ученику при подтверждении заявки.
+const PLATFORM_WEBHOOK_URL = sanitizeEnv(process.env.PLATFORM_WEBHOOK_URL).replace(/\/$/, "");
+const PLATFORM_WEBHOOK_SECRET = sanitizeEnv(process.env.PLATFORM_WEBHOOK_SECRET);
 const rateLimitBuckets = new Map();
 
 const STATIC_FILES = {
@@ -1239,6 +1242,32 @@ async function getOrCreatePortalToken(booking) {
     await writeJson("portal-tokens.json", tokens);
     return token;
   } catch { return null; }
+}
+
+// ── Платформа обучения: выдача доступа ученику ──────────────────────────────
+// Вызывается при первом переходе заявки в статус "confirmed". Через защищённый
+// вебхук платформа создаёт аккаунт ученика и сама отправляет письмо с доступом.
+// Возвращает { skipped } если интеграция не настроена, иначе ответ платформы.
+async function grantPlatformAccess(enrollment) {
+  if (!PLATFORM_WEBHOOK_URL || !PLATFORM_WEBHOOK_SECRET) {
+    return { skipped: true, reason: "not_configured" };
+  }
+  const fullName = String(enrollment.name || "").trim();
+  const parts = fullName.split(/\s+/).filter(Boolean);
+  const firstName = parts[0] || "Студент";
+  const lastName = parts.slice(1).join(" ") || "—";
+  const data = await requestJson(PLATFORM_WEBHOOK_URL, {
+    method: "POST",
+    body: {
+      firstName,
+      lastName,
+      email: String(enrollment.email || "").trim().toLowerCase(),
+      courseId: enrollment.courseId || null,
+      language: enrollment.language || "ru",
+      secret: PLATFORM_WEBHOOK_SECRET
+    }
+  });
+  return { skipped: false, ...data };
 }
 
 async function sendClientConfirmationEmail(booking) {
@@ -3444,10 +3473,52 @@ async function routeApi(request, response, urlObject) {
       return;
     }
     const allowed = ["new", "contacted", "confirmed", "cancelled"];
-    const status = allowed.includes(payload.status) ? payload.status : enrollments[idx].status;
+    const prevStatus = enrollments[idx].status;
+    const status = allowed.includes(payload.status) ? payload.status : prevStatus;
     enrollments[idx] = { ...enrollments[idx], status, updatedAt: new Date().toISOString() };
+
+    // Доступ к платформе выдаём один раз — при первом переходе в "confirmed".
+    let platformAccess = null;
+    if (status === "confirmed" && prevStatus !== "confirmed" && !enrollments[idx].platformProvisioned) {
+      if (!enrollments[idx].email) {
+        platformAccess = { ok: false, error: "no_email" };
+      } else {
+        try {
+          const result = await grantPlatformAccess(enrollments[idx]);
+          if (result.skipped) {
+            platformAccess = { ok: false, skipped: true, reason: result.reason };
+          } else {
+            enrollments[idx].platformProvisioned = true;
+            enrollments[idx].platformUserId = result.userId || null;
+            enrollments[idx].platformProvisionedAt = new Date().toISOString();
+            platformAccess = { ok: true, status: result.status || "created", userId: result.userId || null };
+          }
+        } catch (err) {
+          platformAccess = { ok: false, error: err.message || "webhook_failed" };
+        }
+      }
+    }
+
     await writeJson("enrollments.json", enrollments);
-    sendJson(response, 200, { ok: true, enrollment: enrollments[idx] });
+
+    // Уведомление в Telegram об успешной выдаче доступа (fire and forget).
+    if (platformAccess && platformAccess.ok) {
+      const enr = enrollments[idx];
+      void (async () => {
+        try {
+          if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+            await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              body: {
+                chat_id: TELEGRAM_CHAT_ID,
+                text: `✅ Доступ к платформе выдан\n\nУченик: ${enr.name}\nEmail: ${enr.email}\nКурс: ${enr.courseName}`
+              }
+            });
+          }
+        } catch {}
+      })();
+    }
+
+    sendJson(response, 200, { ok: true, enrollment: enrollments[idx], platformAccess });
     return;
   }
 

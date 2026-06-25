@@ -317,12 +317,30 @@ function bindEvents() {
     const select = event.target.closest(".enrollment-status-select");
     if (!select) return;
     try {
-      await fetchJson(`/api/admin/enrollments/${select.dataset.enrollmentId}`, {
+      const res = await fetchJson(`/api/admin/enrollments/${select.dataset.enrollmentId}`, {
         method: "PATCH",
         body: JSON.stringify({ status: select.value })
       });
       const idx = state.enrollments.findIndex((e) => e.id === select.dataset.enrollmentId);
-      if (idx !== -1) state.enrollments[idx].status = select.value;
+      if (idx !== -1 && res?.enrollment) state.enrollments[idx] = res.enrollment;
+      else if (idx !== -1) state.enrollments[idx].status = select.value;
+
+      // Результат выдачи доступа к платформе обучения.
+      const pa = res?.platformAccess;
+      if (pa) {
+        if (pa.ok) {
+          showToast(pa.status === "already_exists"
+            ? "Доступ к платформе уже был открыт ранее."
+            : "Доступ к платформе выдан — ученику отправлено письмо.", "success");
+          renderEnrollmentsTable();
+        } else if (pa.skipped) {
+          showToast("Статус обновлён. Платформа не подключена (PLATFORM_WEBHOOK_URL не задан).", "info");
+        } else if (pa.error === "no_email") {
+          showToast("Статус обновлён, но у заявки нет email — доступ к платформе не выдан.", "error");
+        } else {
+          showToast("Статус обновлён, но не удалось выдать доступ к платформе. Попробуйте ещё раз.", "error");
+        }
+      }
     } catch {
       showToast("Не удалось обновить статус.", "error");
     }
@@ -5115,6 +5133,7 @@ function renderEnrollmentsTable() {
       <td>
         <span class="table-main">${escapeHtml(e.courseName)}</span>
         <span class="table-sub">${e.direction === "massage" ? "Массаж" : "Косметология"}</span>
+        ${e.platformProvisioned ? `<span class="table-sub" style="color:var(--forest);font-weight:700;">✓ Доступ к платформе</span>` : ""}
       </td>
       <td><span class="table-main">${e.notes ? escapeHtml(e.notes) : "—"}</span></td>
       <td>
