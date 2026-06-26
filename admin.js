@@ -4901,6 +4901,11 @@ async function showVacationModal() {
             <input type="date" id="vmEnd" min="${today}">
           </label>
         </div>
+        <label class="field field--full">
+          <span>Сообщение для гостей на сайте (необязательно)</span>
+          <textarea id="vmNote" rows="2" placeholder="Напр.: 8–10 июля — индивидуальное обучение, 11–12 повышаю квалификацию на семинаре. Запись снова открыта с 13 июля."></textarea>
+          <small style="color:var(--muted);font-size:0.78rem;margin-top:4px;display:block;">Покажем вверху сайта вместо стандартного «Студия закрыта». Оставьте пустым — будет текст по умолчанию.</small>
+        </label>
         <button type="submit" class="button button--secondary">Закрыть период</button>
       </form>
 
@@ -4928,6 +4933,7 @@ async function showVacationModal() {
     const start = backdrop.querySelector("#vmStart").value;
     const end = backdrop.querySelector("#vmEnd").value;
     const reason = backdrop.querySelector("#vmReason").value.trim() || "Отпуск";
+    const note = backdrop.querySelector("#vmNote").value.trim();
 
     if (!start || !end || start > end) { showToast("Укажите корректный период.", "error"); return; }
 
@@ -4952,13 +4958,15 @@ async function showVacationModal() {
       for (const date of dates) {
         await fetchJson("/api/admin/blocks", {
           method: "POST",
-          body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason, force: true })
+          body: JSON.stringify({ specialistId, date, start: "00:00", end: "23:59", reason, note, force: true })
         });
       }
-      showToast(`Закрыто ${dates.length} дн. (${start} — ${end}). Проверь записи клиентов.`, "success");
+      const bannerMsg = note ? " Сообщение появится на сайте." : "";
+      showToast(`Закрыто ${dates.length} дн. (${start} — ${end}).${bannerMsg} Проверь записи клиентов.`, "success");
       backdrop.querySelector("#vmStart").value = "";
       backdrop.querySelector("#vmEnd").value = "";
       backdrop.querySelector("#vmReason").value = "Отпуск";
+      backdrop.querySelector("#vmNote").value = "";
       await Promise.all([loadBlocks(), loadDaySchedule()]);
       renderBlocksList();
       renderScheduleBoard();

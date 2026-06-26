@@ -1787,6 +1787,7 @@ function normalizeScheduleData(scheduleInput = {}, specialists = []) {
         const start = sanitizeTimeString(block?.start, "");
         const end = sanitizeTimeString(block?.end, "");
         const reason = sanitizeText(block?.reason, "Блокировка");
+        const note = sanitizeText(block?.note, "");
 
         if (!validSpecialistIds.has(specialistId) || !isValidDateString(date) || !start || !end) {
           return null;
@@ -1811,7 +1812,8 @@ function normalizeScheduleData(scheduleInput = {}, specialists = []) {
           date,
           start,
           end,
-          reason
+          reason,
+          ...(note ? { note } : {})
         };
       })
       .filter(Boolean)
@@ -2382,7 +2384,10 @@ function detectClosure(schedule) {
       streak++;
     } else break;
   }
-  return streak >= 2 ? { from: start, to: end } : null;
+  if (streak < 2) return null;
+  // Pick up an optional public-facing message stored on any block within the range
+  const note = blocks.find((b) => b.date >= start && b.date <= end && b.note)?.note || "";
+  return { from: start, to: end, note };
 }
 
 async function handleBootstrap(response) {
@@ -2871,6 +2876,7 @@ async function handleAdminBlockCreate(request, response) {
   const start = sanitizeTimeString(payload.start, "");
   const end = sanitizeTimeString(payload.end, "");
   const reason = sanitizeText(payload.reason, "Блокировка");
+  const note = sanitizeText(payload.note, "");
   const force = payload.force === true;
   const specialist = specialists.find((item) => item.id === specialistId);
 
@@ -2932,7 +2938,8 @@ async function handleAdminBlockCreate(request, response) {
           date,
           start,
           end,
-          reason
+          reason,
+          ...(note ? { note } : {})
         }
       ]
     },

@@ -1297,8 +1297,12 @@ function renderClosureBanner(closure) {
   const fmt = (d) => new Date(d + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   const banner = document.createElement("div");
   banner.id = "closureBanner";
-  banner.style.cssText = "background:#1a2e22;color:#fff;text-align:center;padding:12px 20px;font-size:0.88rem;position:relative;z-index:25;";
-  banner.innerHTML = `🌿 Студия закрыта с <strong>${fmt(closure.from)}</strong> по <strong>${fmt(closure.to)}</strong> включительно. Запись откроется после возвращения.`;
+  banner.style.cssText = "background:#1a2e22;color:#fff;text-align:center;padding:12px 20px;font-size:0.88rem;line-height:1.5;position:relative;z-index:25;";
+  if (closure.note) {
+    banner.innerHTML = `🌿 ${escapeHtml(closure.note)}`;
+  } else {
+    banner.innerHTML = `🌿 Студия закрыта с <strong>${fmt(closure.from)}</strong> по <strong>${fmt(closure.to)}</strong> включительно. Запись откроется после возвращения.`;
+  }
   document.querySelector(".topbar")?.insertAdjacentElement("afterend", banner);
 }
 
