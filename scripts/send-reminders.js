@@ -81,6 +81,30 @@ function getTomorrow() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ── Telegram client reminders ────────────────────────────────────────────────
+const { normalizePhoneDigits } = require("../lib/client");
+
+// Map of phone (last 8 digits) → Telegram chatId for clients who linked Telegram.
+function loadTelegramLinks() {
+  const p = path.join(ROOT, "data", "portal-tokens.json");
+  if (!fs.existsSync(p)) return new Map();
+  let tokens = [];
+  try { tokens = JSON.parse(fs.readFileSync(p, "utf8")); } catch { return new Map(); }
+  const map = new Map();
+  for (const t of tokens) {
+    if (t.telegramChatId && t.phone) {
+      const tail = normalizePhoneDigits(t.phone).slice(-8);
+      if (tail) map.set(tail, t.telegramChatId);
+    }
+  }
+  return map;
+}
+
+function buildTelegramReminder(booking, dateLabel) {
+  const cancelUrl = `${SITE_URL}/cancel?ref=${encodeURIComponent(booking.reference)}`;
+  return `🌿 Напоминание о визите завтра!\n\n💆 ${booking.serviceName}\n👤 ${booking.specialistName}\n📅 ${dateLabel}, ${booking.slot}–${booking.endsAt}\n\nЕсли планы изменились — отмените заранее:\n${cancelUrl}`;
+}
+
 // ── Email template ─────────────────────────────────────────────────────────
 function buildReminderHtml(booking, dateLabel) {
   const brandColor = "#b36d2c";
@@ -209,6 +233,29 @@ async function main() {
     console.log("  Skipping emails: RESEND_API_KEY or EMAIL_FROM not set.");
   }
 
+  // Send Telegram reminders to clients who linked their Telegram in the portal
+  let tgClientSent = 0;
+  if (TELEGRAM_BOT_TOKEN) {
+    const links = loadTelegramLinks();
+    if (links.size) {
+      for (const booking of due) {
+        const tail = normalizePhoneDigits(booking.phone || "").slice(-8);
+        const chatId = tail && links.get(tail);
+        if (!chatId) continue;
+        try {
+          await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: chatId,
+            text: buildTelegramReminder(booking, dateLabel)
+          });
+          tgClientSent++;
+          console.log(`  ✓ Telegram reminder to ${booking.clientName} (${booking.reference})`);
+        } catch (err) {
+          console.error(`  ✗ Telegram reminder failed for ${booking.reference}:`, err.message);
+        }
+      }
+    }
+  }
+
   // Send Telegram summary to admin (only once — skip if all due bookings already had reminder)
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
     const noEmail = due.filter(b => !b.email);
@@ -233,7 +280,7 @@ async function main() {
   }
   if (changed) fs.writeFileSync(bookingsPath, JSON.stringify(bookings, null, 2) + "\n", "utf8");
 
-  console.log(`[reminders] Done. Emails: ${emailsSent}/${due.filter(b => b.email).length}`);
+  console.log(`[reminders] Done. Emails: ${emailsSent}/${due.filter(b => b.email).length}, Telegram clients: ${tgClientSent}`);
 }
 
 main().catch(err => {

@@ -369,6 +369,25 @@ function renderPortal(data) {
       </div>
     </div>` : "";
 
+  const telegramHtml = data.telegramLinked
+    ? `<div class="portal-card">
+        <div class="portal-card__head"><span class="portal-card__title">${t("Напоминания","Memento-uri")}</span></div>
+        <div class="portal-card__body" style="padding:20px;display:flex;align-items:center;gap:14px;">
+          <span style="font-size:1.7rem;line-height:1;">🔔</span>
+          <div>
+            <p style="font-weight:600;color:var(--forest);">${t("Telegram подключён","Telegram conectat")}</p>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.45;">${t("Напомним о визите за день. Отключить — команда /stop в боте.","Vă reamintim cu o zi înainte. Dezactivare — /stop în bot.")}</p>
+          </div>
+        </div>
+      </div>`
+    : (data.telegramConnectUrl ? `<div class="portal-card">
+        <div class="portal-card__head"><span class="portal-card__title">${t("Напоминания","Memento-uri")}</span></div>
+        <div class="portal-card__body" style="padding:20px;text-align:center;">
+          <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;line-height:1.5;">${t("Получайте напоминания о визите в Telegram — не пропустите запись","Primiți memento-uri în Telegram — nu uitați de programare")}</p>
+          <a href="${escHtml(data.telegramConnectUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#229ED9;color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:0.9rem;">✈️ ${t("Напоминания в Telegram","Memento-uri în Telegram")}</a>
+        </div>
+      </div>` : "");
+
   app.innerHTML = `
     ${headerBar()}
     <div class="portal-header" style="padding-top:20px;">
@@ -400,6 +419,8 @@ function renderPortal(data) {
       </div>
       <div class="portal-card__body">${nextHtml}</div>
     </div>
+
+    ${telegramHtml}
 
     ${data.packages.length ? `<div class="portal-card">
       <div class="portal-card__head">

@@ -1171,6 +1171,26 @@ function buildBookingNotificationText(booking) {
     .join("\n");
 }
 
+async function tgSend(chatId, text, extra = {}) {
+  if (!TELEGRAM_BOT_TOKEN || !chatId) return;
+  try {
+    await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      body: { chat_id: chatId, text, ...extra }
+    });
+  } catch {}
+}
+
+let _botUsernameCache = null;
+async function getBotUsername() {
+  if (_botUsernameCache !== null) return _botUsernameCache;
+  if (!TELEGRAM_BOT_TOKEN) { _botUsernameCache = ""; return ""; }
+  try {
+    const me = await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`, { method: "GET" });
+    _botUsernameCache = me?.result?.username || "";
+  } catch { _botUsernameCache = ""; }
+  return _botUsernameCache;
+}
+
 async function sendTelegramNotification(booking) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     return { channel: "telegram", skipped: true };
@@ -4492,6 +4512,9 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       await writeJson("referrals.json", referrals);
     }
 
+    const botUsername = await getBotUsername();
+    const telegramConnectUrl = botUsername ? `https://t.me/${botUsername}?start=${entry.token}` : null;
+
     sendJson(response, 200, {
       clientName: client.clientName,
       totalVisits: client.completedVisits,
@@ -4499,6 +4522,8 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       favoriteService: client.favoriteServices?.[0]?.name || null,
       favoriteSpecialist: client.favoriteSpecialists?.[0]?.name || null,
       memberSince: client.history.length ? client.history[client.history.length - 1].date : null,
+      telegramLinked: !!entry.telegramChatId,
+      telegramConnectUrl,
       referralCode: refEntry.code,
       referralLink: `${(SITE_URL || "https://mateevmassage.com").replace(/\/$/, "")}/?ref=${refEntry.code}`,
       upcoming,
@@ -4604,7 +4629,7 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
     const result = await requestJson(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
-      { body: { url: `${base}/api/telegram/webhook`, allowed_updates: ["callback_query"] } }
+      { body: { url: `${base}/api/telegram/webhook`, allowed_updates: ["callback_query", "message"] } }
     );
     sendJson(response, 200, result);
     return;
@@ -4652,6 +4677,45 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
         })();
       }
     }
+
+    // ── Client linking: /start <portalToken> and /stop ──────────────────
+    const msg = payload?.message;
+    const msgText = typeof msg?.text === "string" ? msg.text.trim() : "";
+    const msgChatId = msg?.chat?.id;
+    if (msgChatId && msgText.startsWith("/start")) {
+      const startToken = msgText.split(/\s+/)[1] || "";
+      void (async () => {
+        if (!startToken) {
+          await tgSend(msgChatId, "🌿 Здравствуйте! Это бот Mateev Spa Studio.\n\nЧтобы получать напоминания о визитах, откройте личный кабинет на сайте и нажмите «🔔 Напоминания в Telegram».");
+          return;
+        }
+        try {
+          const tokens = await readJson("portal-tokens.json").catch(() => []);
+          const entry = tokens.find((t) => t.token === startToken);
+          if (!entry) {
+            await tgSend(msgChatId, "Ссылка устарела. Откройте кабинет на сайте и нажмите «Напоминания в Telegram» ещё раз.");
+            return;
+          }
+          entry.telegramChatId = msgChatId;
+          entry.telegramLinkedAt = new Date().toISOString();
+          await writeJson("portal-tokens.json", tokens);
+          await tgSend(msgChatId, `✅ Готово, ${entry.clientName || "дорогой гость"}! Буду напоминать о ваших визитах здесь. Чтобы отключить — отправьте /stop.`);
+        } catch {}
+      })();
+    } else if (msgChatId && msgText === "/stop") {
+      void (async () => {
+        try {
+          const tokens = await readJson("portal-tokens.json").catch(() => []);
+          let changed = false;
+          for (const t of tokens) {
+            if (t.telegramChatId === msgChatId) { delete t.telegramChatId; delete t.telegramLinkedAt; changed = true; }
+          }
+          if (changed) await writeJson("portal-tokens.json", tokens);
+          await tgSend(msgChatId, "Напоминания в Telegram отключены. Включить снова можно в кабинете на сайте.");
+        } catch {}
+      })();
+    }
+
     sendJson(response, 200, { ok: true });
     return;
   }
