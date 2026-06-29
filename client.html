@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Mateev Spa">
   <link rel="apple-touch-icon" href="/favicon.svg">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
@@ -489,7 +490,7 @@ async function handleLogin(e) {
     const res = await fetch("/api/client-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone })
+      body: JSON.stringify({ phone, initData: TG ? TG.initData : undefined })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -578,9 +579,43 @@ function copyRef() {
   else { document.execCommand("copy"); done(); }
 }
 
+// ── Telegram Mini App ──────────────────────────────────────────────────
+const TG = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData
+  ? window.Telegram.WebApp : null;
+
+function initTelegram() {
+  if (!TG) return;
+  try {
+    TG.ready();
+    TG.expand();
+    if (TG.setHeaderColor) TG.setHeaderColor("#1a2e22");
+    if (TG.setBackgroundColor) TG.setBackgroundColor("#f7f0e6");
+  } catch {}
+}
+
 async function init() {
   document.documentElement.lang = LANG;
-  const token = new URLSearchParams(location.search).get("token");
+  initTelegram();
+  let token = new URLSearchParams(location.search).get("token");
+
+  // Внутри Telegram — пробуем авто-вход по подписанным данным (без телефона)
+  if (!token && TG) {
+    try {
+      const res = await fetch("/api/tg-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData: TG.initData })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.token) {
+        token = data.token;
+        const u = new URL(location.href);
+        u.searchParams.set("token", token);
+        history.replaceState(null, "", u.toString());
+      }
+    } catch {}
+  }
+
   if (!token) {
     renderLogin();
     return;

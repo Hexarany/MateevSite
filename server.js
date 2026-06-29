@@ -1191,6 +1191,33 @@ async function getBotUsername() {
   return _botUsernameCache;
 }
 
+// Validate Telegram Mini App initData (signed by the bot token). Returns the
+// verified user object {id, first_name, ...} or null. See core.telegram.org/bots/webapps
+function verifyTelegramInitData(initData) {
+  if (!initData || !TELEGRAM_BOT_TOKEN) return null;
+  let params;
+  try { params = new URLSearchParams(initData); } catch { return null; }
+  const hash = params.get("hash");
+  if (!hash) return null;
+  params.delete("hash");
+  const pairs = [];
+  for (const [k, v] of params.entries()) pairs.push(`${k}=${v}`);
+  pairs.sort();
+  const dataCheckString = pairs.join("\n");
+  const secretKey = crypto.createHmac("sha256", "WebAppData").update(TELEGRAM_BOT_TOKEN).digest();
+  const computed = crypto.createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
+  let ok = false;
+  try {
+    const a = Buffer.from(computed, "hex");
+    const b = Buffer.from(hash, "hex");
+    ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch { ok = false; }
+  if (!ok) return null;
+  const authDate = Number(params.get("auth_date") || 0);
+  if (authDate && (Date.now() / 1000 - authDate) > 86400) return null; // 24h freshness
+  try { return JSON.parse(params.get("user") || "null"); } catch { return null; }
+}
+
 async function sendTelegramNotification(booking) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     return { channel: "telegram", skipped: true };
@@ -4425,6 +4452,24 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     return;
   }
 
+  // POST /api/tg-auth — авто-вход в Mini App по подписанным данным Telegram
+  if (request.method === "POST" && urlObject.pathname === "/api/tg-auth") {
+    const payload = await parseJsonBody(request);
+    const tgUser = verifyTelegramInitData(payload.initData || "");
+    if (!tgUser || !tgUser.id) {
+      sendJson(response, 401, { message: "Недействительные данные Telegram." });
+      return;
+    }
+    const tokens = await readJson("portal-tokens.json").catch(() => []);
+    const entry = tokens.find((t) => String(t.telegramChatId) === String(tgUser.id));
+    if (!entry) {
+      sendJson(response, 404, { linked: false });
+      return;
+    }
+    sendJson(response, 200, { linked: true, token: entry.token });
+    return;
+  }
+
   // POST /api/client-login — вход клиента по номеру телефона (без пароля)
   if (request.method === "POST" && urlObject.pathname === "/api/client-login") {
     assertRateLimit({
@@ -4457,8 +4502,10 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       return;
     }
     const client = matches[0];
+    const tgUser = payload.initData ? verifyTelegramInitData(payload.initData) : null;
     const tokens = await readJson("portal-tokens.json").catch(() => []);
     let entry = tokens.find((t) => t.clientId === client.id);
+    let dirty = false;
     if (!entry) {
       entry = {
         token: crypto.randomBytes(24).toString("hex"),
@@ -4468,8 +4515,15 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
         createdAt: new Date().toISOString()
       };
       tokens.push(entry);
-      await writeJson("portal-tokens.json", tokens);
+      dirty = true;
     }
+    // Если вход из Mini App — привязываем Telegram, чтобы дальше было без логина + напоминания
+    if (tgUser && tgUser.id && String(entry.telegramChatId) !== String(tgUser.id)) {
+      entry.telegramChatId = tgUser.id;
+      entry.telegramLinkedAt = new Date().toISOString();
+      dirty = true;
+    }
+    if (dirty) await writeJson("portal-tokens.json", tokens);
     sendJson(response, 200, { ok: true, token: entry.token });
     return;
   }
@@ -4637,11 +4691,16 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
       { body: { url: `${base}/api/telegram/webhook`, allowed_updates: ["callback_query", "message"] } }
     );
+    // Кнопка-меню бота открывает Mini App (кабинет внутри Telegram)
+    const menu = await requestJson(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setChatMenuButton`,
+      { body: { menu_button: { type: "web_app", text: "Кабинет", web_app: { url: `${base}/client` } } } }
+    ).catch(() => null);
     const info = await requestJson(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`,
       { method: "GET" }
     ).catch(() => null);
-    sendJson(response, 200, { setWebhook: result, info: info?.result || info });
+    sendJson(response, 200, { setWebhook: result, menuButton: menu, info: info?.result || info });
     return;
   }
 
