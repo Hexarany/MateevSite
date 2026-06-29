@@ -1535,3 +1535,80 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+// ── AI consultant widget ───────────────────────────────────────────────
+(function initAiChat() {
+  const launcher = document.getElementById("aiLauncher");
+  const panel = document.getElementById("aiChat");
+  if (!launcher || !panel) return;
+  const body = document.getElementById("aiChatBody");
+  const form = document.getElementById("aiChatForm");
+  const input = document.getElementById("aiChatInput");
+  const closeBtn = document.getElementById("aiChatClose");
+  const sendBtn = document.getElementById("aiChatSend");
+  const history = [];
+  let greeted = false;
+
+  function isRo() { return (typeof state !== "undefined" && state.lang === "ro"); }
+
+  function addMsg(role, text) {
+    const el = document.createElement("div");
+    el.className = "ai-msg ai-msg--" + (role === "user" ? "user" : "bot");
+    el.textContent = text;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    return el;
+  }
+
+  function open() {
+    panel.hidden = false;
+    launcher.classList.add("is-hidden");
+    if (!greeted) {
+      greeted = true;
+      addMsg("bot", isRo()
+        ? "Bună! Sunt asistentul Mateev Spa. Vă pot spune despre proceduri, prețuri, program și vă ajut să vă programați. Cu ce vă pot ajuta?"
+        : "Здравствуйте! Я ассистент Mateev Spa. Расскажу о процедурах, ценах, графике и помогу записаться. Чем могу помочь?");
+    }
+    setTimeout(() => input.focus(), 50);
+  }
+
+  function close() {
+    panel.hidden = true;
+    launcher.classList.remove("is-hidden");
+  }
+
+  launcher.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = "";
+    addMsg("user", msg);
+    sendBtn.disabled = true;
+    const typing = addMsg("bot", "…");
+    typing.classList.add("ai-msg--typing");
+    try {
+      const res = await fetch("/api/ai-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, history: history.slice(-8) })
+      });
+      const data = await res.json().catch(() => ({}));
+      typing.remove();
+      if (res.ok && data.reply) {
+        addMsg("bot", data.reply);
+        history.push({ role: "user", content: msg }, { role: "assistant", content: data.reply });
+      } else {
+        addMsg("bot", data.message || (isRo() ? "Scuze, nu am putut răspunde. Scrieți-ne în Telegram." : "Извините, не получилось ответить. Напишите нам в Telegram."));
+      }
+    } catch {
+      typing.remove();
+      addMsg("bot", isRo() ? "Eroare de rețea. Încercați din nou." : "Ошибка сети. Попробуйте ещё раз.");
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+})();

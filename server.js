@@ -66,6 +66,9 @@ const COOKIE_FORCE_SECURE = process.env.COOKIE_SECURE === "true";
 const CANCEL_CUTOFF_HOURS = Math.max(0, Number(process.env.CANCEL_CUTOFF_HOURS) || 2);
 const SITE_URL = sanitizeEnv(process.env.SITE_URL).replace(/\/$/, "");
 const GITHUB_WEBHOOK_SECRET = sanitizeEnv(process.env.GITHUB_WEBHOOK_SECRET);
+// AI-ресепшн (Claude). Без ключа фича мягко выключена.
+const ANTHROPIC_API_KEY = sanitizeEnv(process.env.ANTHROPIC_API_KEY);
+const AI_MODEL = sanitizeEnv(process.env.AI_MODEL) || "claude-haiku-4-5-20251001";
 // Платформа обучения (Anatomia): выдача доступа ученику при подтверждении заявки.
 const PLATFORM_WEBHOOK_URL = sanitizeEnv(process.env.PLATFORM_WEBHOOK_URL).replace(/\/$/, "");
 const PLATFORM_WEBHOOK_SECRET = sanitizeEnv(process.env.PLATFORM_WEBHOOK_SECRET);
@@ -1196,6 +1199,69 @@ async function tgEdit(chatId, messageId, text) {
       body: { chat_id: chatId, message_id: messageId, text, reply_markup: { inline_keyboard: [] } }
     });
   } catch {}
+}
+
+// ── AI-ресепшн («мозг студии» на Claude) ───────────────────────────────
+const AI_SYSTEM_PROMPT = `Ты — тёплый и вежливый ассистент-консультант студии массажа «Mateev Spa Studio» в Кишинёве.
+Твоя задача — отвечать гостям на вопросы и мягко подводить к онлайн-записи.
+
+Правила:
+- Отвечай на языке вопроса (русский или румынский), кратко и по-человечески (2–5 предложений).
+- Используй ТОЛЬКО факты из блока ниже. Если чего-то нет в фактах — не выдумывай, предложи уточнить у студии (телефон или Telegram).
+- Цены и услуги называй строго из списка, в молдавских леях (MDL).
+- Когда уместно — мягко предлагай записаться: «записаться можно прямо на сайте в разделе „Запись"».
+- Про здоровье говори осторожно: это не медицинская консультация. При боли, травме или беременности советуй сперва проконсультироваться с врачом, а в студии — сообщить о состоянии заранее.
+- Не обсуждай ничего, кроме студии, услуг, цен, записи и подготовки к визиту. На посторонние темы вежливо возвращай к студии.`;
+
+async function buildStudioFacts() {
+  const [rawServices, rawSite] = await Promise.all([
+    readJson("services.json").catch(() => []),
+    readJson("site.json").catch(() => ({}))
+  ]);
+  const services = Array.isArray(rawServices) ? rawServices : [];
+  const brand = rawSite.brand || {};
+  const faq = Array.isArray(rawSite.faq) ? rawSite.faq : [];
+  const cur = brand.currency || "MDL";
+  const lines = [];
+  lines.push(`Название: ${brand.name || "Mateev Spa Studio"}. Город: ${brand.city || "Кишинёв"}. Адрес: ${brand.address || "—"}.`);
+  lines.push(`Часы работы: ${brand.hours || "уточняйте у студии"}.`);
+  lines.push(`Телефон: ${brand.phone || "—"}. Telegram: ${brand.telegram || "—"}.`);
+  lines.push("");
+  lines.push("Услуги и цены:");
+  for (const s of services) {
+    if (!s || !s.name) continue;
+    lines.push(`- ${s.name} — ${s.price} ${cur}, ${s.duration} мин.${s.description ? " " + s.description : ""}`);
+  }
+  if (faq.length) {
+    lines.push("");
+    lines.push("Частые вопросы:");
+    for (const f of faq) {
+      if (f && f.question) lines.push(`- В: ${f.question}\n  О: ${f.answer || ""}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+// messages: [{role:"user"|"assistant", content:string}] — должен начинаться с user
+async function callStudioAI(messages) {
+  if (!ANTHROPIC_API_KEY || !Array.isArray(messages) || !messages.length) return null;
+  const facts = await buildStudioFacts();
+  try {
+    const data = await requestJson("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+      body: {
+        model: AI_MODEL,
+        max_tokens: 400,
+        system: `${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`,
+        messages
+      }
+    });
+    const text = (data?.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n").trim();
+    return text || null;
+  } catch {
+    return null;
+  }
 }
 
 let _botUsernameCache = null;
@@ -4470,6 +4536,40 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     return;
   }
 
+  // POST /api/ai-chat — AI-ресепшн (Claude отвечает на вопросы гостей)
+  if (request.method === "POST" && urlObject.pathname === "/api/ai-chat") {
+    if (!ANTHROPIC_API_KEY) {
+      sendJson(response, 503, { message: "Консультант временно недоступен. Напишите нам в Telegram." });
+      return;
+    }
+    assertRateLimit({
+      scope: "ai-chat",
+      key: getRequestIp(request),
+      windowMs: 5 * 60 * 1000,
+      limit: 25,
+      message: "Слишком много сообщений. Попробуйте через пару минут."
+    });
+    const payload = await parseJsonBody(request);
+    const userMsg = sanitizeText(payload.message || "").slice(0, 1000);
+    if (!userMsg) { sendJson(response, 400, { message: "Пустое сообщение." }); return; }
+    const history = Array.isArray(payload.history) ? payload.history.slice(-8) : [];
+    const messages = [];
+    for (const h of history) {
+      const role = h && h.role === "assistant" ? "assistant" : "user";
+      const content = sanitizeText((h && h.content) || "").slice(0, 1000);
+      if (content) messages.push({ role, content });
+    }
+    messages.push({ role: "user", content: userMsg });
+    while (messages.length && messages[0].role !== "user") messages.shift();
+    const reply = await callStudioAI(messages);
+    if (!reply) {
+      sendJson(response, 502, { message: "Консультант сейчас недоступен. Напишите нам в Telegram — ответим лично." });
+      return;
+    }
+    sendJson(response, 200, { reply });
+    return;
+  }
+
   // POST /api/tg-auth — авто-вход в Mini App по подписанным данным Telegram
   if (request.method === "POST" && urlObject.pathname === "/api/tg-auth") {
     const payload = await parseJsonBody(request);
@@ -4835,6 +4935,16 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
           }
           if (changed) await writeJson("portal-tokens.json", tokens);
           await tgSend(msgChatId, "Напоминания в Telegram отключены. Включить снова можно в кабинете на сайте.");
+        } catch {}
+      })();
+    } else if (msgChatId && msgText && !msgText.startsWith("/") && ANTHROPIC_API_KEY) {
+      // Свободный текст → AI-ресепшн отвечает прямо в чате
+      void (async () => {
+        try {
+          await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendChatAction`,
+            { body: { chat_id: msgChatId, action: "typing" } }).catch(() => {});
+          const reply = await callStudioAI([{ role: "user", content: msgText.slice(0, 1000) }]);
+          await tgSend(msgChatId, reply || "Извините, сейчас не могу ответить. Напишите чуть позже или позвоните нам 🌿");
         } catch {}
       })();
     }

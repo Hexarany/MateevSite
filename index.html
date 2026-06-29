@@ -510,6 +510,27 @@
     </a>
   </div>
 
+  <button class="ai-launcher" id="aiLauncher" type="button" aria-label="Спросить ассистента">
+    <span class="ai-launcher__icon" aria-hidden="true">✨</span>
+    <span class="ai-launcher__text" data-ru="Спросить" data-ro="Întreabă">Спросить</span>
+  </button>
+
+  <div class="ai-chat" id="aiChat" hidden>
+    <div class="ai-chat__head">
+      <div class="ai-chat__title">
+        <span class="ai-chat__dot" aria-hidden="true"></span>
+        <span data-ru="Консультант студии" data-ro="Consultant studio">Консультант студии</span>
+      </div>
+      <button class="ai-chat__close" id="aiChatClose" type="button" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="ai-chat__body" id="aiChatBody"></div>
+    <form class="ai-chat__form" id="aiChatForm">
+      <input type="text" id="aiChatInput" autocomplete="off" maxlength="1000" placeholder="О массаже, ценах, записи…">
+      <button type="submit" id="aiChatSend" aria-label="Отправить">➤</button>
+    </form>
+    <p class="ai-chat__disclaimer" data-ru="Ассистент может ошибаться. Это не медицинская консультация." data-ro="Asistentul poate greși. Nu este consultație medicală.">Ассистент может ошибаться. Это не медицинская консультация.</p>
+  </div>
+
   <script src="script.js" defer></script>
 </body>
 </html>
