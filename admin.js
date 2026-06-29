@@ -1569,7 +1569,7 @@ function renderCertificatesTable() {
           <select class="cert-status-select" data-cert-id="${escapeHtml(c.id)}" style="font-size:0.82rem;color:${statusColors[c.status]||''};">
             ${["pending","active","used","cancelled"].map(s => `<option value="${s}"${c.status===s?" selected":""}>${statusLabels[s]}</option>`).join("")}
           </select>
-          ${c.status === "pending" ? `<a href="/certificate?from=${encodeURIComponent(c.id)}" target="_blank" class="button button--ghost button--mini" style="margin-top:6px;display:inline-block;white-space:nowrap;">📩 Оформить</a>` : ""}
+          ${c.status === "pending" ? `<a href="/certificate?from=${encodeURIComponent(c.id)}" target="_blank" class="button button--ghost button--mini" style="margin-top:12px;display:inline-block;white-space:nowrap;">📩 Оформить</a>` : ""}
         </td>
       </tr>`;
     }).join("");

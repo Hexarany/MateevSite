@@ -4524,3 +4524,19 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
 @media (max-width: 480px) {
   .ai-chat { right: 12px; left: 12px; bottom: 12px; width: auto; max-height: calc(100vh - 100px); }
 }
+
+/* На узких экранах «Спросить» — компактная круглая иконка в углу,
+   чтобы не конфликтовать с центральной кнопкой «Записаться» */
+@media (max-width: 600px) {
+  .ai-launcher {
+    right: 16px;
+    bottom: 20px;
+    padding: 0;
+    width: 52px;
+    height: 52px;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .ai-launcher__text { display: none; }
+  .ai-launcher__icon { font-size: 1.5rem; }
+}
