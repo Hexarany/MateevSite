@@ -1561,6 +1561,7 @@ function escapeHtml(value) {
   }
 
   function open() {
+    document.getElementById("messengerBtns")?.classList.remove("is-open");
     panel.hidden = false;
     launcher.classList.add("is-hidden");
     if (!greeted) {

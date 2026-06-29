@@ -4540,3 +4540,91 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
   .ai-launcher__text { display: none; }
   .ai-launcher__icon { font-size: 1.5rem; }
 }
+
+/* ── Unified contact hub (bottom-right): one toggle → tidy menu ────────── */
+.contact-hub {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.hub-item {
+  display: none;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 16px 8px 9px;
+  border-radius: 999px;
+  background: #fffaf4;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(36, 28, 23, 0.16);
+  white-space: nowrap;
+  animation: hubItemIn 0.22s ease both;
+}
+
+.contact-hub.is-open .hub-item { display: inline-flex; }
+
+.hub-item--book {
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+  color: #fff;
+  border-color: transparent;
+}
+
+.hub-item__ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.hub-item__ic svg { width: 17px; height: 17px; }
+.hub-item__ic--book { background: rgba(255, 255, 255, 0.22); }
+.hub-item__ic--ai { background: var(--forest, #1a2e22); }
+.hub-item__ic--gift { background: var(--brand, #b36d2c); }
+.hub-item__ic--ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.hub-item__ic--wa { background: #25d366; }
+.hub-item__ic--viber { background: #7360f2; }
+.hub-item__ic--tg { background: #229ed9; }
+
+.hub-toggle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(141, 83, 32, 0.36);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.hub-toggle:hover { transform: scale(1.06); }
+
+@keyframes hubItemIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 600px) {
+  .contact-hub { right: 16px; bottom: 16px; }
+  .hub-toggle { width: 54px; height: 54px; }
+}
