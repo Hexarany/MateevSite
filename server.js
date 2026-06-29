@@ -3668,24 +3668,48 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
-  // POST /api/admin/certificates - create new certificate
+  // POST /api/admin/certificates - создать сертификат ИЛИ оформить заявку (upsert по коду)
   if (request.method === "POST" && urlObject.pathname === "/api/admin/certificates") {
     assertAdminPin(request);
     const payload = await parseJsonBody(request);
+    const code = sanitizeText(payload.code || `GC-${Date.now().toString().slice(-6)}`);
+    const recipient = sanitizeText(payload.recipient || "");
+    const procedure = sanitizeText(payload.procedure || "");
+    const amount = Math.max(0, parseInt(payload.amount || "0", 10));
+    const validityMonths = Math.max(1, parseInt(payload.validityMonths || "12", 10));
+    const expiresAt = new Date(Date.now() + validityMonths * 30 * 24 * 3600 * 1000).toISOString();
+    const certs = await readJson("certificates.json");
+
+    // Если код уже есть (например, онлайн-заявка) — оформляем её: обновляем и активируем,
+    // сохраняя тот же код, id и данные покупателя. Без дубля.
+    const existingIdx = certs.findIndex((c) => (c.code || "").toUpperCase() === code.toUpperCase());
+    if (existingIdx !== -1) {
+      const ex = certs[existingIdx];
+      ex.recipient = recipient || ex.recipient || "";
+      ex.procedure = procedure;
+      if (amount) ex.amount = amount;
+      ex.validityMonths = validityMonths;
+      ex.expiresAt = expiresAt;
+      ex.status = "active";
+      ex.issuedAt = ex.issuedAt || new Date().toISOString();
+      await writeJson("certificates.json", certs);
+      sendJson(response, 200, { ok: true, certificate: ex, fulfilled: true });
+      return;
+    }
+
     const cert = {
       id: crypto.randomUUID(),
-      code: sanitizeText(payload.code || `GC-${Date.now().toString().slice(-6)}`),
-      recipient: sanitizeText(payload.recipient || ""),
-      procedure: sanitizeText(payload.procedure || ""),
-      amount: Math.max(0, parseInt(payload.amount || "0", 10)),
-      validityMonths: Math.max(1, parseInt(payload.validityMonths || "12", 10)),
+      code,
+      recipient,
+      procedure,
+      amount,
+      validityMonths,
       issuedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + parseInt(payload.validityMonths || "12", 10) * 30 * 24 * 3600 * 1000).toISOString(),
+      expiresAt,
       status: "active",
       usedAt: null,
       usedInBooking: null
     };
-    const certs = await readJson("certificates.json");
     certs.push(cert);
     await writeJson("certificates.json", certs);
     sendJson(response, 201, { ok: true, certificate: cert });

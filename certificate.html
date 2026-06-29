@@ -975,6 +975,61 @@
 
       updateDisplay();
       bindEvents();
+      prefillFromRequest();
+    }
+
+    // ── Оформление онлайн-заявки: подтянуть данные + тот же код ──────────
+    async function prefillFromRequest() {
+      const fromId = new URLSearchParams(location.search).get("from");
+      if (!fromId) return;
+      try {
+        const res = await fetch("/api/admin/certificates", { credentials: "same-origin" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const cert = (data.certificates || []).find(c => c.id === fromId);
+        if (!cert) { showToast("Заявка не найдена.", "error"); return; }
+
+        // Тот же уникальный код
+        state.code = cert.code;
+        certCodeInput.value = cert.code;
+
+        if (cert.amount) {
+          state.amount = cert.amount;
+          document.querySelectorAll("[data-amount]").forEach(b => b.classList.remove("is-active"));
+          const presetBtn = document.querySelector(`[data-amount="${cert.amount}"]`);
+          if (presetBtn) presetBtn.classList.add("is-active");
+          else document.getElementById("customAmount").value = cert.amount;
+        }
+        if (cert.recipient) {
+          state.recipient = cert.recipient;
+          document.getElementById("recipientName").value = cert.recipient;
+        }
+        if (cert.procedure) {
+          state.procedure = cert.procedure;
+          document.getElementById("procedureName").value = cert.procedure;
+        }
+        if (cert.validityMonths) {
+          state.validityMonths = cert.validityMonths;
+          document.querySelectorAll("[data-validity]").forEach(b => b.classList.remove("is-active"));
+          const vBtn = document.querySelector(`[data-validity="${cert.validityMonths}"]`);
+          if (vBtn) vBtn.classList.add("is-active");
+          else document.getElementById("customValidity").value = cert.validityMonths;
+        }
+        updateDisplay();
+        showRequestBanner(cert);
+      } catch {}
+    }
+
+    function showRequestBanner(cert) {
+      const banner = document.createElement("div");
+      banner.style.cssText = "margin:0 0 16px;padding:12px 14px;border-radius:12px;background:rgba(179,109,44,0.1);border:1px solid rgba(179,109,44,0.3);font-size:0.85rem;color:#7a4d1a;line-height:1.55;";
+      const esc = (s) => String(s || "").replace(/</g, "&lt;");
+      banner.innerHTML = `📩 <strong>Оформление заявки</strong> · код <code>${esc(cert.code)}</code><br>`
+        + `Покупатель: ${esc(cert.buyerName) || "—"}${cert.buyerPhone ? ", " + esc(cert.buyerPhone) : ""}`
+        + `${cert.buyerEmail ? " · " + esc(cert.buyerEmail) : ""}`
+        + `${cert.message ? "<br>«" + esc(cert.message) + "»" : ""}`;
+      const body = document.querySelector(".cert-sidebar__body");
+      if (body) body.insertBefore(banner, body.firstChild);
     }
 
     // ── Events ────────────────────────────────────────
@@ -1134,15 +1189,18 @@
           return;
         }
 
-        showToast("Сертификат сохранён.", "success");
-
-        // Generate new code for next certificate
-        const today = new Date();
-        const ym = today.toISOString().slice(0, 7).replace("-", "");
-        const rand = Math.floor(100 + Math.random() * 900);
-        state.code = `GC-${ym}-${rand}`;
-        certCodeInput.value = state.code;
-        updateDisplay();
+        if (data.fulfilled) {
+          showToast("Заявка оформлена, код сохранён.", "success");
+        } else {
+          showToast("Сертификат сохранён.", "success");
+          // Generate new code for next certificate
+          const today = new Date();
+          const ym = today.toISOString().slice(0, 7).replace("-", "");
+          const rand = Math.floor(100 + Math.random() * 900);
+          state.code = `GC-${ym}-${rand}`;
+          certCodeInput.value = state.code;
+          updateDisplay();
+        }
 
       } catch (err) {
         showToast("Не удалось сохранить сертификат.", "error");
