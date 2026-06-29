@@ -6,6 +6,13 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Личный кабинет — Mateev Spa Studio</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a2e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mateev Spa">
+  <link rel="apple-touch-icon" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
@@ -569,6 +576,50 @@ async function init() {
     document.getElementById("app").innerHTML = `${headerBar()}<div class="error-state">${escHtml(e.message)}</div>`;
   }
 }
+
+// ── PWA: service worker + «установить приложение» ──────────────────────
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (localStorage.getItem("pwaInstallDismissed") === "1") return;
+  showInstallPill();
+});
+
+function showInstallPill() {
+  if (document.getElementById("installPill")) return;
+  const pill = document.createElement("div");
+  pill.id = "installPill";
+  pill.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:420px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--forest,#1a2e22);color:#fff;box-shadow:0 12px 32px rgba(0,0,0,.28);font-size:0.9rem;";
+  pill.innerHTML = `
+    <span style="font-size:1.4rem;line-height:1;">📲</span>
+    <span style="flex:1;line-height:1.35;">${typeof t === "function" ? t("Установить приложение — быстрый доступ к записи и кабинету","Instalează aplicația — acces rapid la programări") : "Установить приложение"}</span>
+    <button id="installPillYes" style="flex-shrink:0;padding:8px 14px;border:none;border-radius:10px;background:#c49e5a;color:#111;font-weight:700;font-family:inherit;cursor:pointer;">${typeof t === "function" ? t("Установить","Instalează") : "Установить"}</button>
+    <button id="installPillNo" aria-label="Закрыть" style="flex-shrink:0;padding:6px;border:none;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);font-size:1.2rem;line-height:1;cursor:pointer;">✕</button>`;
+  document.body.appendChild(pill);
+  document.getElementById("installPillYes").addEventListener("click", async () => {
+    pill.remove();
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice.catch(() => {});
+    deferredInstallPrompt = null;
+  });
+  document.getElementById("installPillNo").addEventListener("click", () => {
+    pill.remove();
+    localStorage.setItem("pwaInstallDismissed", "1");
+  });
+}
+
+window.addEventListener("appinstalled", () => {
+  document.getElementById("installPill")?.remove();
+  localStorage.setItem("pwaInstallDismissed", "1");
+});
 
 init();
 </script>

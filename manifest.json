@@ -2,6 +2,7 @@
   "name": "Mateev Spa Studio",
   "short_name": "Mateev Spa",
   "description": "Массаж и телесная терапия в Кишинёве. Онлайн-запись.",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f7f0e6",
@@ -21,6 +22,12 @@
       "short_name": "Запись",
       "url": "/#booking",
       "description": "Онлайн-запись на процедуру"
+    },
+    {
+      "name": "Личный кабинет",
+      "short_name": "Кабинет",
+      "url": "/client",
+      "description": "Мои записи, перенос и история"
     },
     {
       "name": "Дневник",

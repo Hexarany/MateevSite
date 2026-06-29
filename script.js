@@ -181,6 +181,45 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// ── PWA install prompt ─────────────────────────────────────────────────
+let deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (localStorage.getItem("pwaInstallDismissed") === "1") return;
+  showInstallPill();
+});
+
+function showInstallPill() {
+  if (document.getElementById("installPill")) return;
+  const isRo = (typeof state !== "undefined" && state.lang === "ro");
+  const pill = document.createElement("div");
+  pill.id = "installPill";
+  pill.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:420px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:#1a2e22;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,.28);font-size:0.9rem;";
+  pill.innerHTML = `
+    <span style="font-size:1.4rem;line-height:1;">📲</span>
+    <span style="flex:1;line-height:1.35;">${isRo ? "Instalează aplicația — programare rapidă într-un clic" : "Установите приложение — запись в один тап"}</span>
+    <button id="installPillYes" style="flex-shrink:0;padding:8px 14px;border:none;border-radius:10px;background:#c49e5a;color:#111;font-weight:700;font-family:inherit;cursor:pointer;">${isRo ? "Instalează" : "Установить"}</button>
+    <button id="installPillNo" aria-label="Закрыть" style="flex-shrink:0;padding:6px;border:none;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);font-size:1.2rem;line-height:1;cursor:pointer;">✕</button>`;
+  document.body.appendChild(pill);
+  document.getElementById("installPillYes").addEventListener("click", async () => {
+    pill.remove();
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice.catch(() => {});
+    deferredInstallPrompt = null;
+  });
+  document.getElementById("installPillNo").addEventListener("click", () => {
+    pill.remove();
+    localStorage.setItem("pwaInstallDismissed", "1");
+  });
+}
+
+window.addEventListener("appinstalled", () => {
+  document.getElementById("installPill")?.remove();
+  localStorage.setItem("pwaInstallDismissed", "1");
+});
+
 async function init() {
   initCookieBanner();
   bindEvents();
