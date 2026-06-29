@@ -1180,6 +1180,24 @@ async function tgSend(chatId, text, extra = {}) {
   } catch {}
 }
 
+async function tgAnswer(callbackQueryId, text) {
+  if (!TELEGRAM_BOT_TOKEN) return;
+  try {
+    await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      body: { callback_query_id: callbackQueryId, text, show_alert: false }
+    });
+  } catch {}
+}
+
+async function tgEdit(chatId, messageId, text) {
+  if (!TELEGRAM_BOT_TOKEN) return;
+  try {
+    await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+      body: { chat_id: chatId, message_id: messageId, text, reply_markup: { inline_keyboard: [] } }
+    });
+  } catch {}
+}
+
 let _botUsernameCache = null;
 async function getBotUsername() {
   if (_botUsernameCache !== null) return _botUsernameCache;
@@ -4745,6 +4763,42 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
           } catch {}
         })();
       }
+    }
+
+    // ── Client reminder buttons: cgo (буду) / cno (не смогу) ────────────
+    if (cb && cb.data && /^(cgo|cno):/.test(cb.data)) {
+      const [caction, cBookingId] = cb.data.split(":");
+      void withLock("studio", async () => {
+        try {
+          const bookings = await readJson("bookings.json");
+          const idx = bookings.findIndex((b) => b.id === cBookingId);
+          if (idx === -1) { await tgAnswer(cb.id, "Запись не найдена."); return; }
+          const b = bookings[idx];
+          if (b.status === "cancelled" || b.status === "completed") {
+            await tgAnswer(cb.id, "Запись уже обработана.");
+            return;
+          }
+          const base = SITE_URL || "https://mateevmassage.com";
+          if (caction === "cgo") {
+            bookings[idx].status = "confirmed";
+            bookings[idx].updatedAt = new Date().toISOString();
+            await writeJson("bookings.json", bookings);
+            await tgAnswer(cb.id, "Спасибо, ждём вас! 🌿");
+            await tgEdit(cb.message.chat.id, cb.message.message_id, `${cb.message.text}\n\n✅ Вы подтвердили — ждём вас!`);
+            await tgSend(TELEGRAM_CHAT_ID, `✅ ${b.clientName} подтвердил визит ${b.date}, ${b.slot} (${b.serviceName}).`);
+          } else {
+            bookings[idx].status = "cancelled";
+            bookings[idx].updatedAt = new Date().toISOString();
+            await writeJson("bookings.json", bookings);
+            await tgAnswer(cb.id, "Запись отменена, слот освобождён.");
+            await tgEdit(cb.message.chat.id, cb.message.message_id, `${cb.message.text}\n\n❌ Запись отменена. Будем рады видеть вас в другой раз!`);
+            await tgSend(cb.message.chat.id, "Записаться заново — в пару кликов 👇", {
+              reply_markup: { inline_keyboard: [[{ text: "📅 Записаться заново", url: `${base}/#booking` }]] }
+            });
+            await tgSend(TELEGRAM_CHAT_ID, `❌ ${b.clientName} отменил визит ${b.date}, ${b.slot} (${b.serviceName}) — слот свободен.`);
+          }
+        } catch {}
+      });
     }
 
     // ── Client linking: /start <portalToken> and /stop ──────────────────

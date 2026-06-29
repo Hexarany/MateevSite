@@ -101,8 +101,7 @@ function loadTelegramLinks() {
 }
 
 function buildTelegramReminder(booking, dateLabel) {
-  const cancelUrl = `${SITE_URL}/cancel?ref=${encodeURIComponent(booking.reference)}`;
-  return `🌿 Напоминание о визите завтра!\n\n💆 ${booking.serviceName}\n👤 ${booking.specialistName}\n📅 ${dateLabel}, ${booking.slot}–${booking.endsAt}\n\nЕсли планы изменились — отмените заранее:\n${cancelUrl}`;
+  return `🌿 Напоминание о визите завтра!\n\n💆 ${booking.serviceName}\n👤 ${booking.specialistName}\n📅 ${dateLabel}, ${booking.slot}–${booking.endsAt}\n\nПодтвердите, пожалуйста, кнопкой ниже 👇`;
 }
 
 // ── Email template ─────────────────────────────────────────────────────────
@@ -245,7 +244,13 @@ async function main() {
         try {
           await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             chat_id: chatId,
-            text: buildTelegramReminder(booking, dateLabel)
+            text: buildTelegramReminder(booking, dateLabel),
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "✅ Буду", callback_data: `cgo:${booking.id}` },
+                { text: "❌ Не смогу", callback_data: `cno:${booking.id}` }
+              ]]
+            }
           });
           tgClientSent++;
           console.log(`  ✓ Telegram reminder to ${booking.clientName} (${booking.reference})`);
