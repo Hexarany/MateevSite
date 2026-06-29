@@ -4627,11 +4627,21 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       return;
     }
     const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+    const force = urlObject.searchParams.get("force") === "1";
+    // force=1 сбрасывает webhook перед установкой — гарантирует применение allowed_updates
+    if (force) {
+      await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteWebhook`,
+        { body: { drop_pending_updates: false } }).catch(() => {});
+    }
     const result = await requestJson(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
       { body: { url: `${base}/api/telegram/webhook`, allowed_updates: ["callback_query", "message"] } }
     );
-    sendJson(response, 200, result);
+    const info = await requestJson(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`,
+      { method: "GET" }
+    ).catch(() => null);
+    sendJson(response, 200, { setWebhook: result, info: info?.result || info });
     return;
   }
 
