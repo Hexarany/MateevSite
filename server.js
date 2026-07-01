@@ -4714,9 +4714,12 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const tokens = await readJson("master-tokens.json").catch(() => []);
     const entry = tokens.find((t) => t.token === token);
     if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
-    const { specialists, bookings, schedule } = await loadStudioData();
+    const { specialists, bookings, schedule, services } = await loadStudioData();
     const specialist = specialists.find((s) => s.id === entry.specialistId);
     if (!specialist) { sendJson(response, 404, { message: "Мастер не найден." }); return; }
+    const myServices = (services || [])
+      .filter((sv) => specialist.specialties.includes(sv.id))
+      .map((sv) => ({ id: sv.id, name: sv.name, duration: sv.duration, price: sv.price }));
 
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
     const mapB = (b) => ({
@@ -4736,9 +4739,10 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
 
     sendJson(response, 200, {
       specialist: {
-        name: specialist.name, role: specialist.role, initials: specialist.initials,
+        id: specialist.id, name: specialist.name, role: specialist.role, initials: specialist.initials,
         photo: specialist.photo || null, certified: !!specialist.certified,
-        location: specialist.location || "", daySchedules: specialist.daySchedules
+        location: specialist.location || "", daySchedules: specialist.daySchedules,
+        services: myServices
       },
       stats: {
         upcomingCount: upcoming.length,
@@ -4748,6 +4752,43 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       upcoming, past, blocks
     });
     return;
+  }
+
+  // POST /api/master/booking — мастер сам заносит запись (клиент позвонил/пришёл)
+  if (request.method === "POST" && urlObject.pathname === "/api/master/booking") {
+    return withLock("studio", async () => {
+      const payload = await parseJsonBody(request);
+      const token = sanitizeText(payload.token || "");
+      const tokens = await readJson("master-tokens.json").catch(() => []);
+      const entry = tokens.find((t) => t.token === token);
+      if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+      payload.specialistId = entry.specialistId; // всегда сам мастер, не из формы
+      const { services, specialists, bookings, schedule } = await loadStudioData();
+      try {
+        const { service, specialist, cleanPayload, slot } = validateBookingPayload(
+          payload, services, specialists, { defaultStatus: "confirmed", adminMode: true, allowPast: true }
+        );
+        if (specialist.id !== entry.specialistId) {
+          sendJson(response, 403, { message: "Можно создавать записи только на себя." });
+          return;
+        }
+        const safePayload = { ...payload, slot };
+        const isPast = safePayload.date < new Date().toISOString().slice(0, 10);
+        if (!isPast) {
+          const availability = calculateAvailability({ date: safePayload.date, service, specialist, bookings, schedule, adminMode: true });
+          if (!availability.slots.some((e) => e.time === slot)) {
+            sendJson(response, 409, { message: "Этот слот уже занят. Обновите и выберите другое время." });
+            return;
+          }
+        }
+        const booking = createBookingRecord({ payload: safePayload, cleanPayload, service, specialist, meta: { source: "master" } });
+        await writeJson("bookings.json", sortBookings([...bookings, booking]));
+        void notifyBookingCreated(booking);
+        sendJson(response, 201, { ok: true, booking: { id: booking.id, date: booking.date, slot: booking.slot } });
+      } catch (e) {
+        sendJson(response, 400, { message: e.message || "Проверьте данные записи." });
+      }
+    });
   }
 
   // POST /api/master/block — мастер закрывает свой день/период (по токену)
