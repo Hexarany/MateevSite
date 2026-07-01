@@ -90,6 +90,8 @@ const STATIC_FILES = {
   "/founder.png": "founder.png",
   "/client": "client.html",
   "/client.html": "client.html",
+  "/master": "master.html",
+  "/master.html": "master.html",
   "/card": "card.html",
   "/card.html": "card.html",
   "/denis.png": "denis.png",
@@ -789,6 +791,7 @@ async function ensureDataFiles() {
     ["packages.json", "[]"],
     ["inventory.json", "[]"],
     ["portal-tokens.json", "[]"],
+    ["master-tokens.json", "[]"],
     ["gallery.json", "[]"],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
@@ -3477,6 +3480,33 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/admin/specialists/:id/master-link — ссылка на кабинет мастера (get-or-create)
+  if (
+    request.method === "POST" &&
+    urlObject.pathname.startsWith("/api/admin/specialists/") &&
+    urlObject.pathname.endsWith("/master-link")
+  ) {
+    assertAdminPin(request);
+    const specialistId = urlObject.pathname
+      .replace("/api/admin/specialists/", "")
+      .replace("/master-link", "");
+    const { specialists } = await loadStudioData();
+    if (!specialists.find((s) => s.id === specialistId)) {
+      sendJson(response, 404, { message: "Специалист не найден." });
+      return;
+    }
+    const tokens = await readJson("master-tokens.json").catch(() => []);
+    let entry = tokens.find((t) => t.specialistId === specialistId);
+    if (!entry) {
+      entry = { specialistId, token: crypto.randomBytes(24).toString("hex"), createdAt: new Date().toISOString() };
+      tokens.push(entry);
+      await writeJson("master-tokens.json", tokens);
+    }
+    const base = SITE_URL || "https://mateevmassage.com";
+    sendJson(response, 200, { url: `${base}/master?token=${entry.token}`, token: entry.token });
+    return;
+  }
+
   if (request.method === "PUT" && urlObject.pathname === "/api/admin/content") {
     await handleAdminContentUpdate(request, response);
     return;
@@ -4669,6 +4699,49 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     }
     if (dirty) await writeJson("portal-tokens.json", tokens);
     sendJson(response, 200, { ok: true, token: entry.token });
+    return;
+  }
+
+  // GET /api/master/dashboard?token= — кабинет мастера (свои записи + расписание)
+  if (request.method === "GET" && urlObject.pathname === "/api/master/dashboard") {
+    const token = urlObject.searchParams.get("token") || "";
+    if (!token) { sendJson(response, 400, { message: "Токен не указан." }); return; }
+    const tokens = await readJson("master-tokens.json").catch(() => []);
+    const entry = tokens.find((t) => t.token === token);
+    if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+    const { specialists, bookings, schedule } = await loadStudioData();
+    const specialist = specialists.find((s) => s.id === entry.specialistId);
+    if (!specialist) { sendJson(response, 404, { message: "Мастер не найден." }); return; }
+
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+    const mapB = (b) => ({
+      id: b.id, date: b.date, slot: b.slot, endsAt: b.endsAt,
+      serviceName: b.serviceName, clientName: b.clientName,
+      phone: b.phone || "", status: b.status, notes: b.notes || b.clientNotes || ""
+    });
+    const mine = bookings
+      .filter((b) => b.specialistId === specialist.id)
+      .sort((a, b) => `${a.date}T${a.slot}`.localeCompare(`${b.date}T${b.slot}`));
+    const upcoming = mine.filter((b) => b.date >= today && b.status !== "cancelled").map(mapB);
+    const past = mine.filter((b) => b.date < today || b.status === "completed").reverse().slice(0, 20).map(mapB);
+    const blocks = (schedule?.blocks || [])
+      .filter((bl) => bl.specialistId === specialist.id && bl.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((bl) => ({ date: bl.date, start: bl.start, end: bl.end, reason: bl.reason || "" }));
+
+    sendJson(response, 200, {
+      specialist: {
+        name: specialist.name, role: specialist.role, initials: specialist.initials,
+        photo: specialist.photo || null, certified: !!specialist.certified,
+        location: specialist.location || "", daySchedules: specialist.daySchedules
+      },
+      stats: {
+        upcomingCount: upcoming.length,
+        todayCount: upcoming.filter((b) => b.date === today).length,
+        completedTotal: mine.filter((b) => b.status === "completed").length
+      },
+      upcoming, past, blocks
+    });
     return;
   }
 

@@ -1121,7 +1121,10 @@ function renderSpecialistsEditor() {
                   <h4 class="admin-entry-card__title">${escapeHtml(specialist.name || `Специалист ${index + 1}`)}</h4>
                   <p class="admin-entry-card__copy">ID: ${escapeHtml(specialist.id)}</p>
                 </div>
-                <button type="button" class="button button--ghost" data-remove-specialist-index="${index}">Удалить</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button type="button" class="button button--ghost button--mini" data-master-link-id="${escapeHtml(specialist.id)}">🔑 Ссылка на кабинет</button>
+                  <button type="button" class="button button--ghost" data-remove-specialist-index="${index}">Удалить</button>
+                </div>
               </div>
               <div class="admin-photo-upload" data-specialist-id="${escapeHtml(specialist.id)}">
                 <div class="admin-photo-upload__preview">
@@ -1343,7 +1346,24 @@ function handleSpecialistEditorInput(event) {
   state.specialists[index][field] = target.value;
 }
 
-function handleSpecialistEditorClick(event) {
+async function handleSpecialistEditorClick(event) {
+  const linkButton = event.target.closest("[data-master-link-id]");
+  if (linkButton) {
+    const id = linkButton.dataset.masterLinkId;
+    try {
+      const data = await fetchJson(`/api/admin/specialists/${encodeURIComponent(id)}/master-link`, { method: "POST" });
+      try {
+        await navigator.clipboard.writeText(data.url);
+        showToast("Ссылка на кабинет скопирована — отправьте мастеру.", "success");
+      } catch {
+        window.prompt("Ссылка на кабинет мастера (скопируйте и отправьте мастеру):", data.url);
+      }
+    } catch (e) {
+      showToast(e.message || "Сначала сохраните специалиста, затем получите ссылку.", "error");
+    }
+    return;
+  }
+
   const removeButton = event.target.closest("[data-remove-specialist-index]");
   if (!removeButton) {
     return;
