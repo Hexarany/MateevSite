@@ -3495,15 +3495,20 @@ async function routeApi(request, response, urlObject) {
       sendJson(response, 404, { message: "Специалист не найден." });
       return;
     }
+    const reset = urlObject.searchParams.get("reset") === "1";
     const tokens = await readJson("master-tokens.json").catch(() => []);
     let entry = tokens.find((t) => t.specialistId === specialistId);
     if (!entry) {
       entry = { specialistId, token: crypto.randomBytes(24).toString("hex"), createdAt: new Date().toISOString() };
       tokens.push(entry);
       await writeJson("master-tokens.json", tokens);
+    } else if (reset) {
+      entry.token = crypto.randomBytes(24).toString("hex");
+      entry.createdAt = new Date().toISOString();
+      await writeJson("master-tokens.json", tokens);
     }
     const base = SITE_URL || "https://mateevmassage.com";
-    sendJson(response, 200, { url: `${base}/master?token=${entry.token}`, token: entry.token });
+    sendJson(response, 200, { url: `${base}/master?token=${entry.token}`, token: entry.token, reset });
     return;
   }
 
@@ -4743,6 +4748,54 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       upcoming, past, blocks
     });
     return;
+  }
+
+  // POST /api/master/block — мастер закрывает свой день/период (по токену)
+  if (request.method === "POST" && urlObject.pathname === "/api/master/block") {
+    return withLock("studio", async () => {
+      const payload = await parseJsonBody(request);
+      const token = sanitizeText(payload.token || "");
+      const tokens = await readJson("master-tokens.json").catch(() => []);
+      const entry = tokens.find((t) => t.token === token);
+      if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+      const from = sanitizeText(payload.from || "");
+      const to = sanitizeText(payload.to || from);
+      const reason = sanitizeText(payload.reason || "") || "Выходной";
+      if (!isValidDateString(from) || !isValidDateString(to) || from > to) {
+        sendJson(response, 400, { message: "Укажите корректный период." });
+        return;
+      }
+      const { specialists, schedule } = await loadStudioData();
+      if (!specialists.find((s) => s.id === entry.specialistId)) { sendJson(response, 404, { message: "Мастер не найден." }); return; }
+      const dates = [];
+      let cur = new Date(from + "T12:00:00");
+      const last = new Date(to + "T12:00:00");
+      let guard = 0;
+      while (cur <= last && guard < 366) { dates.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1); guard++; }
+      const newBlocks = [...schedule.blocks];
+      for (const date of dates) {
+        const exists = newBlocks.some((b) => b.specialistId === entry.specialistId && b.date === date && b.start === "00:00");
+        if (!exists) newBlocks.push({ id: crypto.randomUUID(), specialistId: entry.specialistId, date, start: "00:00", end: "23:59", reason });
+      }
+      await writeJson("schedule.json", normalizeScheduleData({ blocks: newBlocks }, specialists));
+      sendJson(response, 200, { ok: true, closed: dates.length });
+    });
+  }
+
+  // DELETE /api/master/block?token=&date= — мастер снова открывает свой день
+  if (request.method === "DELETE" && urlObject.pathname === "/api/master/block") {
+    return withLock("studio", async () => {
+      const token = urlObject.searchParams.get("token") || "";
+      const date = urlObject.searchParams.get("date") || "";
+      const tokens = await readJson("master-tokens.json").catch(() => []);
+      const entry = tokens.find((t) => t.token === token);
+      if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+      const { specialists, schedule } = await loadStudioData();
+      const kept = schedule.blocks.filter((b) => !(b.specialistId === entry.specialistId && b.date === date));
+      if (kept.length === schedule.blocks.length) { sendJson(response, 404, { message: "Закрытие не найдено." }); return; }
+      await writeJson("schedule.json", normalizeScheduleData({ blocks: kept }, specialists));
+      sendJson(response, 200, { ok: true });
+    });
   }
 
   // GET /api/client-portal?token=xxx — public client portal data

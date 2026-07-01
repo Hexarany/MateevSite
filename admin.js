@@ -1123,6 +1123,7 @@ function renderSpecialistsEditor() {
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                   <button type="button" class="button button--ghost button--mini" data-master-link-id="${escapeHtml(specialist.id)}">🔑 Ссылка на кабинет</button>
+                  <button type="button" class="button button--ghost button--mini" data-master-reset-id="${escapeHtml(specialist.id)}">♻️ Сбросить</button>
                   <button type="button" class="button button--ghost" data-remove-specialist-index="${index}">Удалить</button>
                 </div>
               </div>
@@ -1360,6 +1361,24 @@ async function handleSpecialistEditorClick(event) {
       }
     } catch (e) {
       showToast(e.message || "Сначала сохраните специалиста, затем получите ссылку.", "error");
+    }
+    return;
+  }
+
+  const resetButton = event.target.closest("[data-master-reset-id]");
+  if (resetButton) {
+    if (!confirm("Сбросить ссылку на кабинет? Старая перестанет работать.")) return;
+    const id = resetButton.dataset.masterResetId;
+    try {
+      const data = await fetchJson(`/api/admin/specialists/${encodeURIComponent(id)}/master-link?reset=1`, { method: "POST" });
+      try {
+        await navigator.clipboard.writeText(data.url);
+        showToast("Новая ссылка скопирована — отправьте мастеру.", "success");
+      } catch {
+        window.prompt("Новая ссылка на кабинет мастера:", data.url);
+      }
+    } catch (e) {
+      showToast(e.message || "Ошибка.", "error");
     }
     return;
   }
