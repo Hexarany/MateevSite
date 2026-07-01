@@ -841,11 +841,12 @@ function renderStaticContent() {
             : `<div class="specialist-card__avatar">${escapeHtml(specialist.initials)}</div>`
           }
           <div class="specialist-card__role">${escapeHtml(tr(specialist.role, specialist.roleRo))}</div>
-          <h3>${escapeHtml(specialist.name)}</h3>
+          <h3>${escapeHtml(specialist.name)}${specialist.certified ? ` <span class="cert-badge" title="Сертифицированный мастер Mateev">✓ Mateev-certified</span>` : ""}</h3>
           <p>${escapeHtml(tr(specialist.bio, specialist.bioRo))}</p>
 
           <div class="specialist-card__meta">
             <span class="meta-chip">${escapeHtml(specialist.experience)}</span>
+            ${specialist.location ? `<span class="meta-chip meta-chip--loc">📍 ${escapeHtml(specialist.location)}</span>` : ""}
             ${specialties}
           </div>
 

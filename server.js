@@ -1894,6 +1894,8 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         breaks: normalizeBreaks(specialist?.breaks),
         initials: sanitizeText(specialist?.initials) || buildInitials(name),
         photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null,
+        certified: specialist?.certified === true,
+        ...(sanitizeText(specialist?.location) && { location: sanitizeText(specialist?.location) }),
         ...(roleRo && { roleRo }),
         ...(bioRo && { bioRo })
       };

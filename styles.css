@@ -4628,3 +4628,25 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
   .contact-hub { right: 16px; bottom: 16px; }
   .hub-toggle { width: 54px; height: 54px; }
 }
+
+/* Mateev-certified badge on specialist cards */
+.cert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(40, 72, 56, 0.1);
+  color: var(--forest, #1a2e22);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.meta-chip--loc {
+  background: rgba(196, 158, 90, 0.14);
+  color: var(--brand-deep, #8d5320);
+}

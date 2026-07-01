@@ -1141,7 +1141,12 @@ function renderSpecialistsEditor() {
                 ${renderCollectionField("Роль", index, "role", specialist.role || "", "specialist")}
                 ${renderCollectionField("Опыт", index, "experience", specialist.experience || "", "specialist")}
                 ${renderCollectionField("Инициалы", index, "initials", specialist.initials || "", "specialist")}
+                ${renderCollectionField("Локация (город)", index, "location", specialist.location || "", "specialist")}
                 ${renderCollectionField("Bio", index, "bio", specialist.bio || "", "specialist", { multiline: true, rows: 5 })}
+                <label class="field field--full" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer;">
+                  <input type="checkbox" data-specialist-bool-field="certified" data-specialist-index="${index}" ${specialist.certified ? "checked" : ""} style="width:auto;">
+                  <span style="margin:0;">✓ Mateev-certified — сертифицированный мастер сети</span>
+                </label>
                 <div class="field field--full">
                   <span>Услуги специалиста</span>
                   <div class="admin-check-grid admin-check-grid--services">
@@ -1357,6 +1362,13 @@ function handleSpecialistEditorChange(event) {
   const target = event.target;
   const index = Number(target.dataset.specialistIndex);
   const field = target.dataset.specialistArrayField;
+
+  // Boolean-поля (например, certified) — отдельная ветка
+  const boolField = target.dataset.specialistBoolField;
+  if (boolField && Number.isInteger(index) && index >= 0 && state.specialists[index]) {
+    state.specialists[index][boolField] = target.checked;
+    return;
+  }
 
   if (!Number.isInteger(index) || index < 0 || !field || !state.specialists[index]) {
     return;
