@@ -6164,16 +6164,21 @@ function render404Page() {
 </html>`;
 }
 
-function renderSpecialistPage(specialist, services, site, recentPosts = []) {
+function renderSpecialistPage(specialist, services, site, recentPosts = [], lang = "ru") {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const isRo = lang === "ro";
+  const t = (ru, ro) => isRo ? (ro || ru) : ru;
   const name = specialist.name || "Специалист";
-  const description = specialist.bio ? specialist.bio.slice(0, 160) : `${name} — специалист Mateev Spa Studio`;
+  const role = t(specialist.role || "Массажист", specialist.roleRo);
+  const bio = t(specialist.bio || "", specialist.bioRo);
+  const description = bio ? bio.slice(0, 160) : `${name} — специалист Mateev Spa Studio`;
+  const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(((specialist.address || "") + " " + (specialist.location || "")).trim())}`;
   const specialistServices = (specialist.specialties || [])
     .map(id => services.find(s => s.id === id))
     .filter(Boolean);
 
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${escapeHtml(name)} — Mateev Spa Studio</title>
@@ -6263,7 +6268,13 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
   <header class="topbar">
     <div class="topbar__inner">
       <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/#specialists" class="topbar__back">← Специалисты</a>
+      <span style="display:flex;align-items:center;gap:16px;">
+        <span style="display:flex;gap:2px;font-size:0.78rem;font-weight:700;">
+          <a href="?lang=ru" style="padding:3px 8px;border-radius:12px;text-decoration:none;${!isRo ? "background:#1a2e22;color:#fff;" : "color:#6b8d6b;"}">RU</a>
+          <a href="?lang=ro" style="padding:3px 8px;border-radius:12px;text-decoration:none;${isRo ? "background:#1a2e22;color:#fff;" : "color:#6b8d6b;"}">RO</a>
+        </span>
+        <a href="${base}/#specialists" class="topbar__back">← ${t("Специалисты", "Specialiști")}</a>
+      </span>
     </div>
   </header>
 
@@ -6274,15 +6285,15 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
           ? `<img src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(name)}" class="hero__photo" loading="lazy">`
           : `<div class="hero__placeholder">${escapeHtml(specialist.initials || "ДМ")}</div>`}
         <div>
-          <p class="hero__kicker">Специалист студии</p>
+          <p class="hero__kicker">${t("Специалист студии", "Specialist al studioului")}</p>
           <h1 class="hero__name">${escapeHtml(name)}${specialist.certified ? ` <span style="display:inline-block;font-size:0.85rem;vertical-align:middle;padding:5px 13px;border-radius:999px;background:rgba(255,255,255,0.16);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;letter-spacing:0.02em;">✓ Mateev-certified</span>` : ""}</h1>
-          <p class="hero__role">${escapeHtml(specialist.role || "Массажист")}${specialist.location ? ` · 📍 ${escapeHtml(specialist.location)}` : ""}</p>
-          ${specialist.address ? `<p style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin:-24px 0 28px;">📍 ${escapeHtml(specialist.address)} · <a href="https://maps.google.com/?q=${encodeURIComponent(((specialist.location || "") + " " + specialist.address).trim())}" target="_blank" rel="noopener" style="color:rgba(179,109,44,0.95);">на карте</a></p>` : ""}
+          <p class="hero__role">${escapeHtml(role)}${specialist.location ? ` · <a href="${mapUrl}" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.85);text-decoration:underline;">📍 ${escapeHtml(specialist.location)}</a>` : ""}</p>
+          ${specialist.address ? `<p style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin:-24px 0 28px;">📍 ${escapeHtml(specialist.address)} · <a href="${mapUrl}" target="_blank" rel="noopener" style="color:rgba(179,109,44,0.95);">${t("на карте", "pe hartă")}</a></p>` : ""}
           <div class="stats">
-            ${specialist.experience ? `<div><span class="stat__value">${escapeHtml(specialist.experience)}</span><span class="stat__label">лет практики</span></div>` : ""}
-            ${specialistServices.length ? `<div><span class="stat__value">${specialistServices.length}</span><span class="stat__label">процедур</span></div>` : ""}
+            ${specialist.experience ? `<div><span class="stat__value">${escapeHtml(specialist.experience)}</span><span class="stat__label">${t("лет практики", "ani de practică")}</span></div>` : ""}
+            ${specialistServices.length ? `<div><span class="stat__value">${specialistServices.length}</span><span class="stat__label">${t("процедур", "proceduri")}</span></div>` : ""}
           </div>
-          <a href="${base}/?prefillSpecialist=${escapeHtml(specialist.id)}#booking" class="hero__cta">Записаться к мастеру →</a>
+          <a href="${base}/?prefillSpecialist=${escapeHtml(specialist.id)}&lang=${lang}#booking" class="hero__cta">${t("Записаться к мастеру", "Programare la maestru")} →</a>
         </div>
       </div>
     </div>
@@ -6290,43 +6301,43 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
 
   <main>
     <div class="container">
-      ${specialist.bio ? `
+      ${bio ? `
       <div class="section">
-        <h2 class="section__title">О специалисте</h2>
-        <p class="bio">${escapeHtml(specialist.bio)}</p>
+        <h2 class="section__title">${t("О специалисте", "Despre specialist")}</h2>
+        <p class="bio">${escapeHtml(bio)}</p>
       </div>` : ""}
 
       ${specialistServices.length ? `
       <div class="section">
-        <h2 class="section__title">Процедуры</h2>
+        <h2 class="section__title">${t("Процедуры", "Proceduri")}</h2>
         <div class="services-grid">
           ${specialistServices.map(s => `
             <div class="service-item">
-              <div class="service-item__name">${escapeHtml(s.name)}</div>
-              <div class="service-item__meta">${s.duration} мин · ${s.price} MDL</div>
+              <div class="service-item__name">${escapeHtml(t(s.name, s.nameRo))}</div>
+              <div class="service-item__meta">${s.duration} ${t("мин", "min")} · ${s.price} MDL</div>
             </div>`).join("")}
         </div>
       </div>` : ""}
 
       ${recentPosts.length ? `
       <div class="section">
-        <h2 class="section__title">Дневник практики</h2>
+        <h2 class="section__title">${t("Дневник практики", "Jurnalul practicii")}</h2>
         <div class="posts">
           ${recentPosts.map(p => {
-            const date = new Date(p.publishedAt + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+            const date = new Date(p.publishedAt + "T00:00:00").toLocaleDateString(isRo ? "ro-RO" : "ru-RU", { day: "numeric", month: "long", year: "numeric" });
             return `<a href="${base}/blog/${escapeHtml(p.id)}" class="post-card">
               <span class="post-card__date">${date}</span>
               <span class="post-card__title">${escapeHtml(p.title)}</span>
-              <span class="post-card__link">Читать →</span>
+              <span class="post-card__link">${t("Читать", "Citește")} →</span>
             </a>`;
           }).join("")}
         </div>
       </div>` : ""}
 
       <div class="cta-section">
-        <div class="cta-section__title">Записаться к ${escapeHtml(name.split(" ")[0])}</div>
-        <p class="cta-section__sub">Онлайн-запись без звонков — выберите удобное время</p>
-        <a href="${base}/?prefillSpecialist=${escapeHtml(specialist.id)}#booking" class="cta-btn">Выбрать время</a>
+        <div class="cta-section__title">${t("Записаться к", "Programare la")} ${escapeHtml(name.split(" ")[0])}</div>
+        <p class="cta-section__sub">${t("Онлайн-запись без звонков — выберите удобное время", "Programare online fără apeluri — alegeți ora potrivită")}</p>
+        <a href="${base}/?prefillSpecialist=${escapeHtml(specialist.id)}&lang=${lang}#booking" class="cta-btn">${t("Выбрать время", "Alege ora")}</a>
       </div>
     </div>
   </main>
@@ -6920,7 +6931,8 @@ function createServer() {
         const recentPosts = normalizeDiary(diary)
           .filter((e) => e.published && e.publishedAt <= today)
           .slice(0, 3);
-        const html = renderSpecialistPage(specialist, services, site, recentPosts);
+        const teamLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderSpecialistPage(specialist, services, site, recentPosts, teamLang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;

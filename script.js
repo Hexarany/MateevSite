@@ -847,7 +847,7 @@ function renderStaticContent() {
 
           <div class="specialist-card__meta">
             <span class="meta-chip">${escapeHtml(specialist.experience)}</span>
-            ${specialist.location ? `<span class="meta-chip meta-chip--loc">📍 ${escapeHtml(specialist.location)}</span>` : ""}
+            ${specialist.location ? `<a class="meta-chip meta-chip--loc" href="https://maps.google.com/?q=${encodeURIComponent(((specialist.address || '') + ' ' + specialist.location).trim())}" target="_blank" rel="noopener" title="${tr('Открыть на карте','Deschide pe hartă')}" style="text-decoration:none;">📍 ${escapeHtml(specialist.location)}</a>` : ""}
             ${specialties}
           </div>
 
@@ -860,7 +860,7 @@ function renderStaticContent() {
             >
               ${escapeHtml(trSite('ui.specialistCardCta') || "Выбрать мастера")}
             </button>
-            <a href="/team/${escapeHtml(specialist.id)}" class="button button--ghost" style="font-size:0.85rem;">${tr("Подробнее","Mai mult")}</a>
+            <a href="/team/${escapeHtml(specialist.id)}?lang=${state.lang}" class="button button--ghost" style="font-size:0.85rem;">${tr("Подробнее","Mai mult")}</a>
           </div>
         </article>
       `;
