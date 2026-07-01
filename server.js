@@ -1573,8 +1573,17 @@ async function sendClientConfirmationEmail(booking) {
   return { channel: "client-email", delivered: true };
 }
 
+async function notifyMasterOfBooking(booking) {
+  if (!TELEGRAM_BOT_TOKEN || !booking.specialistId) return;
+  const tokens = await readJson("master-tokens.json").catch(() => []);
+  const entry = tokens.find((t) => t.specialistId === booking.specialistId && t.telegramChatId);
+  if (!entry) return;
+  const text = `🆕 Новая запись к вам!\n\n💆 ${booking.serviceName}\n📅 ${booking.date}, ${booking.slot}–${booking.endsAt}\n👤 ${booking.clientName}${booking.phone ? " · " + booking.phone : ""}`;
+  await tgSend(entry.telegramChatId, text);
+}
+
 async function notifyBookingCreated(booking) {
-  const tasks = [sendTelegramNotification(booking), sendEmailNotification(booking)];
+  const tasks = [sendTelegramNotification(booking), sendEmailNotification(booking), notifyMasterOfBooking(booking)];
   if (booking.email) tasks.push(sendClientConfirmationEmail(booking));
 
   const results = await Promise.allSettled(tasks);
@@ -1900,6 +1909,7 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         certified: specialist?.certified === true,
         commissionPercent: Math.max(0, Math.min(100, Number(specialist?.commissionPercent) || 0)),
         ...(sanitizeText(specialist?.location) && { location: sanitizeText(specialist?.location) }),
+        ...(sanitizeText(specialist?.address) && { address: sanitizeText(specialist?.address) }),
         ...(roleRo && { roleRo }),
         ...(bioRo && { bioRo })
       };
@@ -4766,8 +4776,12 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const ym = today.slice(0, 7);
     const monthDone = mine.filter((b) => b.status === "completed" && (b.date || "").slice(0, 7) === ym);
     const monthRevenue = monthDone.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
+    const botUsername = await getBotUsername();
+    const telegramConnectUrl = botUsername ? `https://t.me/${botUsername}?start=m_${entry.token}` : null;
 
     sendJson(response, 200, {
+      telegramLinked: !!entry.telegramChatId,
+      telegramConnectUrl,
       specialist: {
         id: specialist.id, name: specialist.name, role: specialist.role, initials: specialist.initials,
         photo: specialist.photo || null, certified: !!specialist.certified,
@@ -5137,6 +5151,19 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
           await tgSend(msgChatId, "🌿 Здравствуйте! Это бот Mateev Spa Studio.\n\nЧтобы получать напоминания о визитах, откройте личный кабинет на сайте и нажмите «🔔 Напоминания в Telegram».");
           return;
         }
+        // Мастер: привязка Telegram для уведомлений о новых записях (токен с префиксом m_)
+        if (startToken.startsWith("m_")) {
+          try {
+            const mTokens = await readJson("master-tokens.json").catch(() => []);
+            const mEntry = mTokens.find((t) => t.token === startToken.slice(2));
+            if (!mEntry) { await tgSend(msgChatId, "Ссылка устарела. Откройте кабинет и нажмите «Уведомления в Telegram» ещё раз."); return; }
+            mEntry.telegramChatId = msgChatId;
+            mEntry.telegramLinkedAt = new Date().toISOString();
+            await writeJson("master-tokens.json", mTokens);
+            await tgSend(msgChatId, "✅ Готово! Буду присылать вам сюда новые записи. Отключить — отправьте /stop.");
+          } catch {}
+          return;
+        }
         try {
           const tokens = await readJson("portal-tokens.json").catch(() => []);
           const entry = tokens.find((t) => t.token === startToken);
@@ -5159,7 +5186,13 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
             if (t.telegramChatId === msgChatId) { delete t.telegramChatId; delete t.telegramLinkedAt; changed = true; }
           }
           if (changed) await writeJson("portal-tokens.json", tokens);
-          await tgSend(msgChatId, "Напоминания в Telegram отключены. Включить снова можно в кабинете на сайте.");
+          const mTokens = await readJson("master-tokens.json").catch(() => []);
+          let mChanged = false;
+          for (const t of mTokens) {
+            if (t.telegramChatId === msgChatId) { delete t.telegramChatId; delete t.telegramLinkedAt; mChanged = true; }
+          }
+          if (mChanged) await writeJson("master-tokens.json", mTokens);
+          await tgSend(msgChatId, "Уведомления в Telegram отключены. Включить снова можно в кабинете.");
         } catch {}
       })();
     } else if (msgChatId && msgText && !msgText.startsWith("/") && ANTHROPIC_API_KEY) {
@@ -6244,6 +6277,7 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
           <p class="hero__kicker">Специалист студии</p>
           <h1 class="hero__name">${escapeHtml(name)}${specialist.certified ? ` <span style="display:inline-block;font-size:0.85rem;vertical-align:middle;padding:5px 13px;border-radius:999px;background:rgba(255,255,255,0.16);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;letter-spacing:0.02em;">✓ Mateev-certified</span>` : ""}</h1>
           <p class="hero__role">${escapeHtml(specialist.role || "Массажист")}${specialist.location ? ` · 📍 ${escapeHtml(specialist.location)}` : ""}</p>
+          ${specialist.address ? `<p style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin:-24px 0 28px;">📍 ${escapeHtml(specialist.address)} · <a href="https://maps.google.com/?q=${encodeURIComponent(((specialist.location || "") + " " + specialist.address).trim())}" target="_blank" rel="noopener" style="color:rgba(179,109,44,0.95);">на карте</a></p>` : ""}
           <div class="stats">
             ${specialist.experience ? `<div><span class="stat__value">${escapeHtml(specialist.experience)}</span><span class="stat__label">лет практики</span></div>` : ""}
             ${specialistServices.length ? `<div><span class="stat__value">${specialistServices.length}</span><span class="stat__label">процедур</span></div>` : ""}

@@ -1150,6 +1150,7 @@ function refreshBookingSummary() {
   const rows = [
     summaryRow(trSite('ui.summaryServiceLabel') || "Процедура", service?.name),
     summaryRow(trSite('ui.summarySpecialistLabel') || "Специалист", specialist?.name),
+    specialist?.address ? summaryRow(tr("Адрес", "Adresa"), `📍 ${specialist.address}${specialist.location ? ", " + specialist.location : ""}`) : "",
     summaryRow(trSite('ui.summaryDateLabel') || "Дата", elements.dateInput.value ? formatDate(elements.dateInput.value) : ""),
     summaryRow(trSite('ui.summaryTimeLabel') || "Время", state.selectedSlot ? `${state.selectedSlot} — ${slot?.endsAt || ""}` : ""),
     summaryRow(trSite('ui.summaryPriceLabel') || "Стоимость", service ? (() => {

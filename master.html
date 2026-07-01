@@ -123,6 +123,17 @@
           <div class="stat"><span>Завершено</span><strong>${data.stats.completedTotal}</strong></div>
         </div>
 
+        ${data.telegramLinked
+          ? `<div class="card"><div class="cl-body" style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:1.5rem;">🔔</span>
+              <div><strong style="color:var(--forest);">Уведомления в Telegram подключены</strong>
+              <div style="font-size:0.82rem;color:var(--muted);">Новые записи приходят в чат. Отключить — /stop в боте.</div></div>
+            </div></div>`
+          : (data.telegramConnectUrl ? `<div class="card"><div class="cl-body" style="text-align:center;">
+              <p style="font-size:0.9rem;color:var(--muted);margin-bottom:12px;">Получайте новые записи прямо в Telegram</p>
+              <a href="${esc(data.telegramConnectUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#229ED9;color:#fff;border-radius:10px;font-weight:600;text-decoration:none;">✈️ Уведомления в Telegram</a>
+            </div></div>` : "")}
+
         <div class="card">
           <div class="card__head">Заработок за месяц</div>
           <div class="cl-body" style="display:flex;justify-content:space-between;align-items:center;">

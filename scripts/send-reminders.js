@@ -100,12 +100,25 @@ function loadTelegramLinks() {
   return map;
 }
 
-function buildTelegramReminder(booking, dateLabel) {
-  return `🌿 Напоминание о визите завтра!\n\n💆 ${booking.serviceName}\n👤 ${booking.specialistName}\n📅 ${dateLabel}, ${booking.slot}–${booking.endsAt}\n\nПодтвердите, пожалуйста, кнопкой ниже 👇`;
+// Map specialistId → { address, location } для мастеров со своим адресом
+function loadSpecialistAddresses() {
+  const p = path.join(ROOT, "data", "specialists.json");
+  if (!fs.existsSync(p)) return {};
+  try {
+    const arr = JSON.parse(fs.readFileSync(p, "utf8"));
+    const map = {};
+    for (const s of arr) { if (s && s.id && s.address) map[s.id] = { address: s.address, location: s.location || "" }; }
+    return map;
+  } catch { return {}; }
+}
+
+function buildTelegramReminder(booking, dateLabel, addr) {
+  const addrLine = addr ? `\n📍 ${addr.address}${addr.location ? ", " + addr.location : ""}` : "";
+  return `🌿 Напоминание о визите завтра!\n\n💆 ${booking.serviceName}\n👤 ${booking.specialistName}\n📅 ${dateLabel}, ${booking.slot}–${booking.endsAt}${addrLine}\n\nПодтвердите, пожалуйста, кнопкой ниже 👇`;
 }
 
 // ── Email template ─────────────────────────────────────────────────────────
-function buildReminderHtml(booking, dateLabel) {
+function buildReminderHtml(booking, dateLabel, addr) {
   const brandColor = "#b36d2c";
   const bg = "#f7f0e6";
   const ink = "#241c17";
@@ -145,6 +158,10 @@ function buildReminderHtml(booking, dateLabel) {
                 <td style="padding:12px 18px;font-size:13px;color:${muted};">Специалист</td>
                 <td style="padding:12px 18px;font-size:13px;color:${ink};">${booking.specialistName}</td>
               </tr>
+              ${addr ? `<tr style="border-bottom:1px solid rgba(68,50,36,0.08);">
+                <td style="padding:12px 18px;font-size:13px;color:${muted};">Адрес</td>
+                <td style="padding:12px 18px;font-size:13px;color:${ink};">${addr.address}${addr.location ? ", " + addr.location : ""}</td>
+              </tr>` : ""}
               <tr>
                 <td style="padding:12px 18px;font-size:13px;color:${muted};">Дата и время</td>
                 <td style="padding:12px 18px;font-size:13px;color:${ink};font-weight:600;">${dateLabel}, ${booking.slot}–${booking.endsAt}</td>
@@ -204,6 +221,7 @@ async function main() {
   if (!due.length) return;
 
   const dateLabel = formatDate(tomorrow);
+  const addrMap = loadSpecialistAddresses();
   let emailsSent = 0;
 
   // Send email to each client
@@ -219,8 +237,8 @@ async function main() {
           to: [booking.email],
           replyTo: EMAIL_REPLY_TO || undefined,
           subject: `Напоминание — ${booking.serviceName} завтра, ${dateLabel}`,
-          html: buildReminderHtml(booking, dateLabel),
-          text: `Напоминание о визите завтра!\n\nПроцедура: ${booking.serviceName}\nСпециалист: ${booking.specialistName}\nВремя: ${booking.slot}–${booking.endsAt}\n\nОтменить: ${SITE_URL}/cancel?ref=${booking.reference}`
+          html: buildReminderHtml(booking, dateLabel, addrMap[booking.specialistId]),
+          text: `Напоминание о визите завтра!\n\nПроцедура: ${booking.serviceName}\nСпециалист: ${booking.specialistName}\nВремя: ${booking.slot}–${booking.endsAt}${addrMap[booking.specialistId] ? `\nАдрес: ${addrMap[booking.specialistId].address}${addrMap[booking.specialistId].location ? ", " + addrMap[booking.specialistId].location : ""}` : ""}\n\nОтменить: ${SITE_URL}/cancel?ref=${booking.reference}`
         }, { Authorization: `Bearer ${RESEND_API_KEY}` });
         emailsSent++;
         console.log(`  ✓ Email sent to ${booking.email} (${booking.reference})`);
@@ -244,7 +262,7 @@ async function main() {
         try {
           await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             chat_id: chatId,
-            text: buildTelegramReminder(booking, dateLabel),
+            text: buildTelegramReminder(booking, dateLabel, addrMap[booking.specialistId]),
             reply_markup: {
               inline_keyboard: [[
                 { text: "✅ Буду", callback_data: `cgo:${booking.id}` },

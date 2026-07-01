@@ -1147,6 +1147,7 @@ function renderSpecialistsEditor() {
                 ${renderCollectionField("Опыт", index, "experience", specialist.experience || "", "specialist")}
                 ${renderCollectionField("Инициалы", index, "initials", specialist.initials || "", "specialist")}
                 ${renderCollectionField("Локация (город)", index, "location", specialist.location || "", "specialist")}
+                ${renderCollectionField("Адрес (улица, детали)", index, "address", specialist.address || "", "specialist")}
                 ${renderCollectionField("Комиссия сети, %", index, "commissionPercent", specialist.commissionPercent || 0, "specialist", { type: "number", min: "0", step: "1" })}
                 ${renderCollectionField("Bio", index, "bio", specialist.bio || "", "specialist", { multiline: true, rows: 5 })}
                 <label class="field field--full" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer;">
