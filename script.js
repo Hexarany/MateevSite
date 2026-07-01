@@ -90,6 +90,7 @@ const elements = {
   specialistsSectionTitle: document.getElementById("specialistsSectionTitle"),
   specialistsSectionCopy: document.getElementById("specialistsSectionCopy"),
   specialistsGrid: document.getElementById("specialistsGrid"),
+  specialistLocationFilter: document.getElementById("specialistLocationFilter"),
   processSectionKicker: document.getElementById("processSectionKicker"),
   processSectionTitle: document.getElementById("processSectionTitle"),
   processSectionCopy: document.getElementById("processSectionCopy"),
@@ -835,7 +836,7 @@ function renderStaticContent() {
       const preferredService = specialist.specialties[0] || "";
 
       return `
-        <article class="specialist-card reveal">
+        <article class="specialist-card reveal" data-location="${escapeHtml((specialist.location || '').toLowerCase())}">
           ${specialist.photo
             ? `<img class="specialist-card__photo" src="${escapeHtml(specialist.photo)}" alt="${escapeHtml(specialist.name)}" loading="lazy">`
             : `<div class="specialist-card__avatar">${escapeHtml(specialist.initials)}</div>`
@@ -865,6 +866,28 @@ function renderStaticContent() {
       `;
     })
     .join("");
+
+  // ── Каталог «найди мастера рядом»: фильтр по городу (только при 2+ локациях) ──
+  if (elements.specialistLocationFilter) {
+    const locations = [...new Set(state.specialists.map(s => (s.location || "").trim()).filter(Boolean))];
+    if (locations.length >= 2) {
+      const chip = (label, value, active) => `<button type="button" class="school-filter-btn${active ? " is-active" : ""}" data-loc-filter="${escapeHtml(value)}">${escapeHtml(label)}</button>`;
+      elements.specialistLocationFilter.innerHTML =
+        chip(tr("Все города", "Toate orașele"), "", true) +
+        locations.map(l => chip("📍 " + l, l.toLowerCase(), false)).join("");
+      elements.specialistLocationFilter.querySelectorAll("[data-loc-filter]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const val = btn.dataset.locFilter;
+          elements.specialistLocationFilter.querySelectorAll("[data-loc-filter]").forEach(b => b.classList.toggle("is-active", b === btn));
+          elements.specialistsGrid.querySelectorAll(".specialist-card").forEach(card => {
+            card.style.display = (!val || card.dataset.location === val) ? "" : "none";
+          });
+        });
+      });
+    } else {
+      elements.specialistLocationFilter.innerHTML = "";
+    }
+  }
 
   elements.processGrid.innerHTML = trArr("process")
     .map(

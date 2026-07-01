@@ -6242,13 +6242,13 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
           : `<div class="hero__placeholder">${escapeHtml(specialist.initials || "ДМ")}</div>`}
         <div>
           <p class="hero__kicker">Специалист студии</p>
-          <h1 class="hero__name">${escapeHtml(name)}</h1>
-          <p class="hero__role">${escapeHtml(specialist.role || "Массажист")}</p>
+          <h1 class="hero__name">${escapeHtml(name)}${specialist.certified ? ` <span style="display:inline-block;font-size:0.85rem;vertical-align:middle;padding:5px 13px;border-radius:999px;background:rgba(255,255,255,0.16);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;letter-spacing:0.02em;">✓ Mateev-certified</span>` : ""}</h1>
+          <p class="hero__role">${escapeHtml(specialist.role || "Массажист")}${specialist.location ? ` · 📍 ${escapeHtml(specialist.location)}` : ""}</p>
           <div class="stats">
             ${specialist.experience ? `<div><span class="stat__value">${escapeHtml(specialist.experience)}</span><span class="stat__label">лет практики</span></div>` : ""}
             ${specialistServices.length ? `<div><span class="stat__value">${specialistServices.length}</span><span class="stat__label">процедур</span></div>` : ""}
           </div>
-          <a href="${base}/#booking" class="hero__cta">Записаться на сеанс →</a>
+          <a href="${base}/?prefillSpecialist=${escapeHtml(specialist.id)}#booking" class="hero__cta">Записаться к мастеру →</a>
         </div>
       </div>
     </div>
@@ -6292,7 +6292,7 @@ function renderSpecialistPage(specialist, services, site, recentPosts = []) {
       <div class="cta-section">
         <div class="cta-section__title">Записаться к ${escapeHtml(name.split(" ")[0])}</div>
         <p class="cta-section__sub">Онлайн-запись без звонков — выберите удобное время</p>
-        <a href="${base}/#booking" class="cta-btn">Выбрать время</a>
+        <a href="${base}/?prefillSpecialist=${escapeHtml(specialist.id)}#booking" class="cta-btn">Выбрать время</a>
       </div>
     </div>
   </main>
