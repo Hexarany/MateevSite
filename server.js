@@ -1898,6 +1898,7 @@ function normalizeSpecialists(specialistsInput = [], services = []) {
         initials: sanitizeText(specialist?.initials) || buildInitials(name),
         photo: (typeof specialist?.photo === "string" && /^\/uploads\/specialists\/[\w.-]+$/.test(specialist.photo)) ? specialist.photo : null,
         certified: specialist?.certified === true,
+        commissionPercent: Math.max(0, Math.min(100, Number(specialist?.commissionPercent) || 0)),
         ...(sanitizeText(specialist?.location) && { location: sanitizeText(specialist?.location) }),
         ...(roleRo && { roleRo }),
         ...(bioRo && { bioRo })
@@ -3705,6 +3706,31 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // GET /api/admin/commission?month=YYYY-MM — отчёт по комиссии сети с мастеров
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/commission") {
+    assertAdminPin(request);
+    const month = /^\d{4}-\d{2}$/.test(urlObject.searchParams.get("month") || "")
+      ? urlObject.searchParams.get("month")
+      : new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" }).slice(0, 7);
+    const { specialists, bookings } = await loadStudioData();
+    const rows = specialists.map((sp) => {
+      const done = bookings.filter((b) => b.specialistId === sp.id && b.status === "completed" && (b.date || "").slice(0, 7) === month);
+      const revenue = done.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
+      const pct = sp.commissionPercent || 0;
+      return {
+        id: sp.id, name: sp.name, certified: !!sp.certified, location: sp.location || "",
+        sessions: done.length, revenue, commissionPercent: pct, commission: Math.round(revenue * pct / 100)
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
+    const totals = {
+      sessions: rows.reduce((s, r) => s + r.sessions, 0),
+      revenue: rows.reduce((s, r) => s + r.revenue, 0),
+      commission: rows.reduce((s, r) => s + r.commission, 0)
+    };
+    sendJson(response, 200, { month, rows, totals });
+    return;
+  }
+
   // POST /api/admin/certificates - создать сертификат ИЛИ оформить заявку (upsert по коду)
   if (request.method === "POST" && urlObject.pathname === "/api/admin/certificates") {
     assertAdminPin(request);
@@ -4737,17 +4763,23 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((bl) => ({ date: bl.date, start: bl.start, end: bl.end, reason: bl.reason || "" }));
 
+    const ym = today.slice(0, 7);
+    const monthDone = mine.filter((b) => b.status === "completed" && (b.date || "").slice(0, 7) === ym);
+    const monthRevenue = monthDone.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
+
     sendJson(response, 200, {
       specialist: {
         id: specialist.id, name: specialist.name, role: specialist.role, initials: specialist.initials,
         photo: specialist.photo || null, certified: !!specialist.certified,
         location: specialist.location || "", daySchedules: specialist.daySchedules,
-        services: myServices
+        services: myServices, commissionPercent: specialist.commissionPercent || 0
       },
       stats: {
         upcomingCount: upcoming.length,
         todayCount: upcoming.filter((b) => b.date === today).length,
-        completedTotal: mine.filter((b) => b.status === "completed").length
+        completedTotal: mine.filter((b) => b.status === "completed").length,
+        monthSessions: monthDone.length,
+        monthRevenue
       },
       upcoming, past, blocks
     });

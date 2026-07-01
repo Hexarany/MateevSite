@@ -508,6 +508,7 @@ function bindEvents() {
   elements.specialistsEditor.addEventListener("input", handleSpecialistEditorInput);
   elements.specialistsEditor.addEventListener("click", handleSpecialistEditorClick);
   elements.specialistsEditor.addEventListener("change", handleSpecialistEditorChange);
+  document.getElementById("loadCommissionBtn")?.addEventListener("click", loadCommission);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
   elements.scheduleDateInput.addEventListener("change", handleScheduleDateChange);
   elements.schedulePrevBtn.addEventListener("click", () => shiftScheduleDate(-1));
@@ -1146,6 +1147,7 @@ function renderSpecialistsEditor() {
                 ${renderCollectionField("Опыт", index, "experience", specialist.experience || "", "specialist")}
                 ${renderCollectionField("Инициалы", index, "initials", specialist.initials || "", "specialist")}
                 ${renderCollectionField("Локация (город)", index, "location", specialist.location || "", "specialist")}
+                ${renderCollectionField("Комиссия сети, %", index, "commissionPercent", specialist.commissionPercent || 0, "specialist", { type: "number", min: "0", step: "1" })}
                 ${renderCollectionField("Bio", index, "bio", specialist.bio || "", "specialist", { multiline: true, rows: 5 })}
                 <label class="field field--full" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer;">
                   <input type="checkbox" data-specialist-bool-field="certified" data-specialist-index="${index}" ${specialist.certified ? "checked" : ""} style="width:auto;">
@@ -1624,6 +1626,65 @@ function renderCertificatesTable() {
         </td>
       </tr>`;
     }).join("");
+}
+
+// ─── Commission report (сеть мастеров) ────────────────────────────────────────
+async function loadCommission() {
+  const monthEl = document.getElementById("commissionMonth");
+  if (monthEl && !monthEl.value) monthEl.value = new Date().toISOString().slice(0, 7);
+  const month = (monthEl && monthEl.value) || new Date().toISOString().slice(0, 7);
+  const container = document.getElementById("commissionReport");
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state" style="padding:12px 0;">Загрузка…</div>';
+  try {
+    const data = await fetchJson(`/api/admin/commission?month=${encodeURIComponent(month)}`);
+    renderCommission(data);
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка")}</div>`;
+  }
+}
+
+function renderCommission(data) {
+  const container = document.getElementById("commissionReport");
+  if (!container) return;
+  const rows = data.rows.filter(r => r.sessions > 0 || r.commissionPercent > 0);
+  if (!rows.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:12px 0;">Нет данных за этот месяц.</div>';
+    return;
+  }
+  const money = (n) => Number(n).toLocaleString("ru-RU") + " MDL";
+  container.innerHTML = `
+    <div style="overflow-x:auto;margin-top:12px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+        <thead>
+          <tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--line);">
+            <th style="padding:8px 10px;">Мастер</th>
+            <th style="padding:8px 10px;">Сеансов</th>
+            <th style="padding:8px 10px;">Выручка</th>
+            <th style="padding:8px 10px;">%</th>
+            <th style="padding:8px 10px;">Комиссия сети</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `<tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:8px 10px;">${escapeHtml(r.name)}${r.certified ? " ✓" : ""}${r.location ? ` · ${escapeHtml(r.location)}` : ""}</td>
+            <td style="padding:8px 10px;">${r.sessions}</td>
+            <td style="padding:8px 10px;">${money(r.revenue)}</td>
+            <td style="padding:8px 10px;">${r.commissionPercent}%</td>
+            <td style="padding:8px 10px;"><strong>${money(r.commission)}</strong></td>
+          </tr>`).join("")}
+        </tbody>
+        <tfoot>
+          <tr style="font-weight:700;">
+            <td style="padding:10px;">Итого</td>
+            <td style="padding:10px;">${data.totals.sessions}</td>
+            <td style="padding:10px;">${money(data.totals.revenue)}</td>
+            <td></td>
+            <td style="padding:10px;color:var(--brand);">${money(data.totals.commission)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
 }
 
 // ─── Expense Calculator ───────────────────────────────────────────────────────

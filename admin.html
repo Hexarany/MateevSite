@@ -1350,6 +1350,20 @@
               </div>
             </div>
             <div id="specialistsEditor"></div>
+
+            <article class="admin-widget" style="margin-top:22px;">
+              <div class="admin-widget__head admin-widget__head--toolbar">
+                <div>
+                  <p class="section-kicker">Сеть мастеров</p>
+                  <h3 class="admin-widget__title">Комиссия за месяц</h3>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="month" id="commissionMonth" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;">
+                  <button type="button" class="button button--ghost button--mini" id="loadCommissionBtn">Показать</button>
+                </div>
+              </div>
+              <div id="commissionReport"></div>
+            </article>
           </section>
 
           <section class="admin-section-block reveal" id="content-courses">

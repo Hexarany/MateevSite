@@ -124,6 +124,17 @@
         </div>
 
         <div class="card">
+          <div class="card__head">Заработок за месяц</div>
+          <div class="cl-body" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <strong style="font-size:1.5rem;color:var(--forest);">${(data.stats.monthRevenue || 0).toLocaleString("ru-RU")} MDL</strong>
+              <div style="font-size:0.82rem;color:var(--muted);">${data.stats.monthSessions || 0} завершённых сеансов</div>
+            </div>
+            ${s.commissionPercent ? `<div style="text-align:right;font-size:0.8rem;color:var(--muted);">Комиссия сети<br><strong style="color:var(--brand);">${s.commissionPercent}%</strong></div>` : ""}
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card__head">Добавить запись</div>
           <div class="cl-body">
             ${(s.services && s.services.length) ? `
