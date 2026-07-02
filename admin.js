@@ -4,6 +4,9 @@ const state = {
   adminData: null,
   enrollments: [],
   certificates: [],
+  notes: [],
+  notesFilter: "all",
+  notesSearch: "",
   diplomas: [],
   packages: [],
   diary: [],
@@ -509,6 +512,15 @@ function bindEvents() {
   elements.specialistsEditor.addEventListener("click", handleSpecialistEditorClick);
   elements.specialistsEditor.addEventListener("change", handleSpecialistEditorChange);
   document.getElementById("loadCommissionBtn")?.addEventListener("click", loadCommission);
+  document.getElementById("noteAddForm")?.addEventListener("submit", handleNoteAdd);
+  document.getElementById("notesFilters")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-note-filter]");
+    if (!btn) return;
+    state.notesFilter = btn.dataset.noteFilter;
+    renderNotes();
+  });
+  document.getElementById("notesSearch")?.addEventListener("input", (e) => { state.notesSearch = e.target.value; renderNotes(); });
+  document.getElementById("notesList")?.addEventListener("click", handleNoteListClick);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
   elements.scheduleDateInput.addEventListener("change", handleScheduleDateChange);
   elements.schedulePrevBtn.addEventListener("click", () => shiftScheduleDate(-1));
@@ -1567,6 +1579,7 @@ async function loadAdminData() {
     state.diplomas = await fetchJson("/api/admin/diplomas");
     renderDiplomasTable();
   } catch {}
+  loadNotes();
   loadExpenses();
   loadPackages();
   loadInventory();
@@ -1688,6 +1701,148 @@ function renderCommission(data) {
         </tfoot>
       </table>
     </div>`;
+}
+
+// ─── Блокнот (заметки / дела / долги) ─────────────────────────────────────────
+const NOTE_TYPES = {
+  note:       { label: "Заметка",    icon: "📝" },
+  task:       { label: "Дело",       icon: "✅" },
+  owed_to_me: { label: "Мне должны", icon: "💰" },
+  i_owe:      { label: "Я должен",   icon: "🤝" }
+};
+
+function fmtNoteDate(d) {
+  try { return new Date(d + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }); }
+  catch { return d; }
+}
+
+async function loadNotes() {
+  try {
+    const data = await fetchJson("/api/admin/notes");
+    state.notes = data.notes || [];
+  } catch { state.notes = []; }
+  renderNotes();
+}
+
+async function addNote(payload) {
+  const data = await fetchJson("/api/admin/notes", { method: "POST", body: JSON.stringify(payload) });
+  state.notes.push(data.note);
+  renderNotes();
+}
+
+async function patchNote(id, patch) {
+  const data = await fetchJson(`/api/admin/notes/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(patch) });
+  const idx = state.notes.findIndex(n => n.id === id);
+  if (idx !== -1) state.notes[idx] = data.note;
+  renderNotes();
+}
+
+async function deleteNote(id) {
+  await fetchJson(`/api/admin/notes/${encodeURIComponent(id)}`, { method: "DELETE" });
+  state.notes = state.notes.filter(n => n.id !== id);
+  renderNotes();
+}
+
+function noteMatchesFilter(n) {
+  const f = state.notesFilter;
+  if (f === "all") return !n.done;
+  if (f === "done") return n.done;
+  return n.type === f && !n.done;
+}
+
+function renderNotesSummary() {
+  const el = document.getElementById("notesSummary");
+  if (!el) return;
+  const active = state.notes.filter(n => !n.done);
+  const sum = (type, field) => active.filter(n => n.type === type).reduce((s, n) => s + (n[field] || 0), 0);
+  const owedMoney = sum("owed_to_me", "amount"), owedProc = sum("owed_to_me", "procedures");
+  const iOweMoney = sum("i_owe", "amount"), iOweProc = sum("i_owe", "procedures");
+  const tasks = active.filter(n => n.type === "task").length;
+  const money = (m, p) => (m ? m.toLocaleString("ru-RU") + " MDL" : (p ? "" : "—")) + (p ? `${m ? " · " : ""}${p} проц.` : "");
+  const card = (label, value, color) => `<div style="flex:1;min-width:150px;background:#fffaf4;border:1px solid var(--line);border-radius:14px;padding:14px;"><div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">${label}</div><strong style="font-size:1.15rem;color:${color};display:block;margin-top:4px;">${value}</strong></div>`;
+  el.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    ${card("💰 Мне должны", money(owedMoney, owedProc), "#2a6b3e")}
+    ${card("🤝 Я должен", money(iOweMoney, iOweProc), "var(--brand)")}
+    ${card("✅ Активных дел", String(tasks), "var(--forest)")}
+  </div>`;
+}
+
+function renderNotesFilters() {
+  const el = document.getElementById("notesFilters");
+  if (!el) return;
+  const chips = [["all", "Активные"], ["task", "✅ Дела"], ["owed_to_me", "💰 Мне должны"], ["i_owe", "🤝 Я должен"], ["note", "📝 Заметки"], ["done", "Выполненные"]];
+  el.innerHTML = chips.map(([v, l]) => `<button class="school-filter-btn${state.notesFilter === v ? " is-active" : ""}" data-note-filter="${v}">${l}</button>`).join("");
+}
+
+function renderNotes() {
+  renderNotesFilters();
+  renderNotesSummary();
+  const list = document.getElementById("notesList");
+  if (!list) return;
+  const q = (state.notesSearch || "").toLowerCase();
+  let items = state.notes.filter(noteMatchesFilter);
+  if (q) items = items.filter(n => (n.text + " " + (n.client || "")).toLowerCase().includes(q));
+  items.sort((a, b) => (Number(b.pinned) - Number(a.pinned)) || (a.createdAt < b.createdAt ? 1 : -1));
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px 0;">Пусто. Добавьте первую запись выше.</div>';
+    return;
+  }
+  list.innerHTML = items.map(n => {
+    const tp = NOTE_TYPES[n.type] || NOTE_TYPES.note;
+    const meta = [];
+    if (n.client) meta.push(`👤 ${escapeHtml(n.client)}`);
+    if (n.amount) meta.push(`💵 ${n.amount.toLocaleString("ru-RU")} MDL`);
+    if (n.procedures) meta.push(`🔁 ${n.procedures} проц.`);
+    if (n.dueDate) meta.push(`⏰ ${fmtNoteDate(n.dueDate)}`);
+    return `<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#fffaf4;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;${n.done ? "opacity:0.55;" : ""}">
+      <button data-note-done="${n.id}" title="Готово" style="flex-shrink:0;width:22px;height:22px;border-radius:6px;border:2px solid ${n.done ? "#2a6b3e" : "var(--line)"};background:${n.done ? "#2a6b3e" : "transparent"};color:#fff;cursor:pointer;font-size:0.8rem;line-height:1;">${n.done ? "✓" : ""}</button>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
+          <span style="font-size:0.72rem;font-weight:700;color:var(--muted);">${tp.icon} ${tp.label}</span>
+          ${n.pinned ? `<span style="font-size:0.7rem;color:var(--brand);">📌</span>` : ""}
+        </div>
+        <div style="${n.done ? "text-decoration:line-through;" : ""}white-space:pre-wrap;word-break:break-word;">${escapeHtml(n.text)}</div>
+        ${meta.length ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:6px;">${meta.join(" · ")}</div>` : ""}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <button class="button button--ghost button--mini" data-note-pin="${n.id}" title="Закрепить">${n.pinned ? "📌" : "📍"}</button>
+        <button class="button button--ghost button--mini" data-note-edit="${n.id}" title="Изменить">✏️</button>
+        <button class="button button--ghost button--mini" data-note-del="${n.id}" title="Удалить">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function handleNoteAdd(e) {
+  e.preventDefault();
+  const text = document.getElementById("noteText").value.trim();
+  if (!text) return;
+  const payload = {
+    text,
+    type: document.getElementById("noteType").value,
+    client: document.getElementById("noteClient").value.trim(),
+    amount: Number(document.getElementById("noteAmount").value) || 0,
+    procedures: parseInt(document.getElementById("noteProcedures").value, 10) || 0,
+    dueDate: document.getElementById("noteDue").value || ""
+  };
+  try {
+    await addNote(payload);
+    e.target.reset();
+    document.getElementById("noteText").focus();
+  } catch (err) { showToast(err.message || "Не удалось добавить.", "error"); }
+}
+
+async function handleNoteListClick(e) {
+  const done = e.target.closest("[data-note-done]");
+  const pin = e.target.closest("[data-note-pin]");
+  const edit = e.target.closest("[data-note-edit]");
+  const del = e.target.closest("[data-note-del]");
+  try {
+    if (done) { const n = state.notes.find(x => x.id === done.dataset.noteDone); await patchNote(n.id, { done: !n.done }); }
+    else if (pin) { const n = state.notes.find(x => x.id === pin.dataset.notePin); await patchNote(n.id, { pinned: !n.pinned }); }
+    else if (edit) { const n = state.notes.find(x => x.id === edit.dataset.noteEdit); const t = window.prompt("Изменить запись:", n.text); if (t !== null && t.trim()) await patchNote(n.id, { text: t.trim() }); }
+    else if (del) { if (confirm("Удалить запись?")) await deleteNote(del.dataset.noteDel); }
+  } catch (err) { showToast(err.message || "Ошибка.", "error"); }
 }
 
 // ─── Expense Calculator ───────────────────────────────────────────────────────

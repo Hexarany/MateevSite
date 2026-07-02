@@ -46,6 +46,7 @@
 
       <nav class="admin-sidebar__nav">
         <a href="#overview" data-section="overview">Обзор</a>
+        <a href="#notes" data-section="notes">📝 Блокнот</a>
         <a href="#peakHours" data-section="peakHours">Пик-часы</a>
         <a href="#schedule" data-section="schedule">Расписание</a>
         <a href="#requests" data-section="requests">Журнал заявок</a>
@@ -155,6 +156,48 @@
               <button type="button" class="button button--ghost button--mini" id="backupNowBtn">🔄 Создать сейчас</button>
             </div>
           </div>
+
+          <!-- Блокнот -->
+          <section class="admin-section-block reveal" id="notes">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Рабочий блокнот</p>
+                <h2 class="admin-section-block__title">Заметки, дела и долги</h2>
+              </div>
+            </div>
+
+            <article class="admin-widget">
+              <form id="noteAddForm" class="admin-form-stack">
+                <textarea id="noteText" rows="2" placeholder="Что записать? Дело, просьба клиента, долг…" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:0.95rem;resize:vertical;"></textarea>
+                <div class="field-grid">
+                  <label class="field"><span>Тип</span>
+                    <select id="noteType">
+                      <option value="note">📝 Заметка</option>
+                      <option value="task">✅ Дело</option>
+                      <option value="owed_to_me">💰 Мне должны</option>
+                      <option value="i_owe">🤝 Я должен</option>
+                    </select>
+                  </label>
+                  <label class="field"><span>Клиент (необязательно)</span><input type="text" id="noteClient" placeholder="Имя"></label>
+                </div>
+                <div class="field-grid">
+                  <label class="field"><span>Сумма, MDL</span><input type="number" id="noteAmount" min="0" step="50" placeholder="0"></label>
+                  <label class="field"><span>Процедур</span><input type="number" id="noteProcedures" min="0" step="1" placeholder="0"></label>
+                  <label class="field field--date"><span>Срок (необязательно)</span><input type="date" id="noteDue"></label>
+                </div>
+                <button type="submit" class="button button--secondary">Добавить в блокнот</button>
+              </form>
+            </article>
+
+            <div id="notesSummary" style="margin:18px 0;"></div>
+
+            <div class="admin-widget__head admin-widget__head--toolbar" style="margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+              <div class="school-filters" id="notesFilters"></div>
+              <input type="search" id="notesSearch" placeholder="Поиск по блокноту…" style="padding:9px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;min-width:200px;">
+            </div>
+
+            <div id="notesList"></div>
+          </section>
 
           <!-- GA4 Analytics widget -->
           <section class="admin-section-block reveal" id="analyticsWidget">

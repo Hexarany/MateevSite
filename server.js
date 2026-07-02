@@ -792,6 +792,7 @@ async function ensureDataFiles() {
     ["inventory.json", "[]"],
     ["portal-tokens.json", "[]"],
     ["master-tokens.json", "[]"],
+    ["notes.json", "[]"],
     ["gallery.json", "[]"],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
@@ -3705,6 +3706,71 @@ async function routeApi(request, response, urlObject) {
     }
 
     sendJson(response, 200, { ok: true, enrollment: enrollments[idx], platformAccess });
+    return;
+  }
+
+  // ─── Блокнот (заметки / дела / долги) ─────────────────────────────────
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/notes") {
+    assertAdminPin(request);
+    const notes = await readJson("notes.json").catch(() => []);
+    sendJson(response, 200, { notes });
+    return;
+  }
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/notes") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const text = sanitizeText(payload.text || "");
+    if (!text) { sendJson(response, 400, { message: "Пустая заметка." }); return; }
+    const allowedTypes = ["note", "task", "owed_to_me", "i_owe"];
+    const note = {
+      id: crypto.randomUUID(),
+      text,
+      type: allowedTypes.includes(payload.type) ? payload.type : "note",
+      client: sanitizeText(payload.client || ""),
+      amount: Math.max(0, Number(payload.amount) || 0),
+      procedures: Math.max(0, parseInt(payload.procedures || "0", 10) || 0),
+      dueDate: isValidDateString(payload.dueDate || "") ? payload.dueDate : "",
+      done: false,
+      pinned: payload.pinned === true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const notes = await readJson("notes.json").catch(() => []);
+    notes.push(note);
+    await writeJson("notes.json", notes);
+    sendJson(response, 201, { ok: true, note });
+    return;
+  }
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/notes/")) {
+    assertAdminPin(request);
+    const id = urlObject.pathname.replace("/api/admin/notes/", "");
+    const payload = await parseJsonBody(request);
+    const notes = await readJson("notes.json").catch(() => []);
+    const idx = notes.findIndex((n) => n.id === id);
+    if (idx === -1) { sendJson(response, 404, { message: "Заметка не найдена." }); return; }
+    const n = notes[idx];
+    const allowedTypes = ["note", "task", "owed_to_me", "i_owe"];
+    if (typeof payload.text === "string") n.text = sanitizeText(payload.text);
+    if (allowedTypes.includes(payload.type)) n.type = payload.type;
+    if (typeof payload.client === "string") n.client = sanitizeText(payload.client);
+    if (payload.amount !== undefined) n.amount = Math.max(0, Number(payload.amount) || 0);
+    if (payload.procedures !== undefined) n.procedures = Math.max(0, parseInt(payload.procedures, 10) || 0);
+    if (payload.dueDate !== undefined) n.dueDate = isValidDateString(payload.dueDate || "") ? payload.dueDate : "";
+    if (typeof payload.done === "boolean") n.done = payload.done;
+    if (typeof payload.pinned === "boolean") n.pinned = payload.pinned;
+    n.updatedAt = new Date().toISOString();
+    await writeJson("notes.json", notes);
+    sendJson(response, 200, { ok: true, note: n });
+    return;
+  }
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/notes/")) {
+    assertAdminPin(request);
+    const id = urlObject.pathname.replace("/api/admin/notes/", "");
+    const notes = await readJson("notes.json").catch(() => []);
+    const next = notes.filter((n) => n.id !== id);
+    if (next.length === notes.length) { sendJson(response, 404, { message: "Заметка не найдена." }); return; }
+    await writeJson("notes.json", next);
+    sendJson(response, 200, { ok: true });
     return;
   }
 
