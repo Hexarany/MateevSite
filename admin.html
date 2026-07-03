@@ -45,6 +45,7 @@
       </div>
 
       <nav class="admin-sidebar__nav">
+        <a href="#dashboard" data-section="dashboard">📊 Дашборд</a>
         <a href="#overview" data-section="overview">Обзор</a>
         <a href="#notes" data-section="notes">📝 Блокнот</a>
         <a href="#peakHours" data-section="peakHours">Пик-часы</a>
@@ -156,6 +157,18 @@
               <button type="button" class="button button--ghost button--mini" id="backupNowBtn">🔄 Создать сейчас</button>
             </div>
           </div>
+
+          <!-- Единый дашборд -->
+          <section class="admin-section-block reveal" id="dashboard">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Обзор бизнеса</p>
+                <h2 class="admin-section-block__title">Дашборд: студия · сеть · школа · аналитика</h2>
+              </div>
+              <button type="button" class="button button--ghost button--mini" id="dashboardRefreshBtn">Обновить</button>
+            </div>
+            <div id="dashboardSummary"></div>
+          </section>
 
           <!-- Блокнот -->
           <section class="admin-section-block reveal" id="notes">

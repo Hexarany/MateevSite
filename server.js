@@ -793,6 +793,7 @@ async function ensureDataFiles() {
     ["portal-tokens.json", "[]"],
     ["master-tokens.json", "[]"],
     ["notes.json", "[]"],
+    ["commission-payments.json", "[]"],
     ["gallery.json", "[]"],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
@@ -3789,21 +3790,101 @@ async function routeApi(request, response, urlObject) {
       ? urlObject.searchParams.get("month")
       : new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" }).slice(0, 7);
     const { specialists, bookings } = await loadStudioData();
+    const payments = await readJson("commission-payments.json").catch(() => []);
+    const isPaid = (spId) => payments.some((p) => p.specialistId === spId && p.month === month);
     const rows = specialists.map((sp) => {
       const done = bookings.filter((b) => b.specialistId === sp.id && b.status === "completed" && (b.date || "").slice(0, 7) === month);
       const revenue = done.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
       const pct = sp.commissionPercent || 0;
       return {
         id: sp.id, name: sp.name, certified: !!sp.certified, location: sp.location || "",
-        sessions: done.length, revenue, commissionPercent: pct, commission: Math.round(revenue * pct / 100)
+        sessions: done.length, revenue, commissionPercent: pct, commission: Math.round(revenue * pct / 100),
+        paid: isPaid(sp.id)
       };
     }).sort((a, b) => b.revenue - a.revenue);
     const totals = {
       sessions: rows.reduce((s, r) => s + r.sessions, 0),
       revenue: rows.reduce((s, r) => s + r.revenue, 0),
-      commission: rows.reduce((s, r) => s + r.commission, 0)
+      commission: rows.reduce((s, r) => s + r.commission, 0),
+      commissionUnpaid: rows.filter((r) => !r.paid).reduce((s, r) => s + r.commission, 0)
     };
     sendJson(response, 200, { month, rows, totals });
+    return;
+  }
+
+  // POST /api/admin/commission/pay — отметить/снять оплату комиссии за месяц
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/commission/pay") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const specialistId = sanitizeText(payload.specialistId || "");
+    const month = /^\d{4}-\d{2}$/.test(payload.month || "") ? payload.month : "";
+    if (!specialistId || !month) { sendJson(response, 400, { message: "Нужны specialistId и month." }); return; }
+    const payments = await readJson("commission-payments.json").catch(() => []);
+    const idx = payments.findIndex((p) => p.specialistId === specialistId && p.month === month);
+    let paid;
+    if (idx === -1) { payments.push({ specialistId, month, paidAt: new Date().toISOString() }); paid = true; }
+    else { payments.splice(idx, 1); paid = false; }
+    await writeJson("commission-payments.json", payments);
+    sendJson(response, 200, { ok: true, paid });
+    return;
+  }
+
+  // GET /api/admin/dashboard-summary — единый обзор (спа + сеть + школа + аналитика)
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/dashboard-summary") {
+    assertAdminPin(request);
+    const [rawServices, rawSpecialists, bookings, clientsRaw, enrollments] = await Promise.all([
+      readJson("services.json").catch(() => []),
+      readJson("specialists.json").catch(() => []),
+      readJson("bookings.json").catch(() => []),
+      readJson("clients.json").catch(() => []),
+      readJson("enrollments.json").catch(() => [])
+    ]);
+    const services = normalizeServices(rawServices);
+    const specialists = normalizeSpecialists(rawSpecialists, services);
+    const clients = buildAdminClients(bookings, clientsRaw);
+    const month = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" }).slice(0, 7);
+    const inMonth = (b) => (b.date || "").slice(0, 7) === month;
+
+    // Спа
+    const monthBookings = bookings.filter(inMonth);
+    const completedMonth = monthBookings.filter((b) => b.status === "completed");
+    const monthRevenue = completedMonth.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0);
+    const cancelledMonth = monthBookings.filter((b) => b.status === "cancelled").length;
+
+    // Сеть
+    const certifiedCount = specialists.filter((s) => s.certified).length;
+    let commissionMonth = 0;
+    for (const sp of specialists) {
+      const rev = completedMonth.filter((b) => b.specialistId === sp.id).reduce((s, b) => s + (Number(b.totalPrice) || 0), 0);
+      commissionMonth += Math.round(rev * (sp.commissionPercent || 0) / 100);
+    }
+
+    // Школа
+    const enrList = Array.isArray(enrollments) ? enrollments : [];
+    const enrNew = enrList.filter((e) => e && (e.status === "new" || e.status === "pending" || !e.status)).length;
+
+    // Аналитика по клиентам
+    const withVisits = clients.filter((c) => c.completedVisits >= 1);
+    const ltv = withVisits.length ? Math.round(withVisits.reduce((s, c) => s + (c.totalSpent || 0), 0) / withVisits.length) : 0;
+    const repeat = withVisits.filter((c) => c.completedVisits >= 2).length;
+    const repeatRate = withVisits.length ? Math.round(repeat / withVisits.length * 100) : 0;
+    const avgVisits = withVisits.length ? Math.round(withVisits.reduce((s, c) => s + c.completedVisits, 0) / withVisits.length * 10) / 10 : 0;
+    const svcCount = {};
+    for (const b of bookings) if (b.status === "completed" && b.serviceName) svcCount[b.serviceName] = (svcCount[b.serviceName] || 0) + 1;
+    const topService = Object.entries(svcCount).sort((a, b) => b[1] - a[1])[0] || null;
+
+    sendJson(response, 200, {
+      month,
+      spa: { monthBookings: monthBookings.filter((b) => b.status !== "cancelled").length, monthRevenue, cancelledMonth, completedMonth: completedMonth.length },
+      network: { masters: specialists.length, certified: certifiedCount, commissionMonth },
+      school: { total: enrList.length, new: enrNew },
+      analytics: {
+        totalClients: clients.length,
+        activeClients: withVisits.length,
+        ltv, repeatRate, avgVisits,
+        topService: topService ? { name: topService[0], count: topService[1] } : null
+      }
+    });
     return;
   }
 

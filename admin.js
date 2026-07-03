@@ -522,6 +522,8 @@ function bindEvents() {
   document.getElementById("notesSearch")?.addEventListener("input", (e) => { state.notesSearch = e.target.value; renderNotes(); });
   document.getElementById("notesList")?.addEventListener("click", handleNoteListClick);
   document.getElementById("notesExportBtn")?.addEventListener("click", exportNotesCsv);
+  document.getElementById("dashboardRefreshBtn")?.addEventListener("click", loadDashboardSummary);
+  document.getElementById("commissionReport")?.addEventListener("click", handleCommissionPay);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
   elements.scheduleDateInput.addEventListener("change", handleScheduleDateChange);
   elements.schedulePrevBtn.addEventListener("click", () => shiftScheduleDate(-1));
@@ -1581,6 +1583,7 @@ async function loadAdminData() {
     renderDiplomasTable();
   } catch {}
   loadNotes();
+  loadDashboardSummary();
   loadExpenses();
   loadPackages();
   loadInventory();
@@ -1661,6 +1664,18 @@ async function loadCommission() {
   }
 }
 
+async function handleCommissionPay(e) {
+  const btn = e.target.closest("[data-pay-master]");
+  if (!btn) return;
+  try {
+    await fetchJson("/api/admin/commission/pay", {
+      method: "POST",
+      body: JSON.stringify({ specialistId: btn.dataset.payMaster, month: btn.dataset.payMonth })
+    });
+    loadCommission();
+  } catch (err) { showToast(err.message || "Ошибка.", "error"); }
+}
+
 function renderCommission(data) {
   const container = document.getElementById("commissionReport");
   if (!container) return;
@@ -1680,6 +1695,7 @@ function renderCommission(data) {
             <th style="padding:8px 10px;">Выручка</th>
             <th style="padding:8px 10px;">%</th>
             <th style="padding:8px 10px;">Комиссия сети</th>
+            <th style="padding:8px 10px;">Оплата</th>
           </tr>
         </thead>
         <tbody>
@@ -1689,6 +1705,9 @@ function renderCommission(data) {
             <td style="padding:8px 10px;">${money(r.revenue)}</td>
             <td style="padding:8px 10px;">${r.commissionPercent}%</td>
             <td style="padding:8px 10px;"><strong>${money(r.commission)}</strong></td>
+            <td style="padding:8px 10px;white-space:nowrap;">${r.commission ? (r.paid
+              ? `<span style="color:#2a6b3e;font-weight:700;">✓ Оплачено</span> <button class="button button--ghost button--mini" data-pay-master="${escapeHtml(r.id)}" data-pay-month="${escapeHtml(data.month)}" title="Отменить">↺</button>`
+              : `<button class="button button--ghost button--mini" data-pay-master="${escapeHtml(r.id)}" data-pay-month="${escapeHtml(data.month)}">Отметить оплаченной</button>`) : "—"}</td>
           </tr>`).join("")}
         </tbody>
         <tfoot>
@@ -1698,6 +1717,7 @@ function renderCommission(data) {
             <td style="padding:10px;">${money(data.totals.revenue)}</td>
             <td></td>
             <td style="padding:10px;color:var(--brand);">${money(data.totals.commission)}</td>
+            <td style="padding:10px;color:var(--muted);font-weight:600;">${data.totals.commissionUnpaid ? "не оплачено: " + money(data.totals.commissionUnpaid) : "всё оплачено ✓"}</td>
           </tr>
         </tfoot>
       </table>
@@ -1884,6 +1904,55 @@ function clientNotesBlock(client) {
     </div>
     ${items}
   </div>`;
+}
+
+// ─── Единый дашборд (студия · сеть · школа · аналитика) ───────────────────────
+async function loadDashboardSummary() {
+  const el = document.getElementById("dashboardSummary");
+  if (el) el.innerHTML = '<div class="empty-state" style="padding:20px 0;">Загрузка…</div>';
+  try {
+    renderDashboardSummary(await fetchJson("/api/admin/dashboard-summary"));
+  } catch (e) {
+    if (el) el.innerHTML = `<div class="empty-state" style="padding:20px 0;">${escapeHtml(e.message || "Ошибка")}</div>`;
+  }
+}
+
+function renderDashboardSummary(d) {
+  const el = document.getElementById("dashboardSummary");
+  if (!el) return;
+  const money = (n) => Number(n).toLocaleString("ru-RU") + " MDL";
+  const card = (label, value, sub = "") => `<div style="flex:1;min-width:150px;background:#fffaf4;border:1px solid var(--line);border-radius:16px;padding:16px 18px;">
+    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">${label}</div>
+    <strong style="font-size:1.5rem;color:var(--forest);display:block;margin-top:6px;">${value}</strong>
+    ${sub ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${sub}</div>` : ""}
+  </div>`;
+  const group = (title, cards) => `<div style="margin-bottom:22px;">
+    <p class="section-kicker" style="margin-bottom:10px;">${title}</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">${cards.filter(Boolean).join("")}</div>
+  </div>`;
+  let monthLabel = d.month;
+  try { monthLabel = new Date(d.month + "-01T00:00:00").toLocaleDateString("ru-RU", { month: "long", year: "numeric" }); } catch {}
+  el.innerHTML = `
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;">Данные за ${monthLabel}</p>
+    ${group("🌿 Студия", [
+      card("Записей за месяц", d.spa.monthBookings),
+      card("Выручка за месяц", money(d.spa.monthRevenue), d.spa.completedMonth + " завершено"),
+      card("Отмен за месяц", d.spa.cancelledMonth)
+    ])}
+    ${group("🕸️ Сеть мастеров", [
+      card("Мастеров", d.network.masters, d.network.certified + " сертифицированы"),
+      card("Комиссия за месяц", money(d.network.commissionMonth))
+    ])}
+    ${group("🎓 Школа", [
+      card("Заявок на курсы", d.school.total, d.school.new + " новых")
+    ])}
+    ${group("📈 Аналитика клиентов", [
+      card("Клиентов всего", d.analytics.totalClients, d.analytics.activeClients + " с визитами"),
+      card("LTV (ср. выручка с клиента)", money(d.analytics.ltv)),
+      card("Повторных клиентов", d.analytics.repeatRate + "%", "≥2 визитов"),
+      card("Визитов на клиента", d.analytics.avgVisits),
+      d.analytics.topService ? card("Топ-услуга", escapeHtml(d.analytics.topService.name), d.analytics.topService.count + " раз") : ""
+    ])}`;
 }
 
 // ─── Expense Calculator ───────────────────────────────────────────────────────
