@@ -193,7 +193,10 @@
 
             <div class="admin-widget__head admin-widget__head--toolbar" style="margin-bottom:12px;flex-wrap:wrap;gap:10px;">
               <div class="school-filters" id="notesFilters"></div>
-              <input type="search" id="notesSearch" placeholder="Поиск по блокноту…" style="padding:9px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;min-width:200px;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="search" id="notesSearch" placeholder="Поиск по блокноту…" style="padding:9px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;min-width:180px;">
+                <button type="button" class="button button--ghost button--mini" id="notesExportBtn" title="Скачать в CSV">⬇ CSV</button>
+              </div>
             </div>
 
             <div id="notesList"></div>

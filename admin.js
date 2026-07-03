@@ -521,6 +521,7 @@ function bindEvents() {
   });
   document.getElementById("notesSearch")?.addEventListener("input", (e) => { state.notesSearch = e.target.value; renderNotes(); });
   document.getElementById("notesList")?.addEventListener("click", handleNoteListClick);
+  document.getElementById("notesExportBtn")?.addEventListener("click", exportNotesCsv);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
   elements.scheduleDateInput.addEventListener("change", handleScheduleDateChange);
   elements.schedulePrevBtn.addEventListener("click", () => shiftScheduleDate(-1));
@@ -1843,6 +1844,46 @@ async function handleNoteListClick(e) {
     else if (edit) { const n = state.notes.find(x => x.id === edit.dataset.noteEdit); const t = window.prompt("Изменить запись:", n.text); if (t !== null && t.trim()) await patchNote(n.id, { text: t.trim() }); }
     else if (del) { if (confirm("Удалить запись?")) await deleteNote(del.dataset.noteDel); }
   } catch (err) { showToast(err.message || "Ошибка.", "error"); }
+}
+
+function exportNotesCsv() {
+  const typeLabel = { note: "Заметка", task: "Дело", owed_to_me: "Мне должны", i_owe: "Я должен" };
+  const rows = [["Тип", "Текст", "Клиент", "Сумма MDL", "Процедур", "Срок", "Статус", "Создано"]];
+  (state.notes || []).forEach(n => rows.push([
+    typeLabel[n.type] || n.type, n.text || "", n.client || "", n.amount || 0, n.procedures || 0,
+    n.dueDate || "", n.done ? "выполнено" : "активно", (n.createdAt || "").slice(0, 10)
+  ]));
+  const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = "﻿" + rows.map(r => r.map(esc).join(";")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `bloknot-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Блок «Блокнот по клиенту» на карточке клиента (долги/заметки по имени)
+function clientNotesBlock(client) {
+  const name = (client.clientName || "").toLowerCase().trim();
+  if (!name) return "";
+  const mine = (state.notes || []).filter(n => !n.done && (n.client || "").toLowerCase().trim() === name);
+  if (!mine.length) return "";
+  const sum = (type, f) => mine.filter(n => n.type === type).reduce((s, n) => s + (n[f] || 0), 0);
+  const owedM = sum("owed_to_me", "amount"), owedP = sum("owed_to_me", "procedures");
+  const ioweM = sum("i_owe", "amount"), ioweP = sum("i_owe", "procedures");
+  const money = (m, p) => `${m ? m.toLocaleString("ru-RU") + " MDL" : ""}${p ? (m ? " · " : "") + p + " проц." : ""}`;
+  const badges = [];
+  if (owedM || owedP) badges.push(`<span class="meta-chip" style="background:rgba(42,107,62,0.12);color:#2a6b3e;">💰 Должен(на): ${money(owedM, owedP)}</span>`);
+  if (ioweM || ioweP) badges.push(`<span class="meta-chip" style="background:rgba(179,109,44,0.12);color:var(--brand);">🤝 Я должен: ${money(ioweM, ioweP)}</span>`);
+  const items = mine.map(n => `<div style="font-size:0.85rem;padding:4px 0;">${(NOTE_TYPES[n.type] || {}).icon || "📝"} ${escapeHtml(n.text)}${n.amount ? ` — ${n.amount.toLocaleString("ru-RU")} MDL` : ""}${n.procedures ? ` — ${n.procedures} проц.` : ""}</div>`).join("");
+  return `<div class="admin-widget" style="margin-top:14px;padding:14px 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <strong style="font-size:0.9rem;color:var(--forest);">📝 Блокнот по клиенту</strong>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${badges.join("")}</div>
+    </div>
+    ${items}
+  </div>`;
 }
 
 // ─── Expense Calculator ───────────────────────────────────────────────────────
@@ -4328,6 +4369,8 @@ function renderClientDetail(client) {
           <strong>${formatCurrency(client.totalSpent)}</strong>
         </div>
       </div>
+
+      ${clientNotesBlock(client)}
 
       <form class="admin-form-stack" data-client-profile-form>
         <!-- ── Контактные данные ── -->

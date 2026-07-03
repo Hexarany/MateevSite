@@ -199,8 +199,31 @@ function buildReminderHtml(booking, dateLabel, addr) {
 </html>`;
 }
 
+// ── Блокнот: напоминание о делах/долгах с наступившим сроком (админу) ────────
+async function remindDueNotes() {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+  const notesPath = path.join(ROOT, "data", "notes.json");
+  if (!fs.existsSync(notesPath)) return;
+  let notes = [];
+  try { notes = JSON.parse(fs.readFileSync(notesPath, "utf8")); } catch { return; }
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+  const dueNotes = notes.filter(n => !n.done && n.dueDate && n.dueDate <= todayStr);
+  if (!dueNotes.length) return;
+  const icon = { note: "📝", task: "✅", owed_to_me: "💰", i_owe: "🤝" };
+  const lines = dueNotes.map(n =>
+    `${icon[n.type] || "📝"} ${n.text}${n.client ? " · " + n.client : ""}${n.amount ? " · " + n.amount + " MDL" : ""}${n.dueDate < todayStr ? " ⚠️ просрочено" : ""}`);
+  try {
+    await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: `📌 Блокнот — к сроку (${dueNotes.length}):\n\n${lines.join("\n")}`
+    });
+    console.log(`  ✓ Notes-due reminder sent (${dueNotes.length}).`);
+  } catch (err) { console.error("  ✗ Notes-due reminder failed:", err.message); }
+}
+
 // ── Main ───────────────────────────────────────────────────────────────────
 async function main() {
+  await remindDueNotes();
   const tomorrow = getTomorrow();
   const bookingsPath = path.join(ROOT, "data", "bookings.json");
 
