@@ -4907,7 +4907,7 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
     const mapB = (b) => ({
       id: b.id, date: b.date, slot: b.slot, endsAt: b.endsAt,
-      serviceName: b.serviceName, clientName: b.clientName,
+      serviceId: b.serviceId || "", serviceName: b.serviceName, clientName: b.clientName,
       phone: b.phone || "", status: b.status, notes: b.notes || b.clientNotes || ""
     });
     const mine = bookings
@@ -4982,6 +4982,34 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       } catch (e) {
         sendJson(response, 400, { message: e.message || "Проверьте данные записи." });
       }
+    });
+  }
+
+  // POST /api/master/reschedule — мастер переносит свой визит
+  if (request.method === "POST" && urlObject.pathname === "/api/master/reschedule") {
+    return withLock("studio", async () => {
+      const payload = await parseJsonBody(request);
+      const tokens = await readJson("master-tokens.json").catch(() => []);
+      const entry = tokens.find((t) => t.token === sanitizeText(payload.token || ""));
+      if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+      const bookingId = sanitizeText(payload.bookingId || "");
+      const date = sanitizeText(payload.date || "");
+      const slot = sanitizeTimeString(payload.slot || "");
+      if (!isValidDateString(date) || !slot) { sendJson(response, 400, { message: "Укажите дату и время." }); return; }
+      const { services, specialists, bookings, schedule } = await loadStudioData();
+      const idx = bookings.findIndex((b) => b.id === bookingId && b.specialistId === entry.specialistId);
+      if (idx === -1) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+      const booking = bookings[idx];
+      if (booking.status === "cancelled" || booking.status === "completed") { sendJson(response, 400, { message: "Эту запись нельзя перенести." }); return; }
+      const service = services.find((s) => s.id === booking.serviceId);
+      const specialist = specialists.find((s) => s.id === entry.specialistId);
+      if (!service || !specialist) { sendJson(response, 400, { message: "Услуга или мастер недоступны." }); return; }
+      const duration = booking.durationMins || service.duration;
+      const availability = calculateAvailability({ date, service: { ...service, duration }, specialist, bookings, schedule, excludeBookingId: booking.id, adminMode: true });
+      if (!availability.slots.some((s) => s.time === slot)) { sendJson(response, 409, { message: "Это время занято. Выберите другое." }); return; }
+      bookings[idx] = { ...booking, date, slot, endsAt: toTimeString(toMinutes(slot) + duration), updatedAt: new Date().toISOString() };
+      await writeJson("bookings.json", sortBookings(bookings));
+      sendJson(response, 200, { ok: true, date, slot });
     });
   }
 

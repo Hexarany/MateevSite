@@ -76,17 +76,61 @@
           <div class="booking__when">${esc(fmtDate(b.date))} · ${esc(b.slot)}–${esc(b.endsAt)}</div>
           <div class="booking__svc">${esc(b.serviceName)}</div>
           ${b.notes ? `<div class="note">«${esc(b.notes)}»</div>` : ""}
-          ${canAct ? `<div style="display:flex;gap:6px;margin-top:8px;">
+          ${canAct ? `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
             <button class="mini-btn" style="border-color:#2a6b3e;color:#2a6b3e;" onclick="markBooking('${esc(b.id)}','completed')">✓ Завершить</button>
-            <button class="mini-btn" style="border-color:#b43232;color:#b43232;" onclick="markBooking('${esc(b.id)}','cancelled')">✗ Неявка</button>
+            <button class="mini-btn" onclick="startReschedule('${esc(b.id)}','${esc(b.serviceId || '')}')">🔁 Перенести</button>
+            <button class="mini-btn" style="border-color:#b43232;color:#b43232;" onclick="markBooking('${esc(b.id)}','cancelled')">✗ Отменить</button>
           </div>` : ""}
         </div>
         <div class="booking__client">
           <div style="font-weight:600;">${esc(b.clientName)}</div>
           ${b.phone ? `<a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>` : ""}
+          ${b.phone && canAct ? `<div style="margin-top:4px;"><a href="https://wa.me/${esc(b.phone.replace(/\D/g, ''))}?text=${encodeURIComponent('Здравствуйте! Напоминаю о записи ' + fmtDate(b.date) + ' в ' + b.slot + '. Mateev Spa Studio 🌿')}" target="_blank" rel="noopener" style="color:#25d366;font-size:0.8rem;font-weight:600;text-decoration:none;">💬 Напомнить</a></div>` : ""}
           <div><span class="st st--${esc(b.status)}">${esc(STATUS[b.status] || b.status)}</span></div>
         </div>
       </div>`;
+    }
+
+    async function startReschedule(id, serviceId) {
+      const today = new Date().toISOString().slice(0, 10);
+      const ov = document.createElement("div");
+      ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;";
+      ov.innerHTML = `<div style="background:#fffaf4;border-radius:18px;padding:22px;max-width:360px;width:100%;">
+        <h3 style="margin-bottom:14px;color:var(--forest);font-family:'Cormorant Garamond',serif;font-size:1.4rem;">Перенести запись</h3>
+        <label style="font-size:0.8rem;color:var(--muted);">Новая дата<input type="date" id="rsDate" min="${today}" value="${today}"></label>
+        <label style="font-size:0.8rem;color:var(--muted);display:block;margin-top:8px;">Новое время<select id="rsSlot"><option value="">—</option></select></label>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button class="primary-btn" id="rsConfirm" style="flex:1;">Перенести</button>
+          <button class="mini-btn" id="rsCancel">Отмена</button>
+        </div>
+      </div>`;
+      document.body.appendChild(ov);
+      const dateEl = ov.querySelector("#rsDate"), slotEl = ov.querySelector("#rsSlot");
+      async function loadSlots() {
+        slotEl.innerHTML = '<option value="">Загрузка…</option>';
+        try {
+          const res = await fetch(`/api/availability?serviceId=${encodeURIComponent(serviceId)}&specialistId=${encodeURIComponent(MASTER.id)}&date=${encodeURIComponent(dateEl.value)}&excludeBookingId=${encodeURIComponent(id)}&admin=true`);
+          const data = await res.json();
+          const slots = (data.slots || []).map(x => x.time);
+          slotEl.innerHTML = slots.length ? slots.map(t => `<option value="${t}">${t}</option>`).join("") : '<option value="">Нет свободных слотов</option>';
+        } catch { slotEl.innerHTML = '<option value="">Ошибка</option>'; }
+      }
+      dateEl.addEventListener("change", loadSlots);
+      loadSlots();
+      ov.querySelector("#rsCancel").addEventListener("click", () => ov.remove());
+      ov.addEventListener("click", (e) => { if (e.target === ov) ov.remove(); });
+      ov.querySelector("#rsConfirm").addEventListener("click", async () => {
+        const date = dateEl.value, slot = slotEl.value;
+        if (!date || !slot) { alert("Выберите дату и время."); return; }
+        try {
+          const res = await fetch("/api/master/reschedule", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: getToken(), bookingId: id, date, slot })
+          });
+          if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message || "Не удалось перенести."); return; }
+          ov.remove(); init();
+        } catch { alert("Ошибка сети."); }
+      });
     }
 
     async function markBooking(id, status) {
