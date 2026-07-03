@@ -4943,7 +4943,8 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
         monthSessions: monthDone.length,
         monthRevenue
       },
-      upcoming, past, blocks
+      upcoming, past, blocks,
+      all: mine.map(mapB)
     });
     return;
   }

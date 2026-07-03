@@ -64,6 +64,39 @@
     const WEEKDAYS = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
     const STATUS = { completed: "Завершён", confirmed: "Подтверждён", new: "Новый", cancelled: "Отменён" };
     let MASTER = null;
+    let ALL_BOOKINGS = [];
+    let weekOffset = 0;
+
+    function mondayOf(offset) {
+      const d = new Date();
+      const day = (d.getDay() + 6) % 7;
+      d.setDate(d.getDate() - day + offset * 7);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    function isoOf(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+    function changeWeek(delta) { weekOffset += delta; renderWeek(); }
+    function renderWeek() {
+      const grid = document.getElementById("weekGrid");
+      if (!grid) return;
+      const mon = mondayOf(weekOffset);
+      const days = [];
+      for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); days.push(d); }
+      const label = document.getElementById("weekLabel");
+      if (label) label.textContent = `${days[0].getDate()} ${MONTHS[days[0].getMonth()]} – ${days[6].getDate()} ${MONTHS[days[6].getMonth()]}`;
+      const todayIso = new Date().toISOString().slice(0, 10);
+      grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
+        ${days.map(d => {
+          const di = isoOf(d);
+          const dayB = ALL_BOOKINGS.filter(b => b.date === di && b.status !== "cancelled").sort((a, b) => a.slot < b.slot ? -1 : 1);
+          const isToday = di === todayIso;
+          return `<div style="background:${isToday ? 'rgba(40,72,56,0.07)' : '#fff'};border:1px solid var(--line);border-radius:10px;padding:5px;min-height:72px;">
+            <div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-bottom:4px;${isToday ? 'font-weight:700;color:var(--forest);' : ''}">${WEEKDAYS[d.getDay()]} ${d.getDate()}</div>
+            ${dayB.map(b => `<div title="${esc(b.slot)} ${esc(b.clientName)} · ${esc(b.serviceName)}" style="font-size:0.6rem;background:${b.status === 'completed' ? 'rgba(125,109,96,0.15)' : 'rgba(179,109,44,0.16)'};border-radius:4px;padding:2px 3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(b.slot)} ${esc(b.clientName)}</div>`).join("")}
+          </div>`;
+        }).join("")}
+      </div>`;
+    }
 
     function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
     function fmtDate(d) { const x = new Date(d + "T00:00:00"); return `${x.getDate()} ${MONTHS[x.getMonth()]}, ${WEEKDAYS[x.getDay()]}`; }
@@ -89,6 +122,25 @@
           <div><span class="st st--${esc(b.status)}">${esc(STATUS[b.status] || b.status)}</span></div>
         </div>
       </div>`;
+    }
+
+    async function sharePage() {
+      const url = location.origin + "/team/" + MASTER.id;
+      try { await navigator.clipboard.writeText(url); alert("Ссылка на вашу страницу скопирована:\n" + url); }
+      catch { window.prompt("Ваша публичная страница (скопируйте):", url); }
+    }
+
+    function exportMyBookings() {
+      const st = { completed: "Завершён", confirmed: "Подтверждён", new: "Новый", cancelled: "Отменён" };
+      const rows = [["Дата", "Время", "Услуга", "Клиент", "Телефон", "Статус"]];
+      ALL_BOOKINGS.forEach(b => rows.push([b.date, b.slot + "–" + b.endsAt, b.serviceName, b.clientName, b.phone || "", st[b.status] || b.status]));
+      const e2 = (v) => `"${String(v).replace(/"/g, '""')}"`;
+      const csv = "﻿" + rows.map(r => r.map(e2).join(";")).join("\r\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+      a.download = "my-bookings-" + new Date().toISOString().slice(0, 10) + ".csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
 
     async function startReschedule(id, serviceId) {
@@ -148,6 +200,7 @@
     function render(data) {
       const s = data.specialist;
       MASTER = s;
+      ALL_BOOKINGS = data.all || [];
       const avatar = s.photo
         ? `<img class="master-head__avatar" src="${esc(s.photo)}" alt="${esc(s.name)}">`
         : `<div class="master-head__avatar">${esc(s.initials || "?")}</div>`;
@@ -178,10 +231,27 @@
           </div>
         </div>
 
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button class="mini-btn" onclick="sharePage()">🔗 Моя страница</button>
+          <button class="mini-btn" onclick="exportMyBookings()">⬇ CSV записей</button>
+        </div>
+
         <div class="stats">
           <div class="stat"><span>Сегодня</span><strong>${data.stats.todayCount}</strong></div>
           <div class="stat"><span>Впереди</span><strong>${data.stats.upcomingCount}</strong></div>
           <div class="stat"><span>Завершено</span><strong>${data.stats.completedTotal}</strong></div>
+        </div>
+
+        <div class="card">
+          <div class="card__head" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Календарь недели</span>
+            <span style="display:flex;gap:6px;align-items:center;">
+              <button class="mini-btn" onclick="changeWeek(-1)">←</button>
+              <span id="weekLabel" style="font-size:0.78rem;color:var(--muted);min-width:110px;text-align:center;"></span>
+              <button class="mini-btn" onclick="changeWeek(1)">→</button>
+            </span>
+          </div>
+          <div id="weekGrid" style="padding:8px;overflow-x:auto;"></div>
         </div>
 
         ${data.telegramLinked
@@ -202,7 +272,7 @@
               <strong style="font-size:1.5rem;color:var(--forest);">${(data.stats.monthRevenue || 0).toLocaleString("ru-RU")} MDL</strong>
               <div style="font-size:0.82rem;color:var(--muted);">${data.stats.monthSessions || 0} завершённых сеансов</div>
             </div>
-            ${s.commissionPercent ? `<div style="text-align:right;font-size:0.8rem;color:var(--muted);">Комиссия сети<br><strong style="color:var(--brand);">${s.commissionPercent}%</strong></div>` : ""}
+            ${s.commissionPercent ? `<div style="text-align:right;font-size:0.8rem;color:var(--muted);">Комиссия сети ${s.commissionPercent}%<br>к оплате: <strong style="color:var(--brand);">${Math.round((data.stats.monthRevenue || 0) * s.commissionPercent / 100).toLocaleString("ru-RU")} MDL</strong></div>` : ""}
           </div>
         </div>
 
@@ -251,6 +321,7 @@
       `;
 
       if (s.services && s.services.length) loadMasterSlots();
+      renderWeek();
     }
 
     async function loadMasterSlots() {
