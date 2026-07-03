@@ -6493,6 +6493,70 @@ function renderSpecialistPage(specialist, services, site, recentPosts = [], lang
 </html>`;
 }
 
+function slugifyCity(city) {
+  return String(city || "").trim().toLowerCase()
+    .replace(/ș/g, "s").replace(/ț/g, "t").replace(/ă/g, "a").replace(/â/g, "a").replace(/î/g, "i")
+    .replace(/[^a-zа-я0-9]+/gi, "-").replace(/^-+|-+$/g, "");
+}
+
+function renderCityPage(city, specialists, services, lang = "ru") {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const isRo = lang === "ro";
+  const t = (ru, ro) => isRo ? (ro || ru) : ru;
+  const title = t(`Массаж в ${city} — Mateev Spa Studio`, `Masaj în ${city} — Mateev Spa Studio`);
+  const desc = t(`Сертифицированные мастера массажа в ${city}. Онлайн-запись без звонков.`, `Maseuri certificați în ${city}. Programare online, fără apeluri.`);
+  const cards = specialists.map(s => {
+    const svcCount = (s.specialties || []).length;
+    return `<article class="mc">
+      ${s.photo ? `<img src="${escapeHtml(s.photo)}" alt="${escapeHtml(s.name)}" class="mc__ph" loading="lazy">` : `<div class="mc__ph mc__ph--ph">${escapeHtml(s.initials || "")}</div>`}
+      <div class="mc__body">
+        <div class="mc__role">${escapeHtml(t(s.role || "Массажист", s.roleRo))}</div>
+        <h3 class="mc__name">${escapeHtml(s.name)}${s.certified ? ` <span class="mc__badge">✓ Mateev-certified</span>` : ""}</h3>
+        ${s.address ? `<p class="mc__addr">📍 ${escapeHtml(s.address)}</p>` : ""}
+        <p class="mc__meta">${s.experience ? escapeHtml(s.experience) + " · " : ""}${svcCount} ${t("процедур", "proceduri")}</p>
+        <div class="mc__cta">
+          <a href="${base}/?prefillSpecialist=${escapeHtml(s.id)}&lang=${lang}#booking" class="btn btn--p">${t("Записаться", "Programare")}</a>
+          <a href="${base}/team/${escapeHtml(s.id)}?lang=${lang}" class="btn">${t("Подробнее", "Detalii")}</a>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+  return `<!DOCTYPE html><html lang="${lang}"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(desc)}">
+    <link rel="canonical" href="${base}/city/${slugifyCity(city)}">
+    <meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(desc)}">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.6}
+      .top{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0}
+      .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+      .top .wrap{display:flex;justify-content:space-between;align-items:center}
+      .brand{font-weight:700}.back{color:#6b8d6b;text-decoration:none;font-size:0.85rem;font-weight:600}
+      .hero{background:linear-gradient(135deg,#1a2e22,#243b2e);color:#fff;padding:56px 0}
+      .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:600}
+      .hero p{color:rgba(255,255,255,0.65);margin-top:8px}
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;padding:48px 0}
+      .mc{background:#fffaf4;border:1px solid rgba(71,49,28,0.1);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+      .mc__ph{width:100%;height:220px;object-fit:cover}.mc__ph--ph{display:flex;align-items:center;justify-content:center;background:#e8ddd0;font-family:'Cormorant Garamond',serif;font-size:3rem;color:#1a2e22}
+      .mc__body{padding:20px;flex:1;display:flex;flex-direction:column}.mc__role{color:#b36d2c;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
+      .mc__name{font-family:'Cormorant Garamond',serif;font-size:1.35rem;margin:4px 0 6px}
+      .mc__badge{font-size:0.6rem;background:rgba(40,72,56,0.1);color:#1a2e22;padding:3px 8px;border-radius:999px;vertical-align:middle;font-family:'Manrope',sans-serif;font-weight:700}
+      .mc__addr,.mc__meta{font-size:0.82rem;color:#7d6d60;margin-bottom:4px}
+      .mc__cta{display:flex;gap:8px;margin-top:auto;padding-top:14px}
+      .btn{flex:1;text-align:center;padding:11px;border-radius:10px;border:1px solid rgba(71,49,28,0.15);color:#241c17;text-decoration:none;font-weight:600;font-size:0.85rem}
+      .btn--p{background:#b36d2c;color:#fff;border-color:#b36d2c}
+      footer{padding:24px 0;text-align:center;font-size:0.8rem;color:#7d6d60;border-top:1px solid rgba(71,49,28,0.08)}
+    </style></head><body>
+    <header class="top"><div class="wrap"><span class="brand">Mateev Spa Studio</span><a href="${base}/" class="back">← ${t("На главную", "Acasă")}</a></div></header>
+    <section class="hero"><div class="wrap"><h1>${t("Массаж в", "Masaj în")} ${escapeHtml(city)}</h1><p>${t("Сертифицированные мастера сети Mateev", "Maeștri certificați ai rețelei Mateev")} · ${specialists.length}</p></div></section>
+    <div class="wrap"><div class="grid">${cards}</div></div>
+    <footer>© ${new Date().getFullYear()} Mateev Spa Studio</footer>
+    </body></html>`;
+}
+
 function renderBlogListPage(entries, site, lang = "ru", catFilter = "") {
   const isRo = lang === "ro";
   const locale = isRo ? "ro-RO" : "ru-RU";
@@ -7085,6 +7149,27 @@ function createServer() {
         return;
       }
 
+      if (urlObject.pathname.startsWith("/city/")) {
+        const slug = decodeURIComponent(urlObject.pathname.replace("/city/", "").replace(/\/$/, "")).toLowerCase();
+        const [rawSpecialists, rawServices] = await Promise.all([
+          readJson("specialists.json").catch(() => []),
+          readJson("services.json").catch(() => [])
+        ]);
+        const services = normalizeServices(rawServices);
+        const inCity = normalizeSpecialists(rawSpecialists, services)
+          .filter((s) => s.location && slugifyCity(s.location) === slug);
+        if (!inCity.length) {
+          response.writeHead(302, { Location: "/#specialists" });
+          response.end();
+          return;
+        }
+        const cityLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderCityPage(inCity[0].location, inCity, services, cityLang);
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
+        return;
+      }
+
       if (urlObject.pathname === "/confirm") {
         const bookingId = urlObject.searchParams.get("id") || "";
         const token = urlObject.searchParams.get("token") || "";
@@ -7265,6 +7350,9 @@ function createServer() {
         const teamUrls = specialists
           .map((s) => `  <url><loc>${base}/team/${s.id}</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>`)
           .join("\n");
+        const cityUrls = [...new Set(specialists.map((s) => s.location).filter(Boolean).map(slugifyCity))]
+          .map((slug) => `  <url><loc>${base}/city/${slug}</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>`)
+          .join("\n");
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${base}/</loc><lastmod>${now}</lastmod><priority>1.0</priority></url>
@@ -7273,6 +7361,7 @@ function createServer() {
   <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
 ${teamUrls}
+${cityUrls}
 ${blogUrls}
 </urlset>`;
         response.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" });
