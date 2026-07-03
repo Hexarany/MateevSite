@@ -1921,9 +1921,9 @@ function renderDashboardSummary(d) {
   const el = document.getElementById("dashboardSummary");
   if (!el) return;
   const money = (n) => Number(n).toLocaleString("ru-RU") + " MDL";
-  const card = (label, value, sub = "") => `<div style="flex:1;min-width:150px;background:#fffaf4;border:1px solid var(--line);border-radius:16px;padding:16px 18px;">
+  const card = (label, value, sub = "", small = false) => `<div style="flex:1;min-width:150px;background:#fffaf4;border:1px solid var(--line);border-radius:16px;padding:16px 18px;overflow:hidden;">
     <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">${label}</div>
-    <strong style="font-size:1.5rem;color:var(--forest);display:block;margin-top:6px;">${value}</strong>
+    <strong style="font-size:${small ? "1.05rem" : "1.5rem"};color:var(--forest);display:block;margin-top:6px;word-break:break-word;overflow-wrap:anywhere;line-height:1.25;">${value}</strong>
     ${sub ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${sub}</div>` : ""}
   </div>`;
   const group = (title, cards) => `<div style="margin-bottom:22px;">
@@ -1951,7 +1951,7 @@ function renderDashboardSummary(d) {
       card("LTV (ср. выручка с клиента)", money(d.analytics.ltv)),
       card("Повторных клиентов", d.analytics.repeatRate + "%", "≥2 визитов"),
       card("Визитов на клиента", d.analytics.avgVisits),
-      d.analytics.topService ? card("Топ-услуга", escapeHtml(d.analytics.topService.name), d.analytics.topService.count + " раз") : ""
+      d.analytics.topService ? card("Топ-услуга", escapeHtml(d.analytics.topService.name), d.analytics.topService.count + " раз", true) : ""
     ])}`;
 }
 

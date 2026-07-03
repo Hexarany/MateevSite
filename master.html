@@ -69,12 +69,17 @@
     function fmtDate(d) { const x = new Date(d + "T00:00:00"); return `${x.getDate()} ${MONTHS[x.getMonth()]}, ${WEEKDAYS[x.getDay()]}`; }
     function getToken() { return new URLSearchParams(location.search).get("token") || ""; }
 
-    function bookingRow(b) {
+    function bookingRow(b, actions) {
+      const canAct = actions && b.status !== "completed" && b.status !== "cancelled";
       return `<div class="booking">
         <div>
           <div class="booking__when">${esc(fmtDate(b.date))} · ${esc(b.slot)}–${esc(b.endsAt)}</div>
           <div class="booking__svc">${esc(b.serviceName)}</div>
           ${b.notes ? `<div class="note">«${esc(b.notes)}»</div>` : ""}
+          ${canAct ? `<div style="display:flex;gap:6px;margin-top:8px;">
+            <button class="mini-btn" style="border-color:#2a6b3e;color:#2a6b3e;" onclick="markBooking('${esc(b.id)}','completed')">✓ Завершить</button>
+            <button class="mini-btn" style="border-color:#b43232;color:#b43232;" onclick="markBooking('${esc(b.id)}','cancelled')">✗ Неявка</button>
+          </div>` : ""}
         </div>
         <div class="booking__client">
           <div style="font-weight:600;">${esc(b.clientName)}</div>
@@ -84,6 +89,18 @@
       </div>`;
     }
 
+    async function markBooking(id, status) {
+      if (status === "cancelled" && !confirm("Отметить как неявку? Слот освободится.")) return;
+      try {
+        const res = await fetch("/api/master/booking-status", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: getToken(), bookingId: id, status })
+        });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message || "Не удалось."); return; }
+        init();
+      } catch { alert("Ошибка сети."); }
+    }
+
     function render(data) {
       const s = data.specialist;
       MASTER = s;
@@ -91,7 +108,7 @@
         ? `<img class="master-head__avatar" src="${esc(s.photo)}" alt="${esc(s.name)}">`
         : `<div class="master-head__avatar">${esc(s.initials || "?")}</div>`;
       const upcoming = data.upcoming.length
-        ? data.upcoming.map(bookingRow).join("")
+        ? data.upcoming.map(b => bookingRow(b, true)).join("")
         : `<div class="empty">Ближайших записей нет.</div>`;
       const past = data.past.length
         ? data.past.map(bookingRow).join("")

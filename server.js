@@ -4913,8 +4913,9 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const mine = bookings
       .filter((b) => b.specialistId === specialist.id)
       .sort((a, b) => `${a.date}T${a.slot}`.localeCompare(`${b.date}T${b.slot}`));
-    const upcoming = mine.filter((b) => b.date >= today && b.status !== "cancelled").map(mapB);
+    const upcoming = mine.filter((b) => b.date >= today && b.status !== "cancelled" && b.status !== "completed").map(mapB);
     const past = mine.filter((b) => b.date < today || b.status === "completed").reverse().slice(0, 20).map(mapB);
+    const todayCount = mine.filter((b) => b.date === today && b.status !== "cancelled").length;
     const blocks = (schedule?.blocks || [])
       .filter((bl) => bl.specialistId === specialist.id && bl.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
@@ -4937,7 +4938,7 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       },
       stats: {
         upcomingCount: upcoming.length,
-        todayCount: upcoming.filter((b) => b.date === today).length,
+        todayCount,
         completedTotal: mine.filter((b) => b.status === "completed").length,
         monthSessions: monthDone.length,
         monthRevenue
@@ -4981,6 +4982,27 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       } catch (e) {
         sendJson(response, 400, { message: e.message || "Проверьте данные записи." });
       }
+    });
+  }
+
+  // POST /api/master/booking-status — мастер закрывает свой визит (завершён/неявка)
+  if (request.method === "POST" && urlObject.pathname === "/api/master/booking-status") {
+    return withLock("studio", async () => {
+      const payload = await parseJsonBody(request);
+      const token = sanitizeText(payload.token || "");
+      const tokens = await readJson("master-tokens.json").catch(() => []);
+      const entry = tokens.find((t) => t.token === token);
+      if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+      const bookingId = sanitizeText(payload.bookingId || "");
+      const status = ["completed", "cancelled"].includes(payload.status) ? payload.status : "";
+      if (!bookingId || !status) { sendJson(response, 400, { message: "Некорректные данные." }); return; }
+      const bookings = await readJson("bookings.json");
+      const idx = bookings.findIndex((b) => b.id === bookingId && b.specialistId === entry.specialistId);
+      if (idx === -1) { sendJson(response, 404, { message: "Запись не найдена." }); return; }
+      bookings[idx].status = status;
+      bookings[idx].updatedAt = new Date().toISOString();
+      await writeJson("bookings.json", sortBookings(bookings));
+      sendJson(response, 200, { ok: true });
     });
   }
 
