@@ -60,9 +60,23 @@
   </div>
 
   <script>
-    const MONTHS = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
-    const WEEKDAYS = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
-    const STATUS = { completed: "Завершён", confirmed: "Подтверждён", new: "Новый", cancelled: "Отменён" };
+    const MONTHS_RU = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+    const MONTHS_RO = ["ian","feb","mar","apr","mai","iun","iul","aug","sep","oct","noi","dec"];
+    const WEEKDAYS_RU = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+    const WEEKDAYS_RO = ["Du","Lu","Ma","Mi","Jo","Vi","Sâ"];
+    const STATUS_RU = { completed: "Завершён", confirmed: "Подтверждён", new: "Новый", cancelled: "Отменён" };
+    const STATUS_RO = { completed: "Finalizat", confirmed: "Confirmat", new: "Nou", cancelled: "Anulat" };
+    let LANG = localStorage.getItem("masterLang") === "ro" ? "ro" : "ru";
+    let MONTHS = MONTHS_RU, WEEKDAYS = WEEKDAYS_RU, STATUS = STATUS_RU;
+    const t = (ru, ro) => LANG === "ro" ? (ro || ru) : ru;
+    function applyLang() {
+      MONTHS = LANG === "ro" ? MONTHS_RO : MONTHS_RU;
+      WEEKDAYS = LANG === "ro" ? WEEKDAYS_RO : WEEKDAYS_RU;
+      STATUS = LANG === "ro" ? STATUS_RO : STATUS_RU;
+    }
+    applyLang();
+    function setLang(l) { LANG = l === "ro" ? "ro" : "ru"; localStorage.setItem("masterLang", LANG); applyLang(); if (currentData) render(currentData); }
+    let currentData = null;
     let MASTER = null;
     let ALL_BOOKINGS = [];
     let weekOffset = 0;
@@ -110,18 +124,53 @@
           <div class="booking__svc">${esc(b.serviceName)}</div>
           ${b.notes ? `<div class="note">«${esc(b.notes)}»</div>` : ""}
           ${canAct ? `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-            <button class="mini-btn" style="border-color:#2a6b3e;color:#2a6b3e;" onclick="markBooking('${esc(b.id)}','completed')">✓ Завершить</button>
-            <button class="mini-btn" onclick="startReschedule('${esc(b.id)}','${esc(b.serviceId || '')}')">🔁 Перенести</button>
-            <button class="mini-btn" style="border-color:#b43232;color:#b43232;" onclick="markBooking('${esc(b.id)}','cancelled')">✗ Отменить</button>
+            <button class="mini-btn" style="border-color:#2a6b3e;color:#2a6b3e;" onclick="markBooking('${esc(b.id)}','completed')">✓ ${t("Завершить","Finalizează")}</button>
+            <button class="mini-btn" onclick="startReschedule('${esc(b.id)}','${esc(b.serviceId || '')}')">🔁 ${t("Перенести","Reprogramează")}</button>
+            <button class="mini-btn" style="border-color:#b43232;color:#b43232;" onclick="markBooking('${esc(b.id)}','cancelled')">✗ ${t("Отменить","Anulează")}</button>
           </div>` : ""}
         </div>
         <div class="booking__client">
           <div style="font-weight:600;">${esc(b.clientName)}</div>
           ${b.phone ? `<a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>` : ""}
-          ${b.phone && canAct ? `<div style="margin-top:4px;"><a href="https://wa.me/${esc(b.phone.replace(/\D/g, ''))}?text=${encodeURIComponent('Здравствуйте! Напоминаю о записи ' + fmtDate(b.date) + ' в ' + b.slot + '. Mateev Spa Studio 🌿')}" target="_blank" rel="noopener" style="color:#25d366;font-size:0.8rem;font-weight:600;text-decoration:none;">💬 Напомнить</a></div>` : ""}
+          ${b.phone && canAct ? `<div style="margin-top:4px;"><a href="https://wa.me/${esc(b.phone.replace(/\D/g, ''))}?text=${encodeURIComponent('Здравствуйте! Напоминаю о записи ' + fmtDate(b.date) + ' в ' + b.slot + '. Mateev Spa Studio 🌿')}" target="_blank" rel="noopener" style="color:#25d366;font-size:0.8rem;font-weight:600;text-decoration:none;">💬 ${t("Напомнить","Amintește")}</a></div>` : ""}
           <div><span class="st st--${esc(b.status)}">${esc(STATUS[b.status] || b.status)}</span></div>
         </div>
       </div>`;
+    }
+
+    async function saveProfile() {
+      const body = {
+        token: getToken(),
+        role: document.getElementById("pfRole").value.trim(),
+        roleRo: document.getElementById("pfRoleRo").value.trim(),
+        bio: document.getElementById("pfBio").value.trim(),
+        bioRo: document.getElementById("pfBioRo").value.trim()
+      };
+      try {
+        const res = await fetch("/api/master/profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message || "Ошибка."); return; }
+        alert(t("Профиль сохранён.", "Profil salvat."));
+        init();
+      } catch { alert(t("Ошибка сети.", "Eroare de rețea.")); }
+    }
+
+    async function addMasterNote() {
+      const text = document.getElementById("mnText").value.trim();
+      if (!text) return;
+      const client = document.getElementById("mnClient").value.trim();
+      try {
+        const res = await fetch("/api/master/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: getToken(), text, client }) });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message || "Ошибка."); return; }
+        init();
+      } catch { alert(t("Ошибка сети.", "Eroare de rețea.")); }
+    }
+
+    async function delMasterNote(id) {
+      try {
+        const res = await fetch(`/api/master/note?token=${encodeURIComponent(getToken())}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message || "Ошибка."); return; }
+        init();
+      } catch { alert(t("Ошибка сети.", "Eroare de rețea.")); }
     }
 
     async function sharePage() {
@@ -206,45 +255,51 @@
         : `<div class="master-head__avatar">${esc(s.initials || "?")}</div>`;
       const upcoming = data.upcoming.length
         ? data.upcoming.map(b => bookingRow(b, true)).join("")
-        : `<div class="empty">Ближайших записей нет.</div>`;
+        : `<div class="empty">${t("Ближайших записей нет.","Nu sunt programări apropiate.")}</div>`;
       const past = data.past.length
         ? data.past.map(bookingRow).join("")
-        : `<div class="empty">Пока нет завершённых визитов.</div>`;
+        : `<div class="empty">${t("Пока нет завершённых визитов.","Încă nu sunt vizite finalizate.")}</div>`;
       const todayIso = new Date().toISOString().slice(0, 10);
       const blockRows = data.blocks.length
         ? data.blocks.map(b => `<div class="block-row" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-            <span>🚫 ${esc(fmtDate(b.date))}${b.start === "00:00" && b.end >= "23:00" ? " — весь день" : ` · ${esc(b.start)}–${esc(b.end)}`}${b.reason ? " · " + esc(b.reason) : ""}</span>
-            <button class="mini-btn" onclick="openDay('${esc(b.date)}')">Открыть</button>
+            <span>🚫 ${esc(fmtDate(b.date))}${b.start === "00:00" && b.end >= "23:00" ? t(" — весь день", " — toată ziua") : ` · ${esc(b.start)}–${esc(b.end)}`}${b.reason ? " · " + esc(b.reason) : ""}</span>
+            <button class="mini-btn" onclick="openDay('${esc(b.date)}')">${t("Открыть","Deschide")}</button>
           </div>`).join("")
-        : `<div class="empty">Закрытых дней нет.</div>`;
+        : `<div class="empty">${t("Закрытых дней нет.","Nu sunt zile închise.")}</div>`;
 
       document.getElementById("app").innerHTML = `
         <header class="top">
           <a href="/">Mateev Spa Studio</a>
-          <span style="font-size:0.82rem;color:var(--muted);">Кабинет мастера</span>
+          <span style="display:flex;align-items:center;gap:12px;">
+            <span style="display:flex;gap:2px;font-size:0.78rem;font-weight:700;">
+              <button onclick="setLang('ru')" style="padding:3px 8px;border:none;border-radius:12px;cursor:pointer;font-family:inherit;${LANG==='ru'?'background:var(--forest);color:#fff;':'background:transparent;color:var(--muted);'}">RU</button>
+              <button onclick="setLang('ro')" style="padding:3px 8px;border:none;border-radius:12px;cursor:pointer;font-family:inherit;${LANG==='ro'?'background:var(--forest);color:#fff;':'background:transparent;color:var(--muted);'}">RO</button>
+            </span>
+            <span style="font-size:0.82rem;color:var(--muted);">${t("Кабинет мастера","Cont maestru")}</span>
+          </span>
         </header>
         <div class="master-head">
           ${avatar}
           <div>
             <div class="master-head__name">${esc(s.name)}${s.certified ? `<span class="badge">✓ Mateev-certified</span>` : ""}</div>
-            <div class="master-head__role">${esc(s.role)}${s.location ? " · 📍 " + esc(s.location) : ""}</div>
+            <div class="master-head__role">${esc(t(s.role, s.roleRo))}${s.location ? " · 📍 " + esc(s.location) : ""}</div>
           </div>
         </div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-          <button class="mini-btn" onclick="sharePage()">🔗 Моя страница</button>
-          <button class="mini-btn" onclick="exportMyBookings()">⬇ CSV записей</button>
+          <button class="mini-btn" onclick="sharePage()">🔗 ${t("Моя страница","Pagina mea")}</button>
+          <button class="mini-btn" onclick="exportMyBookings()">⬇ ${t("CSV записей","CSV programări")}</button>
         </div>
 
         <div class="stats">
-          <div class="stat"><span>Сегодня</span><strong>${data.stats.todayCount}</strong></div>
-          <div class="stat"><span>Впереди</span><strong>${data.stats.upcomingCount}</strong></div>
-          <div class="stat"><span>Завершено</span><strong>${data.stats.completedTotal}</strong></div>
+          <div class="stat"><span>${t("Сегодня","Azi")}</span><strong>${data.stats.todayCount}</strong></div>
+          <div class="stat"><span>${t("Впереди","Urmează")}</span><strong>${data.stats.upcomingCount}</strong></div>
+          <div class="stat"><span>${t("Завершено","Finalizate")}</span><strong>${data.stats.completedTotal}</strong></div>
         </div>
 
         <div class="card">
           <div class="card__head" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>Календарь недели</span>
+            <span>${t("Календарь недели","Calendarul săptămânii")}</span>
             <span style="display:flex;gap:6px;align-items:center;">
               <button class="mini-btn" onclick="changeWeek(-1)">←</button>
               <span id="weekLabel" style="font-size:0.78rem;color:var(--muted);min-width:110px;text-align:center;"></span>
@@ -257,67 +312,92 @@
         ${data.telegramLinked
           ? `<div class="card"><div class="cl-body" style="display:flex;align-items:center;gap:12px;">
               <span style="font-size:1.5rem;">🔔</span>
-              <div><strong style="color:var(--forest);">Уведомления в Telegram подключены</strong>
-              <div style="font-size:0.82rem;color:var(--muted);">Новые записи приходят в чат. Отключить — /stop в боте.</div></div>
+              <div><strong style="color:var(--forest);">${t("Уведомления в Telegram подключены","Notificări în Telegram active")}</strong>
+              <div style="font-size:0.82rem;color:var(--muted);">${t("Новые записи приходят в чат. Отключить — /stop в боте.","Programările noi vin în chat. Dezactivare — /stop.")}</div></div>
             </div></div>`
           : (data.telegramConnectUrl ? `<div class="card"><div class="cl-body" style="text-align:center;">
-              <p style="font-size:0.9rem;color:var(--muted);margin-bottom:12px;">Получайте новые записи прямо в Telegram</p>
-              <a href="${esc(data.telegramConnectUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#229ED9;color:#fff;border-radius:10px;font-weight:600;text-decoration:none;">✈️ Уведомления в Telegram</a>
+              <p style="font-size:0.9rem;color:var(--muted);margin-bottom:12px;">${t("Получайте новые записи прямо в Telegram","Primiți programările noi direct în Telegram")}</p>
+              <a href="${esc(data.telegramConnectUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#229ED9;color:#fff;border-radius:10px;font-weight:600;text-decoration:none;">✈️ ${t("Уведомления в Telegram","Notificări în Telegram")}</a>
             </div></div>` : "")}
 
         <div class="card">
-          <div class="card__head">Заработок за месяц</div>
+          <div class="card__head">${t("Заработок за месяц","Câștig pe lună")}</div>
           <div class="cl-body" style="display:flex;justify-content:space-between;align-items:center;">
             <div>
               <strong style="font-size:1.5rem;color:var(--forest);">${(data.stats.monthRevenue || 0).toLocaleString("ru-RU")} MDL</strong>
-              <div style="font-size:0.82rem;color:var(--muted);">${data.stats.monthSessions || 0} завершённых сеансов</div>
+              <div style="font-size:0.82rem;color:var(--muted);">${data.stats.monthSessions || 0} ${t("завершённых сеансов","ședințe finalizate")}</div>
             </div>
-            ${s.commissionPercent ? `<div style="text-align:right;font-size:0.8rem;color:var(--muted);">Комиссия сети ${s.commissionPercent}%<br>к оплате: <strong style="color:var(--brand);">${Math.round((data.stats.monthRevenue || 0) * s.commissionPercent / 100).toLocaleString("ru-RU")} MDL</strong></div>` : ""}
+            ${s.commissionPercent ? `<div style="text-align:right;font-size:0.8rem;color:var(--muted);">${t("Комиссия сети","Comision rețea")} ${s.commissionPercent}%<br>${t("к оплате","de plată")}: <strong style="color:var(--brand);">${Math.round((data.stats.monthRevenue || 0) * s.commissionPercent / 100).toLocaleString("ru-RU")} MDL</strong></div>` : ""}
           </div>
         </div>
 
         <div class="card">
-          <div class="card__head">Добавить запись</div>
+          <div class="card__head">${t("Мой профиль","Profilul meu")}</div>
+          <div class="cl-body">
+            <label>${t("Роль","Rol")} (RU)<input type="text" id="pfRole" value="${esc(s.role || '')}"></label>
+            <label style="display:block;margin-top:8px;">${t("Роль","Rol")} (RO)<input type="text" id="pfRoleRo" value="${esc(s.roleRo || '')}"></label>
+            <label style="display:block;margin-top:8px;">Bio (RU)<textarea id="pfBio" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:0.9rem;margin-top:4px;">${esc(s.bio || '')}</textarea></label>
+            <label style="display:block;margin-top:8px;">Bio (RO)<textarea id="pfBioRo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:0.9rem;margin-top:4px;">${esc(s.bioRo || '')}</textarea></label>
+            <button class="primary-btn" onclick="saveProfile()" style="margin-top:10px;">${t("Сохранить профиль","Salvează profilul")}</button>
+            <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;">${t("Фото и услуги меняет администратор.","Foto și servicii — administratorul.")}</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">${t("Добавить запись","Adaugă programare")}</div>
           <div class="cl-body">
             ${(s.services && s.services.length) ? `
-              <label>Процедура<select id="mbService" onchange="loadMasterSlots()">
-                ${s.services.map(sv => `<option value="${esc(sv.id)}">${esc(sv.name)} · ${sv.duration} мин · ${sv.price} MDL</option>`).join("")}
+              <label>${t("Процедура","Procedură")}<select id="mbService" onchange="loadMasterSlots()">
+                ${s.services.map(sv => `<option value="${esc(sv.id)}">${esc(t(sv.name, sv.nameRo))} · ${sv.duration} ${t("мин","min")} · ${sv.price} MDL</option>`).join("")}
               </select></label>
               <div class="cl-row" style="margin-top:8px;">
-                <label>Дата<input type="date" id="mbDate" min="${todayIso}" value="${todayIso}" onchange="loadMasterSlots()"></label>
-                <label>Время<select id="mbSlot"><option value="">—</option></select></label>
+                <label>${t("Дата","Data")}<input type="date" id="mbDate" min="${todayIso}" value="${todayIso}" onchange="loadMasterSlots()"></label>
+                <label>${t("Время","Ora")}<select id="mbSlot"><option value="">—</option></select></label>
               </div>
-              <input type="text" id="mbName" placeholder="Имя клиента" style="margin-top:8px;">
-              <input type="text" id="mbPhone" placeholder="Телефон (необязательно)" style="margin-top:8px;">
-              <button class="primary-btn" onclick="createMasterBooking()" style="margin-top:10px;">Создать запись</button>
-            ` : `<div class="empty">Чтобы заносить записи, попросите добавить вам услуги в админке.</div>`}
+              <input type="text" id="mbName" placeholder="${t("Имя клиента","Nume client")}" style="margin-top:8px;">
+              <input type="text" id="mbPhone" placeholder="${t("Телефон (необязательно)","Telefon (opțional)")}" style="margin-top:8px;">
+              <button class="primary-btn" onclick="createMasterBooking()" style="margin-top:10px;">${t("Создать запись","Creează programare")}</button>
+            ` : `<div class="empty">${t("Чтобы заносить записи, попросите добавить вам услуги в админке.","Pentru a adăuga programări, cereți administratorului să vă adauge servicii.")}</div>`}
           </div>
         </div>
 
         <div class="card">
-          <div class="card__head">Ближайшие записи</div>
+          <div class="card__head">${t("Ближайшие записи","Programări apropiate")}</div>
           ${upcoming}
         </div>
 
         <div class="card">
-          <div class="card__head">Управление днями</div>
+          <div class="card__head">${t("Мои заметки","Notițele mele")}</div>
+          <div class="cl-body">
+            <input type="text" id="mnClient" placeholder="${t("Клиент (необязательно)","Client (opțional)")}">
+            <textarea id="mnText" rows="2" placeholder="${t("Заметка: пожелание, особенность…","Notă: dorință, particularitate…")}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:0.9rem;margin-top:8px;"></textarea>
+            <button class="primary-btn" onclick="addMasterNote()" style="margin-top:10px;">${t("Добавить","Adaugă")}</button>
+          </div>
+          ${(data.masterNotes && data.masterNotes.length) ? data.masterNotes.map(n => `<div class="block-row" style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+            <div><div style="white-space:pre-wrap;">${esc(n.text)}</div>${n.client ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">👤 ${esc(n.client)}</div>` : ""}</div>
+            <button class="mini-btn" onclick="delMasterNote('${esc(n.id)}')" style="flex-shrink:0;">🗑</button>
+          </div>`).join("") : `<div class="empty">${t("Заметок пока нет.","Nu sunt notițe.")}</div>`}
+        </div>
+
+        <div class="card">
+          <div class="card__head">${t("Управление днями","Gestionarea zilelor")}</div>
           <div class="cl-body">
             <div class="cl-row">
-              <label>С даты<input type="date" id="clFrom" min="${todayIso}" value="${todayIso}"></label>
-              <label>По дату<input type="date" id="clTo" min="${todayIso}" value="${todayIso}"></label>
+              <label>${t("С даты","De la data")}<input type="date" id="clFrom" min="${todayIso}" value="${todayIso}"></label>
+              <label>${t("По дату","Până la data")}<input type="date" id="clTo" min="${todayIso}" value="${todayIso}"></label>
             </div>
-            <input type="text" id="clReason" placeholder="Причина (необязательно): отпуск, обучение…" style="margin-top:8px;">
-            <button class="primary-btn" onclick="closeDays()" style="margin-top:10px;">Закрыть день / период</button>
+            <input type="text" id="clReason" placeholder="${t("Причина (необязательно): отпуск, обучение…","Motiv (opțional): concediu, instruire…")}" style="margin-top:8px;">
+            <button class="primary-btn" onclick="closeDays()" style="margin-top:10px;">${t("Закрыть день / период","Închide zi / perioadă")}</button>
           </div>
           ${blockRows}
         </div>
 
         <div class="card">
-          <div class="card__head">История визитов</div>
+          <div class="card__head">${t("История визитов","Istoric vizite")}</div>
           ${past}
         </div>
 
-        <div class="footer">mateevmassage.com · Кабинет мастера</div>
+        <div class="footer">mateevmassage.com · ${t("Кабинет мастера","Cont maestru")}</div>
       `;
 
       if (s.services && s.services.length) loadMasterSlots();
@@ -392,7 +472,8 @@
           const err = await res.json().catch(() => ({}));
           throw new Error(err.message || "Ошибка загрузки.");
         }
-        render(await res.json());
+        currentData = await res.json();
+        render(currentData);
       } catch (e) {
         document.getElementById("app").innerHTML = `<div class="error-state">${esc(e.message)}</div>`;
       }

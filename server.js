@@ -793,6 +793,7 @@ async function ensureDataFiles() {
     ["portal-tokens.json", "[]"],
     ["master-tokens.json", "[]"],
     ["notes.json", "[]"],
+    ["master-notes.json", "[]"],
     ["commission-payments.json", "[]"],
     ["gallery.json", "[]"],
     ["birthday-sent.json", "{}"],
@@ -4932,6 +4933,7 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       telegramConnectUrl,
       specialist: {
         id: specialist.id, name: specialist.name, role: specialist.role, initials: specialist.initials,
+        roleRo: specialist.roleRo || "", bio: specialist.bio || "", bioRo: specialist.bioRo || "",
         photo: specialist.photo || null, certified: !!specialist.certified,
         location: specialist.location || "", daySchedules: specialist.daySchedules,
         services: myServices, commissionPercent: specialist.commissionPercent || 0
@@ -4944,8 +4946,42 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
         monthRevenue
       },
       upcoming, past, blocks,
-      all: mine.map(mapB)
+      all: mine.map(mapB),
+      masterNotes: (await readJson("master-notes.json").catch(() => []))
+        .filter((n) => n.specialistId === specialist.id)
+        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     });
+    return;
+  }
+
+  // POST /api/master/notes — мастер добавляет заметку по клиенту
+  if (request.method === "POST" && urlObject.pathname === "/api/master/notes") {
+    const payload = await parseJsonBody(request);
+    const tokens = await readJson("master-tokens.json").catch(() => []);
+    const entry = tokens.find((t) => t.token === sanitizeText(payload.token || ""));
+    if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+    const text = sanitizeText(payload.text || "");
+    if (!text) { sendJson(response, 400, { message: "Пустая заметка." }); return; }
+    const notes = await readJson("master-notes.json").catch(() => []);
+    const note = { id: crypto.randomUUID(), specialistId: entry.specialistId, client: sanitizeText(payload.client || ""), text, createdAt: new Date().toISOString() };
+    notes.push(note);
+    await writeJson("master-notes.json", notes);
+    sendJson(response, 201, { ok: true, note });
+    return;
+  }
+
+  // DELETE /api/master/note?token=&id= — мастер удаляет свою заметку
+  if (request.method === "DELETE" && urlObject.pathname === "/api/master/note") {
+    const token = urlObject.searchParams.get("token") || "";
+    const id = urlObject.searchParams.get("id") || "";
+    const tokens = await readJson("master-tokens.json").catch(() => []);
+    const entry = tokens.find((t) => t.token === token);
+    if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+    const notes = await readJson("master-notes.json").catch(() => []);
+    const next = notes.filter((n) => !(n.id === id && n.specialistId === entry.specialistId));
+    if (next.length === notes.length) { sendJson(response, 404, { message: "Заметка не найдена." }); return; }
+    await writeJson("master-notes.json", next);
+    sendJson(response, 200, { ok: true });
     return;
   }
 
@@ -4983,6 +5019,27 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       } catch (e) {
         sendJson(response, 400, { message: e.message || "Проверьте данные записи." });
       }
+    });
+  }
+
+  // POST /api/master/profile — мастер редактирует своё описание (роль/био, RU+RO)
+  if (request.method === "POST" && urlObject.pathname === "/api/master/profile") {
+    return withLock("studio", async () => {
+      const payload = await parseJsonBody(request);
+      const tokens = await readJson("master-tokens.json").catch(() => []);
+      const entry = tokens.find((t) => t.token === sanitizeText(payload.token || ""));
+      if (!entry) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+      const list = await readJson("specialists.json").catch(() => []);
+      const arr = Array.isArray(list) ? list : [];
+      const idx = arr.findIndex((s) => s.id === entry.specialistId);
+      if (idx === -1) { sendJson(response, 404, { message: "Мастер не найден." }); return; }
+      if (typeof payload.role === "string") arr[idx].role = sanitizeText(payload.role);
+      if (typeof payload.roleRo === "string") arr[idx].roleRo = sanitizeText(payload.roleRo);
+      if (typeof payload.bio === "string") arr[idx].bio = sanitizeText(payload.bio);
+      if (typeof payload.bioRo === "string") arr[idx].bioRo = sanitizeText(payload.bioRo);
+      await writeJson("specialists.json", arr);
+      sendJson(response, 200, { ok: true });
+      return;
     });
   }
 
