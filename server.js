@@ -1273,7 +1273,8 @@ async function callAnthropic(system, messages, maxTokens = 500) {
     const data = await requestJson("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-      body: { model: AI_MODEL, max_tokens: maxTokens, system, messages }
+      body: { model: AI_MODEL, max_tokens: maxTokens, system, messages },
+      timeout: 60000
     });
     const text = (data?.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n").trim();
     return text || null;
