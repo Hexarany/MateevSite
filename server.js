@@ -5735,7 +5735,10 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const payload = await parseJsonBody(request);
     const entries = normalizeDiary(await readJson("diary.json").catch(() => []));
     const now = new Date().toISOString().slice(0, 7).replace("-", "");
-    const newId = `diary-${now}-${String(entries.length + 1).padStart(3, "0")}`;
+    const usedIds = new Set(entries.map((e) => e.id));
+    let seq = entries.length + 1;
+    let newId = `diary-${now}-${String(seq).padStart(3, "0")}`;
+    while (usedIds.has(newId)) { seq++; newId = `diary-${now}-${String(seq).padStart(3, "0")}`; }
     const entry = normalizeDiaryEntry({ ...payload, id: newId }, 0);
     await writeJson("diary.json", [entry, ...entries]);
     if (entry.published) void notifyDiarySubscribers(entry);

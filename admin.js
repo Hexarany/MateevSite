@@ -2538,8 +2538,16 @@ async function handleDiaryEntrySubmit(event) {
 
   try {
     if (id) {
-      await fetchJson(`/api/admin/diary/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-      showToast("Запись обновлена.", "success");
+      try {
+        await fetchJson(`/api/admin/diary/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+        showToast("Запись обновлена.", "success");
+      } catch (err) {
+        // Устаревший id (запись не найдена) → сохраняем как новую, чтобы не потерять текст
+        if (/не найдена/i.test(err.message || "")) {
+          await fetchJson("/api/admin/diary", { method: "POST", body: JSON.stringify(payload) });
+          showToast("Запись добавлена.", "success");
+        } else { throw err; }
+      }
     } else {
       await fetchJson("/api/admin/diary", { method: "POST", body: JSON.stringify(payload) });
       showToast("Запись добавлена.", "success");
