@@ -46,6 +46,7 @@
 
       <nav class="admin-sidebar__nav">
         <a href="#dashboard" data-section="dashboard">📊 Дашборд</a>
+        <a href="#ai-helper" data-section="ai-helper">🤖 AI-помощник</a>
         <a href="#overview" data-section="overview">Обзор</a>
         <a href="#notes" data-section="notes">📝 Блокнот</a>
         <a href="#peakHours" data-section="peakHours">Пик-часы</a>
@@ -168,6 +169,43 @@
               <button type="button" class="button button--ghost button--mini" id="dashboardRefreshBtn">Обновить</button>
             </div>
             <div id="dashboardSummary"></div>
+          </section>
+
+          <!-- AI-помощник -->
+          <section class="admin-section-block reveal" id="ai-helper">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">AI-помощник</p>
+                <h2 class="admin-section-block__title">Ассистент владельца и генератор постов</h2>
+              </div>
+            </div>
+
+            <article class="admin-widget">
+              <div class="admin-widget__head"><div><p class="section-kicker">Спроси про бизнес</p><h3 class="admin-widget__title">AI-ассистент</h3></div></div>
+              <div id="aiAsstBody" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:8px 0;"></div>
+              <form id="aiAsstForm" style="display:flex;gap:8px;margin-top:8px;">
+                <input type="text" id="aiAsstInput" placeholder="Напр.: кого давно не было? / как месяц? / напиши win-back" style="flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;">
+                <button type="submit" class="button button--secondary">➤</button>
+              </form>
+              <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                <button type="button" class="button button--ghost button--mini" data-ai-quick="Как прошёл этот месяц? Дай короткую сводку.">Сводка месяца</button>
+                <button type="button" class="button button--ghost button--mini" data-ai-quick="Кого давно не было? Дай до 10 имён с телефонами и датой последнего визита.">Кого давно не было</button>
+                <button type="button" class="button button--ghost button--mini" data-ai-quick="Напиши тёплый короткий win-back текст для клиентов, которых давно не было.">Win-back текст</button>
+              </div>
+            </article>
+
+            <article class="admin-widget" style="margin-top:18px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Соцсети</p><h3 class="admin-widget__title">Генератор постов</h3></div></div>
+              <form id="aiContentForm" class="admin-form-stack">
+                <label class="field field--full"><span>Тема поста</span><input type="text" id="aiTopic" placeholder="Напр.: польза миофасциального массажа при сидячей работе"></label>
+                <div class="field-grid">
+                  <label class="field"><span>Формат</span><select id="aiFormat"><option>пост для Instagram</option><option>сторис (короткий текст)</option><option>пост с советом/лайфхаком</option><option>анонс акции</option></select></label>
+                  <label class="field"><span>Язык</span><select id="aiLang"><option value="ru">Русский</option><option value="ro">Румынский</option></select></label>
+                </div>
+                <button type="submit" class="button button--secondary">Сгенерировать</button>
+              </form>
+              <div id="aiContentOut" style="margin-top:14px;"></div>
+            </article>
           </section>
 
           <!-- Блокнот -->

@@ -1208,6 +1208,20 @@ async function tgEdit(chatId, messageId, text) {
 }
 
 // ── AI-ресепшн («мозг студии» на Claude) ───────────────────────────────
+const AI_OWNER_PROMPT = `Ты — бизнес-ассистент владельца массажной студии Mateev Spa Studio (Кишинёв).
+Отвечай кратко, по делу, на языке вопроса (русский по умолчанию). Опирайся ТОЛЬКО на данные ниже
+(статистика и список клиентов с датами последних визитов).
+- «Кого давно не было» → найди клиентов с самым давним последним визитом, дай имена и телефоны.
+- «Как неделя/месяц» → используй цифры из данных.
+- «Напиши сообщение/пост/win-back» → сразу дай готовый текст, тёплый и человечный.
+- Не выдумывай данных, которых нет. Если данных не хватает — честно скажи.`;
+
+const AI_CONTENT_PROMPT = `Ты — SMM-копирайтер массажной студии Mateev Spa Studio (Кишинёв).
+Пиши тёплые, экспертные посты про массаж, заботу о теле, восстановление и здоровье.
+Тон: спокойный, профессиональный, живой (без канцелярита и «воды»).
+На запрос дай 2 варианта поста: у каждого цепляющая первая строка-крючок, компактный текст,
+эмодзи в меру и 5–7 релевантных хэштегов. Язык: {lang}.`;
+
 const AI_SYSTEM_PROMPT = `Ты — тёплый и вежливый ассистент-консультант студии массажа «Mateev Spa Studio» в Кишинёве.
 Твоя задача — отвечать гостям на вопросы и мягко подводить к онлайн-записи.
 
@@ -1248,26 +1262,60 @@ async function buildStudioFacts() {
   return lines.join("\n");
 }
 
-// messages: [{role:"user"|"assistant", content:string}] — должен начинаться с user
-async function callStudioAI(messages) {
+// Универсальный вызов Claude. messages: [{role, content}], начинается с user.
+async function callAnthropic(system, messages, maxTokens = 500) {
   if (!ANTHROPIC_API_KEY || !Array.isArray(messages) || !messages.length) return null;
-  const facts = await buildStudioFacts();
   try {
     const data = await requestJson("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-      body: {
-        model: AI_MODEL,
-        max_tokens: 400,
-        system: `${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`,
-        messages
-      }
+      body: { model: AI_MODEL, max_tokens: maxTokens, system, messages }
     });
     const text = (data?.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n").trim();
     return text || null;
   } catch {
     return null;
   }
+}
+
+async function callStudioAI(messages) {
+  const facts = await buildStudioFacts();
+  return callAnthropic(`${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`, messages, 400);
+}
+
+// Сводка бизнеса для AI-ассистента владельца
+async function buildBusinessContext() {
+  const [rawServices, rawSpecialists, bookings, clientsRaw] = await Promise.all([
+    readJson("services.json").catch(() => []),
+    readJson("specialists.json").catch(() => []),
+    readJson("bookings.json").catch(() => []),
+    readJson("clients.json").catch(() => [])
+  ]);
+  const services = normalizeServices(rawServices);
+  const specialists = normalizeSpecialists(rawSpecialists, services);
+  const clients = buildAdminClients(bookings, clientsRaw);
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+  const month = today.slice(0, 7);
+  const completedMonth = bookings.filter((b) => b.status === "completed" && (b.date || "").slice(0, 7) === month);
+  const revenueMonth = completedMonth.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0);
+  const upcoming = bookings.filter((b) => b.date >= today && b.status !== "cancelled" && b.status !== "completed").length;
+
+  const clientLines = clients
+    .map((c) => {
+      const lastVisit = (c.history || []).filter((h) => h.status === "completed").map((h) => h.date).sort().pop() || "нет";
+      return { name: c.clientName, phone: c.phone || "—", visits: c.completedVisits, spent: c.totalSpent, last: lastVisit };
+    })
+    .sort((a, b) => (a.last < b.last ? 1 : -1))
+    .slice(0, 100);
+
+  const lines = [];
+  lines.push(`Сегодня: ${today}. Текущий месяц: ${month}.`);
+  lines.push(`Завершено визитов в этом месяце: ${completedMonth.length}, выручка: ${revenueMonth} MDL.`);
+  lines.push(`Предстоящих визитов: ${upcoming}. Всего клиентов: ${clients.length}. Специалистов: ${specialists.length}.`);
+  lines.push("");
+  lines.push("Клиенты (имя · телефон · завершённых визитов · потрачено MDL · последний визит):");
+  for (const c of clientLines) lines.push(`- ${c.name} · ${c.phone} · ${c.visits} · ${c.spent} · ${c.last}`);
+  return lines.join("\n");
 }
 
 let _botUsernameCache = null;
@@ -3886,6 +3934,45 @@ async function routeApi(request, response, urlObject) {
         topService: topService ? { name: topService[0], count: topService[1] } : null
       }
     });
+    return;
+  }
+
+  // POST /api/admin/ai-assistant — AI-ассистент владельца (чат по данным бизнеса)
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/ai-assistant") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const msg = sanitizeText(payload.message || "").slice(0, 1000);
+    if (!msg) { sendJson(response, 400, { message: "Пустой вопрос." }); return; }
+    const history = Array.isArray(payload.history) ? payload.history.slice(-8) : [];
+    const messages = [];
+    for (const h of history) {
+      const role = h && h.role === "assistant" ? "assistant" : "user";
+      const content = sanitizeText((h && h.content) || "").slice(0, 2000);
+      if (content) messages.push({ role, content });
+    }
+    messages.push({ role: "user", content: msg });
+    while (messages.length && messages[0].role !== "user") messages.shift();
+    const context = await buildBusinessContext();
+    const reply = await callAnthropic(`${AI_OWNER_PROMPT}\n\n=== ДАННЫЕ БИЗНЕСА ===\n${context}`, messages, 800);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
+    return;
+  }
+
+  // POST /api/admin/ai-content — генератор постов для соцсетей
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/ai-content") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const topic = sanitizeText(payload.topic || "").slice(0, 500);
+    if (!topic) { sendJson(response, 400, { message: "Укажите тему поста." }); return; }
+    const format = sanitizeText(payload.format || "пост для Instagram").slice(0, 100);
+    const langLabel = payload.lang === "ro" ? "румынском" : "русском";
+    const system = AI_CONTENT_PROMPT.replace("{lang}", langLabel);
+    const reply = await callAnthropic(system, [{ role: "user", content: `Тема: ${topic}. Формат: ${format}.` }], 900);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
     return;
   }
 

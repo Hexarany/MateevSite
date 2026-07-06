@@ -524,6 +524,16 @@ function bindEvents() {
   document.getElementById("notesExportBtn")?.addEventListener("click", exportNotesCsv);
   document.getElementById("dashboardRefreshBtn")?.addEventListener("click", loadDashboardSummary);
   document.getElementById("commissionReport")?.addEventListener("click", handleCommissionPay);
+  document.getElementById("aiAsstForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const inp = document.getElementById("aiAsstInput");
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = "";
+    aiAsstSend(msg);
+  });
+  document.querySelectorAll("[data-ai-quick]").forEach(b => b.addEventListener("click", () => aiAsstSend(b.dataset.aiQuick)));
+  document.getElementById("aiContentForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateContent(); });
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
   elements.scheduleDateInput.addEventListener("change", handleScheduleDateChange);
   elements.schedulePrevBtn.addEventListener("click", () => shiftScheduleDate(-1));
@@ -1953,6 +1963,51 @@ function renderDashboardSummary(d) {
       card("Визитов на клиента", d.analytics.avgVisits),
       d.analytics.topService ? card("Топ-услуга", escapeHtml(d.analytics.topService.name), d.analytics.topService.count + " раз", true) : ""
     ])}`;
+}
+
+// ─── AI-помощник (ассистент владельца + генератор постов) ─────────────────────
+const aiAsstHistory = [];
+function aiAsstMsg(role, text) {
+  const body = document.getElementById("aiAsstBody");
+  if (!body) return null;
+  const el = document.createElement("div");
+  el.style.cssText = `max-width:88%;padding:10px 14px;border-radius:14px;font-size:0.9rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;${role === "user" ? "align-self:flex-end;background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;" : "align-self:flex-start;background:#fff;border:1px solid var(--line);"}`;
+  el.textContent = text;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+  return el;
+}
+async function aiAsstSend(msg) {
+  aiAsstMsg("user", msg);
+  const typing = aiAsstMsg("bot", "…");
+  try {
+    const data = await fetchJson("/api/admin/ai-assistant", { method: "POST", body: JSON.stringify({ message: msg, history: aiAsstHistory.slice(-8) }) });
+    if (typing) typing.remove();
+    aiAsstMsg("bot", data.reply);
+    aiAsstHistory.push({ role: "user", content: msg }, { role: "assistant", content: data.reply });
+  } catch (e) {
+    if (typing) typing.remove();
+    aiAsstMsg("bot", e.message || "Ошибка. Проверьте, что на сервере задан ANTHROPIC_API_KEY.");
+  }
+}
+async function aiGenerateContent() {
+  const topic = document.getElementById("aiTopic").value.trim();
+  if (!topic) { showToast("Укажите тему поста.", "info"); return; }
+  const out = document.getElementById("aiContentOut");
+  out.innerHTML = '<div class="empty-state" style="padding:12px 0;">Генерирую…</div>';
+  try {
+    const data = await fetchJson("/api/admin/ai-content", {
+      method: "POST",
+      body: JSON.stringify({ topic, format: document.getElementById("aiFormat").value, lang: document.getElementById("aiLang").value })
+    });
+    out.innerHTML = `<div style="background:#fffaf4;border:1px solid var(--line);border-radius:14px;padding:16px 18px;white-space:pre-wrap;font-size:0.92rem;line-height:1.55;">${escapeHtml(data.reply)}</div>
+      <button type="button" class="button button--ghost button--mini" style="margin-top:8px;" id="aiCopyBtn">📋 Скопировать</button>`;
+    document.getElementById("aiCopyBtn").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(data.reply); showToast("Текст скопирован.", "success"); } catch {}
+    });
+  } catch (e) {
+    out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
+  }
 }
 
 // ─── Expense Calculator ───────────────────────────────────────────────────────
