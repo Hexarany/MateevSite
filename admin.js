@@ -6024,6 +6024,33 @@ function renderCredGrid() {
       </div>
     </div>`).join("");
 }
+// Сжимает картинку в браузере: ужимает до maxDim по длинной стороне и пере-кодирует в JPEG.
+// Возвращает data-URL. Если что-то пошло не так (например, экзотический формат) — читает файл как есть.
+async function compressImageFile(file, { maxDim = 2000, quality = 0.82 } = {}) {
+  try {
+    const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+    // SVG/GIF не трогаем — canvas их испортит
+    if (/^data:image\/(svg|gif)/i.test(dataUrl)) return dataUrl;
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl; });
+    let { width, height } = img;
+    if (!width || !height) return dataUrl;
+    const scale = Math.min(1, maxDim / Math.max(width, height));
+    const w = Math.round(width * scale), h = Math.round(height * scale);
+    // Уже маленькая и лёгкая — оставляем оригинал
+    if (scale === 1 && file.size <= 1.2 * 1024 * 1024) return dataUrl;
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); // белый фон вместо прозрачности
+    ctx.drawImage(img, 0, 0, w, h);
+    const out = canvas.toDataURL("image/jpeg", quality);
+    // Если вдруг вышло тяжелее оригинала — берём меньшее
+    return (out && out.length < dataUrl.length) ? out : dataUrl;
+  } catch {
+    return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+  }
+}
+
 function bindCredEvents() {
   if (_credBound) return;
   _credBound = true;
@@ -6036,9 +6063,9 @@ function bindCredEvents() {
     for (let i = 0; i < files.length; i++) {
       if (statusEl) statusEl.textContent = `${i + 1} / ${files.length}`;
       const file = files[i];
-      if (file.size > 8 * 1024 * 1024) { showToast(`${file.name}: слишком большой (макс. 8MB).`); continue; }
+      if (file.size > 40 * 1024 * 1024) { showToast(`${file.name}: слишком большой (макс. 40MB).`); continue; }
       try {
-        const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+        const base64 = await compressImageFile(file);
         const result = await fetchJson("/api/admin/credentials/upload", { method: "POST", body: JSON.stringify({ photo: base64, title: "", year: "" }) });
         _credItems.push(result.item);
         renderCredGrid();
@@ -6122,14 +6149,9 @@ function bindGalleryEvents() {
     for (let i = 0; i < files.length; i++) {
       if (statusEl) statusEl.textContent = `${i + 1} / ${files.length}`;
       const file = files[i];
-      if (file.size > 8 * 1024 * 1024) { showToast(`${file.name}: файл слишком большой (макс. 8MB).`); continue; }
+      if (file.size > 40 * 1024 * 1024) { showToast(`${file.name}: файл слишком большой (макс. 40MB).`); continue; }
       try {
-        const base64 = await new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = () => res(reader.result);
-          reader.onerror = rej;
-          reader.readAsDataURL(file);
-        });
+        const base64 = await compressImageFile(file);
         const result = await fetchJson("/api/admin/gallery/upload", {
           method: "POST",
           body: JSON.stringify({ photo: base64, alt: "" })
