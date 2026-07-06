@@ -499,6 +499,7 @@ async function loadBootstrap() {
   state.services = payload.services;
   state.specialists = payload.specialists;
   state.site = payload.site;
+  state.credentials = payload.credentials || [];
   if (payload.closure) renderClosureBanner(payload.closure);
   if (payload.site?.promoBanner?.enabled) renderPromoBanner(payload.site.promoBanner);
   state.currency = payload.site?.brand?.currency || "MDL";
@@ -508,6 +509,7 @@ async function loadBootstrap() {
   renderStaticContent();
   renderMethodBlock();
   renderDiarySection();
+  renderFounderDiplomas();
   injectStructuredData();
   populateServiceOptions();
   updateSpecialistOptions();
@@ -607,6 +609,66 @@ function renderDiarySection() {
     </article>
   `;
 
+}
+
+let diplomaState = { items: [], index: 0 };
+let diplomaLbInit = false;
+
+function renderFounderDiplomas() {
+  const el = document.getElementById("founderDiplomas");
+  if (!el) return;
+  const items = state.credentials || [];
+  diplomaState.items = items;
+  if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  if (!diplomaLbInit) { initDiplomaLightbox(); diplomaLbInit = true; }
+  const PREVIEW = 8;
+  const showAll = el.dataset.expanded === "1";
+  const visible = showAll ? items : items.slice(0, PREVIEW);
+  el.innerHTML = `
+    <div class="section-heading reveal is-visible" style="max-width:none;margin-bottom:22px;">
+      <p class="section-kicker">${tr("Квалификация", "Calificare")}</p>
+      <h2>${tr("Дипломы и сертификаты", "Diplome și certificate")}</h2>
+      <p class="section-copy">${tr("Подтверждённая экспертиза — обучение, чемпионаты и профессиональные сертификаты.", "Expertiză confirmată — instruire, campionate și certificate profesionale.")}</p>
+    </div>
+    <div class="diploma-grid">
+      ${visible.map((c, i) => `<button type="button" class="diploma-thumb" data-diploma="${i}" title="${escapeHtml(c.title || "Диплом")}">
+        <img src="${escapeHtml(c.url)}" alt="${escapeHtml((c.title || "Диплом Mateev Spa") + (c.year ? ", " + c.year : ""))}" loading="lazy">
+      </button>`).join("")}
+    </div>
+    ${items.length > PREVIEW ? `<div style="text-align:center;margin-top:22px;"><button type="button" class="button button--ghost" id="diplomaToggle">${showAll ? tr("Свернуть", "Restrânge") : tr("Показать все", "Arată toate") + " (" + items.length + ")"}</button></div>` : ""}
+  `;
+  el.querySelectorAll("[data-diploma]").forEach(b => b.addEventListener("click", () => openDiploma(Number(b.dataset.diploma))));
+  const toggle = document.getElementById("diplomaToggle");
+  if (toggle) toggle.addEventListener("click", () => { el.dataset.expanded = showAll ? "0" : "1"; renderFounderDiplomas(); });
+}
+
+function openDiploma(i) {
+  const items = diplomaState.items;
+  if (!items.length) return;
+  diplomaState.index = (i + items.length) % items.length;
+  const c = items[diplomaState.index];
+  const lb = document.getElementById("diplomaLightbox");
+  document.getElementById("diplomaImg").src = c.url;
+  document.getElementById("diplomaImg").alt = c.title || "Диплом";
+  document.getElementById("diplomaCaption").textContent = [c.title, c.year].filter(Boolean).join(" · ");
+  lb.hidden = false;
+}
+
+function initDiplomaLightbox() {
+  const lb = document.getElementById("diplomaLightbox");
+  if (!lb) return;
+  const close = () => { lb.hidden = true; };
+  document.getElementById("diplomaClose")?.addEventListener("click", close);
+  document.getElementById("diplomaPrev")?.addEventListener("click", () => openDiploma(diplomaState.index - 1));
+  document.getElementById("diplomaNext")?.addEventListener("click", () => openDiploma(diplomaState.index + 1));
+  lb.addEventListener("click", (e) => { if (e.target === lb) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (lb.hidden) return;
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") openDiploma(diplomaState.index - 1);
+    else if (e.key === "ArrowRight") openDiploma(diplomaState.index + 1);
+  });
 }
 
 function addJsonLd(id, obj) {

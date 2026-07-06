@@ -39,6 +39,7 @@ const BACKUP_DIR = path.join(ROOT_DIR, "backups");
 const UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "specialists");
 const BLOG_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "blog");
 const GALLERY_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "gallery");
+const CREDENTIALS_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "credentials");
 const ADMIN_SESSION_COOKIE_NAME = "mateev_admin_session";
 const ADMIN_SESSION_TTL_HOURS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_HOURS) || 12);
 const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000;
@@ -799,6 +800,7 @@ async function ensureDataFiles() {
     ["master-notes.json", "[]"],
     ["commission-payments.json", "[]"],
     ["gallery.json", "[]"],
+    ["credentials.json", "[]"],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
   ];
@@ -870,7 +872,7 @@ function sendText(response, statusCode, message) {
 async function serveStaticFile(requestPath, response) {
   if (requestPath.startsWith("/uploads/")) {
     const safeName = path.basename(requestPath);
-    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : "specialists";
+    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : requestPath.startsWith("/uploads/credentials/") ? "credentials" : "specialists";
     const fullPath = path.join(ROOT_DIR, "uploads", subDir, safeName);
     try {
       const fileBuffer = await fs.readFile(fullPath);
@@ -2611,12 +2613,13 @@ function detectClosure(schedule) {
 }
 
 async function handleBootstrap(response) {
-  const [rawServices, rawSpecialists, rawSite, bookings, schedule] = await Promise.all([
+  const [rawServices, rawSpecialists, rawSite, bookings, schedule, credentials] = await Promise.all([
     readJson("services.json"),
     readJson("specialists.json"),
     readJson("site.json"),
     readJson("bookings.json"),
-    readJson("schedule.json").catch(() => ({}))
+    readJson("schedule.json").catch(() => ({})),
+    readJson("credentials.json").catch(() => [])
   ]);
 
   const services = normalizeServices(rawServices);
@@ -2629,6 +2632,7 @@ async function handleBootstrap(response) {
     specialists,
     site,
     closure,
+    credentials: (Array.isArray(credentials) ? credentials : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)),
     meta: {
       existingBookings: bookings.length,
       bookingProtectionToken: createBookingProtectionToken()
@@ -4894,6 +4898,72 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     items.forEach((it, i) => { it.order = i; });
     await writeJson("gallery.json", items);
     try { await fs.unlink(path.join(GALLERY_UPLOADS_DIR, filename)); } catch {}
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // ─── Дипломы и сертификаты владельца (регалии) ────────────────────────────
+  if (request.method === "GET" && urlObject.pathname === "/api/credentials") {
+    const items = await readJson("credentials.json").catch(() => []);
+    sendJson(response, 200, { credentials: items.slice().sort((a, b) => (a.order || 0) - (b.order || 0)) });
+    return;
+  }
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/credentials") {
+    assertAdminPin(request);
+    const items = await readJson("credentials.json").catch(() => []);
+    sendJson(response, 200, { credentials: items.slice().sort((a, b) => (a.order || 0) - (b.order || 0)) });
+    return;
+  }
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/credentials/upload") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 10 * 1024 * 1024);
+    const { photo, title, year } = payload;
+    if (!photo || typeof photo !== "string") { sendJson(response, 400, { message: "Поле photo обязательно." }); return; }
+    const match = photo.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/);
+    if (!match) { sendJson(response, 400, { message: "Неверный формат. Поддерживаются JPEG, PNG, WebP." }); return; }
+    const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+    const buffer = Buffer.from(match[3], "base64");
+    if (buffer.length > 8 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой. Максимум 8MB." }); return; }
+    await fs.mkdir(CREDENTIALS_UPLOADS_DIR, { recursive: true });
+    const id = crypto.randomUUID();
+    const filename = `cred-${id}.${ext}`;
+    await fs.writeFile(path.join(CREDENTIALS_UPLOADS_DIR, filename), buffer);
+    const items = await readJson("credentials.json").catch(() => []);
+    const item = {
+      id, filename, url: `/uploads/credentials/${filename}`,
+      title: sanitizeText(title || ""), year: sanitizeText(year || ""),
+      order: items.length, createdAt: new Date().toISOString()
+    };
+    items.push(item);
+    await writeJson("credentials.json", items);
+    sendJson(response, 201, { ok: true, item });
+    return;
+  }
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/credentials/")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/credentials/", "");
+    const payload = await parseJsonBody(request);
+    const items = await readJson("credentials.json").catch(() => []);
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
+    if (payload.title !== undefined) items[idx].title = sanitizeText(payload.title);
+    if (payload.year !== undefined) items[idx].year = sanitizeText(payload.year);
+    if (payload.order !== undefined) items[idx].order = parseInt(payload.order) || 0;
+    await writeJson("credentials.json", items);
+    sendJson(response, 200, { ok: true, item: items[idx] });
+    return;
+  }
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/credentials/")) {
+    assertAdminPin(request);
+    const itemId = urlObject.pathname.replace("/api/admin/credentials/", "");
+    const items = await readJson("credentials.json").catch(() => []);
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
+    const filename = items[idx].filename;
+    items.splice(idx, 1);
+    items.forEach((it, i) => { it.order = i; });
+    await writeJson("credentials.json", items);
+    try { await fs.unlink(path.join(CREDENTIALS_UPLOADS_DIR, filename)); } catch {}
     sendJson(response, 200, { ok: true });
     return;
   }

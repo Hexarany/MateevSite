@@ -65,6 +65,7 @@
         <a href="#diplomas" data-section="diplomas">Дипломы</a>
         <a href="#intakes" data-section="intakes">Анкеты пациентов</a>
         <a href="#gallery" data-section="gallery">Фотогалерея</a>
+        <a href="#credentials" data-section="credentials">🎓 Мои дипломы</a>
         <a href="#broadcast" data-section="broadcast">Рассылка</a>
         <a href="#diary" data-section="diary">Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">Отзывы на сайте</a>
@@ -1213,6 +1214,24 @@
             <!-- Grid -->
             <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
             <p id="galleryEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Фотографий пока нет. Нажмите «+ Загрузить фото».</p>
+          </section>
+
+          <!-- ═══════════════ МОИ ДИПЛОМЫ ═══════════════ -->
+          <section class="admin-section-block reveal" id="credentials">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Регалии</p>
+                <h2 class="admin-section-block__title">Мои дипломы и сертификаты</h2>
+              </div>
+              <label class="button button--secondary" style="cursor:pointer;">
+                + Загрузить диплом
+                <input type="file" id="credFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none;">
+              </label>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">Показываются на главной под блоком «Основатель» (и в лайтбоксе). Впиши название и год — попадут в подпись и в alt для Google. Порядок — кнопками ← →.</p>
+            <div id="credUploadProgress" style="display:none;background:rgba(26,46,34,0.05);border-radius:12px;padding:12px 18px;margin-bottom:16px;font-size:0.85rem;">Загружаем... <span id="credUploadStatus"></span></div>
+            <div id="credGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;"></div>
+            <p id="credEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Дипломов пока нет. Нажмите «+ Загрузить диплом».</p>
           </section>
 
           <!-- ═══════════════ BROADCAST ═══════════════ -->

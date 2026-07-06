@@ -1605,6 +1605,7 @@ async function loadAdminData() {
   loadGallery();
   initBackupWidget();
   initFinancialReport();
+  loadCredentials();
   // Peak hours rendered after admin data loads
   initPeakHours();
   try {
@@ -5990,6 +5991,87 @@ function hideBroadcastPreview() {
 // ─── Gallery ────────────────────────────────────────────────────────────────
 
 let _galleryItems = [];
+
+let _credItems = [];
+let _credBound = false;
+async function loadCredentials() {
+  try {
+    const data = await fetchJson("/api/admin/credentials");
+    _credItems = data.credentials || [];
+    renderCredGrid();
+    bindCredEvents();
+  } catch (e) { console.error("loadCredentials", e); }
+}
+function renderCredGrid() {
+  const grid = document.getElementById("credGrid");
+  const empty = document.getElementById("credEmpty");
+  if (!grid) return;
+  if (!_credItems.length) { grid.innerHTML = ""; if (empty) empty.style.display = ""; return; }
+  if (empty) empty.style.display = "none";
+  grid.innerHTML = _credItems.map((item, idx) => `
+    <div style="background:#fffaf4;border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+      <img src="${escapeHtml(item.url)}" alt="" style="width:100%;aspect-ratio:3/4;object-fit:cover;display:block;">
+      <div style="padding:8px;display:flex;flex-direction:column;gap:6px;">
+        <input type="text" value="${escapeHtml(item.title || '')}" placeholder="Название диплома" data-cred-title="${escapeHtml(item.id)}" style="font-size:0.78rem;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" value="${escapeHtml(item.year || '')}" placeholder="Год" data-cred-year="${escapeHtml(item.id)}" style="width:60px;font-size:0.78rem;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;">
+          <div style="display:flex;gap:4px;margin-left:auto;">
+            ${idx > 0 ? `<button class="button button--ghost button--mini" data-cred-move="${escapeHtml(item.id)}" data-dir="-1">←</button>` : ""}
+            ${idx < _credItems.length - 1 ? `<button class="button button--ghost button--mini" data-cred-move="${escapeHtml(item.id)}" data-dir="1">→</button>` : ""}
+            <button class="button button--ghost button--mini" style="color:var(--danger);" data-cred-delete="${escapeHtml(item.id)}">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+function bindCredEvents() {
+  if (_credBound) return;
+  _credBound = true;
+  document.getElementById("credFileInput")?.addEventListener("change", async (ev) => {
+    const files = Array.from(ev.target.files || []);
+    if (!files.length) return;
+    const progressEl = document.getElementById("credUploadProgress");
+    const statusEl = document.getElementById("credUploadStatus");
+    if (progressEl) progressEl.style.display = "";
+    for (let i = 0; i < files.length; i++) {
+      if (statusEl) statusEl.textContent = `${i + 1} / ${files.length}`;
+      const file = files[i];
+      if (file.size > 8 * 1024 * 1024) { showToast(`${file.name}: слишком большой (макс. 8MB).`); continue; }
+      try {
+        const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+        const result = await fetchJson("/api/admin/credentials/upload", { method: "POST", body: JSON.stringify({ photo: base64, title: "", year: "" }) });
+        _credItems.push(result.item);
+        renderCredGrid();
+      } catch (e) { showToast(e.message || `Ошибка загрузки ${file.name}.`); }
+    }
+    if (progressEl) progressEl.style.display = "none";
+    ev.target.value = "";
+    showToast(`Загружено ${files.length}.`, "success");
+  });
+  const grid = document.getElementById("credGrid");
+  grid?.addEventListener("click", async (e) => {
+    const del = e.target.closest("[data-cred-delete]");
+    const move = e.target.closest("[data-cred-move]");
+    if (del) {
+      if (!confirm("Удалить диплом?")) return;
+      try { await fetchJson(`/api/admin/credentials/${del.dataset.credDelete}`, { method: "DELETE" }); _credItems = _credItems.filter(x => x.id !== del.dataset.credDelete); renderCredGrid(); } catch (er) { showToast(er.message, "error"); }
+    } else if (move) {
+      const id = move.dataset.credMove, dir = Number(move.dataset.dir);
+      const idx = _credItems.findIndex(x => x.id === id);
+      const swap = idx + dir;
+      if (swap < 0 || swap >= _credItems.length) return;
+      [_credItems[idx], _credItems[swap]] = [_credItems[swap], _credItems[idx]];
+      renderCredGrid();
+      try { await Promise.all(_credItems.map((it, i) => fetchJson(`/api/admin/credentials/${it.id}`, { method: "PATCH", body: JSON.stringify({ order: i }) }))); } catch {}
+    }
+  });
+  grid?.addEventListener("change", async (e) => {
+    const t = e.target.closest("[data-cred-title]");
+    const y = e.target.closest("[data-cred-year]");
+    if (t) { try { await fetchJson(`/api/admin/credentials/${t.dataset.credTitle}`, { method: "PATCH", body: JSON.stringify({ title: t.value.trim() }) }); } catch {} }
+    if (y) { try { await fetchJson(`/api/admin/credentials/${y.dataset.credYear}`, { method: "PATCH", body: JSON.stringify({ year: y.value.trim() }) }); } catch {} }
+  });
+}
 
 async function loadGallery() {
   try {
