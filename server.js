@@ -86,7 +86,8 @@ const STATIC_FILES = {
   "/school-success": "school-success.html",
   "/school-success.html": "school-success.html",
   "/og-image.jpg": "og-image.jpg",
-  "/og-image.jpg": "og-image.jpg",
+  "/og-image.svg": "og-image.svg",
+  "/favicon.svg": "favicon.svg",
   "/founder.png": "founder.png",
   "/client": "client.html",
   "/client.html": "client.html",
@@ -123,6 +124,8 @@ const MIME_TYPES = {
   ".jpeg": "image/jpeg",
   ".png": "image/png",
   ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
   ".webmanifest": "application/manifest+json"
 };
 
