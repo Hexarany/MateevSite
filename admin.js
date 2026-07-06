@@ -534,6 +534,8 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-ai-quick]").forEach(b => b.addEventListener("click", () => aiAsstSend(b.dataset.aiQuick)));
   document.getElementById("aiContentForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateContent(); });
+  document.getElementById("diaryAiIdeas")?.addEventListener("click", diaryAiIdeas);
+  document.getElementById("diaryAiDraft")?.addEventListener("click", diaryAiDraft);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
   elements.scheduleDateInput.addEventListener("change", handleScheduleDateChange);
   elements.schedulePrevBtn.addEventListener("click", () => shiftScheduleDate(-1));
@@ -2007,6 +2009,40 @@ async function aiGenerateContent() {
     });
   } catch (e) {
     out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
+  }
+}
+
+async function diaryAiIdeas() {
+  const st = document.getElementById("diaryAiStatus");
+  const box = document.getElementById("diaryAiIdeasBox");
+  if (st) st.textContent = "Генерирую идеи…";
+  try {
+    const data = await fetchJson("/api/admin/ai-diary", { method: "POST", body: JSON.stringify({ mode: "ideas" }) });
+    const ideas = data.reply.split("\n").map(l => l.replace(/^[\d.\-–•\s]+/, "").trim()).filter(Boolean);
+    box.style.display = "flex";
+    box.innerHTML = ideas.map(i => `<button type="button" class="button button--ghost button--mini" data-idea="${escapeHtml(i)}" style="text-align:left;">${escapeHtml(i)}</button>`).join("");
+    box.querySelectorAll("[data-idea]").forEach(b => b.addEventListener("click", () => {
+      document.getElementById("diaryEntryTitle").value = b.dataset.idea;
+      box.style.display = "none";
+      if (st) st.textContent = "Заголовок вставлен — жми «Черновик по заголовку».";
+    }));
+    if (st) st.textContent = "";
+  } catch (e) {
+    if (st) st.textContent = e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY.";
+  }
+}
+
+async function diaryAiDraft() {
+  const title = document.getElementById("diaryEntryTitle").value.trim();
+  if (!title) { showToast("Сначала впишите заголовок (или возьмите из идей).", "info"); return; }
+  const st = document.getElementById("diaryAiStatus");
+  if (st) st.textContent = "Пишу черновик…";
+  try {
+    const data = await fetchJson("/api/admin/ai-diary", { method: "POST", body: JSON.stringify({ mode: "draft", topic: title }) });
+    document.getElementById("diaryEntryBody").value = data.reply;
+    if (st) st.textContent = "Черновик готов — отредактируй и сохрани. RU→RO — кнопкой перевода.";
+  } catch (e) {
+    if (st) st.textContent = e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY.";
   }
 }
 

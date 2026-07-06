@@ -1222,6 +1222,10 @@ const AI_CONTENT_PROMPT = `Ты — SMM-копирайтер массажной 
 На запрос дай 2 варианта поста: у каждого цепляющая первая строка-крючок, компактный текст,
 эмодзи в меру и 5–7 релевантных хэштегов. Язык: {lang}.`;
 
+const AI_DIARY_PROMPT = `Ты — автор блога «Дневник практики» массажной студии Mateev Spa Studio (Кишинёв), практикующий массажист и преподаватель.
+Пиши экспертно, тепло и полезно про массаж, анатомию, восстановление и заботу о теле — простым живым языком, без «воды» и канцелярита.
+Это блог (не соцсети), хэштеги не нужны. Язык — русский.`;
+
 const AI_SYSTEM_PROMPT = `Ты — тёплый и вежливый ассистент-консультант студии массажа «Mateev Spa Studio» в Кишинёве.
 Твоя задача — отвечать гостям на вопросы и мягко подводить к онлайн-записи.
 
@@ -3971,6 +3975,28 @@ async function routeApi(request, response, urlObject) {
     const langLabel = payload.lang === "ro" ? "румынском" : "русском";
     const system = AI_CONTENT_PROMPT.replace("{lang}", langLabel);
     const reply = await callAnthropic(system, [{ role: "user", content: `Тема: ${topic}. Формат: ${format}.` }], 900);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
+    return;
+  }
+
+  // POST /api/admin/ai-diary — идеи тем / черновик статьи для дневника
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/ai-diary") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const mode = payload.mode === "draft" ? "draft" : "ideas";
+    let userMsg, maxTokens;
+    if (mode === "ideas") {
+      userMsg = "Дай 10 идей-заголовков для статей блога про массаж, восстановление, заботу о теле и практичные советы. Каждый заголовок — с новой строки, без нумерации и лишних слов.";
+      maxTokens = 400;
+    } else {
+      const topic = sanitizeText(payload.topic || "").slice(0, 300);
+      if (!topic) { sendJson(response, 400, { message: "Укажите заголовок или тему статьи." }); return; }
+      userMsg = `Напиши полную статью для блога на тему: «${topic}». Формат Markdown: подзаголовки через ##, абзацы, при необходимости списки. 3–6 абзацев, практичные советы, тёплое завершение. Без хэштегов и без повторения заголовка статьи в начале.`;
+      maxTokens = 1200;
+    }
+    const reply = await callAnthropic(AI_DIARY_PROMPT, [{ role: "user", content: userMsg }], maxTokens);
     if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
     sendJson(response, 200, { reply });
     return;

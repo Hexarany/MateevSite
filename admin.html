@@ -1286,6 +1286,12 @@
                   <span>Заголовок</span>
                   <input type="text" id="diaryEntryTitle" placeholder="Название записи" required>
                 </label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:-4px 0 2px;">
+                  <button type="button" class="button button--ghost button--mini" id="diaryAiIdeas">💡 Идеи тем</button>
+                  <button type="button" class="button button--ghost button--mini" id="diaryAiDraft">✨ Черновик по заголовку</button>
+                  <span id="diaryAiStatus" style="font-size:0.78rem;color:var(--muted);"></span>
+                </div>
+                <div id="diaryAiIdeasBox" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:6px;"></div>
                 <div class="field-grid">
                   <label class="field field--date">
                     <span>Дата</span>
