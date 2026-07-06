@@ -27,6 +27,24 @@ const SITE_URL       = (process.env.SITE_URL || "https://mateevmassage.com").rep
 
 // Google review URL — update after getting it from Google Maps
 const GOOGLE_REVIEW_URL = "https://g.page/r/Cbye495fXWm7EBM/review";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const { normalizePhoneDigits } = require("../lib/client");
+
+// phone(последние 8) → chatId клиентов с привязанным Telegram
+function loadTelegramLinks() {
+  const p = path.join(ROOT, "data", "portal-tokens.json");
+  if (!fs.existsSync(p)) return new Map();
+  let tokens = [];
+  try { tokens = JSON.parse(fs.readFileSync(p, "utf8")); } catch { return new Map(); }
+  const map = new Map();
+  for (const t of tokens) {
+    if (t.telegramChatId && t.phone) {
+      const tail = normalizePhoneDigits(t.phone).slice(-8);
+      if (tail) map.set(tail, t.telegramChatId);
+    }
+  }
+  return map;
+}
 
 function post(urlString, headers, body) {
   return new Promise((resolve, reject) => {
@@ -125,10 +143,12 @@ function buildReviewEmail(booking) {
 }
 
 async function main() {
-  if (!RESEND_API_KEY || !EMAIL_FROM) {
-    console.log("[review-requests] Skipped: RESEND_API_KEY or EMAIL_FROM not set.");
+  const emailReady = Boolean(RESEND_API_KEY && EMAIL_FROM);
+  if (!emailReady && !TELEGRAM_BOT_TOKEN) {
+    console.log("[review-requests] Skipped: ни email, ни Telegram не настроены.");
     return;
   }
+  const links = loadTelegramLinks();
 
   const yesterday = getYesterday();
   const bookingsPath = path.join(ROOT, "data", "bookings.json");
@@ -151,9 +171,11 @@ async function main() {
   // (A) дата визита — вчера И статус confirmed/completed, ИЛИ
   // (B) запись была помечена "completed" вчера (admin поставил статус позже дня визита)
   const due = bookings.filter(b => {
-    if (!b.email) return false;
     if (b.reviewRequestedAt) return false;
     if (alreadyAsked.has((b.phone || "").replace(/\D/g, "").slice(-8))) return false;
+    const tail = normalizePhoneDigits(b.phone || "").slice(-8);
+    const hasChannel = (b.email && emailReady) || (tail && links.get(tail));
+    if (!hasChannel) return false;
     const visitWasYesterday = b.date === yesterday && (b.status === "confirmed" || b.status === "completed");
     const completedYesterday = b.status === "completed" && b.updatedAt && b.updatedAt.startsWith(yesterday);
     return visitWasYesterday || completedYesterday;
@@ -163,24 +185,42 @@ async function main() {
 
   let sent = 0;
   for (const booking of due) {
-    try {
-      await post("https://api.resend.com/emails",
-        { Authorization: `Bearer ${RESEND_API_KEY}` },
-        {
-          from: EMAIL_FROM,
-          to: [booking.email],
-          replyTo: EMAIL_REPLY_TO || undefined,
-          subject: `${booking.clientName}, как прошёл ваш ${booking.serviceName}?`,
-          html: buildReviewEmail(booking),
-          text: `Здравствуйте, ${booking.clientName}!\n\nВы посетили нас вчера — ${booking.serviceName} с ${booking.specialistName}.\n\nЕсли вам понравилось, пожалуйста оставьте отзыв на Google:\n${GOOGLE_REVIEW_URL}\n\nЗаписаться снова: ${SITE_URL}/#booking`
-        }
-      );
-      booking.reviewRequestedAt = new Date().toISOString();
-      sent++;
-      console.log(`  ✓ Review request sent to ${booking.email} (${booking.reference})`);
-    } catch (err) {
-      console.error(`  ✗ Failed for ${booking.reference}:`, err.message);
+    let ok = false;
+    if (booking.email && emailReady) {
+      try {
+        await post("https://api.resend.com/emails",
+          { Authorization: `Bearer ${RESEND_API_KEY}` },
+          {
+            from: EMAIL_FROM,
+            to: [booking.email],
+            replyTo: EMAIL_REPLY_TO || undefined,
+            subject: `${booking.clientName}, как прошёл ваш ${booking.serviceName}?`,
+            html: buildReviewEmail(booking),
+            text: `Здравствуйте, ${booking.clientName}!\n\nВы посетили нас вчера — ${booking.serviceName} с ${booking.specialistName}.\n\nЕсли вам понравилось, пожалуйста оставьте отзыв на Google:\n${GOOGLE_REVIEW_URL}\n\nЗаписаться снова: ${SITE_URL}/#booking`
+          }
+        );
+        ok = true;
+        console.log(`  ✓ Email review request → ${booking.email} (${booking.reference})`);
+      } catch (err) {
+        console.error(`  ✗ Email failed ${booking.reference}:`, err.message);
+      }
     }
+    const tail = normalizePhoneDigits(booking.phone || "").slice(-8);
+    const chatId = tail && links.get(tail);
+    if (chatId && TELEGRAM_BOT_TOKEN) {
+      try {
+        await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {}, {
+          chat_id: chatId,
+          text: `Здравствуйте, ${booking.clientName}! 🌿\n\nВчера вы были у нас — ${booking.serviceName}. Как всё прошло?\n\nБудем очень благодарны за короткий отзыв — это помогает нам и другим гостям 🙏`,
+          reply_markup: { inline_keyboard: [[{ text: "⭐ Оставить отзыв", url: GOOGLE_REVIEW_URL }]] }
+        });
+        ok = true;
+        console.log(`  ✓ Telegram review request → ${booking.clientName} (${booking.reference})`);
+      } catch (err) {
+        console.error(`  ✗ Telegram failed ${booking.reference}:`, err.message);
+      }
+    }
+    if (ok) { booking.reviewRequestedAt = new Date().toISOString(); sent++; }
   }
 
   // Save updated bookings with reviewRequestedAt

@@ -1665,19 +1665,33 @@ async function notifyWaitlistOnCancellation(cancelledBooking) {
       )
     );
 
-    if (!matches.length) return;
+    if (!matches.length || !TELEGRAM_BOT_TOKEN) return;
 
     const ru = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
     const dateLabel = ru.format(new Date(`${cancelledBooking.date}T12:00:00`));
+    const base = SITE_URL || "https://mateevmassage.com";
+
+    // Карта phone(последние 8) → chatId клиентов с привязанным Telegram
+    const tokens = await readJson("portal-tokens.json").catch(() => []);
+    const linked = new Map();
+    for (const t of tokens) {
+      if (t.telegramChatId && t.phone) {
+        const tail = normalizePhoneDigits(t.phone).slice(-8);
+        if (tail) linked.set(tail, t.telegramChatId);
+      }
+    }
 
     for (const entry of matches) {
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-        await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          body: {
-            chat_id: TELEGRAM_CHAT_ID,
-            text: `🔔 Освободилось место!\n\n${dateLabel} · ${cancelledBooking.serviceName} · ${cancelledBooking.slot}\n\nВ листе ожидания: ${entry.name}, ${entry.phone}\n\nСвяжитесь с клиентом для подтверждения.`
-          }
+      const tail = normalizePhoneDigits(entry.phone || "").slice(-8);
+      const clientChat = tail && linked.get(tail);
+      if (clientChat) {
+        // Пишем КЛИЕНТУ напрямую — он сам успевает записаться
+        await tgSend(clientChat, `🔔 Освободилось место, о котором вы спрашивали!\n\n📅 ${dateLabel} · ${cancelledBooking.slot} · ${cancelledBooking.serviceName}\n\nУспейте записаться 👇`, {
+          reply_markup: { inline_keyboard: [[{ text: "📅 Записаться", url: `${base}/#booking` }]] }
         });
+      } else if (TELEGRAM_CHAT_ID) {
+        // Клиент без Telegram → сообщаем администратору, чтобы позвонил
+        await tgSend(TELEGRAM_CHAT_ID, `🔔 Освободилось место!\n\n${dateLabel} · ${cancelledBooking.serviceName} · ${cancelledBooking.slot}\n\nВ листе ожидания: ${entry.name}, ${entry.phone}\nСвяжитесь для подтверждения.`);
       }
       entry.notified = true;
       entry.notifiedAt = new Date().toISOString();
@@ -3008,6 +3022,10 @@ async function handleBookingStatusUpdate(request, response, bookingId) {
 
     const nextBookings = sortBookings(bookings);
     await writeJson("bookings.json", nextBookings);
+
+    if (payload.status === "cancelled" && currentBooking.status !== "cancelled") {
+      void notifyWaitlistOnCancellation(bookings[bookingIndex]);
+    }
 
     sendJson(response, 200, {
       message: "Статус записи обновлен.",
@@ -5205,6 +5223,7 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
       bookings[idx].status = status;
       bookings[idx].updatedAt = new Date().toISOString();
       await writeJson("bookings.json", sortBookings(bookings));
+      if (status === "cancelled") void notifyWaitlistOnCancellation(bookings[idx]);
       sendJson(response, 200, { ok: true });
     });
   }
