@@ -508,6 +508,7 @@ async function loadBootstrap() {
   renderStaticContent();
   renderMethodBlock();
   renderDiarySection();
+  injectStructuredData();
   populateServiceOptions();
   updateSpecialistOptions();
   updateDurationCalc();
@@ -606,6 +607,53 @@ function renderDiarySection() {
     </article>
   `;
 
+}
+
+function addJsonLd(id, obj) {
+  const existing = document.getElementById(id);
+  if (existing) existing.remove();
+  const el = document.createElement("script");
+  el.type = "application/ld+json";
+  el.id = id;
+  el.textContent = JSON.stringify(obj);
+  document.head.appendChild(el);
+}
+
+// Динамическая structured data: FAQ + каталог услуг (для расширенных сниппетов Google)
+function injectStructuredData() {
+  try {
+    const faq = Array.isArray(state.site?.faq) ? state.site.faq : [];
+    if (faq.length) {
+      addJsonLd("ld-faq", {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faq.filter(f => f && f.question).map(f => ({
+          "@type": "Question",
+          "name": f.question,
+          "acceptedAnswer": { "@type": "Answer", "text": f.answer || "" }
+        }))
+      });
+    }
+    const services = state.services || [];
+    if (services.length) {
+      addJsonLd("ld-offers", {
+        "@context": "https://schema.org",
+        "@type": "OfferCatalog",
+        "name": "Услуги массажа — Mateev Spa Studio",
+        "itemListElement": services.map(s => ({
+          "@type": "Offer",
+          "priceCurrency": "MDL",
+          "price": s.price,
+          "itemOffered": {
+            "@type": "Service",
+            "name": s.name,
+            "description": (s.description || "").slice(0, 200),
+            "provider": { "@type": "HealthAndBeautyBusiness", "name": "Mateev Spa Studio" }
+          }
+        }))
+      });
+    }
+  } catch {}
 }
 
 function renderStaticContent() {

@@ -6569,6 +6569,15 @@ function renderSpecialistPage(specialist, services, site, recentPosts = [], lang
     "url": `${base}/team/${specialist.id}`,
     ...(specialist.photo ? { "image": `${base}${specialist.photo}` } : {})
   })}</script>
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Главная", "item": base },
+      { "@type": "ListItem", "position": 2, "name": "Специалисты", "item": `${base}/#specialists` },
+      { "@type": "ListItem", "position": 3, "name": name, "item": `${base}/team/${specialist.id}` }
+    ]
+  })}</script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.7}
@@ -6748,6 +6757,14 @@ function renderCityPage(city, specialists, services, lang = "ru") {
     <meta name="description" content="${escapeHtml(desc)}">
     <link rel="canonical" href="${base}/city/${slugifyCity(city)}">
     <meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(desc)}">
+    <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Главная", "item": base },
+        { "@type": "ListItem", "position": 2, "name": t("Массаж в", "Masaj în") + " " + city, "item": `${base}/city/${slugifyCity(city)}` }
+      ]
+    })}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -7215,6 +7232,15 @@ function renderBlogEntryPage(entry, lang = "ru", related = []) {
     "datePublished": entry.publishedAt,
     "author": { "@type": "Person", "name": "Денис Матиевич" },
     "publisher": { "@type": "Organization", "name": "Mateev Spa Studio", "url": base }
+  })}</script>
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Главная", "item": base },
+      { "@type": "ListItem", "position": 2, "name": "Дневник практики", "item": `${base}/blog` },
+      { "@type": "ListItem", "position": 3, "name": entry.title, "item": url }
+    ]
   })}</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
