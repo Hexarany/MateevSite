@@ -7060,27 +7060,102 @@ function renderBlogListPage(entries, site, lang = "ru", catFilter = "") {
 </html>`;
 }
 
-function renderCertificatesPage(site) {
+function renderCertificatesPage(site, lang = "ru") {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const phone = site?.brand?.phone || "+373 69 158 475";
   const telegram = site?.brand?.telegram || "";
+  const ro = lang === "ro";
+  const t = ro ? {
+    title: "Certificate cadou — Mateev Spa Studio",
+    metaDesc: "Dăruiește o ședință de masaj la Mateev Spa Studio. Certificate de orice valoare — cadoul perfect pentru cei dragi.",
+    ogDesc: "Dăruiește o ședință de masaj. Certificate de la 500 MDL — cadoul perfect pentru cei dragi.",
+    prodName: "Certificat cadou pentru masaj",
+    prodDesc: "Certificat pentru o ședință de masaj la Mateev Spa Studio, Chișinău. Valori disponibile: 500, 1000, 1500, 2000 MDL și orice sumă.",
+    back: "← Acasă",
+    kicker: "Certificate cadou",
+    heroTitle: "Dăruiește grijă pentru corp",
+    heroSub: "Certificatul pentru masaj este un cadou care ajută la recuperare, eliberează tensiunea și te face să te simți mai bine. Potrivit pentru orice ocazie.",
+    anySum: "Orice sumă — la alegerea ta",
+    anySumSub: "Putem emite un certificat de orice valoare",
+    anySumHint: "Precizați la comandă →",
+    howTitle: "Cum funcționează",
+    step1: "Scrieți-ne — indicați numele destinatarului și valoarea dorită",
+    step2: "Pregătim un certificat frumos cu un cod unic și vi-l trimitem",
+    step3: "Destinatarul se programează la o oră convenabilă și prezintă codul",
+    orderTitle: "Comandă certificat",
+    orderSub: "Completați formularul — vă contactăm pentru plată și pregătim certificatul",
+    amountLabel: "Suma (MDL)",
+    phRecipient: "Numele destinatarului (opțional)",
+    phName: "Numele dvs. *",
+    phPhone: "Telefonul dvs. *",
+    phEmail: "Email (opțional)",
+    phMessage: "Urare pentru destinatar (opțional)",
+    submit: "Trimite comanda",
+    orDirect: "Sau direct:",
+    callWord: "sunați",
+    city: "Chișinău",
+    jsSending: "Se trimite…",
+    jsFail: "Nu am putut trimite cererea.",
+    jsSubmit: "Trimite comanda",
+    jsDoneTitle: "Cerere primită!",
+    jsDoneText: "Vă contactăm în cel mai scurt timp — stabilim plata și pregătim certificatul.",
+    jsNetErr: "Eroare de rețea. Încercați din nou."
+  } : {
+    title: "Подарочные сертификаты — Mateev Spa Studio",
+    metaDesc: "Подарите сеанс массажа в Mateev Spa Studio. Сертификаты на любую сумму — идеальный подарок для близких.",
+    ogDesc: "Подарите сеанс массажа. Сертификаты от 500 MDL — идеальный подарок для близких.",
+    prodName: "Подарочный сертификат на массаж",
+    prodDesc: "Сертификат на сеанс массажа в Mateev Spa Studio, Кишинёв. Доступны номиналы 500, 1000, 1500, 2000 MDL и любая сумма.",
+    back: "← На главную",
+    kicker: "Подарочные сертификаты",
+    heroTitle: "Подарите заботу о теле",
+    heroSub: "Сертификат на массаж — подарок который помогает восстановиться, снять напряжение и почувствовать себя лучше. Подходит для любого повода.",
+    anySum: "Любая сумма — на ваш выбор",
+    anySumSub: "Можем оформить сертификат на любой номинал",
+    anySumHint: "Уточните при заказе →",
+    howTitle: "Как это работает",
+    step1: "Напишите нам — укажите имя получателя и желаемый номинал",
+    step2: "Мы оформляем красивый сертификат с уникальным кодом и отправляем вам",
+    step3: "Получатель записывается на удобное время и предъявляет код",
+    orderTitle: "Заказать сертификат",
+    orderSub: "Заполните форму — мы свяжемся для оплаты и оформим сертификат",
+    amountLabel: "Сумма (MDL)",
+    phRecipient: "Имя получателя (необязательно)",
+    phName: "Ваше имя *",
+    phPhone: "Ваш телефон *",
+    phEmail: "Email (необязательно)",
+    phMessage: "Пожелание получателю (необязательно)",
+    submit: "Оформить заказ",
+    orDirect: "Или напрямую:",
+    callWord: "позвонить",
+    city: "Кишинёв",
+    jsSending: "Отправляем…",
+    jsFail: "Не удалось отправить заявку.",
+    jsSubmit: "Оформить заказ",
+    jsDoneTitle: "Заявка принята!",
+    jsDoneText: "Мы свяжемся с вами в ближайшее время — согласуем оплату и оформим сертификат.",
+    jsNetErr: "Ошибка сети. Попробуйте ещё раз."
+  };
+  const otherLang = ro ? "ru" : "ro";
 
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${ro ? "ro" : "ru"}">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Подарочные сертификаты — Mateev Spa Studio</title>
-  <meta name="description" content="Подарите сеанс массажа в Mateev Spa Studio. Сертификаты на любую сумму — идеальный подарок для близких.">
-  <link rel="canonical" href="${base}/certificates">
-  <meta property="og:title" content="Подарочные сертификаты — Mateev Spa Studio">
-  <meta property="og:description" content="Подарите сеанс массажа. Сертификаты от 500 MDL — идеальный подарок для близких.">
-  <meta property="og:url" content="${base}/certificates">
+  <title>${t.title}</title>
+  <meta name="description" content="${t.metaDesc}">
+  <link rel="canonical" href="${base}/certificates${ro ? "?lang=ro" : ""}">
+  <link rel="alternate" hreflang="ru" href="${base}/certificates">
+  <link rel="alternate" hreflang="ro" href="${base}/certificates?lang=ro">
+  <meta property="og:title" content="${t.title}">
+  <meta property="og:description" content="${t.ogDesc}">
+  <meta property="og:url" content="${base}/certificates${ro ? "?lang=ro" : ""}">
   <meta property="og:image" content="${base}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": "Подарочный сертификат на массаж",
-    "description": "Сертификат на сеанс массажа в Mateev Spa Studio, Кишинёв. Доступны номиналы 500, 1000, 1500, 2000 MDL и любая сумма.",
+    "name": t.prodName,
+    "description": t.prodDesc,
     "brand": { "@type": "Brand", "name": "Mateev Spa Studio" },
     "offers": [500, 1000, 1500, 2000].map(price => ({
       "@type": "Offer",
@@ -7100,7 +7175,11 @@ function renderCertificatesPage(site) {
     .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
     .topbar__inner{max-width:840px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
     .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__right{display:flex;align-items:center;gap:14px}
     .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .lang-switch{display:inline-flex;gap:2px;border:1px solid rgba(71,49,28,0.15);border-radius:999px;padding:2px;background:rgba(255,255,255,0.6)}
+    .lang-switch a{font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:999px;color:#7d6d60}
+    .lang-switch a.is-active{background:#1a2e22;color:#fff}
     .container{max-width:840px;margin:0 auto;padding:0 24px}
     .hero{padding:64px 0 48px;text-align:center}
     .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
@@ -7135,15 +7214,21 @@ function renderCertificatesPage(site) {
   <header class="topbar">
     <div class="topbar__inner">
       <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/" class="topbar__back">← На главную</a>
+      <div class="topbar__right">
+        <span class="lang-switch">
+          <a href="/certificates" class="${ro ? "" : "is-active"}">RU</a>
+          <a href="/certificates?lang=ro" class="${ro ? "is-active" : ""}">RO</a>
+        </span>
+        <a href="/${ro ? "?lang=ro" : ""}" class="topbar__back">${t.back}</a>
+      </div>
     </div>
   </header>
   <main>
     <div class="container">
       <div class="hero">
-        <p class="hero__kicker">Подарочные сертификаты</p>
-        <h1 class="hero__title">Подарите заботу о теле</h1>
-        <p class="hero__subtitle">Сертификат на массаж — подарок который помогает восстановиться, снять напряжение и почувствовать себя лучше. Подходит для любого повода.</p>
+        <p class="hero__kicker">${t.kicker}</p>
+        <h1 class="hero__title">${t.heroTitle}</h1>
+        <p class="hero__subtitle">${t.heroSub}</p>
       </div>
 
       <div class="amounts">
@@ -7154,49 +7239,50 @@ function renderCertificatesPage(site) {
       </div>
       <div class="amount-custom">
         <div>
-          <div class="amount-custom__text">Любая сумма — на ваш выбор</div>
-          <div class="amount-custom__sub">Можем оформить сертификат на любой номинал</div>
+          <div class="amount-custom__text">${t.anySum}</div>
+          <div class="amount-custom__sub">${t.anySumSub}</div>
         </div>
-        <div class="amount-custom__hint">Уточните при заказе →</div>
+        <div class="amount-custom__hint">${t.anySumHint}</div>
       </div>
 
       <div class="how">
-        <div class="how__title">Как это работает</div>
+        <div class="how__title">${t.howTitle}</div>
         <div class="steps">
-          <div class="step"><div class="step__num">1</div><div class="step__text">Напишите нам — укажите имя получателя и желаемый номинал</div></div>
-          <div class="step"><div class="step__num">2</div><div class="step__text">Мы оформляем красивый сертификат с уникальным кодом и отправляем вам</div></div>
-          <div class="step"><div class="step__num">3</div><div class="step__text">Получатель записывается на удобное время и предъявляет код</div></div>
+          <div class="step"><div class="step__num">1</div><div class="step__text">${t.step1}</div></div>
+          <div class="step"><div class="step__num">2</div><div class="step__text">${t.step2}</div></div>
+          <div class="step"><div class="step__num">3</div><div class="step__text">${t.step3}</div></div>
         </div>
       </div>
 
       <div class="cta-block" id="orderForm" style="text-align:left;">
-        <div class="cta-block__title" style="text-align:center;">Заказать сертификат</div>
-        <div class="cta-block__sub" style="text-align:center;">Заполните форму — мы свяжемся для оплаты и оформим сертификат</div>
+        <div class="cta-block__title" style="text-align:center;">${t.orderTitle}</div>
+        <div class="cta-block__sub" style="text-align:center;">${t.orderSub}</div>
         <form id="giftForm" style="max-width:440px;margin:24px auto 0;display:grid;gap:14px;">
           <div>
-            <label style="display:block;font-size:0.82rem;color:rgba(255,255,255,0.7);margin-bottom:6px;">Сумма (MDL)</label>
+            <label style="display:block;font-size:0.82rem;color:rgba(255,255,255,0.7);margin-bottom:6px;">${t.amountLabel}</label>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
               ${[500,1000,1500,2000].map(v => `<button type="button" onclick="setAmount(${v})" style="flex:1;min-width:64px;padding:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;">${v}</button>`).join("")}
             </div>
             <input type="number" id="gAmount" min="100" max="100000" step="50" value="1000" required
               style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:1rem;">
           </div>
-          <input type="text" id="gRecipient" placeholder="Имя получателя (необязательно)" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
-          <input type="text" id="gName" placeholder="Ваше имя *" required style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
-          <input type="tel" id="gPhone" placeholder="Ваш телефон *" required style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
-          <input type="email" id="gEmail" placeholder="Email (необязательно)" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
-          <textarea id="gMessage" rows="2" placeholder="Пожелание получателю (необязательно)" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;resize:vertical;"></textarea>
-          <button type="submit" id="gSubmit" style="padding:14px;background:#b36d2c;color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;">Оформить заказ</button>
+          <input type="text" id="gRecipient" placeholder="${t.phRecipient}" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <input type="text" id="gName" placeholder="${t.phName}" required style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <input type="tel" id="gPhone" placeholder="${t.phPhone}" required style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <input type="email" id="gEmail" placeholder="${t.phEmail}" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;">
+          <textarea id="gMessage" rows="2" placeholder="${t.phMessage}" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-family:inherit;font-size:0.95rem;resize:vertical;"></textarea>
+          <button type="submit" id="gSubmit" style="padding:14px;background:#b36d2c;color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;">${t.submit}</button>
           <p id="gMsg" style="text-align:center;font-size:0.85rem;margin:0;min-height:1em;"></p>
         </form>
         <p style="text-align:center;font-size:0.82rem;color:rgba(255,255,255,0.55);margin-top:18px;">
-          Или напрямую: <a href="tel:${escapeHtml(phone)}" style="color:#fff;font-weight:600;">позвонить</a>${telegram ? ` · <a href="https://t.me/${escapeHtml(telegram.replace("@", ""))}" style="color:#fff;font-weight:600;">Telegram</a>` : ""}
+          ${t.orDirect} <a href="tel:${escapeHtml(phone)}" style="color:#fff;font-weight:600;">${t.callWord}</a>${telegram ? ` · <a href="https://t.me/${escapeHtml(telegram.replace("@", ""))}" style="color:#fff;font-weight:600;">Telegram</a>` : ""}
         </p>
       </div>
     </div>
   </main>
-  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · ${t.city}</p></footer>
   <script>
+    var T = ${JSON.stringify({ sending: t.jsSending, fail: t.jsFail, submit: t.jsSubmit, doneTitle: t.jsDoneTitle, doneText: t.jsDoneText, netErr: t.jsNetErr })};
     function setAmount(v){ document.getElementById("gAmount").value = v; }
     document.getElementById("giftForm").addEventListener("submit", async function(e){
       e.preventDefault();
@@ -7209,13 +7295,13 @@ function renderCertificatesPage(site) {
         buyerEmail: document.getElementById("gEmail").value.trim(),
         message: document.getElementById("gMessage").value.trim()
       };
-      btn.disabled = true; btn.textContent = "Отправляем…"; msg.textContent = "";
+      btn.disabled = true; btn.textContent = T.sending; msg.textContent = "";
       try {
         var res = await fetch("/api/gift-certificate", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) });
         var data = await res.json().catch(function(){return {};});
-        if (!res.ok) { msg.style.color = "#ffb4a8"; msg.textContent = data.message || "Не удалось отправить заявку."; btn.disabled = false; btn.textContent = "Оформить заказ"; return; }
-        document.getElementById("orderForm").innerHTML = '<div style="text-align:center;padding:24px 8px;"><p style="font-size:2.6rem;margin:0;">🎁</p><h2 style="font-family:\\'Cormorant Garamond\\',serif;color:#fff;font-size:1.7rem;margin:10px 0;">Заявка принята!</h2><p style="color:rgba(255,255,255,0.75);font-size:0.95rem;">Мы свяжемся с вами в ближайшее время — согласуем оплату и оформим сертификат.</p></div>';
-      } catch (err) { msg.style.color = "#ffb4a8"; msg.textContent = "Ошибка сети. Попробуйте ещё раз."; btn.disabled = false; btn.textContent = "Оформить заказ"; }
+        if (!res.ok) { msg.style.color = "#ffb4a8"; msg.textContent = data.message || T.fail; btn.disabled = false; btn.textContent = T.submit; return; }
+        document.getElementById("orderForm").innerHTML = '<div style="text-align:center;padding:24px 8px;"><p style="font-size:2.6rem;margin:0;">🎁</p><h2 style="font-family:\\'Cormorant Garamond\\',serif;color:#fff;font-size:1.7rem;margin:10px 0;">' + T.doneTitle + '</h2><p style="color:rgba(255,255,255,0.75);font-size:0.95rem;">' + T.doneText + '</p></div>';
+      } catch (err) { msg.style.color = "#ffb4a8"; msg.textContent = T.netErr; btn.disabled = false; btn.textContent = T.submit; }
     });
   </script>
 </body>
@@ -7609,7 +7695,8 @@ function createServer() {
 
       if (urlObject.pathname === "/certificates" || urlObject.pathname === "/certificates/") {
         const site = await readJson("site.json").catch(() => ({}));
-        const html = renderCertificatesPage(site);
+        const certLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderCertificatesPage(site, certLang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
