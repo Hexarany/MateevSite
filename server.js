@@ -7250,9 +7250,11 @@ function renderMaterialPage(material) {
   h1{font-size:1.9rem;color:#1a2e22;margin:6px 0 4px;line-height:1.2}
   .meta{color:#8a7a6c;font-size:.9rem;margin-bottom:24px}
   .content h1{font-size:1.6rem;margin:32px 0 10px}
-  .content h2{font-size:1.35rem;color:#1a2e22;border-bottom:2px solid #b36d2c;padding-bottom:4px;margin:28px 0 12px}
-  .content h3{font-size:1.05rem;color:#6b4a1f;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.03em}
+  .content h2{font-size:1.4rem;color:#1a2e22;border-bottom:2px solid #b36d2c;padding-bottom:4px;margin:30px 0 12px}
+  .content h3{font-size:1.12rem;color:#6b4a1f;margin:20px 0 6px}
   .content p{margin:10px 0}
+  .content ul,.content ol{margin:10px 0 14px;padding-left:22px}
+  .content li{margin:4px 0}
   .content ul,.content ol{margin:8px 0 12px;padding-left:22px}
   .content li{margin:3px 0}
   .content strong{color:#1a2e22}
@@ -7543,31 +7545,41 @@ function parseMarkdown(text) {
   // Italic: *text*
   s = s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
 
-  const blocks = s.split(/\n{2,}/);
-  return blocks.map(block => {
-    block = block.trim();
-    if (!block) return "";
-    if (block.startsWith("#### ")) return `<h4 style="font-size:1rem;color:#1a2e22;margin:20px 0 8px;">${block.slice(5)}</h4>`;
-    if (block.startsWith("### ")) return `<h3 style="font-family:'Georgia',serif;font-size:1.3rem;color:#1a2e22;margin:28px 0 10px;">${block.slice(4)}</h3>`;
-    if (block.startsWith("## ")) return `<h2 style="font-family:'Georgia',serif;font-size:1.6rem;color:#1a2e22;margin:36px 0 12px;">${block.slice(3)}</h2>`;
-    if (block.startsWith("# ")) return `<h1 style="font-family:'Georgia',serif;font-size:2rem;color:#1a2e22;margin:40px 0 14px;">${block.slice(2)}</h1>`;
-    if (block === "---" || block === "***") return '<hr style="border:none;border-top:1px solid rgba(71,49,28,0.15);margin:36px 0;">';
-    if (block.includes("<figure")) return block;
-    if (block.match(/^- /m)) {
-      const items = block.split("\n").filter(l => l.startsWith("- "))
-        .map(l => `<li style="margin-bottom:6px;">${l.slice(2)}</li>`).join("");
-      return `<ul style="padding-left:24px;margin:16px 0;">${items}</ul>`;
+  // Построчный разбор: заголовки/списки/цитаты/абзацы не требуют пустых строк между собой
+  const lines = s.split("\n");
+  const out = [];
+  let para = [];      // накопленные строки абзаца
+  let list = null;    // { type: "ul"|"ol", items: [] }
+  let quote = [];     // строки цитаты
+  const flushPara = () => { if (para.length) { out.push(`<p style="margin-bottom:16px;">${para.join("<br>")}</p>`); para = []; } };
+  const flushList = () => {
+    if (list) {
+      const tag = list.type;
+      out.push(`<${tag} style="padding-left:24px;margin:14px 0;">${list.items.map(i => `<li style="margin-bottom:6px;">${i}</li>`).join("")}</${tag}>`);
+      list = null;
     }
-    if (block.match(/^\d+\. /m)) {
-      const items = block.split("\n").filter(l => l.match(/^\d+\. /))
-        .map(l => `<li style="margin-bottom:6px;">${l.replace(/^\d+\. /,"")}</li>`).join("");
-      return `<ol style="padding-left:24px;margin:16px 0;">${items}</ol>`;
-    }
-    if (block.startsWith("&gt; ")) {
-      return `<blockquote style="border-left:3px solid #b36d2c;padding:12px 20px;margin:24px 0;color:#5a4e45;font-style:italic;">${block.slice(5)}</blockquote>`;
-    }
-    return `<p style="margin-bottom:18px;">${block.replace(/\n/g,"<br>")}</p>`;
-  }).filter(Boolean).join("\n");
+  };
+  const flushQuote = () => { if (quote.length) { out.push(`<blockquote style="border-left:3px solid #b36d2c;padding:12px 20px;margin:20px 0;color:#5a4e45;font-style:italic;">${quote.join("<br>")}</blockquote>`); quote = []; } };
+  const flushAll = () => { flushPara(); flushList(); flushQuote(); };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { flushAll(); continue; }
+    let m;
+    if (line.startsWith("<figure") || line.startsWith("<img") || line.startsWith("<iframe")) { flushAll(); out.push(line); continue; }
+    if (line === "---" || line === "***" || line === "___") { flushAll(); out.push('<hr style="border:none;border-top:1px solid rgba(71,49,28,0.15);margin:32px 0;">'); continue; }
+    if (line.startsWith("#### ")) { flushAll(); out.push(`<h4 style="font-size:1rem;color:#1a2e22;margin:18px 0 6px;">${line.slice(5)}</h4>`); continue; }
+    if (line.startsWith("### ")) { flushAll(); out.push(`<h3 style="font-family:'Georgia',serif;font-weight:600;font-size:1.2rem;color:#6b4a1f;margin:22px 0 8px;">${line.slice(4)}</h3>`); continue; }
+    if (line.startsWith("## ")) { flushAll(); out.push(`<h2 style="font-family:'Georgia',serif;font-size:1.5rem;color:#1a2e22;margin:32px 0 10px;">${line.slice(3)}</h2>`); continue; }
+    if (line.startsWith("# ")) { flushAll(); out.push(`<h1 style="font-family:'Georgia',serif;font-size:1.9rem;color:#1a2e22;margin:36px 0 12px;">${line.slice(2)}</h1>`); continue; }
+    if (line.startsWith("- ") || line.startsWith("* ")) { flushPara(); flushQuote(); if (!list || list.type !== "ul") { flushList(); list = { type: "ul", items: [] }; } list.items.push(line.slice(2)); continue; }
+    if ((m = line.match(/^(\d+)\.\s+(.*)/))) { flushPara(); flushQuote(); if (!list || list.type !== "ol") { flushList(); list = { type: "ol", items: [] }; } list.items.push(m[2]); continue; }
+    if (line.startsWith("&gt; ")) { flushPara(); flushList(); quote.push(line.slice(5)); continue; }
+    // обычная строка абзаца
+    flushList(); flushQuote(); para.push(line);
+  }
+  flushAll();
+  return out.filter(Boolean).join("\n");
 }
 
 function stripMarkdown(text) {
