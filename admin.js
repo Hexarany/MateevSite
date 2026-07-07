@@ -6061,7 +6061,30 @@ function initMaterials() {
   document.getElementById("matCancelBtn")?.addEventListener("click", () => { document.getElementById("matEditor").style.display = "none"; });
   document.getElementById("matSaveBtn")?.addEventListener("click", saveMaterial);
   document.getElementById("matAiBtn")?.addEventListener("click", matAiDraft);
+  document.getElementById("matImgInput")?.addEventListener("change", matUploadImages);
   document.getElementById("matList")?.addEventListener("click", handleMatListClick);
+}
+
+async function matUploadImages(ev) {
+  const files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  const st = document.getElementById("matAiStatus");
+  const ta = document.getElementById("matContent");
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.size > 40 * 1024 * 1024) { showToast(`${file.name}: слишком большой.`); continue; }
+    st.textContent = `Загружаю изображение ${i + 1}/${files.length}…`;
+    try {
+      const base64 = await compressImageFile(file);
+      const data = await fetchJson("/api/admin/materials/upload", { method: "POST", body: JSON.stringify({ photo: base64 }) });
+      const snippet = `\n\n![подпись к фото](${data.url})\n\n`;
+      // вставляем в позицию курсора
+      const pos = ta.selectionStart ?? ta.value.length;
+      ta.value = ta.value.slice(0, pos) + snippet + ta.value.slice(pos);
+    } catch (e) { showToast(e.message || `Ошибка загрузки ${file.name}.`, "error"); }
+  }
+  st.textContent = "Изображение вставлено — замени «подпись к фото» на свою.";
+  ev.target.value = "";
 }
 
 async function loadMaterials() {

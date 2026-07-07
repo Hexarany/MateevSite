@@ -40,6 +40,7 @@ const UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "specialists");
 const BLOG_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "blog");
 const GALLERY_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "gallery");
 const CREDENTIALS_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "credentials");
+const MATERIALS_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "materials");
 const ADMIN_SESSION_COOKIE_NAME = "mateev_admin_session";
 const ADMIN_SESSION_TTL_HOURS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_HOURS) || 12);
 const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000;
@@ -873,7 +874,7 @@ function sendText(response, statusCode, message) {
 async function serveStaticFile(requestPath, response) {
   if (requestPath.startsWith("/uploads/")) {
     const safeName = path.basename(requestPath);
-    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : requestPath.startsWith("/uploads/credentials/") ? "credentials" : "specialists";
+    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : requestPath.startsWith("/uploads/credentials/") ? "credentials" : requestPath.startsWith("/uploads/materials/") ? "materials" : "specialists";
     const fullPath = path.join(ROOT_DIR, "uploads", subDir, safeName);
     try {
       const fileBuffer = await fs.readFile(fullPath);
@@ -5112,6 +5113,23 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     const reply = await callAnthropic(AI_MATERIAL_PROMPT, [{ role: "user", content: userMsg }], 4000);
     if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
     sendJson(response, 200, { reply });
+    return;
+  }
+  // POST /api/admin/materials/upload — загрузка картинки для методички
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/materials/upload") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 10 * 1024 * 1024);
+    const photo = payload.photo;
+    if (!photo || typeof photo !== "string") { sendJson(response, 400, { message: "Поле photo обязательно." }); return; }
+    const match = photo.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/);
+    if (!match) { sendJson(response, 400, { message: "Неверный формат. Поддерживаются JPEG, PNG, WebP." }); return; }
+    const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+    const buffer = Buffer.from(match[3], "base64");
+    if (buffer.length > 8 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой. Максимум 8MB." }); return; }
+    await fs.mkdir(MATERIALS_UPLOADS_DIR, { recursive: true });
+    const filename = `mat-${crypto.randomUUID()}.${ext}`;
+    await fs.writeFile(path.join(MATERIALS_UPLOADS_DIR, filename), buffer);
+    sendJson(response, 201, { ok: true, url: `/uploads/materials/${filename}` });
     return;
   }
 
