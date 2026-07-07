@@ -7258,9 +7258,19 @@ function renderMaterialPage(material) {
   .content ul,.content ol{margin:8px 0 12px;padding-left:22px}
   .content li{margin:3px 0}
   .content strong{color:#1a2e22}
+  .content figure{margin:16px 0;text-align:center;break-inside:avoid;page-break-inside:avoid}
+  .content img{max-width:100%;height:auto;max-height:60vh;border-radius:10px;display:block;margin:0 auto}
+  .content figcaption{font-size:.85rem;color:#7d6d60;margin-top:6px}
   .print-btn{background:#b36d2c;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit}
   .foot{margin-top:40px;border-top:1px solid #ddd;padding-top:12px;color:#8a7a6c;font-size:.8rem}
-  @media print{.print-btn,.topbar__back{display:none}body{background:#fff}.wrap{max-width:none;padding:0}}
+  @media print{
+    .print-btn,.topbar__back{display:none}
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .content h2,.content h3{break-after:avoid;page-break-after:avoid}
+    .content figure{break-inside:avoid;page-break-inside:avoid;margin:10px 0}
+    .content img{max-height:15cm}
+  }
 </style>
 </head>
 <body>
@@ -7534,7 +7544,7 @@ function parseMarkdown(text) {
   // Images: ![alt](url)
   s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(_, alt, src) {
     var caption = alt ? '<figcaption style="font-size:0.82rem;color:#7d6d60;margin-top:8px;text-align:center;">' + alt + '</figcaption>' : '';
-    return '<figure style="margin:28px 0;"><img src="' + src + '" alt="' + alt + '" style="max-width:100%;border-radius:14px;display:block;">' + caption + '</figure>';
+    return '<figure style="margin:18px 0;text-align:center;page-break-inside:avoid;break-inside:avoid;"><img src="' + src + '" alt="' + alt + '" style="max-width:100%;height:auto;border-radius:12px;display:block;margin:0 auto;">' + caption + '</figure>';
   });
   // Links: [text](url)
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener" style="color:#6b8d6b;">$1</a>');
