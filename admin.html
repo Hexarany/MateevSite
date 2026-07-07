@@ -234,6 +234,24 @@
               </form>
               <div id="aiReviewOut" style="margin-top:14px;"></div>
             </article>
+
+            <article class="admin-widget" style="margin-top:18px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Клинический разбор</p><h3 class="admin-widget__title">🩺 Диагнозы и снимки</h3></div></div>
+              <p class="admin-hint" style="margin:0 0 10px;">Расшифровка диагнозов и медицинских терминов + ориентировка по снимкам (рентген/КТ/МРТ, заключения). Главное — тактика для массажа: можно / нельзя / осторожно, красные флаги. <b>Это не диагноз и не заменяет врача.</b></p>
+              <form id="aiMedForm" class="admin-form-stack">
+                <label class="field field--full"><span>Диагноз / термин / вопрос (можно без текста, если есть снимок)</span><textarea id="aiMedText" rows="2" placeholder="Напр.: протрузия L4–L5, остеохондроз — можно ли массаж и что учесть?"></textarea></label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                  <label class="button button--ghost button--mini" style="cursor:pointer;margin:0;">
+                    📎 Прикрепить снимок/заключение
+                    <input type="file" id="aiMedImg" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                  </label>
+                  <span id="aiMedImgName" style="font-size:0.82rem;color:var(--muted);"></span>
+                </div>
+                <div id="aiMedPreview" style="display:none;"><img id="aiMedPreviewImg" alt="" style="max-height:140px;border-radius:10px;border:1px solid var(--line);"></div>
+                <button type="submit" class="button button--secondary">Разобрать</button>
+              </form>
+              <div id="aiMedOut" style="margin-top:14px;"></div>
+            </article>
           </section>
 
           <!-- Блокнот -->

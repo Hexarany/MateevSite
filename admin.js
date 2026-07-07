@@ -536,6 +536,8 @@ function bindEvents() {
   document.getElementById("aiContentForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateContent(); });
   document.getElementById("aiGoogleForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateGooglePost(); });
   document.getElementById("aiReviewForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateReviewReply(); });
+  document.getElementById("aiMedForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiMedicalAnalyze(); });
+  document.getElementById("aiMedImg")?.addEventListener("change", aiMedPickImage);
   document.getElementById("diaryAiIdeas")?.addEventListener("click", diaryAiIdeas);
   document.getElementById("diaryAiDraft")?.addEventListener("click", diaryAiDraft);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
@@ -2047,6 +2049,34 @@ async function aiGenerateGooglePost() {
     document.getElementById("aiGCopy").addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(postText); showToast("Текст поста скопирован.", "success"); } catch {}
     });
+  } catch (e) {
+    out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
+  }
+}
+
+let _aiMedImage = "";
+async function aiMedPickImage(ev) {
+  const file = (ev.target.files || [])[0];
+  if (!file) return;
+  if (file.size > 40 * 1024 * 1024) { showToast("Файл слишком большой.", "info"); return; }
+  try {
+    _aiMedImage = await compressImageFile(file, { maxDim: 1568, quality: 0.85 });
+    document.getElementById("aiMedImgName").textContent = file.name;
+    const prev = document.getElementById("aiMedPreview");
+    document.getElementById("aiMedPreviewImg").src = _aiMedImage;
+    prev.style.display = "";
+  } catch { showToast("Не удалось прочитать изображение.", "error"); }
+  ev.target.value = "";
+}
+
+async function aiMedicalAnalyze() {
+  const text = document.getElementById("aiMedText").value.trim();
+  if (!text && !_aiMedImage) { showToast("Введите диагноз или прикрепите снимок.", "info"); return; }
+  const out = document.getElementById("aiMedOut");
+  out.innerHTML = '<div class="empty-state" style="padding:12px 0;">Анализирую… (может занять до минуты)</div>';
+  try {
+    const data = await fetchJson("/api/admin/ai-medical", { method: "POST", body: JSON.stringify({ text, image: _aiMedImage }) });
+    aiResultBlock(out, data.reply);
   } catch (e) {
     out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
   }
