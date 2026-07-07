@@ -7231,8 +7231,20 @@ function renderMaterialPage(material) {
 <style>body{font-family:'Segoe UI',Arial,sans-serif;background:#f7f0e6;color:#241c17;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}</style></head>
 <body><div><h1 style="color:#1a2e22;">Материал недоступен</h1><p style="color:#7d6d60;">Ссылка неверна или доступ отозван. Обратитесь к преподавателю.</p></div></body></html>`;
   }
-  const body = parseMarkdown(material.content || "");
+  let body = parseMarkdown(material.content || "");
+  // Оглавление: проставляем id заголовкам ## и собираем список
+  let secIdx = 0;
+  const toc = [];
+  body = body.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/g, (m, attrs, inner) => {
+    const id = `sec-${secIdx++}`;
+    toc.push({ id, label: inner.replace(/<[^>]+>/g, "").trim() });
+    return `<h2${attrs} id="${id}">${inner}</h2>`;
+  });
+  const tocHtml = toc.length > 1
+    ? `<nav class="toc"><p class="toc__title">Содержание</p><ol>${toc.map(t => `<li><a href="#${t.id}">${escapeHtml(t.label)}</a></li>`).join("")}</ol></nav>`
+    : "";
   const meta = [material.date, material.topics].filter(Boolean).join(" · ");
+  const wm = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='340'%20height='200'%3E%3Ctext%20x='20'%20y='120'%20transform='rotate(-28%20170%20100)'%20fill='%23b36d2c'%20font-family='Arial'%20font-size='22'%3EMateev%20Spa%20Studio%3C/text%3E%3C/svg%3E";
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7240,51 +7252,57 @@ function renderMaterialPage(material) {
 <meta name="robots" content="noindex, nofollow">
 <title>${escapeHtml(material.title)} — Mateev Spa Studio</title>
 <style>
-  @page { size: A4; margin: 18mm 16mm; }
   *{box-sizing:border-box;margin:0;padding:0}
+  html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#f7f0e6;color:#241c17;line-height:1.6;font-size:16px}
-  .wrap{max-width:820px;margin:0 auto;padding:32px 24px 64px}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:5;background-image:url("${wm}");background-repeat:repeat;opacity:.05}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 24px 64px;position:relative;z-index:1}
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
   .brand{font-weight:700;color:#1a2e22}
+  .ro-badge{font-size:.78rem;font-weight:700;color:#6b4a1f;background:#f0e6d6;border:1px solid #dcc9a6;border-radius:999px;padding:5px 12px}
   .kicker{color:#b36d2c;font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
   h1{font-size:1.9rem;color:#1a2e22;margin:6px 0 4px;line-height:1.2}
   .meta{color:#8a7a6c;font-size:.9rem;margin-bottom:24px}
+  .toc{background:#fffdf9;border:1px solid #e3d8c6;border-radius:14px;padding:16px 20px;margin:8px 0 28px}
+  .toc__title{font-weight:700;color:#1a2e22;margin-bottom:8px;font-size:.95rem}
+  .toc ol{margin:0;padding-left:20px}
+  .toc li{margin:4px 0}
+  .toc a{color:#6b8d6b;text-decoration:none;font-weight:600}
+  .toc a:hover{text-decoration:underline}
+  html{scroll-behavior:smooth}
   .content h1{font-size:1.6rem;margin:32px 0 10px}
-  .content h2{font-size:1.4rem;color:#1a2e22;border-bottom:2px solid #b36d2c;padding-bottom:4px;margin:30px 0 12px}
+  .content h2{font-size:1.4rem;color:#1a2e22;border-bottom:2px solid #b36d2c;padding-bottom:4px;margin:30px 0 12px;scroll-margin-top:16px}
   .content h3{font-size:1.12rem;color:#6b4a1f;margin:20px 0 6px}
   .content p{margin:10px 0}
-  .content ul,.content ol{margin:10px 0 14px;padding-left:22px}
-  .content li{margin:4px 0}
   .content ul,.content ol{margin:8px 0 12px;padding-left:22px}
   .content li{margin:3px 0}
   .content strong{color:#1a2e22}
-  .content figure{margin:16px 0;text-align:center;break-inside:avoid;page-break-inside:avoid}
-  .content img{max-width:100%;height:auto;max-height:60vh;border-radius:10px;display:block;margin:0 auto}
+  .content figure{margin:16px 0;text-align:center;break-inside:avoid}
+  .content img{max-width:100%;height:auto;max-height:60vh;border-radius:10px;display:block;margin:0 auto;pointer-events:none}
   .content figcaption{font-size:.85rem;color:#7d6d60;margin-top:6px}
-  .print-btn{background:#b36d2c;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit}
   .foot{margin-top:40px;border-top:1px solid #ddd;padding-top:12px;color:#8a7a6c;font-size:.8rem}
-  @media print{
-    .print-btn,.topbar__back{display:none}
-    body{background:#fff}
-    .wrap{max-width:none;padding:0}
-    .content h2,.content h3{break-after:avoid;page-break-after:avoid}
-    .content figure{break-inside:avoid;page-break-inside:avoid;margin:10px 0}
-    .content img{max-height:15cm}
-  }
+  @media print{ html{display:none!important} }
 </style>
 </head>
-<body>
+<body oncontextmenu="return false" oncopy="return false" oncut="return false" ondragstart="return false">
 <div class="wrap">
   <div class="topbar">
     <span class="brand">Mateev Spa Studio · Материалы семинара</span>
-    <button class="print-btn" onclick="window.print()">🖨 Скачать PDF</button>
+    <span class="ro-badge">🔒 Только для чтения</span>
   </div>
   <p class="kicker">Методичка</p>
   <h1>${escapeHtml(material.title)}</h1>
   ${meta ? `<p class="meta">${escapeHtml(meta)}</p>` : ""}
+  ${tocHtml}
   <div class="content">${body}</div>
-  <div class="foot">© ${new Date().getFullYear()} Mateev Spa Studio. Материал для участников семинара. Распространение без согласия автора не допускается. Информация носит образовательный характер и не заменяет медицинскую консультацию.</div>
+  <div class="foot">© ${new Date().getFullYear()} Mateev Spa Studio. Материал для участников семинара. Копирование и распространение без согласия автора не допускается. Информация носит образовательный характер и не заменяет медицинскую консультацию.</div>
 </div>
+<script>
+  document.addEventListener('keydown', function(e){
+    var k = (e.key || '').toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && (k === 'p' || k === 's' || k === 'c' || k === 'u')) { e.preventDefault(); }
+  });
+</script>
 </body>
 </html>`;
 }
