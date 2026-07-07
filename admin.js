@@ -1608,6 +1608,7 @@ async function loadAdminData() {
   initBackupWidget();
   initFinancialReport();
   loadCredentials();
+  initMaterials();
   // Peak hours rendered after admin data loads
   initPeakHours();
   try {
@@ -6048,6 +6049,127 @@ let _galleryItems = [];
 
 let _credItems = [];
 let _credBound = false;
+// ─── Материалы семинаров ───────────────────────────────────────────────────
+let _matItems = [];
+let _matBound = false;
+
+function initMaterials() {
+  loadMaterials();
+  if (_matBound) return;
+  _matBound = true;
+  document.getElementById("matNewBtn")?.addEventListener("click", () => openMatEditor(null));
+  document.getElementById("matCancelBtn")?.addEventListener("click", () => { document.getElementById("matEditor").style.display = "none"; });
+  document.getElementById("matSaveBtn")?.addEventListener("click", saveMaterial);
+  document.getElementById("matAiBtn")?.addEventListener("click", matAiDraft);
+  document.getElementById("matList")?.addEventListener("click", handleMatListClick);
+}
+
+async function loadMaterials() {
+  try {
+    const data = await fetchJson("/api/admin/materials");
+    _matItems = data.materials || [];
+    renderMatList();
+  } catch (e) { console.error("loadMaterials", e); }
+}
+
+function matLink(token) { return `${location.origin}/seminar?token=${token}`; }
+
+function renderMatList() {
+  const list = document.getElementById("matList");
+  const empty = document.getElementById("matEmpty");
+  if (!list) return;
+  if (!_matItems.length) { list.innerHTML = ""; if (empty) empty.style.display = ""; return; }
+  if (empty) empty.style.display = "none";
+  list.innerHTML = _matItems.map(m => `
+    <div class="admin-widget" style="padding:16px 18px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="min-width:200px;flex:1;">
+          <div style="font-weight:700;color:var(--ink);">${escapeHtml(m.title)}</div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-top:2px;">${escapeHtml([m.date, m.topics].filter(Boolean).join(" · ")) || "—"}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="button button--ghost button--mini" data-mat-open="${m.id}">✏️ Изменить</button>
+          <button class="button button--ghost button--mini" data-mat-copy="${m.id}">🔗 Ссылка ученикам</button>
+          <a class="button button--ghost button--mini" href="${matLink(m.token)}" target="_blank" rel="noopener">👁 Открыть</a>
+          <button class="button button--ghost button--mini" data-mat-reset="${m.id}">♻️ Новая ссылка</button>
+          <button class="button button--ghost button--mini" data-mat-del="${m.id}" style="color:#c0392b;">🗑</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function openMatEditor(m) {
+  document.getElementById("matEditor").style.display = "";
+  document.getElementById("matEditorTitle").textContent = m ? "Редактирование методички" : "Новая методичка";
+  document.getElementById("matId").value = m ? m.id : "";
+  document.getElementById("matTitle").value = m ? m.title : "";
+  document.getElementById("matDate").value = m ? (m.date || "") : "";
+  document.getElementById("matTopics").value = m ? (m.topics || "") : "";
+  document.getElementById("matContent").value = m ? (m.content || "") : "";
+  document.getElementById("matAiStatus").textContent = "";
+  document.getElementById("matEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function saveMaterial() {
+  const id = document.getElementById("matId").value;
+  const body = {
+    title: document.getElementById("matTitle").value.trim(),
+    date: document.getElementById("matDate").value.trim(),
+    topics: document.getElementById("matTopics").value.trim(),
+    content: document.getElementById("matContent").value
+  };
+  if (!body.title) { showToast("Укажите название.", "info"); return; }
+  try {
+    if (id) {
+      await fetchJson(`/api/admin/materials/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+    } else {
+      await fetchJson("/api/admin/materials", { method: "POST", body: JSON.stringify(body) });
+    }
+    document.getElementById("matEditor").style.display = "none";
+    await loadMaterials();
+    showToast("Сохранено.", "success");
+  } catch (e) { showToast(e.message || "Ошибка сохранения.", "error"); }
+}
+
+async function matAiDraft() {
+  const topics = document.getElementById("matTopics").value.trim();
+  if (!topics) { showToast("Сначала укажите зоны/темы.", "info"); return; }
+  const st = document.getElementById("matAiStatus");
+  st.textContent = "Генерирую черновик… (может занять до минуты)";
+  try {
+    const data = await fetchJson("/api/admin/ai-material", { method: "POST", body: JSON.stringify({ topics }) });
+    const cur = document.getElementById("matContent");
+    cur.value = cur.value.trim() ? cur.value + "\n\n" + data.reply : data.reply;
+    if (!document.getElementById("matTitle").value.trim()) document.getElementById("matTitle").value = `Семинар: ${topics}`;
+    st.textContent = "Черновик вставлен — проверь и поправь под себя.";
+  } catch (e) { st.textContent = e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY."; }
+}
+
+async function handleMatListClick(e) {
+  const open = e.target.closest("[data-mat-open]");
+  const copy = e.target.closest("[data-mat-copy]");
+  const reset = e.target.closest("[data-mat-reset]");
+  const del = e.target.closest("[data-mat-del]");
+  if (open) { const m = _matItems.find(x => x.id === open.dataset.matOpen); if (m) openMatEditor(m); return; }
+  if (copy) {
+    const m = _matItems.find(x => x.id === copy.dataset.matCopy);
+    if (m) { try { await navigator.clipboard.writeText(matLink(m.token)); showToast("Ссылка для учеников скопирована.", "success"); } catch {} }
+    return;
+  }
+  if (reset) {
+    if (!confirm("Сгенерировать новую ссылку? Старая перестанет работать у всех, кому вы её давали.")) return;
+    try { await fetchJson(`/api/admin/materials/${reset.dataset.matReset}?reset=1`, { method: "PATCH" }); await loadMaterials(); showToast("Новая ссылка создана.", "success"); }
+    catch (er) { showToast(er.message, "error"); }
+    return;
+  }
+  if (del) {
+    if (!confirm("Удалить методичку? Ссылка перестанет работать.")) return;
+    try { await fetchJson(`/api/admin/materials/${del.dataset.matDel}`, { method: "DELETE" }); await loadMaterials(); showToast("Удалено.", "success"); }
+    catch (er) { showToast(er.message, "error"); }
+    return;
+  }
+}
+
 async function loadCredentials() {
   try {
     const data = await fetchJson("/api/admin/credentials");

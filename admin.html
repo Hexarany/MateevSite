@@ -66,6 +66,7 @@
         <a href="#intakes" data-section="intakes">🩺 Анкеты пациентов</a>
         <a href="#gallery" data-section="gallery">🖼️ Фотогалерея</a>
         <a href="#credentials" data-section="credentials">🎓 Мои дипломы</a>
+        <a href="#materials" data-section="materials">📚 Материалы семинаров</a>
         <a href="#broadcast" data-section="broadcast">📣 Рассылка</a>
         <a href="#diary" data-section="diary">✍️ Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">⭐ Отзывы на сайте</a>
@@ -1258,6 +1259,41 @@
             <div id="credUploadProgress" style="display:none;background:rgba(26,46,34,0.05);border-radius:12px;padding:12px 18px;margin-bottom:16px;font-size:0.85rem;">Загружаем... <span id="credUploadStatus"></span></div>
             <div id="credGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;"></div>
             <p id="credEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Дипломов пока нет. Нажмите «+ Загрузить диплом».</p>
+          </section>
+
+          <!-- ═══════════════ МАТЕРИАЛЫ СЕМИНАРОВ ═══════════════ -->
+          <section class="admin-section-block reveal" id="materials">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Школа · Приватно</p>
+                <h2 class="admin-section-block__title">Материалы семинаров</h2>
+              </div>
+              <button class="button button--secondary" id="matNewBtn" type="button">+ Новая методичка</button>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">Приватная библиотека теории. У каждой методички — личная ссылка для учеников (публично в поиске её нет). Ученик открывает ссылку в браузере/телефоне и может скачать PDF. Можно сгенерировать черновик по темам через AI.</p>
+
+            <!-- Редактор -->
+            <div class="admin-widget" id="matEditor" style="display:none;padding:22px;margin-bottom:20px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Редактор</p><h3 class="admin-widget__title" id="matEditorTitle">Новая методичка</h3></div></div>
+              <input type="hidden" id="matId">
+              <div class="field-grid" style="margin-top:10px;">
+                <label class="field"><span>Название</span><input type="text" id="matTitle" placeholder="Напр.: Семинар: ШВЗ, живот, грудь, лицо"></label>
+                <label class="field"><span>Дата (необязательно)</span><input type="text" id="matDate" placeholder="Напр.: 8 июля 2026"></label>
+              </div>
+              <label class="field field--full" style="margin-top:12px;"><span>Зоны / темы (через запятую)</span><input type="text" id="matTopics" placeholder="ШВЗ, живот, грудь, лицо"></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
+                <button type="button" class="button button--ghost button--mini" id="matAiBtn">✨ AI-черновик по темам</button>
+                <span id="matAiStatus" style="font-size:0.82rem;color:var(--muted);align-self:center;"></span>
+              </div>
+              <label class="field field--full"><span>Содержание (Markdown: ## заголовки, - списки, **жирный**)</span><textarea id="matContent" rows="16" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:0.85rem;line-height:1.5;"></textarea></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                <button type="button" class="button button--secondary" id="matSaveBtn">Сохранить</button>
+                <button type="button" class="button button--ghost" id="matCancelBtn">Отмена</button>
+              </div>
+            </div>
+
+            <div id="matList" style="display:grid;gap:12px;"></div>
+            <p id="matEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Методичек пока нет. Нажмите «+ Новая методичка».</p>
           </section>
 
           <!-- ═══════════════ BROADCAST ═══════════════ -->
