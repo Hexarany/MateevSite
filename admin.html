@@ -207,6 +207,32 @@
               </form>
               <div id="aiContentOut" style="margin-top:14px;"></div>
             </article>
+
+            <article class="admin-widget" style="margin-top:18px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Google Профиль</p><h3 class="admin-widget__title">Пост для Google</h3></div></div>
+              <p class="admin-hint" style="margin:0 0 10px;">Короткий пост под формат Google Профиля — с локальными ключами и призывом. Регулярные посты поднимают «качество профиля» и позиции.</p>
+              <form id="aiGoogleForm" class="admin-form-stack">
+                <label class="field field--full"><span>Тема публикации</span><input type="text" id="aiGoogleTopic" placeholder="Напр.: спортивный массаж для восстановления после тренировок"></label>
+                <div class="field-grid">
+                  <label class="field"><span>Язык</span><select id="aiGoogleLang"><option value="ru">Русский</option><option value="ro">Румынский</option></select></label>
+                </div>
+                <button type="submit" class="button button--secondary">Сгенерировать пост</button>
+              </form>
+              <div id="aiGoogleOut" style="margin-top:14px;"></div>
+            </article>
+
+            <article class="admin-widget" style="margin-top:18px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Отзывы</p><h3 class="admin-widget__title">AI-ответ на отзыв</h3></div></div>
+              <p class="admin-hint" style="margin:0 0 10px;">Вставь текст отзыва — получишь тёплый персональный ответ на языке отзыва. Ответы на все отзывы улучшают рейтинг в Google.</p>
+              <form id="aiReviewForm" class="admin-form-stack">
+                <div class="field-grid">
+                  <label class="field"><span>Имя автора (необязательно)</span><input type="text" id="aiReviewAuthor" placeholder="Напр.: Lucia"></label>
+                </div>
+                <label class="field field--full"><span>Текст отзыва</span><textarea id="aiReviewText" rows="3" placeholder="Вставьте сюда отзыв клиента…"></textarea></label>
+                <button type="submit" class="button button--secondary">Сгенерировать ответ</button>
+              </form>
+              <div id="aiReviewOut" style="margin-top:14px;"></div>
+            </article>
           </section>
 
           <!-- Блокнот -->

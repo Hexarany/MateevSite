@@ -1227,6 +1227,28 @@ const AI_CONTENT_PROMPT = `Ты — SMM-копирайтер массажной 
 На запрос дай 2 варианта поста: у каждого цепляющая первая строка-крючок, компактный текст,
 эмодзи в меру и 5–7 релевантных хэштегов. Язык: {lang}.`;
 
+const AI_GOOGLE_POST_PROMPT = `Ты — SMM-специалист массажной студии Mateev Spa Studio (Кишинёв), пишешь публикации для Google Профиля компании (Google Business Profile).
+Формат Google-поста отличается от Instagram:
+- Объём 150–300 слов (максимум ~1500 знаков). Первая фраза — самая важная, она видна в превью.
+- Тон тёплый, экспертный, человечный — без канцелярита и «воды».
+- Обязательно вплети 1–2 локальных ключевых слова естественно: «массаж в Кишинёве», «masaj Chișinău», «спа Кишинёв» — но без спама.
+- В конце — понятный призыв к действию (записаться, позвонить, узнать подробнее).
+- Хэштеги НЕ нужны (в Google Профиле они не работают как в соцсетях).
+- Не выдумывай акции, цены или факты, которых нет в задании.
+Выдай ГОТОВЫЙ текст поста (одним вариантом), а после него с новой строки короткую подсказку в формате «Кнопка: <текст кнопки>» (например «Записаться» или «Подробнее»). Язык: {lang}.`;
+
+const AI_REVIEW_REPLY_PROMPT = `Ты — владелец массажной студии Mateev Spa Studio (Кишинёв), Денис Матиевич. Пишешь ответ на отзыв клиента в Google.
+Правила:
+- Отвечай на ЯЗЫКЕ отзыва (русский или румынский).
+- Обращайся к автору по имени, если оно указано.
+- Упомяни суть отзыва (конкретную проблему/результат, о котором пишет клиент) — коротко, своими словами.
+- Тон тёплый, искренний, благодарный, живой — как живой человек, а не шаблон. Без канцелярита.
+- 2–4 предложения. 1 уместный эмодзи максимум (например 🙏), можно без него.
+- Естественно вплети клиентский ключ, если уместно (массаж, восстановление) — но НЕ рекламно и не в каждый ответ.
+- Пригласи вернуться / пожелай хорошего.
+- Если отзыв негативный: без оправданий, с эмпатией, признай и предложи связаться и всё решить.
+Выдай ТОЛЬКО текст ответа, без пояснений и без кавычек.`;
+
 const AI_DIARY_PROMPT = `Ты — автор блога «Дневник практики» массажной студии Mateev Spa Studio (Кишинёв), практикующий массажист и преподаватель.
 Пиши экспертно, тепло и полезно про массаж, анатомию, восстановление и заботу о теле — простым живым языком, без «воды» и канцелярита.
 Это блог (не соцсети), хэштеги не нужны. Язык — русский.`;
@@ -4001,6 +4023,36 @@ async function routeApi(request, response, urlObject) {
     const langLabel = payload.lang === "ro" ? "румынском" : "русском";
     const system = AI_CONTENT_PROMPT.replace("{lang}", langLabel);
     const reply = await callAnthropic(system, [{ role: "user", content: `Тема: ${topic}. Формат: ${format}.` }], 900);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
+    return;
+  }
+
+  // POST /api/admin/ai-google-post — публикация для Google Профиля
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/ai-google-post") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const topic = sanitizeText(payload.topic || "").slice(0, 500);
+    if (!topic) { sendJson(response, 400, { message: "Укажите тему публикации." }); return; }
+    const langLabel = payload.lang === "ro" ? "румынском" : "русском";
+    const system = AI_GOOGLE_POST_PROMPT.replace("{lang}", langLabel);
+    const reply = await callAnthropic(system, [{ role: "user", content: `Тема публикации: ${topic}.` }], 700);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
+    return;
+  }
+
+  // POST /api/admin/ai-review-reply — ответ на отзыв клиента
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/ai-review-reply") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const review = sanitizeText(payload.review || "").slice(0, 1500);
+    if (!review) { sendJson(response, 400, { message: "Вставьте текст отзыва." }); return; }
+    const author = sanitizeText(payload.author || "").slice(0, 100);
+    const userMsg = (author ? `Автор отзыва: ${author}.\n` : "") + `Текст отзыва:\n${review}`;
+    const reply = await callAnthropic(AI_REVIEW_REPLY_PROMPT, [{ role: "user", content: userMsg }], 500);
     if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
     sendJson(response, 200, { reply });
     return;

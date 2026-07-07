@@ -534,6 +534,8 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-ai-quick]").forEach(b => b.addEventListener("click", () => aiAsstSend(b.dataset.aiQuick)));
   document.getElementById("aiContentForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateContent(); });
+  document.getElementById("aiGoogleForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateGooglePost(); });
+  document.getElementById("aiReviewForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateReviewReply(); });
   document.getElementById("diaryAiIdeas")?.addEventListener("click", diaryAiIdeas);
   document.getElementById("diaryAiDraft")?.addEventListener("click", diaryAiDraft);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
@@ -2008,6 +2010,46 @@ async function aiGenerateContent() {
     document.getElementById("aiCopyBtn").addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(data.reply); showToast("Текст скопирован.", "success"); } catch {}
     });
+  } catch (e) {
+    out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
+  }
+}
+
+function aiResultBlock(out, text) {
+  out.innerHTML = `<div style="background:#fffaf4;border:1px solid var(--line);border-radius:14px;padding:16px 18px;white-space:pre-wrap;font-size:0.92rem;line-height:1.55;">${escapeHtml(text)}</div>
+    <button type="button" class="button button--ghost button--mini" style="margin-top:8px;">📋 Скопировать</button>`;
+  out.querySelector("button").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(text); showToast("Текст скопирован.", "success"); } catch {}
+  });
+}
+
+async function aiGenerateGooglePost() {
+  const topic = document.getElementById("aiGoogleTopic").value.trim();
+  if (!topic) { showToast("Укажите тему публикации.", "info"); return; }
+  const out = document.getElementById("aiGoogleOut");
+  out.innerHTML = '<div class="empty-state" style="padding:12px 0;">Генерирую…</div>';
+  try {
+    const data = await fetchJson("/api/admin/ai-google-post", {
+      method: "POST",
+      body: JSON.stringify({ topic, lang: document.getElementById("aiGoogleLang").value })
+    });
+    aiResultBlock(out, data.reply);
+  } catch (e) {
+    out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
+  }
+}
+
+async function aiGenerateReviewReply() {
+  const review = document.getElementById("aiReviewText").value.trim();
+  if (!review) { showToast("Вставьте текст отзыва.", "info"); return; }
+  const out = document.getElementById("aiReviewOut");
+  out.innerHTML = '<div class="empty-state" style="padding:12px 0;">Генерирую ответ…</div>';
+  try {
+    const data = await fetchJson("/api/admin/ai-review-reply", {
+      method: "POST",
+      body: JSON.stringify({ review, author: document.getElementById("aiReviewAuthor").value.trim() })
+    });
+    aiResultBlock(out, data.reply);
   } catch (e) {
     out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
   }
