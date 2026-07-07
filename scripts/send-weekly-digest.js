@@ -71,10 +71,36 @@ async function main() {
   }
   if (!reply) { console.log("[weekly-digest] Пустой ответ AI (проверьте ANTHROPIC_API_KEY)."); return; }
 
+  // Готовый Google-пост на неделю — тема ротируется по номеру недели, чтобы не повторяться
+  const GOOGLE_TOPICS = [
+    "спортивный массаж для восстановления после тренировок",
+    "массаж при боли в спине и шее от сидячей работы",
+    "польза регулярного массажа для снятия стресса",
+    "лимфодренажный массаж — лёгкость и уменьшение отёчности",
+    "массаж как забота о себе: восстановление и энергия",
+    "подарочный сертификат на массаж — заботливый подарок",
+    "классический массаж для расслабления и улучшения сна",
+    "как массаж помогает при хронической усталости"
+  ];
+  const weekNo = Math.floor((Date.now() / 86400000 + 3) / 7); // ISO-ish номер недели
+  const topic = GOOGLE_TOPICS[weekNo % GOOGLE_TOPICS.length];
+  let googlePost = "";
+  try {
+    const res = await post(`${SITE_URL}/api/admin/ai-google-post`, { "x-admin-pin": ADMIN_PIN }, { topic, lang: "ru" });
+    googlePost = JSON.parse(res).reply || "";
+  } catch (err) {
+    console.error("[weekly-digest] Google-post failed:", err.message);
+  }
+
+  let text = `📊 Еженедельный дайджест\n\n${reply}`;
+  if (googlePost) {
+    text += `\n\n———\n📣 Готовый пост для Google на эту неделю (тема: ${topic}):\n\n${googlePost}\n\nСкопируй текст выше в Google Профиль → «Публикации», выбери подсказанную кнопку.`;
+  }
+
   try {
     await post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {}, {
       chat_id: TELEGRAM_CHAT_ID,
-      text: `📊 Еженедельный дайджест\n\n${reply}`
+      text
     });
     console.log("[weekly-digest] Sent.");
   } catch (err) {
