@@ -803,6 +803,7 @@ async function ensureDataFiles() {
     ["gallery.json", "[]"],
     ["credentials.json", "[]"],
     ["materials.json", "[]"],
+    ["reception.json", JSON.stringify({ mode: "hybrid", open: "08:00", close: "20:00" })],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
   ];
@@ -1306,6 +1307,24 @@ const AI_SYSTEM_PROMPT = `Ты — тёплый и вежливый ассист
 - Про здоровье говори осторожно: это не медицинская консультация. При боли, травме или беременности советуй сперва проконсультироваться с врачом, а в студии — сообщить о состоянии заранее.
 - Не обсуждай ничего, кроме студии, услуг, цен, записи и подготовки к визиту. На посторонние темы вежливо возвращай к студии.`;
 
+const AI_AGENT_PROMPT = `Ты — AI-ресепшн студии массажа «Mateev Spa Studio» в Кишинёве. Ты отвечаешь на вопросы гостей И умеешь записывать их на приём с помощью инструментов.
+Тон: тёплый, вежливый, человечный, кратко (2–5 предложений). Язык — язык гостя (русский или румынский).
+
+Как записывать (важно):
+1. Пойми, какая услуга нужна. Если не уверен в услуге или её id — вызови list_services.
+2. Спроси удобную дату (и при желании время). Определи дату в формате YYYY-MM-DD (сегодняшняя дата указана ниже).
+3. ВСЕГДА вызывай check_availability перед тем, как назвать время. Никогда не выдумывай свободные окна — предлагай только те, что вернул инструмент.
+4. Собери имя и телефон гостя (обязательно оба).
+5. ПОДТВЕРДИ у гостя детали одной фразой: «Записываю: <имя>, <телефон>, <дата> <время>, <услуга> — всё верно?». Только после явного «да» вызывай create_booking.
+6. После create_booking: если confirmed=true — скажи, что запись подтверждена (назови дату/время/услугу и номер брони). Если confirmed=false — скажи, что заявка принята и мастер подтвердит её в ближайшее время.
+
+Правила:
+- Факты, цены и услуги — только из данных ниже, ничего не выдумывай.
+- Про здоровье — осторожно: это не медконсультация; при боли/травме/беременности советуй предупредить студию заранее.
+- Если инструмент вернул error — вежливо объясни гостю и предложи другой вариант (другое время/дату) или связаться в Telegram.
+- Не проси email — он не нужен для записи через тебя.
+- Не обсуждай посторонние темы — мягко возвращай к записи и услугам.`;
+
 async function buildStudioFacts() {
   const [rawServices, rawSite] = await Promise.all([
     readJson("services.json").catch(() => []),
@@ -1355,6 +1374,122 @@ async function callAnthropic(system, messages, maxTokens = 500) {
 async function callStudioAI(messages) {
   const facts = await buildStudioFacts();
   return callAnthropic(`${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`, messages, 400);
+}
+
+// ─── AI-ресепшн: агент записи (tool use) ─────────────────────────────────────
+async function anthropicRaw(system, messages, { tools, maxTokens = 1024 } = {}) {
+  if (!ANTHROPIC_API_KEY || !Array.isArray(messages) || !messages.length) return null;
+  try {
+    const body = { model: AI_MODEL, max_tokens: maxTokens, system, messages };
+    if (tools && tools.length) body.tools = tools;
+    return await requestJson("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+      body, timeout: 60000
+    }) || null;
+  } catch { return null; }
+}
+
+const BOOKING_TOOLS = [
+  { name: "list_services", description: "Список услуг студии с id, названием, ценой и длительностью. Вызови, если нужно уточнить, какая услуга нужна клиенту, или её id.", input_schema: { type: "object", properties: {} } },
+  { name: "check_availability", description: "Свободные окна на конкретную дату для услуги. Всегда вызывай перед тем, как предложить клиенту время — не выдумывай слоты.", input_schema: { type: "object", properties: { date: { type: "string", description: "Дата в формате YYYY-MM-DD" }, serviceId: { type: "string", description: "id услуги из list_services" } }, required: ["date", "serviceId"] } },
+  { name: "create_booking", description: "Создать запись. Вызывай ТОЛЬКО после того, как клиент подтвердил услугу, дату, время и дал имя и телефон. Время должно быть из свободных окон check_availability.", input_schema: { type: "object", properties: { name: { type: "string" }, phone: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD" }, time: { type: "string", description: "HH:MM" }, serviceId: { type: "string" } }, required: ["name", "phone", "date", "time", "serviceId"] } }
+];
+
+async function getReceptionMode() {
+  const r = await readJson("reception.json").catch(() => ({}));
+  return { mode: ["request", "auto", "hybrid"].includes(r.mode) ? r.mode : "hybrid", open: sanitizeTimeString(r.open) || "08:00", close: sanitizeTimeString(r.close) || "20:00" };
+}
+function receptionAutoConfirm(rec) {
+  if (rec.mode === "auto") return true;
+  if (rec.mode === "request") return false;
+  // hybrid: автобронь вне рабочих часов (ночь/рано утром), заявка — в рабочие часы
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }));
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const within = mins >= toMinutes(rec.open) && mins < toMinutes(rec.close);
+  return !within;
+}
+
+function findServiceLoose(services, ref) {
+  if (!ref) return null;
+  const s = String(ref).toLowerCase().trim();
+  return services.find((x) => x.id === ref) || services.find((x) => (x.name || "").toLowerCase() === s) || services.find((x) => (x.name || "").toLowerCase().includes(s)) || null;
+}
+
+async function runBookingTool(name, input) {
+  try {
+    if (name === "list_services") {
+      const services = await readJson("services.json").catch(() => []);
+      return { services: (Array.isArray(services) ? services : []).filter((s) => s.active !== false).map((s) => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })) };
+    }
+    if (name === "check_availability") {
+      const { services, specialists, bookings, schedule } = await loadStudioData();
+      const service = findServiceLoose(services, input.serviceId);
+      if (!service) return { error: "Услуга не найдена. Вызови list_services." };
+      const specialist = specialists.find((sp) => (sp.specialties || []).includes(service.id));
+      if (!specialist) return { error: "Нет специалиста для этой услуги." };
+      if (!isValidDateString(input.date) || !isFutureOrToday(input.date)) return { error: "Дату можно только сегодня или в будущем, формат YYYY-MM-DD." };
+      const av = calculateAvailability({ date: input.date, service, specialist, bookings, schedule });
+      const times = (av.slots || []).map((s) => s.time);
+      return times.length ? { date: input.date, service: service.name, freeSlots: times } : { date: input.date, freeSlots: [], message: av.message || "На эту дату свободных окон нет." };
+    }
+    if (name === "create_booking") {
+      return await withLock("studio", async () => {
+        const { services, specialists, bookings, schedule } = await loadStudioData();
+        const service = findServiceLoose(services, input.serviceId);
+        if (!service) return { error: "Услуга не найдена." };
+        const specialist = specialists.find((sp) => (sp.specialties || []).includes(service.id));
+        if (!specialist) return { error: "Нет специалиста для этой услуги." };
+        const nm = sanitizeText(input.name || "").trim();
+        const phone = sanitizeText(input.phone || "").trim();
+        const slot = sanitizeTimeString(input.time);
+        if (nm.length < 2) return { error: "Нужно имя клиента." };
+        if (phone.replace(/\D/g, "").length < 8) return { error: "Нужен корректный телефон." };
+        if (!isValidDateString(input.date) || !isFutureOrToday(input.date)) return { error: "Некорректная дата." };
+        if (!slot) return { error: "Некорректное время." };
+        const av = calculateAvailability({ date: input.date, service, specialist, bookings, schedule });
+        if (!(av.slots || []).some((s) => s.time === slot)) return { error: "Это окно уже занято. Проверь check_availability и предложи другое время." };
+        const rec = await getReceptionMode();
+        const auto = receptionAutoConfirm(rec);
+        const booking = createBookingRecord({
+          payload: { date: input.date, slot },
+          cleanPayload: { clientName: nm, phone, email: "", notes: "Запись через AI-ресепшн", status: auto ? "confirmed" : "new" },
+          service, specialist, meta: { source: "ai" }
+        });
+        await writeJson("bookings.json", sortBookings([...bookings, booking]));
+        void notifyBookingCreated(booking);
+        return { ok: true, reference: booking.reference, confirmed: auto, date: booking.date, time: booking.slot, service: service.name, specialist: specialist.name };
+      });
+    }
+    return { error: "Неизвестный инструмент." };
+  } catch (e) {
+    return { error: "Ошибка выполнения: " + (e && e.message ? e.message : "неизвестно") };
+  }
+}
+
+async function runReceptionAgent(messages) {
+  const facts = await buildStudioFacts();
+  const services = await readJson("services.json").catch(() => []);
+  const idList = (Array.isArray(services) ? services : []).filter((s) => s.active !== false).map((s) => `${s.id} — ${s.name} (${s.price} MDL, ${s.duration} мин)`).join("\n");
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
+  const system = `${AI_AGENT_PROMPT}\n\nСегодня: ${today} (часовой пояс Кишинёва).\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}\n\n=== УСЛУГИ (id — название) ===\n${idList}`;
+  const convo = messages.map((m) => ({ role: m.role, content: m.content }));
+  for (let step = 0; step < 5; step++) {
+    const data = await anthropicRaw(system, convo, { tools: BOOKING_TOOLS, maxTokens: 1024 });
+    if (!data || !Array.isArray(data.content)) return null;
+    convo.push({ role: "assistant", content: data.content });
+    const toolUses = data.content.filter((c) => c.type === "tool_use");
+    if (!toolUses.length) {
+      return data.content.filter((c) => c.type === "text").map((c) => c.text).join("\n").trim() || null;
+    }
+    const results = [];
+    for (const tu of toolUses) {
+      const out = await runBookingTool(tu.name, tu.input || {});
+      results.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(out) });
+    }
+    convo.push({ role: "user", content: results });
+  }
+  return "Извините, не удалось завершить запись автоматически. Напишите нам в Telegram — оформим лично.";
 }
 
 // Сводка бизнеса для AI-ассистента владельца
@@ -4100,6 +4235,26 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // GET/POST /api/admin/reception — режим AI-ресепшна (запись)
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/reception") {
+    assertAdminPin(request);
+    sendJson(response, 200, await getReceptionMode());
+    return;
+  }
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/reception") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const cur = await getReceptionMode();
+    const next = {
+      mode: ["request", "auto", "hybrid"].includes(payload.mode) ? payload.mode : cur.mode,
+      open: sanitizeTimeString(payload.open) || cur.open,
+      close: sanitizeTimeString(payload.close) || cur.close
+    };
+    await writeJson("reception.json", next);
+    sendJson(response, 200, { ok: true, ...next });
+    return;
+  }
+
   // POST /api/admin/ai-voice-note — структурировать голосовую заметку в карту клиента
   if (request.method === "POST" && urlObject.pathname === "/api/admin/ai-voice-note") {
     assertAdminPin(request);
@@ -5236,7 +5391,7 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     }
     messages.push({ role: "user", content: userMsg });
     while (messages.length && messages[0].role !== "user") messages.shift();
-    const reply = await callStudioAI(messages);
+    const reply = await runReceptionAgent(messages);
     if (!reply) {
       sendJson(response, 502, { message: "Консультант сейчас недоступен. Напишите нам в Telegram — ответим лично." });
       return;

@@ -538,6 +538,9 @@ function bindEvents() {
   document.getElementById("aiReviewForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiGenerateReviewReply(); });
   document.getElementById("aiMedForm")?.addEventListener("submit", (e) => { e.preventDefault(); aiMedicalAnalyze(); });
   document.getElementById("aiMedImg")?.addEventListener("change", aiMedPickImage);
+  document.getElementById("recSave")?.addEventListener("click", saveReception);
+  document.getElementById("recMode")?.addEventListener("change", updateRecHoursVisibility);
+  loadReception();
   document.getElementById("diaryAiIdeas")?.addEventListener("click", diaryAiIdeas);
   document.getElementById("diaryAiDraft")?.addEventListener("click", diaryAiDraft);
   elements.adminTableBody.addEventListener("click", handleAdminTableClick);
@@ -2052,6 +2055,35 @@ async function aiGenerateGooglePost() {
   } catch (e) {
     out.innerHTML = `<div class="empty-state" style="padding:12px 0;">${escapeHtml(e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY на сервере.")}</div>`;
   }
+}
+
+function updateRecHoursVisibility() {
+  const mode = document.getElementById("recMode")?.value;
+  const row = document.getElementById("recHoursRow");
+  if (row) row.style.display = mode === "hybrid" ? "" : "none";
+}
+async function loadReception() {
+  try {
+    const d = await fetchJson("/api/admin/reception");
+    if (document.getElementById("recMode")) document.getElementById("recMode").value = d.mode || "hybrid";
+    if (document.getElementById("recOpen")) document.getElementById("recOpen").value = d.open || "08:00";
+    if (document.getElementById("recClose")) document.getElementById("recClose").value = d.close || "20:00";
+    updateRecHoursVisibility();
+  } catch (e) { /* раздел мог не открываться */ }
+}
+async function saveReception() {
+  const st = document.getElementById("recStatus");
+  const body = {
+    mode: document.getElementById("recMode").value,
+    open: document.getElementById("recOpen").value.trim(),
+    close: document.getElementById("recClose").value.trim()
+  };
+  if (st) st.textContent = "Сохраняю…";
+  try {
+    await fetchJson("/api/admin/reception", { method: "POST", body: JSON.stringify(body) });
+    if (st) st.textContent = "Сохранено ✓";
+    showToast("Режим AI-записи сохранён.", "success");
+  } catch (e) { if (st) st.textContent = e.message || "Ошибка."; }
 }
 
 let _aiMedImage = "";
