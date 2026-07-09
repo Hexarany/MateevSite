@@ -1914,7 +1914,7 @@ function clientNotesBlock(client) {
   const badges = [];
   if (owedM || owedP) badges.push(`<span class="meta-chip" style="background:rgba(42,107,62,0.12);color:#2a6b3e;">💰 Должен(на): ${money(owedM, owedP)}</span>`);
   if (ioweM || ioweP) badges.push(`<span class="meta-chip" style="background:rgba(179,109,44,0.12);color:var(--brand);">🤝 Я должен: ${money(ioweM, ioweP)}</span>`);
-  const items = mine.map(n => `<div style="font-size:0.85rem;padding:4px 0;">${(NOTE_TYPES[n.type] || {}).icon || "📝"} ${escapeHtml(n.text)}${n.amount ? ` — ${n.amount.toLocaleString("ru-RU")} MDL` : ""}${n.procedures ? ` — ${n.procedures} проц.` : ""}</div>`).join("");
+  const items = mine.map(n => `<div style="font-size:0.85rem;padding:4px 0;white-space:pre-wrap;">${(NOTE_TYPES[n.type] || {}).icon || "📝"} ${escapeHtml(n.text)}${n.amount ? ` — ${n.amount.toLocaleString("ru-RU")} MDL` : ""}${n.procedures ? ` — ${n.procedures} проц.` : ""}</div>`).join("");
   return `<div class="admin-widget" style="margin-top:14px;padding:14px 16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
       <strong style="font-size:0.9rem;color:var(--forest);">📝 Блокнот по клиенту</strong>
@@ -4544,6 +4544,7 @@ function renderClientsWorkspace() {
 }
 
 function renderClientDetail(client) {
+  _vnLastClient = client;
   const statusLabel = clientStatusLabels[client.status] || client.status;
   const tagLabel = client.tag ? `<span class="meta-chip">${escapeHtml(client.tag)}</span>` : "";
   const upcomingVisit = client.upcomingBooking
@@ -4625,6 +4626,22 @@ function renderClientDetail(client) {
       </div>
 
       ${clientNotesBlock(client)}
+
+      <div class="admin-widget" data-vn-block data-vn-client="${escapeHtml(client.clientName || "")}" style="margin-top:14px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <strong style="font-size:0.9rem;color:var(--forest);">🎙️ Голосовая заметка</strong>
+          <span data-vn-status style="font-size:0.8rem;color:var(--muted);"></span>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Надиктуй после сеанса — AI структурирует в карту: жалобы · что делал · зоны · план.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <button type="button" class="button button--secondary button--mini" data-vn-mic>🎙️ Диктовать</button>
+          <button type="button" class="button button--ghost button--mini" data-vn-ai>✨ Структурировать</button>
+        </div>
+        <textarea data-vn-text rows="5" placeholder="Текст надиктовки появится здесь (или впиши вручную)…" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:0.88rem;line-height:1.5;"></textarea>
+        <div style="margin-top:8px;">
+          <button type="button" class="button button--secondary button--mini" data-vn-save>💾 Сохранить в блокнот клиента</button>
+        </div>
+      </div>
 
       <form class="admin-form-stack" data-client-profile-form>
         <!-- ── Контактные данные ── -->
@@ -4834,7 +4851,74 @@ function renderClientDetail(client) {
   `;
 }
 
+// ─── Голосовые заметки (Web Speech API + AI-структурирование) ────────────────
+let _vnRec = null;
+let _vnListening = false;
+let _vnLastClient = null;
+
+function handleVoiceNoteClick(event) {
+  const block = event.target.closest("[data-vn-block]");
+  if (!block) return false;
+  const mic = event.target.closest("[data-vn-mic]");
+  const ai = event.target.closest("[data-vn-ai]");
+  const save = event.target.closest("[data-vn-save]");
+  if (!mic && !ai && !save) return false;
+  const ta = block.querySelector("[data-vn-text]");
+  const status = block.querySelector("[data-vn-status]");
+
+  if (mic) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { showToast("Голосовой ввод не поддерживается в этом браузере. Откройте в Chrome.", "info"); return true; }
+    if (_vnListening) { try { _vnRec && _vnRec.stop(); } catch {} return true; }
+    _vnRec = new SR();
+    _vnRec.lang = "ru-RU"; _vnRec.continuous = true; _vnRec.interimResults = true;
+    let base = ta.value ? ta.value.trim() + " " : "";
+    _vnRec.onstart = () => { _vnListening = true; mic.textContent = "⏹ Остановить"; status.textContent = "Слушаю… говорите"; };
+    _vnRec.onerror = (e) => { status.textContent = e.error === "not-allowed" ? "Нет доступа к микрофону" : "Ошибка распознавания"; };
+    _vnRec.onend = () => { _vnListening = false; mic.textContent = "🎙️ Диктовать"; if (status.textContent === "Слушаю… говорите") status.textContent = ""; };
+    _vnRec.onresult = (ev) => {
+      let interim = "", final = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const tr = ev.results[i][0].transcript;
+        if (ev.results[i].isFinal) final += tr + " "; else interim += tr;
+      }
+      if (final) base += final;
+      ta.value = (base + interim).trim();
+    };
+    try { _vnRec.start(); } catch {}
+    return true;
+  }
+
+  if (ai) {
+    const raw = ta.value.trim();
+    if (!raw) { showToast("Сначала надиктуйте или впишите текст.", "info"); return true; }
+    status.textContent = "Структурирую…";
+    fetchJson("/api/admin/ai-voice-note", { method: "POST", body: JSON.stringify({ text: raw }) })
+      .then(data => { ta.value = data.reply; status.textContent = "Готово — проверь и сохрани."; })
+      .catch(e => { status.textContent = e.message || "Ошибка AI."; });
+    return true;
+  }
+
+  if (save) {
+    const text = ta.value.trim();
+    const client = block.dataset.vnClient || "";
+    if (!text) { showToast("Пустая заметка.", "info"); return true; }
+    if (!client) { showToast("У клиента нет имени — впишите его в карточке.", "info"); return true; }
+    status.textContent = "Сохраняю…";
+    fetchJson("/api/admin/notes", { method: "POST", body: JSON.stringify({ type: "note", text, client }) })
+      .then(async () => {
+        await loadNotes();
+        showToast("Заметка сохранена.", "success");
+        if (_vnLastClient) renderClientDetail(_vnLastClient);
+      })
+      .catch(e => { status.textContent = e.message || "Ошибка сохранения."; });
+    return true;
+  }
+  return false;
+}
+
 function handleClientDetailClick(event) {
+  if (handleVoiceNoteClick(event)) return;
   // Generate and copy portal link
   const portalBtn = event.target.closest("[data-portal-link]");
   if (portalBtn) {
