@@ -7449,7 +7449,7 @@ function renderDiplomaCertPage(diploma, notFound = false) {
   }
   const dateFmt = (() => { try { return new Date(diploma.completionDate + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }); } catch { return diploma.completionDate || ""; } })();
   const certUrl = `${base}/cert?code=${encodeURIComponent(diploma.code)}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(certUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=0&qzone=1&color=2d4a35&bgcolor=f7f2e6&data=${encodeURIComponent(certUrl)}`;
   const name = escapeHtml(diploma.graduateName || "Выпускник");
   const course = escapeHtml(diploma.courseName || "");
   return `<!DOCTYPE html>
@@ -7489,10 +7489,13 @@ function renderDiplomaCertPage(diploma, notFound = false) {
   .dsigline{width:100pt;height:1pt;background:rgba(45,74,53,.3);margin-bottom:4pt}
   .dsign{font-family:'Cormorant Garamond',serif;font-size:11pt;font-weight:600;color:#2d4a35}
   .dsigr{font-size:6.5pt;letter-spacing:.1em;text-transform:uppercase;color:#9aab9c}
-  .dcode{position:absolute;bottom:14mm;right:18mm;font-family:'Manrope',monospace;font-size:6.5pt;letter-spacing:.06em;color:rgba(45,74,53,.45)}
-  .dqr{position:absolute;bottom:12mm;left:18mm;text-align:center}
-  .dqr img{width:22mm;height:22mm;display:block}
-  .dqr span{font-size:5.5pt;letter-spacing:.05em;color:rgba(45,74,53,.5);display:block;margin-top:2pt}
+  .dverify{display:flex;align-items:center;gap:11pt;margin-top:30pt}
+  .dverify__qr{width:17mm;height:17mm;padding:4pt;background:#f7f2e6;border:1px solid rgba(45,74,53,.22);border-radius:8px;box-shadow:0 1px 5px rgba(45,26,10,.08)}
+  .dverify__qr img{width:100%;height:100%;display:block}
+  .dverify__meta{text-align:left;display:flex;flex-direction:column;gap:2pt}
+  .dverify__label{font-family:'Manrope',sans-serif;font-size:6pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9aab9c}
+  .dverify__code{font-family:'Manrope',monospace;font-size:8.5pt;letter-spacing:.06em;color:#4a6b52;font-weight:700}
+  .dverify__hint{font-family:'Manrope',sans-serif;font-size:6pt;letter-spacing:.03em;color:#9aab9c}
   .foot{max-width:210mm;margin:16px auto 0;text-align:center;color:#7a6a58;font-size:.8rem}
   @media print{ body{background:#fff;padding:0} .bar,.foot{display:none} .diploma-sheet{box-shadow:none;transform:none!important} .sheet-wrap{max-width:none;overflow:visible} }
 </style>
@@ -7519,9 +7522,15 @@ function renderDiplomaCertPage(diploma, notFound = false) {
           <div class="dmi"><span class="dml">Место проведения</span><span class="dmv">Кишинёв, Молдова</span></div>
         </div>
         <div class="dsig"><div class="dsigline"></div><p class="dsign">Денис Матиевич</p><p class="dsigr">Основатель · Преподаватель</p></div>
+        <div class="dverify">
+          <div class="dverify__qr"><img src="${qrUrl}" alt="QR проверки подлинности"></div>
+          <div class="dverify__meta">
+            <span class="dverify__label">Проверка подлинности</span>
+            <span class="dverify__code">${escapeHtml(diploma.code)}</span>
+            <span class="dverify__hint">Сканируйте QR · mateevmassage.com/cert</span>
+          </div>
+        </div>
       </div>
-      <div class="dqr"><img src="${qrUrl}" alt="QR проверки"><span>Проверка подлинности</span></div>
-      <span class="dcode">${escapeHtml(diploma.code)}</span>
     </div>
   </div>
   <div class="foot">Этот диплом подтверждён студией Mateev Spa Studio. Код: <strong>${escapeHtml(diploma.code)}</strong> · Отсканируйте QR для проверки.</div>
