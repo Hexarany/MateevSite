@@ -398,6 +398,9 @@
           <a id="publicLinkOpen" href="#" target="_blank" rel="noopener" class="btn btn--primary" style="font-size:0.8rem;padding:8px 14px;">Открыть / печатать</a>
           <button type="button" id="publicLinkCopy" class="btn btn--ghost" style="font-size:0.8rem;padding:8px 14px;">Скопировать ссылку</button>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.8rem;color:#2d4a35;cursor:pointer;">
+          <input type="checkbox" id="dipPublicToggle"> Показывать на «Стене выпускников» (с согласия ученика)
+        </label>
       </div>
 
     </div>
@@ -551,6 +554,20 @@
           try { await navigator.clipboard.writeText(url); copy.textContent = "✓ Скопировано"; setTimeout(function(){ copy.textContent = "Скопировать ссылку"; }, 1500); }
           catch (e) { prompt("Скопируйте ссылку:", url); }
         });
+      }
+      var toggle = document.getElementById("dipPublicToggle");
+      if (toggle) {
+        toggle.checked = !!(currentDiploma && currentDiploma.public);
+        if (!toggle._bound) {
+          toggle._bound = true;
+          toggle.addEventListener("change", async function () {
+            if (!currentDiploma) return;
+            try {
+              await fetchJson("/api/admin/diplomas/" + currentDiploma.id, { method: "PATCH", body: JSON.stringify({ public: toggle.checked }) });
+              currentDiploma.public = toggle.checked;
+            } catch (e) { alert("Не удалось сохранить: " + e.message); toggle.checked = !toggle.checked; }
+          });
+        }
       }
     }
 
