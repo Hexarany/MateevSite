@@ -54,6 +54,7 @@
         <a href="#requests" data-section="requests">📋 Журнал заявок</a>
         <a href="#rec-templates" data-section="rec-templates">🧩 Шаблоны</a>
         <a href="#clients" data-section="clients">👥 Клиенты</a>
+        <a href="#referrals" data-section="referrals">🎁 Рефералы</a>
         <a href="#operations" data-section="operations">💼 Операции</a>
         <a href="#expenses" data-section="expenses">💸 Расходы</a>
         <a href="#financial-report" data-section="financial-report">💰 Отчёт P&amp;L</a>
@@ -1298,6 +1299,20 @@
             <div id="credUploadProgress" style="display:none;background:rgba(26,46,34,0.05);border-radius:12px;padding:12px 18px;margin-bottom:16px;font-size:0.85rem;">Загружаем... <span id="credUploadStatus"></span></div>
             <div id="credGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;"></div>
             <p id="credEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Дипломов пока нет. Нажмите «+ Загрузить диплом».</p>
+          </section>
+
+          <!-- ═══════════════ РЕФЕРАЛЫ ═══════════════ -->
+          <section class="admin-section-block reveal" id="referrals">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Программа лояльности</p>
+                <h2 class="admin-section-block__title">Рефералы «Приведи друга»</h2>
+              </div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">Клиент делится своей ссылкой из портала. Друг записывается по ней → получает <b>−10%</b> автоматически, а пригласившему начисляется награда <b>−10%</b> на следующий визит. Отмечай использованные награды кнопкой.</p>
+            <div id="refTotals" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;"></div>
+            <div id="refList" style="display:grid;gap:12px;"></div>
+            <p id="refEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Пока никто никого не привёл. Раздай клиентам их реф-ссылки из портала.</p>
           </section>
 
           <!-- ═══════════════ МАТЕРИАЛЫ СЕМИНАРОВ ═══════════════ -->

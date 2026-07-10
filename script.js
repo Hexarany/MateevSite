@@ -4,6 +4,21 @@
   if (ref && /^REF-[A-Z0-9]+$/i.test(ref)) localStorage.setItem("referralCode", ref.toUpperCase());
 })();
 
+// Предзаполнить поле реф-кода на форме записи + подсказка о скидке
+document.addEventListener("DOMContentLoaded", function () {
+  var input = document.getElementById("referralCodeInput");
+  if (!input) return;
+  var hint = document.getElementById("referralHint");
+  var saved = localStorage.getItem("referralCode");
+  if (saved && !input.value) input.value = saved;
+  var upd = function () {
+    var ok = /^REF-[A-Z0-9]{4,}$/i.test((input.value || "").trim());
+    if (hint) hint.style.display = ok ? "block" : "none";
+  };
+  input.addEventListener("input", upd);
+  upd();
+});
+
 const state = {
   services: [],
   specialists: [],
@@ -1322,7 +1337,7 @@ async function handleBookingSubmit(event) {
       ? { customDuration: state.bookingDuration }
       : {}),
     ...(state.appliedCert ? { certificateCode: state.appliedCert.code } : {}),
-    ...(localStorage.getItem("referralCode") ? { referralCode: localStorage.getItem("referralCode") } : {})
+    ...((function(){ var manual=(document.getElementById("referralCodeInput")||{}).value; var code=(manual||"").trim()||localStorage.getItem("referralCode")||""; return code?{referralCode:code.toUpperCase()}:{}; })())
   };
 
   elements.submitBookingBtn.disabled = true;

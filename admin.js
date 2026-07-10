@@ -1614,6 +1614,7 @@ async function loadAdminData() {
   initFinancialReport();
   loadCredentials();
   initMaterials();
+  loadReferrals();
   // Peak hours rendered after admin data loads
   initPeakHours();
   try {
@@ -6195,6 +6196,63 @@ let _galleryItems = [];
 
 let _credItems = [];
 let _credBound = false;
+// ─── Рефералы ────────────────────────────────────────────────────────────────
+let _refBound = false;
+async function loadReferrals() {
+  try {
+    const data = await fetchJson("/api/admin/referrals");
+    renderReferrals(data);
+  } catch (e) { /* раздел мог не открываться */ }
+  if (!_refBound) {
+    _refBound = true;
+    document.getElementById("refList")?.addEventListener("click", handleRefClick);
+  }
+}
+function renderReferrals(data) {
+  const totals = document.getElementById("refTotals");
+  const list = document.getElementById("refList");
+  const empty = document.getElementById("refEmpty");
+  if (!list) return;
+  const items = data.referrals || [];
+  if (totals) {
+    const t = data.totals || {};
+    const card = (label, val) => `<div style="flex:1;min-width:130px;background:#fffaf4;border:1px solid var(--line);border-radius:14px;padding:14px 16px;"><div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">${label}</div><strong style="font-size:1.4rem;color:var(--forest);display:block;margin-top:4px;">${val}</strong></div>`;
+    totals.innerHTML = card("Рефереров", t.referrers || 0) + card("Приведено (визитов)", t.broughtCompleted || 0) + card("Наград к выдаче", t.rewardsRemaining || 0);
+  }
+  if (!items.length) { list.innerHTML = ""; if (empty) empty.style.display = ""; return; }
+  if (empty) empty.style.display = "none";
+  list.innerHTML = items.map(r => `
+    <div class="admin-widget" style="padding:16px 18px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="min-width:200px;flex:1;">
+          <div style="font-weight:700;color:var(--ink);">${escapeHtml(r.clientName || "—")} <span style="font-family:monospace;font-size:0.78rem;color:var(--muted);">${escapeHtml(r.code)}</span></div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-top:2px;">Привёл: ${r.broughtCompleted} завершено${r.broughtTotal > r.broughtCompleted ? ` (${r.broughtTotal - r.broughtCompleted} в процессе)` : ""}</div>
+          <div style="font-size:0.82rem;margin-top:6px;">🎁 Наград: <b>${r.rewardsEarned}</b> · использовано ${r.rewardsUsed} · <span style="color:${r.rewardsRemaining ? '#2a6b3e' : 'var(--muted)'};font-weight:700;">к выдаче ${r.rewardsRemaining}</span></div>
+          ${r.referred && r.referred.length ? `<details style="margin-top:6px;"><summary style="font-size:0.78rem;color:var(--brand);cursor:pointer;">Кого привёл (${r.referred.length})</summary><div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">${r.referred.map(x => `${escapeHtml(x.clientName || "—")} · ${escapeHtml(x.date || "")} · ${STATUS_LABEL(x.status)}`).join("<br>")}</div></details>` : ""}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="button button--secondary button--mini" data-ref-redeem="${escapeHtml(r.code)}" ${r.rewardsRemaining ? "" : "disabled"}>✓ Выдал награду</button>
+          <button class="button button--ghost button--mini" data-ref-unredeem="${escapeHtml(r.code)}" ${r.rewardsUsed ? "" : "disabled"}>↩︎</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+function STATUS_LABEL(s) {
+  return ({ new: "новая", confirmed: "подтверждена", completed: "завершена", cancelled: "отменена" })[s] || s || "";
+}
+async function handleRefClick(e) {
+  const redeem = e.target.closest("[data-ref-redeem]");
+  const unredeem = e.target.closest("[data-ref-unredeem]");
+  const btn = redeem || unredeem;
+  if (!btn) return;
+  const code = (redeem ? redeem.dataset.refRedeem : unredeem.dataset.refUnredeem);
+  const delta = redeem ? 1 : -1;
+  try {
+    await fetchJson(`/api/admin/referrals/${encodeURIComponent(code)}/redeem`, { method: "POST", body: JSON.stringify({ delta }) });
+    await loadReferrals();
+  } catch (er) { showToast(er.message || "Ошибка.", "error"); }
+}
+
 // ─── Материалы семинаров ───────────────────────────────────────────────────
 let _matItems = [];
 let _matBound = false;

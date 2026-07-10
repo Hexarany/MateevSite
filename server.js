@@ -2462,6 +2462,9 @@ function createBookingRecord({ payload, cleanPayload, service, specialist, meta 
   const now = new Date().toISOString();
   const startMins = toMinutes(payload.slot);
   const endMins = startMins + service.duration;
+  // Реферал: другу −10% на этот визит (авто)
+  const hasReferral = !!meta.referredByCode;
+  const totalPrice = hasReferral ? Math.round(service.price * 0.9) : service.price;
 
   return {
     id: crypto.randomUUID(),
@@ -2477,13 +2480,13 @@ function createBookingRecord({ payload, cleanPayload, service, specialist, meta 
     slot: payload.slot,
     endsAt: toTimeString(endMins),
     durationMins: service.duration,
-    totalPrice: service.price,
+    totalPrice,
     clientName: cleanPayload.clientName,
     phone: cleanPayload.phone,
     email: cleanPayload.email,
     notes: cleanPayload.notes,
     source: meta.source || "public",
-    ...(meta.referredByCode ? { referredByCode: meta.referredByCode, referredByName: meta.referredByName } : {})
+    ...(hasReferral ? { referredByCode: meta.referredByCode, referredByName: meta.referredByName, referralDiscount: 10 } : {})
   };
 }
 
@@ -4680,6 +4683,61 @@ async function routeApi(request, response, urlObject) {
     diplomas.splice(idx, 1);
     await writeJson("diplomas.json", diplomas);
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // GET /api/admin/referrals — агрегированная панель рефералов
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/referrals") {
+    assertAdminPin(request);
+    const [referrals, bookings] = await Promise.all([
+      readJson("referrals.json").catch(() => []),
+      readJson("bookings.json").catch(() => [])
+    ]);
+    const list = referrals.map((r) => {
+      const referred = bookings.filter((b) => (b.referredByCode || "").toUpperCase() === (r.code || "").toUpperCase());
+      const completed = referred.filter((b) => b.status === "completed");
+      const earned = completed.length;
+      const used = Math.max(0, Number(r.rewardsUsed) || 0);
+      return {
+        code: r.code,
+        clientName: r.clientName,
+        phone: r.phone || "",
+        broughtTotal: referred.length,
+        broughtCompleted: earned,
+        rewardsEarned: earned,
+        rewardsUsed: Math.min(used, earned),
+        rewardsRemaining: Math.max(0, earned - used),
+        referred: referred
+          .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+          .map((b) => ({ clientName: b.clientName, date: b.date, status: b.status }))
+      };
+    }).filter((r) => r.broughtTotal > 0)
+      .sort((a, b) => b.broughtCompleted - a.broughtCompleted || b.broughtTotal - a.broughtTotal);
+    const totals = {
+      referrers: list.length,
+      broughtCompleted: list.reduce((s, r) => s + r.broughtCompleted, 0),
+      rewardsRemaining: list.reduce((s, r) => s + r.rewardsRemaining, 0)
+    };
+    sendJson(response, 200, { referrals: list, totals });
+    return;
+  }
+  // POST /api/admin/referrals/:code/redeem — отметить использование награды (delta ±1)
+  if (request.method === "POST" && urlObject.pathname.startsWith("/api/admin/referrals/") && urlObject.pathname.endsWith("/redeem")) {
+    assertAdminPin(request);
+    const code = decodeURIComponent(urlObject.pathname.replace("/api/admin/referrals/", "").replace("/redeem", "")).toUpperCase();
+    const payload = await parseJsonBody(request);
+    const delta = Number(payload.delta) === -1 ? -1 : 1;
+    const [referrals, bookings] = await Promise.all([
+      readJson("referrals.json").catch(() => []),
+      readJson("bookings.json").catch(() => [])
+    ]);
+    const idx = referrals.findIndex((r) => (r.code || "").toUpperCase() === code);
+    if (idx === -1) { sendJson(response, 404, { message: "Реферер не найден." }); return; }
+    const earned = bookings.filter((b) => (b.referredByCode || "").toUpperCase() === code && b.status === "completed").length;
+    const cur = Math.max(0, Number(referrals[idx].rewardsUsed) || 0);
+    referrals[idx].rewardsUsed = Math.min(earned, Math.max(0, cur + delta));
+    await writeJson("referrals.json", referrals);
+    sendJson(response, 200, { ok: true, rewardsUsed: referrals[idx].rewardsUsed, rewardsRemaining: earned - referrals[idx].rewardsUsed });
     return;
   }
 
