@@ -41,6 +41,7 @@ const BLOG_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "blog");
 const GALLERY_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "gallery");
 const CREDENTIALS_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "credentials");
 const MATERIALS_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "materials");
+const SIGNATURES_UPLOADS_DIR = path.join(ROOT_DIR, "uploads", "signatures");
 const ADMIN_SESSION_COOKIE_NAME = "mateev_admin_session";
 const ADMIN_SESSION_TTL_HOURS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_HOURS) || 12);
 const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_HOURS * 60 * 60 * 1000;
@@ -875,7 +876,7 @@ function sendText(response, statusCode, message) {
 async function serveStaticFile(requestPath, response) {
   if (requestPath.startsWith("/uploads/")) {
     const safeName = path.basename(requestPath);
-    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : requestPath.startsWith("/uploads/credentials/") ? "credentials" : requestPath.startsWith("/uploads/materials/") ? "materials" : "specialists";
+    const subDir = requestPath.startsWith("/uploads/blog/") ? "blog" : requestPath.startsWith("/uploads/gallery/") ? "gallery" : requestPath.startsWith("/uploads/credentials/") ? "credentials" : requestPath.startsWith("/uploads/materials/") ? "materials" : requestPath.startsWith("/uploads/signatures/") ? "signatures" : "specialists";
     const fullPath = path.join(ROOT_DIR, "uploads", subDir, safeName);
     try {
       const fileBuffer = await fs.readFile(fullPath);
@@ -4235,6 +4236,44 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // GET /api/signature — публичный URL подписи основателя (для диплома)
+  if (request.method === "GET" && urlObject.pathname === "/api/signature") {
+    const site = await readJson("site.json").catch(() => ({}));
+    sendJson(response, 200, { url: (site.brand && site.brand.signature) || null });
+    return;
+  }
+  // POST /api/admin/signature — загрузить подпись
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/signature") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 6 * 1024 * 1024);
+    const match = String(payload.photo || "").match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.+)$/);
+    if (!match) { sendJson(response, 400, { message: "Нужен PNG (лучше с прозрачным фоном), JPEG или WebP." }); return; }
+    const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+    const buffer = Buffer.from(match[3], "base64");
+    if (buffer.length > 4 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой (макс. 4MB)." }); return; }
+    await fs.mkdir(SIGNATURES_UPLOADS_DIR, { recursive: true });
+    // чистим старые файлы подписи
+    try { for (const f of await fs.readdir(SIGNATURES_UPLOADS_DIR)) { if (f.startsWith("founder.")) await fs.unlink(path.join(SIGNATURES_UPLOADS_DIR, f)).catch(() => {}); } } catch {}
+    const filename = `founder.${ext}`;
+    await fs.writeFile(path.join(SIGNATURES_UPLOADS_DIR, filename), buffer);
+    const url = `/uploads/signatures/${filename}?v=${Date.now()}`;
+    const site = await readJson("site.json").catch(() => ({}));
+    site.brand = site.brand || {};
+    site.brand.signature = url;
+    await writeJson("site.json", site);
+    sendJson(response, 201, { ok: true, url });
+    return;
+  }
+  // DELETE /api/admin/signature
+  if (request.method === "DELETE" && urlObject.pathname === "/api/admin/signature") {
+    assertAdminPin(request);
+    try { for (const f of await fs.readdir(SIGNATURES_UPLOADS_DIR)) { if (f.startsWith("founder.")) await fs.unlink(path.join(SIGNATURES_UPLOADS_DIR, f)).catch(() => {}); } } catch {}
+    const site = await readJson("site.json").catch(() => ({}));
+    if (site.brand) { delete site.brand.signature; await writeJson("site.json", site); }
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // GET/POST /api/admin/reception — режим AI-ресепшна (запись)
   if (request.method === "GET" && urlObject.pathname === "/api/admin/reception") {
     assertAdminPin(request);
@@ -7455,7 +7494,7 @@ function renderBlogListPage(entries, site, lang = "ru", catFilter = "") {
 </html>`;
 }
 
-function renderDiplomaCertPage(diploma, notFound = false) {
+function renderDiplomaCertPage(diploma, notFound = false, signatureUrl = "") {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   if (notFound || !diploma) {
     return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Диплом не найден</title>
@@ -7501,10 +7540,11 @@ function renderDiplomaCertPage(diploma, notFound = false) {
   .dml{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9aab9c}
   .dmv{font-family:'Cormorant Garamond',serif;font-size:13pt;color:#2d1a0a}
   .dsig{display:flex;flex-direction:column;align-items:center;gap:4pt;margin-top:4pt}
+  .dsig__img{height:46pt;max-width:150pt;object-fit:contain;margin-bottom:-6pt;mix-blend-mode:multiply}
   .dsigline{width:100pt;height:1pt;background:rgba(45,74,53,.3);margin-bottom:4pt}
   .dsign{font-family:'Cormorant Garamond',serif;font-size:11pt;font-weight:600;color:#2d4a35}
   .dsigr{font-size:6.5pt;letter-spacing:.1em;text-transform:uppercase;color:#9aab9c}
-  .dverify{display:flex;flex-direction:column;align-items:center;gap:7pt;margin-top:78pt}
+  .dverify{display:flex;flex-direction:column;align-items:center;gap:7pt;margin-top:104pt}
   .dverify__qr{width:18mm;height:18mm;padding:4pt;background:#f7f2e6;border:1px solid rgba(45,74,53,.22);border-radius:8px;box-shadow:0 1px 5px rgba(45,26,10,.08)}
   .dverify__qr img{width:100%;height:100%;display:block}
   .dverify__code{font-family:'Manrope',monospace;font-size:8.5pt;letter-spacing:.08em;color:#4a6b52;font-weight:700}
@@ -7533,7 +7573,7 @@ function renderDiplomaCertPage(diploma, notFound = false) {
           <div class="dmi"><span class="dml">Дата окончания</span><span class="dmv">${escapeHtml(dateFmt)}</span></div>
           <div class="dmi"><span class="dml">Место проведения</span><span class="dmv">Кишинёв, Молдова</span></div>
         </div>
-        <div class="dsig"><div class="dsigline"></div><p class="dsign">Денис Матиевич</p><p class="dsigr">Основатель · Преподаватель</p></div>
+        <div class="dsig">${signatureUrl ? `<img class="dsig__img" src="${escapeHtml(signatureUrl)}" alt="Подпись">` : ""}<div class="dsigline"></div><p class="dsign">Денис Матиевич</p><p class="dsigr">Основатель · Преподаватель</p></div>
         <div class="dverify">
           <div class="dverify__qr"><img src="${qrUrl}" alt="QR проверки подлинности"></div>
           <span class="dverify__code">${escapeHtml(diploma.code)}</span>
@@ -8372,7 +8412,8 @@ function createServer() {
         const code = (urlObject.searchParams.get("code") || "").toUpperCase();
         const diplomas = await readJson("diplomas.json").catch(() => []);
         const diploma = code ? diplomas.find((d) => (d.code || "").toUpperCase() === code) : null;
-        const html = renderDiplomaCertPage(diploma, !diploma);
+        const certSite = await readJson("site.json").catch(() => ({}));
+        const html = renderDiplomaCertPage(diploma, !diploma, (certSite.brand && certSite.brand.signature) || "");
         response.writeHead(diploma ? 200 : 404, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;

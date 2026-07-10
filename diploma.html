@@ -386,6 +386,19 @@
         <textarea id="notes" placeholder="Дополнительно..."></textarea>
       </div>
 
+      <div style="margin-top:14px;padding:12px 14px;background:#f7f2e6;border:1px solid #dcc9a6;border-radius:12px;">
+        <p style="font-size:0.78rem;font-weight:700;color:#2d4a35;margin:0 0 6px;">✍️ Подпись основателя</p>
+        <p style="font-size:0.72rem;color:#7a6a58;margin:0 0 8px;">Загрузи картинку подписи (PNG с прозрачным фоном — лучше всего; скан на белом тоже подойдёт). Появится над линией на всех дипломах.</p>
+        <div id="sigPreviewWrap" style="display:none;margin-bottom:8px;"><img id="sigPreview" alt="" style="height:44px;object-fit:contain;mix-blend-mode:multiply;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <label class="btn btn--ghost" style="cursor:pointer;font-size:0.8rem;padding:8px 14px;margin:0;">
+            Загрузить подпись
+            <input type="file" id="sigFileInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+          </label>
+          <button type="button" id="sigRemoveBtn" class="btn btn--danger" style="display:none;font-size:0.8rem;padding:8px 14px;">Убрать</button>
+        </div>
+      </div>
+
       <div class="code-badge" id="codeBadge" style="display:none;">
         <span>Код диплома</span>
         <strong id="codeDisplay"></strong>
@@ -446,6 +459,7 @@
         </div>
 
         <div class="diploma-signature">
+          <img id="dpSigImg" alt="Подпись" style="display:none;height:46pt;max-width:150pt;object-fit:contain;margin-bottom:-6pt;mix-blend-mode:multiply;">
           <div class="diploma-signature__line"></div>
           <p class="diploma-signature__name" id="dpSigName">Денис Матиевич</p>
           <p class="diploma-signature__role" id="dpSigRole">Основатель · Преподаватель</p>
@@ -641,10 +655,50 @@
       }
     }
 
+    function applySignature(url) {
+      var img = document.getElementById("dpSigImg");
+      var prevWrap = document.getElementById("sigPreviewWrap");
+      var prev = document.getElementById("sigPreview");
+      var rm = document.getElementById("sigRemoveBtn");
+      if (url) {
+        img.src = url; img.style.display = "block";
+        prev.src = url; prevWrap.style.display = "block";
+        rm.style.display = "inline-block";
+      } else {
+        img.style.display = "none"; prevWrap.style.display = "none"; rm.style.display = "none";
+      }
+    }
+    async function loadSignature() {
+      try { const d = await fetchJson("/api/signature"); applySignature(d.url || ""); } catch (_) {}
+    }
+    function initSignatureControls() {
+      var input = document.getElementById("sigFileInput");
+      if (input) input.addEventListener("change", function () {
+        var file = this.files && this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = async function () {
+          try {
+            const res = await fetchJson("/api/admin/signature", { method: "POST", body: JSON.stringify({ photo: reader.result }) });
+            applySignature(res.url);
+          } catch (e) { alert("Ошибка загрузки: " + e.message); }
+        };
+        reader.readAsDataURL(file);
+        this.value = "";
+      });
+      var rm = document.getElementById("sigRemoveBtn");
+      if (rm) rm.addEventListener("click", async function () {
+        if (!confirm("Убрать подпись со всех дипломов?")) return;
+        try { await fetchJson("/api/admin/signature", { method: "DELETE" }); applySignature(""); } catch (e) { alert(e.message); }
+      });
+    }
+
     async function init() {
       // set today as default date
       document.getElementById("completionDate").value = new Date().toISOString().slice(0, 10);
       renderDiploma();
+      loadSignature();
+      initSignatureControls();
 
       // load courses
       try {
