@@ -7489,13 +7489,10 @@ function renderDiplomaCertPage(diploma, notFound = false) {
   .dsigline{width:100pt;height:1pt;background:rgba(45,74,53,.3);margin-bottom:4pt}
   .dsign{font-family:'Cormorant Garamond',serif;font-size:11pt;font-weight:600;color:#2d4a35}
   .dsigr{font-size:6.5pt;letter-spacing:.1em;text-transform:uppercase;color:#9aab9c}
-  .dverify{display:flex;align-items:center;gap:11pt;margin-top:30pt}
-  .dverify__qr{width:17mm;height:17mm;padding:4pt;background:#f7f2e6;border:1px solid rgba(45,74,53,.22);border-radius:8px;box-shadow:0 1px 5px rgba(45,26,10,.08)}
+  .dverify{display:flex;flex-direction:column;align-items:center;gap:7pt;margin-top:52pt}
+  .dverify__qr{width:18mm;height:18mm;padding:4pt;background:#f7f2e6;border:1px solid rgba(45,74,53,.22);border-radius:8px;box-shadow:0 1px 5px rgba(45,26,10,.08)}
   .dverify__qr img{width:100%;height:100%;display:block}
-  .dverify__meta{text-align:left;display:flex;flex-direction:column;gap:2pt}
-  .dverify__label{font-family:'Manrope',sans-serif;font-size:6pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9aab9c}
-  .dverify__code{font-family:'Manrope',monospace;font-size:8.5pt;letter-spacing:.06em;color:#4a6b52;font-weight:700}
-  .dverify__hint{font-family:'Manrope',sans-serif;font-size:6pt;letter-spacing:.03em;color:#9aab9c}
+  .dverify__code{font-family:'Manrope',monospace;font-size:8.5pt;letter-spacing:.08em;color:#4a6b52;font-weight:700}
   .foot{max-width:210mm;margin:16px auto 0;text-align:center;color:#7a6a58;font-size:.8rem}
   @media print{ body{background:#fff;padding:0} .bar,.foot{display:none} .diploma-sheet{box-shadow:none;transform:none!important} .sheet-wrap{max-width:none;overflow:visible} }
 </style>
@@ -7524,11 +7521,7 @@ function renderDiplomaCertPage(diploma, notFound = false) {
         <div class="dsig"><div class="dsigline"></div><p class="dsign">Денис Матиевич</p><p class="dsigr">Основатель · Преподаватель</p></div>
         <div class="dverify">
           <div class="dverify__qr"><img src="${qrUrl}" alt="QR проверки подлинности"></div>
-          <div class="dverify__meta">
-            <span class="dverify__label">Проверка подлинности</span>
-            <span class="dverify__code">${escapeHtml(diploma.code)}</span>
-            <span class="dverify__hint">Сканируйте QR · mateevmassage.com/cert</span>
-          </div>
+          <span class="dverify__code">${escapeHtml(diploma.code)}</span>
         </div>
       </div>
     </div>
