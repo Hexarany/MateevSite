@@ -8608,6 +8608,7 @@ function createServer() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${base}/</loc><lastmod>${now}</lastmod><priority>1.0</priority></url>
   <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
+  <url><loc>${base}/graduates</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/blog</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
