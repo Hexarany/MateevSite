@@ -3023,13 +3023,15 @@ async function handleBookingCreate(request, response) {
     return;
   }
 
-  // Реферал: запись по реф-ссылке — находим, кто привёл (но не самого себя)
+  // Реферал: засчитываем только НОВОМУ клиенту (телефона не было в базе) и не самому себе
   let referredBy = null;
   const referralCode = sanitizeText(payload.referralCode || "");
   if (referralCode) {
     const referrals = await readJson("referrals.json").catch(() => []);
     const ref = referrals.find((r) => r.code.toUpperCase() === referralCode.toUpperCase());
-    if (ref && normalizePhoneDigits(ref.phone) !== normalizePhoneDigits(cleanPayload.phone)) {
+    const friendDigits = normalizePhoneDigits(cleanPayload.phone);
+    const isExistingClient = bookings.some((b) => normalizePhoneDigits(b.phone) === friendDigits);
+    if (ref && normalizePhoneDigits(ref.phone) !== friendDigits && !isExistingClient) {
       referredBy = { referredByCode: ref.code, referredByName: ref.clientName };
     }
   }
