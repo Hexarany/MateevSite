@@ -805,6 +805,7 @@ async function ensureDataFiles() {
     ["credentials.json", "[]"],
     ["materials.json", "[]"],
     ["reception.json", JSON.stringify({ mode: "hybrid", open: "08:00", close: "20:00" })],
+    ["tg-sessions.json", "{}"],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
   ];
@@ -1491,6 +1492,23 @@ async function runReceptionAgent(messages) {
     convo.push({ role: "user", content: results });
   }
   return "Извините, не удалось завершить запись автоматически. Напишите нам в Telegram — оформим лично.";
+}
+
+// Память диалога Telegram-агента по чату (для многоходовой записи)
+const TG_SESSION_TTL_MS = 90 * 60 * 1000; // 90 минут
+async function getTgSession(chatId) {
+  const all = await readJson("tg-sessions.json").catch(() => ({}));
+  const s = all[String(chatId)];
+  if (!s || (Date.now() - (s.t || 0)) > TG_SESSION_TTL_MS) return [];
+  return Array.isArray(s.m) ? s.m : [];
+}
+async function saveTgSession(chatId, messages) {
+  const all = await readJson("tg-sessions.json").catch(() => ({}));
+  // чистим протухшие сессии, чтобы файл не рос
+  const now = Date.now();
+  for (const k of Object.keys(all)) { if ((now - (all[k].t || 0)) > TG_SESSION_TTL_MS) delete all[k]; }
+  all[String(chatId)] = { t: now, m: messages.slice(-10) };
+  await writeJson("tg-sessions.json", all);
 }
 
 // Сводка бизнеса для AI-ассистента владельца
@@ -6151,12 +6169,19 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
         } catch {}
       })();
     } else if (msgChatId && msgText && !msgText.startsWith("/") && ANTHROPIC_API_KEY) {
-      // Свободный текст → AI-ресепшн отвечает прямо в чате
+      // Свободный текст → AI-ресепшн (агент записи) отвечает прямо в чате, с памятью диалога
       void (async () => {
         try {
           await requestJson(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendChatAction`,
             { body: { chat_id: msgChatId, action: "typing" } }).catch(() => {});
-          const reply = await callStudioAI([{ role: "user", content: msgText.slice(0, 1000) }]);
+          const history = await getTgSession(msgChatId);
+          history.push({ role: "user", content: msgText.slice(0, 1000) });
+          while (history.length && history[0].role !== "user") history.shift();
+          const reply = await runReceptionAgent(history);
+          if (reply) {
+            history.push({ role: "assistant", content: reply });
+            await saveTgSession(msgChatId, history);
+          }
           await tgSend(msgChatId, reply || "Извините, сейчас не могу ответить. Напишите чуть позже или позвоните нам 🌿");
         } catch {}
       })();
