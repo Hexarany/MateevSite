@@ -391,6 +391,15 @@
         <strong id="codeDisplay"></strong>
       </div>
 
+      <div id="publicLinkBox" style="display:none;margin-top:12px;padding:12px 14px;background:#eaf3ea;border:1px solid #6b8d6b;border-radius:12px;">
+        <p style="font-size:0.78rem;font-weight:700;color:#2d4a35;margin:0 0 6px;">🔗 Публичный диплом (с QR + проверкой)</p>
+        <p style="font-size:0.75rem;color:#5a6e5c;margin:0 0 8px;">Ссылку можно отправить ученику для соцсетей. Печатай отсюда — на дипломе будет QR для проверки подлинности.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <a id="publicLinkOpen" href="#" target="_blank" rel="noopener" class="btn btn--primary" style="font-size:0.8rem;padding:8px 14px;">Открыть / печатать</a>
+          <button type="button" id="publicLinkCopy" class="btn btn--ghost" style="font-size:0.8rem;padding:8px 14px;">Скопировать ссылку</button>
+        </div>
+      </div>
+
     </div>
 
     <div class="lang-toggle">
@@ -524,6 +533,24 @@
         document.getElementById("dpCode").textContent = currentDiploma.code;
         document.getElementById("codeDisplay").textContent = currentDiploma.code;
         document.getElementById("codeBadge").style.display = "flex";
+        showPublicLink(currentDiploma.code);
+      }
+    }
+
+    function showPublicLink(code) {
+      if (!code) return;
+      var url = location.origin + "/cert?code=" + encodeURIComponent(code);
+      var box = document.getElementById("publicLinkBox");
+      var open = document.getElementById("publicLinkOpen");
+      if (open) open.href = url;
+      if (box) box.style.display = "block";
+      var copy = document.getElementById("publicLinkCopy");
+      if (copy && !copy._bound) {
+        copy._bound = true;
+        copy.addEventListener("click", async function () {
+          try { await navigator.clipboard.writeText(url); copy.textContent = "✓ Скопировано"; setTimeout(function(){ copy.textContent = "Скопировать ссылку"; }, 1500); }
+          catch (e) { prompt("Скопируйте ссылку:", url); }
+        });
       }
     }
 
@@ -575,6 +602,7 @@
         document.getElementById("saveDiplomaBtn").textContent = "Сохранено ✓";
         setTimeout(() => { document.getElementById("saveDiplomaBtn").textContent = "Сохранить диплом"; }, 2000);
         history.replaceState(null, "", "?code=" + currentDiploma.code);
+        showPublicLink(currentDiploma.code);
       } catch (e) {
         alert("Ошибка: " + e.message);
       }
@@ -587,6 +615,7 @@
         await fetchJson("/api/admin/diplomas/" + currentDiploma.id, { method: "DELETE" });
         currentDiploma = null;
         document.getElementById("codeBadge").style.display = "none";
+        document.getElementById("publicLinkBox").style.display = "none";
         document.getElementById("deleteDiplomaBtn").style.display = "none";
         document.getElementById("dpCode").textContent = "";
         history.replaceState(null, "", "/diploma.html");

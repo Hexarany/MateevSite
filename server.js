@@ -7440,6 +7440,111 @@ function renderBlogListPage(entries, site, lang = "ru", catFilter = "") {
 </html>`;
 }
 
+function renderDiplomaCertPage(diploma, notFound = false) {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  if (notFound || !diploma) {
+    return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Диплом не найден</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0e4;color:#2d1a0a;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}.card{background:#fff;border-radius:18px;padding:40px;box-shadow:0 8px 40px rgba(0,0,0,.1);max-width:420px}</style></head>
+<body><div class="card"><p style="font-size:2.4rem;margin:0;">❌</p><h1 style="color:#b91c1c;font-size:1.4rem;margin:12px 0;">Диплом не найден</h1><p style="color:#7a6a58;">Код неверный или диплом отозван. Проверьте код на дипломе или свяжитесь со студией.</p><a href="${base}/team" style="color:#4a6b52;font-weight:700;">Mateev Spa Studio →</a></div></body></html>`;
+  }
+  const dateFmt = (() => { try { return new Date(diploma.completionDate + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }); } catch { return diploma.completionDate || ""; } })();
+  const certUrl = `${base}/cert?code=${encodeURIComponent(diploma.code)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(certUrl)}`;
+  const name = escapeHtml(diploma.graduateName || "Выпускник");
+  const course = escapeHtml(diploma.courseName || "");
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Диплом ${escapeHtml(diploma.graduateName || "")} — Mateev Spa Studio</title>
+<meta name="description" content="Подтверждённый диплом Mateev Spa Studio: ${name} — ${course}. Код ${escapeHtml(diploma.code)}.">
+<meta property="og:title" content="🎓 Диплом Mateev Spa Studio — ${name}">
+<meta property="og:description" content="${course} · ${dateFmt}. Подлинность подтверждена студией.">
+<meta property="og:image" content="${base}/diploma-bg.png">
+<meta property="og:url" content="${certUrl}">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  @page{size:A4;margin:0}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Manrope',sans-serif;background:#e8e2d4;color:#2d1a0a;padding:20px 12px 60px}
+  .bar{max-width:210mm;margin:0 auto 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .verified{display:inline-flex;align-items:center;gap:8px;background:#eaf3ea;border:1.5px solid #6b8d6b;color:#2d4a35;border-radius:999px;padding:8px 16px;font-weight:700;font-size:.9rem}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:#b36d2c;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
+  .btn--ghost{background:#fff;border:1.5px solid #cfc3ac;color:#2d1a0a}
+  .sheet-wrap{max-width:210mm;margin:0 auto;overflow:hidden}
+  .diploma-sheet{width:210mm;min-height:297mm;position:relative;background:#f5f0e4 url('/diploma-bg.png') center/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60mm 22mm 40mm;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18);transform-origin:top left}
+  .dk{font-size:8pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#4a6b52;margin-bottom:14pt}
+  .dh{font-family:'Cormorant Garamond',Georgia,serif;font-size:38pt;font-weight:600;color:#2d4a35;line-height:1;margin-bottom:22pt;letter-spacing:.04em}
+  .dsub{font-family:'Cormorant Garamond',serif;font-size:13pt;font-style:italic;color:#5a6e5c;margin-bottom:10pt}
+  .dname{font-family:'Cormorant Garamond',serif;font-size:32pt;font-weight:700;color:#2d1a0a;line-height:1.1;margin-bottom:18pt;border-bottom:1.5pt solid rgba(179,109,44,.4);padding-bottom:10pt;width:80%}
+  .dcl{font-size:7.5pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#7a8c7c;margin-bottom:6pt}
+  .dcourse{font-family:'Cormorant Garamond',serif;font-size:18pt;font-weight:600;color:#2d4a35;margin-bottom:28pt}
+  .dmeta{display:flex;justify-content:center;gap:40pt;width:80%;margin-bottom:30pt}
+  .dmi{display:flex;flex-direction:column;align-items:center;gap:4pt}
+  .dml{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9aab9c}
+  .dmv{font-family:'Cormorant Garamond',serif;font-size:13pt;color:#2d1a0a}
+  .dsig{display:flex;flex-direction:column;align-items:center;gap:4pt;margin-top:4pt}
+  .dsigline{width:100pt;height:1pt;background:rgba(45,74,53,.3);margin-bottom:4pt}
+  .dsign{font-family:'Cormorant Garamond',serif;font-size:11pt;font-weight:600;color:#2d4a35}
+  .dsigr{font-size:6.5pt;letter-spacing:.1em;text-transform:uppercase;color:#9aab9c}
+  .dcode{position:absolute;bottom:14mm;right:18mm;font-family:'Manrope',monospace;font-size:6.5pt;letter-spacing:.06em;color:rgba(45,74,53,.45)}
+  .dqr{position:absolute;bottom:12mm;left:18mm;text-align:center}
+  .dqr img{width:22mm;height:22mm;display:block}
+  .dqr span{font-size:5.5pt;letter-spacing:.05em;color:rgba(45,74,53,.5);display:block;margin-top:2pt}
+  .foot{max-width:210mm;margin:16px auto 0;text-align:center;color:#7a6a58;font-size:.8rem}
+  @media print{ body{background:#fff;padding:0} .bar,.foot{display:none} .diploma-sheet{box-shadow:none;transform:none!important} .sheet-wrap{max-width:none;overflow:visible} }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="verified">✓ Подлинный диплом · Mateev Spa Studio</span>
+    <div class="actions">
+      <button class="btn" onclick="window.print()">🖨 Скачать / печать</button>
+      <button class="btn btn--ghost" id="shareBtn">🔗 Поделиться</button>
+    </div>
+  </div>
+  <div class="sheet-wrap">
+    <div class="diploma-sheet" id="sheet">
+      <div style="display:flex;flex-direction:column;align-items:center;width:100%;">
+        <p class="dk">Mateev Spa Studio · Школа массажа</p>
+        <h2 class="dh">ДИПЛОМ</h2>
+        <p class="dsub">Настоящим подтверждается, что</p>
+        <p class="dname">${name}</p>
+        <p class="dcl">успешно завершил(а) курс</p>
+        <p class="dcourse">${course}</p>
+        <div class="dmeta">
+          <div class="dmi"><span class="dml">Дата окончания</span><span class="dmv">${escapeHtml(dateFmt)}</span></div>
+          <div class="dmi"><span class="dml">Место проведения</span><span class="dmv">Кишинёв, Молдова</span></div>
+        </div>
+        <div class="dsig"><div class="dsigline"></div><p class="dsign">Денис Матиевич</p><p class="dsigr">Основатель · Преподаватель</p></div>
+      </div>
+      <div class="dqr"><img src="${qrUrl}" alt="QR проверки"><span>Проверка подлинности</span></div>
+      <span class="dcode">${escapeHtml(diploma.code)}</span>
+    </div>
+  </div>
+  <div class="foot">Этот диплом подтверждён студией Mateev Spa Studio. Код: <strong>${escapeHtml(diploma.code)}</strong> · Отсканируйте QR для проверки.</div>
+  <script>
+    // Масштабируем лист под ширину экрана (сохраняя дизайн)
+    function fit(){
+      var wrap=document.querySelector('.sheet-wrap'), sheet=document.getElementById('sheet');
+      if(!wrap||!sheet) return;
+      sheet.style.transform='none';
+      var w=wrap.clientWidth, sw=sheet.offsetWidth;
+      if(sw>w){ var s=w/sw; sheet.style.transform='scale('+s+')'; wrap.style.height=(sheet.offsetHeight*s)+'px'; }
+      else { wrap.style.height=''; }
+    }
+    window.addEventListener('resize',fit); window.addEventListener('load',fit); fit();
+    document.getElementById('shareBtn').addEventListener('click',async function(){
+      var url=location.href;
+      try{ if(navigator.share){ await navigator.share({title:'Мой диплом Mateev Spa Studio',url:url}); } else { await navigator.clipboard.writeText(url); this.textContent='✓ Ссылка скопирована'; } }catch(e){}
+    });
+  </script>
+</body>
+</html>`;
+}
+
 function renderMaterialPage(material) {
   if (!material) {
     return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Материал не найден</title>
@@ -8161,6 +8266,16 @@ function createServer() {
         const catFilter = sanitizeText(urlObject.searchParams.get("cat") || "");
         const html = renderBlogListPage(entries, site, lang, catFilter);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/cert" || urlObject.pathname === "/cert/") {
+        const code = (urlObject.searchParams.get("code") || "").toUpperCase();
+        const diplomas = await readJson("diplomas.json").catch(() => []);
+        const diploma = code ? diplomas.find((d) => (d.code || "").toUpperCase() === code) : null;
+        const html = renderDiplomaCertPage(diploma, !diploma);
+        response.writeHead(diploma ? 200 : 404, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
       }
