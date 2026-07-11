@@ -806,6 +806,7 @@ async function ensureDataFiles() {
     ["materials.json", "[]"],
     ["reception.json", JSON.stringify({ mode: "hybrid", open: "08:00", close: "20:00" })],
     ["tg-sessions.json", "{}"],
+    ["saas-leads.json", "[]"],
     ["birthday-sent.json", "{}"],
     ["rec-templates.json", "[]"]
   ];
@@ -4706,6 +4707,38 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/saas-lead — заявка на ранний доступ к платформе (White-label, Этап 0)
+  if (request.method === "POST" && urlObject.pathname === "/api/saas-lead") {
+    assertRateLimit({ scope: "saas-lead", key: getRequestIp(request), windowMs: 10 * 60 * 1000, limit: 5, message: "Слишком много заявок. Попробуйте позже." });
+    const payload = await parseJsonBody(request);
+    const name = sanitizeText(payload.name || "").slice(0, 120);
+    const contact = sanitizeText(payload.contact || "").slice(0, 160);
+    if (!name || !contact) { sendJson(response, 400, { message: "Укажите имя и контакт." }); return; }
+    const lead = {
+      id: crypto.randomUUID(),
+      name, contact,
+      size: sanitizeText(payload.size || "").slice(0, 60),
+      city: sanitizeText(payload.city || "").slice(0, 80),
+      note: sanitizeText(payload.note || "").slice(0, 600),
+      createdAt: new Date().toISOString()
+    };
+    const leads = await readJson("saas-leads.json").catch(() => []);
+    leads.push(lead);
+    await writeJson("saas-leads.json", leads);
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      void tgSend(TELEGRAM_CHAT_ID, `🚀 Заявка на платформу (ранний доступ)\n\n👤 ${lead.name}\n📞 ${lead.contact}\n🏢 ${lead.size || "—"}${lead.city ? `\n📍 ${lead.city}` : ""}${lead.note ? `\n📝 ${lead.note}` : ""}`);
+    }
+    sendJson(response, 201, { ok: true });
+    return;
+  }
+  // GET /api/admin/saas-leads — список заявок
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/saas-leads") {
+    assertAdminPin(request);
+    const leads = await readJson("saas-leads.json").catch(() => []);
+    sendJson(response, 200, { leads: leads.slice().reverse() });
+    return;
+  }
+
   // GET /api/admin/referrals — агрегированная панель рефералов
   if (request.method === "GET" && urlObject.pathname === "/api/admin/referrals") {
     assertAdminPin(request);
@@ -7687,6 +7720,140 @@ function renderDiplomaCertPage(diploma, notFound = false, signatureUrl = "") {
 </html>`;
 }
 
+function renderSaasLandingPage() {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const feature = (icon, title, text) => `<div class="feat"><div class="feat__ic">${icon}</div><div><div class="feat__t">${title}</div><div class="feat__x">${text}</div></div></div>`;
+  const tier = (name, price, note, items, hot) => `<div class="tier${hot ? " tier--hot" : ""}">${hot ? '<div class="tier__badge">Популярный</div>' : ""}<div class="tier__name">${name}</div><div class="tier__price">€${price}<span>/мес</span></div><div class="tier__note">${note}</div><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul></div>`;
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Платформа для массажных студий под ключ — от Mateev Spa Studio</title>
+<meta name="description" content="Сайт, онлайн-запись, AI-ресепшн 24/7, кабинет клиента, CRM, аналитика, школа и дипломы — всё под ключ для вашей массажной студии. Ранний доступ.">
+<meta property="og:title" content="Твоя массажная студия — под ключ">
+<meta property="og:description" content="Всё, что построено для Mateev Spa Studio, теперь для тебя. Ранний доступ.">
+<meta property="og:image" content="${base}/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.6}
+  a{color:inherit}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  .top{padding:18px 0;display:flex;justify-content:space-between;align-items:center}
+  .top__brand{font-weight:700;font-size:.9rem}
+  .top__back{font-size:.85rem;color:#6b8d6b;font-weight:600;text-decoration:none}
+  .hero{padding:56px 0 40px;text-align:center}
+  .kick{font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#b36d2c;margin-bottom:14px}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.6rem);font-weight:600;color:#1a2e22;line-height:1.1;margin-bottom:16px}
+  .lead{color:#5a4a3c;max-width:620px;margin:0 auto 28px;font-size:1.05rem}
+  .btn{display:inline-block;background:#b36d2c;color:#fff;border:none;border-radius:12px;padding:15px 34px;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;font-family:inherit}
+  .btn:hover{background:#9a5c22}
+  .proof{margin-top:16px;font-size:.85rem;color:#7d6d60}
+  .sec{padding:44px 0}
+  .sec h2{font-family:'Cormorant Garamond',serif;font-size:2rem;color:#1a2e22;text-align:center;margin-bottom:28px}
+  .feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .feat{display:flex;gap:14px;background:rgba(255,255,255,.7);border:1px solid rgba(71,49,28,.1);border-radius:16px;padding:18px 20px}
+  .feat__ic{font-size:1.5rem;flex:0 0 auto}
+  .feat__t{font-weight:700;color:#1a2e22}
+  .feat__x{font-size:.88rem;color:#5a4e45;margin-top:2px}
+  .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-items:start}
+  .tier{background:#fff;border:1px solid rgba(71,49,28,.12);border-radius:18px;padding:24px 22px;position:relative}
+  .tier--hot{border-color:#b36d2c;box-shadow:0 8px 30px rgba(179,109,44,.15)}
+  .tier__badge{position:absolute;top:-11px;left:22px;background:#b36d2c;color:#fff;font-size:.7rem;font-weight:700;padding:4px 12px;border-radius:20px}
+  .tier__name{font-weight:700;color:#1a2e22;font-size:1.1rem}
+  .tier__price{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:700;color:#1a2e22;margin:6px 0 2px}
+  .tier__price span{font-size:.9rem;font-family:'Manrope';color:#7d6d60;font-weight:500}
+  .tier__note{font-size:.82rem;color:#7d6d60;margin-bottom:12px}
+  .tier ul{list-style:none;display:grid;gap:6px}
+  .tier li{font-size:.86rem;color:#3a2e26;padding-left:20px;position:relative}
+  .tier li::before{content:"✓";position:absolute;left:0;color:#6b8d6b;font-weight:700}
+  .note-price{text-align:center;color:#7d6d60;font-size:.82rem;margin-top:14px}
+  .form-card{background:#1a2e22;border-radius:24px;padding:40px 32px;margin:24px 0 60px}
+  .form-card h2{color:#fff}
+  .form-card p.sub{color:rgba(255,255,255,.7);text-align:center;margin-bottom:22px;font-size:.92rem}
+  form{max-width:460px;margin:0 auto;display:grid;gap:12px}
+  form input,form select,form textarea{width:100%;padding:13px 15px;border-radius:10px;border:none;font-family:inherit;font-size:.95rem}
+  form button{padding:15px;background:#b36d2c;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:1rem;cursor:pointer;font-family:inherit}
+  .msg{text-align:center;color:#ffd9a8;font-size:.88rem;min-height:1em}
+  footer{padding:26px 0;text-align:center;font-size:.8rem;color:#7d6d60}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top"><span class="top__brand">Mateev Spa Studio · Платформа</span><a class="top__back" href="${base}/">← На сайт студии</a></div>
+    <section class="hero">
+      <p class="kick">Ранний доступ · для массажистов и студий</p>
+      <h1>Твоя массажная студия — под ключ</h1>
+      <p class="lead">Сайт, онлайн-запись, AI-ресепшн 24/7, кабинет клиента, CRM и аналитика, школа и дипломы — всё, что мы построили и каждый день используем в Mateev Spa Studio. Теперь — для тебя.</p>
+      <a class="btn" href="#join">Оставить заявку на ранний доступ</a>
+      <p class="proof">🌿 Работает в реальной студии в Кишинёве каждый день</p>
+    </section>
+
+    <section class="sec">
+      <h2>Что входит</h2>
+      <div class="feats">
+        ${feature("📅", "Онлайн-запись", "Сайт с записью, свободные окна, защита от двойных броней, закрытия студии.")}
+        ${feature("🤖", "AI-ресепшн 24/7", "AI сам записывает клиентов в чате сайта и в Telegram — ловит заявки ночью.")}
+        ${feature("👤", "Кабинет клиента", "Портал, PWA, напоминания в Telegram, история визитов, лояльность.")}
+        ${feature("🗂️", "CRM и заметки", "Карточки клиентов, голосовые заметки → AI-карта, блокнот, долги.")}
+        ${feature("📊", "Дашборд и аналитика", "Выручка, LTV, удержание, топ-услуги, P&L — вся студия как на ладони.")}
+        ${feature("📣", "Маркетинг", "Генератор постов, посты для Google, AI-ответы на отзывы, рассылки, рефералы.")}
+        ${feature("🎓", "Школа и дипломы", "Курсы, дипломы с QR-верификацией, стена выпускников, методички.")}
+        ${feature("🕸️", "Сеть мастеров", "Выпускники → мастера с кабинетом и комиссией. Масштаб по городам.")}
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Тарифы (ранний доступ)</h2>
+      <div class="tiers">
+        ${tier("Соло", 19, "для одного массажиста", ["Сайт + онлайн-запись", "Кабинет клиента", "AI-ресепшн", "Напоминания"], false)}
+        ${tier("Студия", 39, "команда мастеров", ["Всё из «Соло»", "CRM + аналитика", "Маркетинг + рефералы", "Голосовые заметки"], true)}
+        ${tier("Школа", 79, "студия + обучение", ["Всё из «Студия»", "Школа и дипломы + QR", "Методички, стена выпускников", "Сеть мастеров + комиссия"], false)}
+      </div>
+      <p class="note-price">Цены на этапе раннего доступа — предварительные. Ранние участники получат льготные условия.</p>
+    </section>
+
+    <section class="form-card" id="join">
+      <h2>Заявка на ранний доступ</h2>
+      <p class="sub">Оставь контакты — расскажем детали и дадим особые условия первым.</p>
+      <form id="saasForm">
+        <input type="text" id="sName" placeholder="Имя *" required>
+        <input type="text" id="sContact" placeholder="Телефон / Telegram / Email *" required>
+        <select id="sSize">
+          <option value="">Размер студии…</option>
+          <option>Работаю один</option>
+          <option>2–5 мастеров</option>
+          <option>Больше 5</option>
+          <option>Пока только планирую</option>
+        </select>
+        <input type="text" id="sCity" placeholder="Город">
+        <textarea id="sNote" rows="2" placeholder="Что для вас важнее всего? (необязательно)"></textarea>
+        <button type="submit" id="sBtn">Отправить заявку</button>
+        <p class="msg" id="sMsg"></p>
+      </form>
+    </section>
+  </div>
+  <footer>© ${new Date().getFullYear()} Mateev Spa Studio · Платформа для массажных студий</footer>
+  <script>
+    document.getElementById("saasForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      var btn=document.getElementById("sBtn"), msg=document.getElementById("sMsg");
+      var body={ name:document.getElementById("sName").value.trim(), contact:document.getElementById("sContact").value.trim(), size:document.getElementById("sSize").value, city:document.getElementById("sCity").value.trim(), note:document.getElementById("sNote").value.trim() };
+      if(!body.name||!body.contact){ msg.textContent="Заполните имя и контакт."; return; }
+      btn.disabled=true; btn.textContent="Отправляем…"; msg.textContent="";
+      try{
+        var res=await fetch("/api/saas-lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+        var d=await res.json().catch(function(){return{};});
+        if(!res.ok){ msg.textContent=d.message||"Не удалось отправить."; btn.disabled=false; btn.textContent="Отправить заявку"; return; }
+        document.getElementById("saasForm").innerHTML='<div style="text-align:center;padding:16px 0;"><p style="font-size:2.4rem;margin:0;">✅</p><h3 style="color:#fff;font-family:\\'Cormorant Garamond\\',serif;font-size:1.6rem;margin:8px 0;">Заявка принята!</h3><p style="color:rgba(255,255,255,.75);">Спасибо! Свяжемся с вами в ближайшее время и расскажем детали.</p></div>';
+      }catch(err){ msg.textContent="Ошибка сети. Попробуйте ещё раз."; btn.disabled=false; btn.textContent="Отправить заявку"; }
+    });
+  </script>
+</body>
+</html>`;
+}
+
 function renderGraduatesPage(diplomas) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const list = (diplomas || []).filter((d) => d.public).sort((a, b) => (b.completionDate || "").localeCompare(a.completionDate || ""));
@@ -8482,6 +8649,12 @@ function createServer() {
         const html = renderBlogListPage(entries, site, lang, catFilter);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/for-studios" || urlObject.pathname === "/for-studios/") {
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
+        response.end(renderSaasLandingPage());
         return;
       }
 
