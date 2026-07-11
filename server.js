@@ -1461,7 +1461,7 @@ async function runBookingTool(name, input) {
         });
         await writeJson("bookings.json", sortBookings([...bookings, booking]));
         void notifyBookingCreated(booking);
-        return { ok: true, reference: booking.reference, confirmed: auto, date: booking.date, time: booking.slot, service: service.name, specialist: specialist.name };
+        return { ok: true, reference: booking.reference, confirmed: auto, date: booking.date, time: booking.slot, service: service.name, specialist: specialist.name, clientName: booking.clientName, phone: booking.phone, price: booking.totalPrice };
       });
     }
     return { error: "Неизвестный инструмент." };
@@ -1477,22 +1477,65 @@ async function runReceptionAgent(messages) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Chisinau" });
   const system = `${AI_AGENT_PROMPT}\n\nСегодня: ${today} (часовой пояс Кишинёва).\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}\n\n=== УСЛУГИ (id — название) ===\n${idList}`;
   const convo = messages.map((m) => ({ role: m.role, content: m.content }));
+  let createdBooking = null;
   for (let step = 0; step < 5; step++) {
     const data = await anthropicRaw(system, convo, { tools: BOOKING_TOOLS, maxTokens: 1024 });
     if (!data || !Array.isArray(data.content)) return null;
     convo.push({ role: "assistant", content: data.content });
     const toolUses = data.content.filter((c) => c.type === "tool_use");
     if (!toolUses.length) {
-      return data.content.filter((c) => c.type === "text").map((c) => c.text).join("\n").trim() || null;
+      const text = data.content.filter((c) => c.type === "text").map((c) => c.text).join("\n").trim();
+      return { reply: text || null, booking: createdBooking };
     }
     const results = [];
     for (const tu of toolUses) {
       const out = await runBookingTool(tu.name, tu.input || {});
+      if (tu.name === "create_booking" && out && out.ok) createdBooking = out;
       results.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(out) });
     }
     convo.push({ role: "user", content: results });
   }
-  return "Извините, не удалось завершить запись автоматически. Напишите нам в Telegram — оформим лично.";
+  return { reply: "Извините, не удалось завершить запись автоматически. Напишите нам в Telegram — оформим лично.", booking: createdBooking };
+}
+
+// Структурированное подтверждение записи клиенту (Telegram)
+function buildClientConfirmation(b, site) {
+  const brand = (site && site.brand) || {};
+  const addr = brand.address || "";
+  const city = brand.city || "Кишинёв";
+  let dateFmt = b.date;
+  try { dateFmt = new Date(b.date + "T00:00:00").toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" }); } catch {}
+  const mapQuery = encodeURIComponent([addr, city].filter(Boolean).join(", "));
+  const head = b.confirmed ? "✅ Ваша запись подтверждена!" : "📝 Заявка принята — мы скоро её подтвердим";
+  const lines = [
+    head, "",
+    `💆 ${b.service}`,
+    `👤 ${b.specialist}`,
+    `📅 ${dateFmt}, ${b.time}`,
+    b.price ? `💰 ${b.price} MDL` : "",
+    addr ? `📍 ${addr}, ${city}` : `📍 ${city}`,
+    `🗺 Как добраться: https://maps.google.com/?q=${mapQuery}`,
+    "",
+    `Номер брони: ${b.reference}`,
+    "Нужно перенести или отменить? Просто напишите нам здесь 🌿"
+  ];
+  return lines.filter((l) => l !== "").join("\n");
+}
+
+async function sendClientBookingConfirmation(b, directChatId) {
+  try {
+    if (!TELEGRAM_BOT_TOKEN || !b) return;
+    const site = await readJson("site.json").catch(() => ({}));
+    const msg = buildClientConfirmation(b, site);
+    const targets = new Set();
+    if (directChatId) targets.add(String(directChatId));
+    const digits = normalizePhoneDigits(b.phone || "");
+    if (digits) {
+      const tokens = await readJson("portal-tokens.json").catch(() => []);
+      for (const t of tokens) { if (t.telegramChatId && normalizePhoneDigits(t.phone || "") === digits) targets.add(String(t.telegramChatId)); }
+    }
+    for (const chat of targets) await tgSend(chat, msg);
+  } catch {}
 }
 
 // Память диалога Telegram-агента по чату (для многоходовой записи)
@@ -5556,12 +5599,14 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     }
     messages.push({ role: "user", content: userMsg });
     while (messages.length && messages[0].role !== "user") messages.shift();
-    const reply = await runReceptionAgent(messages);
-    if (!reply) {
+    const result = await runReceptionAgent(messages);
+    if (!result || !result.reply) {
       sendJson(response, 502, { message: "Консультант сейчас недоступен. Напишите нам в Telegram — ответим лично." });
       return;
     }
-    sendJson(response, 200, { reply });
+    // Если оформилась запись — шлём структурированное подтверждение в Telegram (если клиент привязан)
+    if (result.booking) void sendClientBookingConfirmation(result.booking, null);
+    sendJson(response, 200, { reply: result.reply });
     return;
   }
 
@@ -6210,12 +6255,14 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
           const history = await getTgSession(msgChatId);
           history.push({ role: "user", content: msgText.slice(0, 1000) });
           while (history.length && history[0].role !== "user") history.shift();
-          const reply = await runReceptionAgent(history);
+          const result = await runReceptionAgent(history);
+          const reply = result && result.reply;
           if (reply) {
             history.push({ role: "assistant", content: reply });
             await saveTgSession(msgChatId, history);
           }
           await tgSend(msgChatId, reply || "Извините, сейчас не могу ответить. Напишите чуть позже или позвоните нам 🌿");
+          if (result && result.booking) await sendClientBookingConfirmation(result.booking, msgChatId);
         } catch {}
       })();
     }
