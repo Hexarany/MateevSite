@@ -4689,6 +4689,48 @@ async function routeApi(request, response, urlObject) {
   }
 
   // ─── Diplomas ─────────────────────────────────────────────────────────────
+  // POST /api/webhook/issue-diploma — единая сертификация: Академия (Anatomia) выдаёт
+  // диплом в систему сайта (/cert + QR + Стена выпускников). Защита — общий секрет.
+  if (request.method === "POST" && urlObject.pathname === "/api/webhook/issue-diploma") {
+    const payload = await parseJsonBody(request);
+    if (!PLATFORM_WEBHOOK_SECRET || sanitizeText(payload.secret || "") !== PLATFORM_WEBHOOK_SECRET) {
+      sendJson(response, 401, { message: "Неверный секрет." }); return;
+    }
+    const graduateName = sanitizeText(payload.graduateName || "").slice(0, 200);
+    const courseName = sanitizeText(payload.courseName || "").slice(0, 200);
+    if (!graduateName || !courseName) { sendJson(response, 400, { message: "graduateName и courseName обязательны." }); return; }
+    const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+    const diplomas = await readJson("diplomas.json").catch(() => []);
+    // Идемпотентность: не плодить дубли по externalId (id завершения курса в Академии)
+    const externalId = sanitizeText(payload.externalId || "");
+    if (externalId) {
+      const existing = diplomas.find((d) => d.externalId === externalId);
+      if (existing) { sendJson(response, 200, { ok: true, code: existing.code, certUrl: `${base}/cert?code=${existing.code}`, existed: true }); return; }
+    }
+    const now = new Date();
+    const seq = String(diplomas.length + 1).padStart(3, "0");
+    const diploma = {
+      id: crypto.randomUUID(),
+      code: `DIP-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-${seq}`,
+      graduateName, courseName,
+      courseId: sanitizeText(payload.courseId || ""),
+      completionDate: sanitizeText(payload.completionDate || now.toISOString().slice(0, 10)),
+      enrollmentId: "",
+      notes: "Выдан автоматически из Mateev Academy",
+      public: payload.public === true,
+      ...(externalId ? { externalId } : {}),
+      source: "anatomia",
+      issuedAt: now.toISOString()
+    };
+    diplomas.push(diploma);
+    await writeJson("diplomas.json", diplomas);
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      void tgSend(TELEGRAM_CHAT_ID, `🎓 Выдан диплом (Академия)\n\n${graduateName}\n${courseName}\nКод: ${diploma.code}\n${base}/cert?code=${diploma.code}`);
+    }
+    sendJson(response, 201, { ok: true, code: diploma.code, certUrl: `${base}/cert?code=${diploma.code}` });
+    return;
+  }
+
   // GET /api/admin/diplomas
   if (request.method === "GET" && urlObject.pathname === "/api/admin/diplomas") {
     if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
