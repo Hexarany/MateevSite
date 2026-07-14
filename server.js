@@ -902,6 +902,22 @@ async function ensureDataFiles() {
       });
       changed = true;
     }
+
+    // Одноразовое обновление методички семинара «ШВЗ, живот, грудь, лицо» до
+    // версии с явным слоем техник (guard по сигнальной фразе — повторно не перетрёт).
+    const SEM_TITLE = "Семинар: ШВЗ, живот, грудь, лицо";
+    const SEM_SENTINEL = "Техники семинара (что применялось)";
+    const sem = mats.find((m) => m && m.title === SEM_TITLE);
+    if (sem && !(sem.content || "").includes(SEM_SENTINEL)) {
+      try {
+        const c = await fs.readFile(path.join(ROOT_DIR, "materials", "seminar-01.md"), "utf8");
+        sem.content = c.slice(0, 60000);
+        sem.topics = "МФР, триггеры, дифиброз, лимфодренаж, висцералка, грудь, лицо/буккально";
+        sem.updatedAt = nowIso;
+        changed = true;
+      } catch { /* .md недоступен — оставляем как есть */ }
+    }
+
     if (changed) await fs.writeFile(matPath, JSON.stringify(mats, null, 2), "utf8");
   } catch { /* не критично — методички можно создать через админку */ }
 }
