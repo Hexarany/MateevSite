@@ -828,6 +828,42 @@ async function ensureDataFiles() {
       }
     })
   );
+
+  // Досев авторского курса «Интегративный массаж» (идемпотентно — и для уже
+  // существующих установок, где courses.json создан ранее без этого курса).
+  try {
+    const coursesPath = path.join(DATA_DIR, "courses.json");
+    const list = JSON.parse(await fs.readFile(coursesPath, "utf8"));
+    if (Array.isArray(list) && !list.some((c) => c && c.id === "integrative-massage-author")) {
+      const course = {
+        id: "integrative-massage-author",
+        direction: "massage",
+        name: "Интегративный массаж",
+        subtitle: "Авторский курс Дениса Матеева: тело, лицо и внутренние системы в одном подходе",
+        level: "advanced",
+        format: "group",
+        duration: "8–10 недель",
+        price: 600,
+        currency: "EUR",
+        description: "Авторский интегративный метод: в одном подходе соединяются МФР, deep tissue и триггерные точки, постизометрическая релаксация (ПИР), дифиброзирующий массаж, лимфодренаж, висцеральная терапия, работа с грудью и постурой, массаж лица (в т.ч. интрабуккальный) и восточные техники — шиацу, акупрессура, рефлексология. Теория проходится на платформе MateevSpa академия, практика — на очных семинарах под контролем преподавателя.",
+        benefits: [
+          "8 групп техник: от фасций, триггеров и ПИР до буккального массажа лица",
+          "Дифиброзирующая и эстетическая работа: лицо, рубцы, овал",
+          "Висцеральная терапия и лимфодренаж",
+          "Восточные рефлекторные техники: шиацу, акупрессура, рефлексология",
+          "Умение собирать сеанс под конкретную задачу клиента",
+          "Сертификат об окончании курса с QR-верификацией"
+        ],
+        teacherId: "denis-mateev",
+        groupSize: "до 4 человек",
+        certificate: true
+      };
+      const idx = list.findIndex((c) => c && c.id === "individual-massage");
+      if (idx >= 0) list.splice(idx + 1, 0, course);
+      else list.push(course);
+      await fs.writeFile(coursesPath, JSON.stringify(list, null, 2), "utf8");
+    }
+  } catch { /* не критично — курс можно добавить через админку */ }
 }
 
 function sanitizeEnv(value) {
