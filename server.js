@@ -864,6 +864,46 @@ async function ensureDataFiles() {
       await fs.writeFile(coursesPath, JSON.stringify(list, null, 2), "utf8");
     }
   } catch { /* не критично — курс можно добавить через админку */ }
+
+  // Досев методичек курса «Интегративный массаж» в библиотеку материалов
+  // (идемпотентно по title; content читается из materials/*.md).
+  try {
+    const seedMaterials = [
+      {
+        title: "Интегративный массаж — метод и техники",
+        topics: "МФР, deep tissue, триггеры, ПИР, дифиброз, лимфодренаж, висцералка, грудь, лицо/буккально, восток",
+        file: "integrativnyy-massazh.md",
+        token: "int7massage7method7a7f3c1e9b4d20867"
+      },
+      {
+        title: "Интегративный массаж — программа курса",
+        topics: "9 модулей: теория + практика + тесты, аттестация и сертификат",
+        file: "integrativnyy-massazh-programma.md",
+        token: "int7massage7program7b8e4d2fa5c319786"
+      }
+    ];
+    const matPath = path.join(DATA_DIR, "materials.json");
+    const mats = await readJson("materials.json").catch(() => []);
+    let changed = false;
+    const nowIso = new Date().toISOString();
+    for (const sm of seedMaterials) {
+      if (mats.some((m) => m && m.title === sm.title)) continue;
+      let content = "";
+      try { content = await fs.readFile(path.join(ROOT_DIR, "materials", sm.file), "utf8"); } catch { continue; }
+      mats.push({
+        id: crypto.randomUUID(),
+        title: sm.title,
+        topics: sm.topics,
+        date: "",
+        content: content.slice(0, 60000),
+        token: sm.token,
+        createdAt: nowIso,
+        updatedAt: nowIso
+      });
+      changed = true;
+    }
+    if (changed) await fs.writeFile(matPath, JSON.stringify(mats, null, 2), "utf8");
+  } catch { /* не критично — методички можно создать через админку */ }
 }
 
 function sanitizeEnv(value) {
