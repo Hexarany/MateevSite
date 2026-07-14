@@ -115,7 +115,13 @@ const STATIC_FILES = {
   "/manifest.json": "manifest.json",
   "/manifest-admin.json": "manifest-admin.json",
   "/service-worker.js": "service-worker.js",
-  "/body-diagram.jpg": "body-diagram.jpg"
+  "/body-diagram.jpg": "body-diagram.jpg",
+  // Методички и презентации курсов (materials/*.html)
+  "/materials/seminar-01": "materials/seminar-01-shvz-zhivot-grud-lico.html",
+  "/materials/integrativnyy-massazh": "materials/integrativnyy-massazh.html",
+  "/materials/integrativnyy-massazh.html": "materials/integrativnyy-massazh.html",
+  "/materials/integrativnyy-massazh-programma": "materials/integrativnyy-massazh-programma.html",
+  "/materials/integrativnyy-massazh-programma.html": "materials/integrativnyy-massazh-programma.html"
 };
 
 const MIME_TYPES = {
