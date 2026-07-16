@@ -2938,6 +2938,11 @@ p {
     box-shadow: 0 12px 40px rgba(36, 28, 23, 0.15);
     z-index: 35;
     animation: none;
+    max-height: calc(100vh - 88px);
+    max-height: calc(100dvh - 88px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   .nav.is-open {
@@ -2951,8 +2956,8 @@ p {
   }
 
   .nav__link {
-    padding: 15px 0;
-    font-size: 1.05rem;
+    padding: 12px 0;
+    font-size: 1rem;
     font-weight: 600;
     border-bottom: 1px solid var(--line);
     color: var(--ink);

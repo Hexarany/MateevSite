@@ -736,9 +736,9 @@
     <section class="section gallery-section" id="gallery-section" hidden>
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker">Атмосфера</p>
-          <h2>Студия в лицах и пространствах</h2>
-          <p class="section-copy">Приходите — и почувствуете разницу сами.</p>
+          <p class="section-kicker" data-ru="Атмосфера" data-ro="Atmosferă">Атмосфера</p>
+          <h2 data-ru="Студия в лицах и пространствах" data-ro="Studioul în chipuri și spații">Студия в лицах и пространствах</h2>
+          <p class="section-copy" data-ru="Приходите — и почувствуете разницу сами." data-ro="Veniți — și veți simți diferența.">Приходите — и почувствуете разницу сами.</p>
         </div>
         <div class="gallery-grid reveal" id="siteGalleryGrid"></div>
       </div>
@@ -903,5 +903,19 @@
   </div>
 
   <script src="script.js" defer></script>
+  <script>
+    /* Прокидываем текущий язык в серверные страницы (/graduates) */
+    (function(){
+      function syncLang(){
+        var lang = (function(){ try { return localStorage.getItem('lang') === 'ro' ? 'ro' : 'ru'; } catch(e){ return 'ru'; } })();
+        document.querySelectorAll('a[href^="/graduates"]').forEach(function(a){
+          var u = a.getAttribute('href').split('?')[0];
+          a.setAttribute('href', lang === 'ro' ? (u + '?lang=ro') : u);
+        });
+      }
+      syncLang();
+      document.addEventListener('click', function(e){ if (e.target.closest('.lang-btn')) setTimeout(syncLang, 60); });
+    })();
+  </script>
 </body>
 </html>

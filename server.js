@@ -8361,30 +8361,32 @@ function renderSaasLandingPage() {
 </html>`;
 }
 
-function renderGraduatesPage(diplomas) {
+function renderGraduatesPage(diplomas, lang = "ru") {
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const list = (diplomas || []).filter((d) => d.public).sort((a, b) => (b.completionDate || "").localeCompare(a.completionDate || ""));
-  const fmt = (d) => { try { return new Date(d + "T00:00:00").toLocaleDateString("ru-RU", { month: "long", year: "numeric" }); } catch { return d || ""; } };
+  const fmt = (d) => { try { return new Date(d + "T00:00:00").toLocaleDateString(ro ? "ro-RO" : "ru-RU", { month: "long", year: "numeric" }); } catch { return d || ""; } };
   const initials = (name) => (name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase();
   const cards = list.map((d) => `
-    <a class="grad-card" href="${base}/cert?code=${encodeURIComponent(d.code)}">
+    <a class="grad-card" href="${base}/cert?code=${encodeURIComponent(d.code)}${ro ? "&lang=ro" : ""}">
       <div class="grad-card__ava">${escapeHtml(initials(d.graduateName)) || "🎓"}</div>
       <div class="grad-card__body">
-        <div class="grad-card__name">${escapeHtml(d.graduateName || "Выпускник")}</div>
+        <div class="grad-card__name">${escapeHtml(d.graduateName || t("Выпускник", "Absolvent"))}</div>
         <div class="grad-card__course">${escapeHtml(d.courseName || "")}</div>
-        <div class="grad-card__meta">${escapeHtml(fmt(d.completionDate))} · ✓ подтверждён</div>
+        <div class="grad-card__meta">${escapeHtml(fmt(d.completionDate))} · ✓ ${t("подтверждён", "confirmat")}</div>
       </div>
       <span class="grad-card__arrow">→</span>
     </a>`).join("");
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${ro ? "ro" : "ru"}">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Выпускники школы — Mateev Spa Studio</title>
-<meta name="description" content="Мастера, прошедшие обучение и сертификацию в школе массажа Mateev Spa Studio, Кишинёв. Подтверждённые дипломы с проверкой подлинности.">
+<title>${t("Выпускники школы", "Absolvenții școlii")} — Mateev Spa Studio</title>
+<meta name="description" content="${t("Мастера, прошедшие обучение и сертификацию в школе массажа Mateev Spa Studio, Кишинёв. Подтверждённые дипломы с проверкой подлинности.", "Specialiști care au absolvit și au fost certificați la școala de masaj Mateev Spa Studio, Chișinău. Diplome confirmate cu verificarea autenticității.")}">
 <link rel="canonical" href="${base}/graduates">
-<meta property="og:title" content="Выпускники школы Mateev Spa Studio">
-<meta property="og:description" content="Сертифицированные мастера школы массажа. Подтверждённые дипломы.">
+<meta property="og:title" content="${t("Выпускники школы Mateev Spa Studio", "Absolvenții școlii Mateev Spa Studio")}">
+<meta property="og:description" content="${t("Сертифицированные мастера школы массажа. Подтверждённые дипломы.", "Maeștri certificați ai școlii de masaj. Diplome confirmate.")}">
 <meta property="og:image" content="${base}/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -8417,19 +8419,19 @@ function renderGraduatesPage(diplomas) {
 </style>
 </head>
 <body>
-  <header class="topbar"><div class="topbar__inner"><span class="topbar__brand">Mateev Spa Studio · Школа массажа</span><a href="${base}/" class="topbar__back">← На главную</a></div></header>
+  <header class="topbar"><div class="topbar__inner"><span class="topbar__brand">Mateev Spa Studio · ${t("Школа массажа", "Școala de masaj")}</span><a href="${base}/" class="topbar__back">← ${t("На главную", "Acasă")}</a></div></header>
   <main class="wrap">
-    <p class="kicker">Выпускники</p>
-    <h1>Наши сертифицированные мастера</h1>
-    <p class="sub">Специалисты, прошедшие авторское обучение и сертификацию в школе Mateev Spa Studio. Каждый диплом подтверждён — нажмите, чтобы проверить подлинность.</p>
-    ${cards ? `<div class="grid">${cards}</div>` : `<div class="empty">Скоро здесь появятся наши выпускники.</div>`}
+    <p class="kicker">${t("Выпускники", "Absolvenți")}</p>
+    <h1>${t("Наши сертифицированные мастера", "Maeștrii noștri certificați")}</h1>
+    <p class="sub">${t("Специалисты, прошедшие авторское обучение и сертификацию в школе Mateev Spa Studio. Каждый диплом подтверждён — нажмите, чтобы проверить подлинность.", "Specialiști care au absolvit cursurile de autor și au fost certificați la școala Mateev Spa Studio. Fiecare diplomă este confirmată — apăsați pentru a verifica autenticitatea.")}</p>
+    ${cards ? `<div class="grid">${cards}</div>` : `<div class="empty">${t("Скоро здесь появятся наши выпускники.", "În curând aici vor apărea absolvenții noștri.")}</div>`}
     <div class="cta">
-      <h2>Хотите так же?</h2>
-      <p>Присоединяйтесь к обучению массажу в нашей школе.</p>
-      <a href="${base}/school">Узнать о курсах</a>
+      <h2>${t("Хотите так же?", "Vreți la fel?")}</h2>
+      <p>${t("Присоединяйтесь к обучению массажу в нашей школе.", "Alăturați-vă cursurilor de masaj din școala noastră.")}</p>
+      <a href="${base}/school">${t("Узнать о курсах", "Despre cursuri")}</a>
     </div>
   </main>
-  <footer>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</footer>
+  <footer>© ${new Date().getFullYear()} Mateev Spa Studio · ${t("Кишинёв", "Chișinău")}</footer>
 </body>
 </html>`;
 }
@@ -9202,7 +9204,8 @@ function createServer() {
 
       if (urlObject.pathname === "/graduates" || urlObject.pathname === "/graduates/") {
         const diplomas = await readJson("diplomas.json").catch(() => []);
-        const html = renderGraduatesPage(diplomas);
+        const gradLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderGraduatesPage(diplomas, gradLang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
         return;
