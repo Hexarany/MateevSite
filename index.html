@@ -271,9 +271,7 @@
         #bodymap .bm-wrap{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start}
         #bodymap .bm-figure{flex:0 0 300px;max-width:100%;margin:0 auto}
         #bodymap .bm-svg{width:100%;height:auto;display:block}
-        #bodymap .bm-hot{fill:rgba(179,109,44,0);stroke:rgba(26,46,34,.22);stroke-width:1.4;stroke-dasharray:5 4;cursor:pointer;transition:fill .15s,stroke .15s}
-        #bodymap .bm-hot:hover{fill:rgba(179,109,44,.30);stroke:rgba(179,109,44,.7)}
-        #bodymap .bm-hot.is-active{fill:rgba(26,46,34,.28);stroke:rgba(26,46,34,.6);stroke-dasharray:none}
+        #bodymap .bm-hot{fill:transparent;stroke:none;cursor:pointer}
         #bodymap .bm-extra{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
         #bodymap .bm-zbtn{border:1px solid rgba(26,46,34,.18);background:#fff;color:#2b2620;border-radius:999px;padding:7px 15px;font-size:.88rem;cursor:pointer;font-family:inherit;transition:all .15s}
         #bodymap .bm-zbtn:hover{border-color:var(--amber,#b36d2c)}
@@ -303,8 +301,8 @@
                 <ellipse class="bm-hot" data-zone="neck" cx="140" cy="120" rx="74" ry="28"><title>Шея и плечи</title></ellipse>
                 <ellipse class="bm-hot" data-zone="chest" cx="140" cy="170" rx="48" ry="36"><title>Грудь</title></ellipse>
                 <ellipse class="bm-hot" data-zone="belly" cx="140" cy="245" rx="44" ry="44"><title>Живот</title></ellipse>
-                <ellipse class="bm-hot" data-zone="arms" cx="61" cy="235" rx="20" ry="92" transform="rotate(18 61 235)"><title>Руки</title></ellipse>
-                <ellipse class="bm-hot" data-zone="arms" cx="220" cy="235" rx="20" ry="92" transform="rotate(-18 220 235)"><title>Руки</title></ellipse>
+                <ellipse class="bm-hot" data-zone="arms" cx="57" cy="248" rx="22" ry="112" transform="rotate(18 57 248)"><title>Руки и кисти</title></ellipse>
+                <ellipse class="bm-hot" data-zone="arms" cx="224" cy="248" rx="22" ry="112" transform="rotate(-18 224 248)"><title>Руки и кисти</title></ellipse>
                 <ellipse class="bm-hot" data-zone="legs" cx="120" cy="458" rx="25" ry="146"><title>Ноги</title></ellipse>
                 <ellipse class="bm-hot" data-zone="legs" cx="160" cy="458" rx="25" ry="146"><title>Ноги</title></ellipse>
               </g>
