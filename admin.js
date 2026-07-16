@@ -1614,6 +1614,7 @@ async function loadAdminData() {
   initFinancialReport();
   loadCredentials();
   initMaterials();
+  initCare();
   loadReferrals();
   // Peak hours rendered after admin data loads
   initPeakHours();
@@ -6392,6 +6393,115 @@ async function handleMatListClick(e) {
   if (del) {
     if (!confirm("Удалить методичку? Ссылка перестанет работать.")) return;
     try { await fetchJson(`/api/admin/materials/${del.dataset.matDel}`, { method: "DELETE" }); await loadMaterials(); showToast("Удалено.", "success"); }
+    catch (er) { showToast(er.message, "error"); }
+    return;
+  }
+}
+
+// ─── Памятка клиенту (после сеанса) ──────────────────────────────────────────
+let _careItems = [];
+let _careBound = false;
+function initCare() {
+  loadCare();
+  if (_careBound) return;
+  _careBound = true;
+  document.getElementById("careNewBtn")?.addEventListener("click", () => openCareEditor(null));
+  document.getElementById("careCancelBtn")?.addEventListener("click", () => { document.getElementById("careEditor").style.display = "none"; });
+  document.getElementById("careSaveBtn")?.addEventListener("click", saveCare);
+  document.getElementById("careAiBtn")?.addEventListener("click", careAiDraft);
+  document.getElementById("careList")?.addEventListener("click", handleCareListClick);
+}
+async function loadCare() {
+  try {
+    const data = await fetchJson("/api/admin/care-notes");
+    _careItems = data.notes || [];
+    renderCareList();
+  } catch (e) { console.error("loadCare", e); }
+}
+function careLink(token) { return `${location.origin}/care?token=${token}`; }
+function renderCareList() {
+  const list = document.getElementById("careList");
+  const empty = document.getElementById("careEmpty");
+  if (!list) return;
+  if (!_careItems.length) { list.innerHTML = ""; if (empty) empty.style.display = ""; return; }
+  if (empty) empty.style.display = "none";
+  list.innerHTML = _careItems.map(m => `
+    <div class="admin-widget" style="padding:16px 18px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="min-width:200px;flex:1;">
+          <div style="font-weight:700;color:var(--ink);">${escapeHtml(m.clientName || "Без имени")}</div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-top:2px;">${escapeHtml([m.zones, m.techniques].filter(Boolean).join(" · ")) || "—"}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="button button--ghost button--mini" data-care-open="${m.id}">✏️ Изменить</button>
+          <button class="button button--ghost button--mini" data-care-copy="${m.id}">🔗 Ссылка клиенту</button>
+          <a class="button button--ghost button--mini" href="${careLink(m.token)}" target="_blank" rel="noopener">👁 Открыть</a>
+          <button class="button button--ghost button--mini" data-care-del="${m.id}" style="color:#c0392b;">🗑</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+function openCareEditor(m) {
+  document.getElementById("careEditor").style.display = "";
+  document.getElementById("careEditorTitle").textContent = m ? "Редактирование памятки" : "Памятка после сеанса";
+  document.getElementById("careId").value = m ? m.id : "";
+  document.getElementById("careClient").value = m ? (m.clientName || "") : "";
+  document.getElementById("careZones").value = m ? (m.zones || "") : "";
+  document.getElementById("careTech").value = m ? (m.techniques || "") : "";
+  document.getElementById("careNotes").value = "";
+  document.getElementById("careContent").value = m ? (m.content || "") : "";
+  document.getElementById("careAiStatus").textContent = "";
+  document.getElementById("careEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+async function careAiDraft() {
+  const body = {
+    clientName: document.getElementById("careClient").value.trim(),
+    zones: document.getElementById("careZones").value.trim(),
+    techniques: document.getElementById("careTech").value.trim(),
+    notes: document.getElementById("careNotes").value.trim()
+  };
+  if (!body.zones && !body.techniques) { showToast("Укажите зоны или техники.", "info"); return; }
+  const st = document.getElementById("careAiStatus");
+  st.textContent = "Собираю памятку…";
+  try {
+    const data = await fetchJson("/api/admin/care-ai", { method: "POST", body: JSON.stringify(body) });
+    document.getElementById("careContent").value = data.reply;
+    st.textContent = "Готово — проверь и поправь под себя.";
+  } catch (e) { st.textContent = e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY."; }
+}
+async function saveCare() {
+  const id = document.getElementById("careId").value;
+  const body = {
+    clientName: document.getElementById("careClient").value.trim(),
+    zones: document.getElementById("careZones").value.trim(),
+    techniques: document.getElementById("careTech").value.trim(),
+    content: document.getElementById("careContent").value
+  };
+  if (!body.content.trim()) { showToast("Памятка пустая — соберите или впишите текст.", "info"); return; }
+  try {
+    if (id) {
+      await fetchJson(`/api/admin/care-notes/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+    } else {
+      await fetchJson("/api/admin/care-notes", { method: "POST", body: JSON.stringify(body) });
+    }
+    document.getElementById("careEditor").style.display = "none";
+    await loadCare();
+    showToast("Памятка сохранена.", "success");
+  } catch (e) { showToast(e.message || "Ошибка сохранения.", "error"); }
+}
+async function handleCareListClick(e) {
+  const open = e.target.closest("[data-care-open]");
+  const copy = e.target.closest("[data-care-copy]");
+  const del = e.target.closest("[data-care-del]");
+  if (open) { const m = _careItems.find(x => x.id === open.dataset.careOpen); if (m) openCareEditor(m); return; }
+  if (copy) {
+    const m = _careItems.find(x => x.id === copy.dataset.careCopy);
+    if (m) { try { await navigator.clipboard.writeText(careLink(m.token)); showToast("Ссылка для клиента скопирована.", "success"); } catch {} }
+    return;
+  }
+  if (del) {
+    if (!confirm("Удалить памятку? Ссылка перестанет работать.")) return;
+    try { await fetchJson(`/api/admin/care-notes/${del.dataset.careDel}`, { method: "DELETE" }); await loadCare(); showToast("Удалено.", "success"); }
     catch (er) { showToast(er.message, "error"); }
     return;
   }

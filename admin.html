@@ -68,6 +68,7 @@
         <a href="#gallery" data-section="gallery">🖼️ Фотогалерея</a>
         <a href="#credentials" data-section="credentials">🎓 Мои дипломы</a>
         <a href="#materials" data-section="materials">📚 Материалы семинаров</a>
+        <a href="#care" data-section="care">🌿 Памятка клиенту</a>
         <a href="#broadcast" data-section="broadcast">📣 Рассылка</a>
         <a href="#diary" data-section="diary">✍️ Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">⭐ Отзывы на сайте</a>
@@ -1352,6 +1353,41 @@
 
             <div id="matList" style="display:grid;gap:12px;"></div>
             <p id="matEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Методичек пока нет. Нажмите «+ Новая методичка».</p>
+          </section>
+
+          <!-- ═══════════════ ПАМЯТКА КЛИЕНТУ ═══════════════ -->
+          <section class="admin-section-block reveal" id="care">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Клиентам · После сеанса</p>
+                <h2 class="admin-section-block__title">Памятка клиенту</h2>
+              </div>
+              <button class="button button--secondary" id="careNewBtn" type="button">+ Новая памятка</button>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">После сеанса создайте персональную памятку: что делали и домашние рекомендации. AI соберёт тёплый текст по зонам и техникам — вы правите и отправляете клиенту личную ссылку (в поиске её нет).</p>
+
+            <div class="admin-widget" id="careEditor" style="display:none;padding:22px;margin-bottom:20px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Новая памятка</p><h3 class="admin-widget__title" id="careEditorTitle">Памятка после сеанса</h3></div></div>
+              <input type="hidden" id="careId">
+              <div class="field-grid" style="margin-top:10px;">
+                <label class="field"><span>Имя клиента</span><input type="text" id="careClient" placeholder="Напр.: Анна"></label>
+                <label class="field"><span>Проработанные зоны</span><input type="text" id="careZones" placeholder="шея, трапеции, лицо"></label>
+              </div>
+              <label class="field field--full" style="margin-top:12px;"><span>Техники (через запятую)</span><input type="text" id="careTech" placeholder="МФР, триггеры, лимфодренаж лица"></label>
+              <label class="field field--full" style="margin-top:12px;"><span>Заметки массажиста (необязательно)</span><input type="text" id="careNotes" placeholder="Напр.: сильный гипертонус слева, дала упражнения"></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center;">
+                <button type="button" class="button button--ghost button--mini" id="careAiBtn">✨ Собрать памятку (AI)</button>
+                <span id="careAiStatus" style="font-size:0.82rem;color:var(--muted);align-self:center;"></span>
+              </div>
+              <label class="field field--full"><span>Текст памятки (Markdown: ## заголовки, - списки, **жирный**)</span><textarea id="careContent" rows="14" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:0.85rem;line-height:1.5;"></textarea></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                <button type="button" class="button button--secondary" id="careSaveBtn">Сохранить</button>
+                <button type="button" class="button button--ghost" id="careCancelBtn">Отмена</button>
+              </div>
+            </div>
+
+            <div id="careList" style="display:grid;gap:12px;"></div>
+            <p id="careEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Памяток пока нет. Нажмите «+ Новая памятка».</p>
           </section>
 
           <!-- ═══════════════ BROADCAST ═══════════════ -->

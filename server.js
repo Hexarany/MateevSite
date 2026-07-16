@@ -810,6 +810,7 @@ async function ensureDataFiles() {
     ["gallery.json", "[]"],
     ["credentials.json", "[]"],
     ["materials.json", "[]"],
+    ["care-notes.json", "[]"],
     ["reception.json", JSON.stringify({ mode: "hybrid", open: "08:00", close: "20:00" })],
     ["tg-sessions.json", "{}"],
     ["saas-leads.json", "[]"],
@@ -1476,6 +1477,21 @@ async function callStudioAI(messages) {
   const facts = await buildStudioFacts();
   return callAnthropic(`${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`, messages, 400);
 }
+
+// Промпт для памятки клиенту после сеанса (клиентоориентированный, тёплый)
+const AI_CARE_PROMPT = `Ты — массажист Денис Матеев (Mateev Spa Studio, Кишинёв). Составь тёплую, человечную ПАМЯТКУ ДЛЯ КЛИЕНТА после сеанса массажа — на «ты», простым языком, без клинического жаргона и латыни. Клиент прочитает это дома с телефона.
+
+Структура (Markdown: ## заголовки, - списки, **жирный**):
+## Что мы сегодня делали
+2–3 предложения по проработанным зонам и техникам простыми словами.
+## Как ты можешь себя чувствовать
+Что нормально в первые 1–2 дня (лёгкая усталость/чувствительность, пить воду, тепло, отдых). Когда стоит написать мне.
+## Домашние рекомендации
+3–5 простых выполнимых пунктов под проработанные зоны: пара мягких упражнений/растяжек и бытовые советы (осанка, сон, вода, тепло).
+## Когда прийти снова
+Мягкая рекомендация по срокам следующего визита.
+
+Пиши тепло и заботливо, без запугивания. Не ставь диагнозов и не обещай лечения. 250–400 слов.`;
 
 // Rule-based фолбэк для AI-подбора сеанса (работает без ключа/если AI не ответил)
 function sessionMatchFallback(a, services) {
@@ -5740,6 +5756,86 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     sendJson(response, 200, { reply });
     return;
   }
+  // POST /api/admin/care-ai — AI-черновик памятки клиенту после сеанса
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/care-ai") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const clientName = sanitizeText(payload.clientName || "").slice(0, 80);
+    const zones = sanitizeText(payload.zones || "").slice(0, 300);
+    const techniques = sanitizeText(payload.techniques || "").slice(0, 300);
+    const notes = sanitizeText(payload.notes || "").slice(0, 600);
+    if (!zones && !techniques) { sendJson(response, 400, { message: "Укажите зоны или техники сеанса." }); return; }
+    const langLabel = payload.lang === "ro" ? "румынском" : "русском";
+    const userMsg = `Данные сеанса:\n- Имя клиента: ${clientName || "—"}\n- Проработанные зоны: ${zones || "—"}\n- Техники: ${techniques || "—"}\n- Заметки массажиста: ${notes || "—"}\n\nСоставь памятку на ${langLabel} языке. Если указано имя — обращайся по имени.`;
+    const reply = await callAnthropic(AI_CARE_PROMPT, [{ role: "user", content: userMsg }], 1400);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
+    return;
+  }
+  // GET /api/admin/care-notes — список памяток
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/care-notes") {
+    assertAdminPin(request);
+    const items = await readJson("care-notes.json").catch(() => []);
+    const list = items.slice().sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    sendJson(response, 200, { notes: list });
+    return;
+  }
+  // POST /api/admin/care-notes — создать памятку
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/care-notes") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 1024 * 1024);
+    const content = String(payload.content || "").slice(0, 20000);
+    if (!content.trim()) { sendJson(response, 400, { message: "Памятка пустая." }); return; }
+    const items = await readJson("care-notes.json").catch(() => []);
+    const now = new Date().toISOString();
+    const item = {
+      id: crypto.randomUUID(),
+      clientName: sanitizeText(payload.clientName || "").slice(0, 80),
+      zones: sanitizeText(payload.zones || "").slice(0, 300),
+      techniques: sanitizeText(payload.techniques || "").slice(0, 300),
+      content,
+      token: crypto.randomBytes(18).toString("hex"),
+      createdAt: now, updatedAt: now
+    };
+    items.push(item);
+    await writeJson("care-notes.json", items);
+    sendJson(response, 201, { ok: true, item });
+    return;
+  }
+  // PATCH /api/admin/care-notes/:id — обновить (или ?reset=1 — новая ссылка)
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/care-notes/")) {
+    assertAdminPin(request);
+    const id = urlObject.pathname.replace("/api/admin/care-notes/", "");
+    const items = await readJson("care-notes.json").catch(() => []);
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) { sendJson(response, 404, { message: "Памятка не найдена." }); return; }
+    if (urlObject.searchParams.get("reset") === "1") {
+      items[idx].token = crypto.randomBytes(18).toString("hex");
+    } else {
+      const payload = await parseJsonBody(request, 1024 * 1024);
+      if (payload.clientName !== undefined) items[idx].clientName = sanitizeText(payload.clientName).slice(0, 80);
+      if (payload.zones !== undefined) items[idx].zones = sanitizeText(payload.zones).slice(0, 300);
+      if (payload.techniques !== undefined) items[idx].techniques = sanitizeText(payload.techniques).slice(0, 300);
+      if (payload.content !== undefined) items[idx].content = String(payload.content).slice(0, 20000);
+    }
+    items[idx].updatedAt = new Date().toISOString();
+    await writeJson("care-notes.json", items);
+    sendJson(response, 200, { ok: true, item: items[idx] });
+    return;
+  }
+  // DELETE /api/admin/care-notes/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/care-notes/")) {
+    assertAdminPin(request);
+    const id = urlObject.pathname.replace("/api/admin/care-notes/", "");
+    const items = await readJson("care-notes.json").catch(() => []);
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) { sendJson(response, 404, { message: "Памятка не найдена." }); return; }
+    items.splice(idx, 1);
+    await writeJson("care-notes.json", items);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
   // POST /api/admin/materials/upload — загрузка картинки для методички
   if (request.method === "POST" && urlObject.pathname === "/api/admin/materials/upload") {
     assertAdminPin(request);
@@ -8230,6 +8326,41 @@ function renderGraduatesPage(diplomas) {
 </html>`;
 }
 
+function renderCareNotePage(note) {
+  if (!note) {
+    return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Памятка недоступна</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;background:#f7f0e6;color:#241c17;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}</style></head>
+<body><div><h1 style="color:#1a2e22;">Памятка недоступна</h1><p style="color:#7d6d60;">Ссылка неверна или устарела. Обратитесь к массажисту.</p></div></body></html>`;
+  }
+  const body = parseMarkdown(note.content || "");
+  const hi = note.clientName ? `, ${escapeHtml(note.clientName)}` : "";
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  return `<!DOCTYPE html><html lang="ru"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow">
+<title>Памятка после сеанса — Mateev Spa Studio</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f7f0e6;color:#241c17;line-height:1.6;font-size:16px}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 22px 60px}
+  .brand{font-weight:700;color:#1a2e22;margin-bottom:6px}
+  .kicker{color:#b36d2c;font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:1.7rem;color:#1a2e22;margin:6px 0 18px;line-height:1.2}
+  .content h2{font-size:1.25rem;color:#1a2e22;border-bottom:2px solid #b36d2c;padding-bottom:4px;margin:26px 0 10px}
+  .content h3{font-size:1.05rem;color:#6b4a1f;margin:16px 0 6px}
+  .content p{margin:10px 0}.content ul,.content ol{margin:8px 0 12px;padding-left:22px}.content li{margin:4px 0}.content strong{color:#1a2e22}
+  .cta{display:inline-block;margin-top:24px;background:#1a2e22;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:600}
+  .foot{margin-top:34px;border-top:1px solid #ddd;padding-top:12px;color:#8a7a6c;font-size:.8rem}
+</style></head>
+<body><div class="wrap">
+  <p class="brand">Mateev Spa Studio</p>
+  <p class="kicker">Памятка после сеанса</p>
+  <h1>Спасибо за визит${hi}!</h1>
+  <div class="content">${body}</div>
+  <a class="cta" href="${base}/#booking">Записаться снова →</a>
+  <div class="foot">© ${new Date().getFullYear()} Mateev Spa Studio · Денис Матеев. Рекомендации носят общий характер и не заменяют консультацию врача. При острой боли или ухудшении — обратитесь к специалисту.</div>
+</div></body></html>`;
+}
+
 function renderMaterialPage(material) {
   if (!material) {
     return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Материал не найден</title>
@@ -8986,6 +9117,16 @@ function createServer() {
         const material = token ? items.find(m => m.token === token) : null;
         const html = renderMaterialPage(material);
         response.writeHead(material ? 200 : 404, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/care" || urlObject.pathname === "/care/") {
+        const token = urlObject.searchParams.get("token") || "";
+        const items = await readJson("care-notes.json").catch(() => []);
+        const note = token ? items.find(m => m.token === token) : null;
+        const html = renderCareNotePage(note);
+        response.writeHead(note ? 200 : 404, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
         response.end(html);
         return;
       }
