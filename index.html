@@ -104,6 +104,7 @@
         <a href="#platform" class="nav__link" id="navOverviewLink">Почему мы</a>
         <a href="#services" class="nav__link" id="navServicesLink">Процедуры</a>
         <a href="#specialists" class="nav__link" id="navSpecialistsLink">Специалисты</a>
+        <a href="#bodymap" class="nav__link" data-ru="Карта тела" data-ro="Harta corpului">Карта тела</a>
         <a href="#podbor" class="nav__link" data-ru="AI-подбор" data-ro="Selecție AI">AI-подбор</a>
         <a href="#booking" class="nav__link" id="navBookingLink">Запись</a>
         <a href="#gift" class="nav__link" data-ru="Сертификаты" data-ro="Certificate">Сертификаты</a>
@@ -263,6 +264,141 @@
 
         <div class="process-grid" id="processGrid"></div>
       </div>
+    </section>
+
+    <section class="section section--contrast" id="bodymap">
+      <style>
+        #bodymap .bm-wrap{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start}
+        #bodymap .bm-figure{flex:0 0 300px;max-width:100%;margin:0 auto}
+        #bodymap .bm-svg{width:100%;height:auto;display:block}
+        #bodymap .bm-silhouette{fill:#e7ddcd}
+        #bodymap .bm-hot{fill:rgba(179,109,44,0);cursor:pointer;transition:fill .15s}
+        #bodymap .bm-hot:hover{fill:rgba(179,109,44,.28)}
+        #bodymap .bm-hot.is-active{fill:rgba(26,46,34,.34)}
+        #bodymap .bm-extra{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+        #bodymap .bm-zbtn{border:1px solid rgba(26,46,34,.18);background:#fff;color:#2b2620;border-radius:999px;padding:7px 15px;font-size:.88rem;cursor:pointer;font-family:inherit;transition:all .15s}
+        #bodymap .bm-zbtn:hover{border-color:var(--amber,#b36d2c)}
+        #bodymap .bm-zbtn.is-active{background:var(--forest,#1a2e22);color:#fff;border-color:var(--forest,#1a2e22)}
+        #bodymap .bm-panel{flex:1;min-width:280px;background:var(--card,#fff);border:1px solid rgba(26,46,34,.1);border-radius:20px;padding:24px;box-shadow:0 14px 34px rgba(26,46,34,.08)}
+        #bodymap .bm-panel__hint{color:var(--muted,#8a7a6c)}
+        #bodymap .bm-panel__title{font-size:1.3rem;color:var(--forest,#1a2e22);font-weight:700;margin:0 0 4px}
+        #bodymap .bm-panel__sub{color:var(--muted,#8a7a6c);font-size:.85rem;margin:0 0 12px}
+        #bodymap .bm-h{font-weight:600;color:var(--forest,#1a2e22);font-size:.9rem;margin:14px 0 6px}
+        #bodymap .bm-chips{display:flex;flex-wrap:wrap;gap:6px}
+        #bodymap .bm-chip{background:rgba(179,109,44,.1);color:#8a5320;border-radius:8px;padding:4px 11px;font-size:.84rem;font-weight:600}
+        #bodymap .bm-effect{background:rgba(26,46,34,.05);border-radius:12px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+      </style>
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" data-ru="🗺 Карта тела" data-ro="🗺 Harta corpului">🗺 Карта тела</p>
+          <h2 data-ru="Что где болит — и что мы с этим делаем" data-ro="Ce vă doare — și ce facem noi cu asta">Что где болит — и что мы с этим делаем</h2>
+          <p class="section-copy" data-ru="Нажмите на зону тела — покажем, какие техники интегративного метода там работают и с чем помогают. И сразу подготовим запись." data-ro="Apăsați pe o zonă a corpului — vă arătăm ce tehnici lucrează acolo și cu ce ajută.">Нажмите на зону тела — покажем, какие техники интегративного метода там работают и с чем помогают. И сразу подготовим запись.</p>
+        </div>
+
+        <div class="bm-wrap reveal">
+          <div class="bm-figure">
+            <svg class="bm-svg" viewBox="0 0 300 620" role="img" aria-label="Карта тела">
+              <g class="bm-silhouette">
+                <circle cx="150" cy="54" r="33"/>
+                <rect x="138" y="82" width="24" height="22" rx="8"/>
+                <path d="M92 110 Q150 94 208 110 L216 130 Q150 118 84 130 Z"/>
+                <rect x="104" y="120" width="92" height="122" rx="26"/>
+                <rect x="112" y="230" width="76" height="90" rx="24"/>
+                <rect x="74" y="122" width="22" height="152" rx="11"/>
+                <rect x="204" y="122" width="22" height="152" rx="11"/>
+                <rect x="116" y="312" width="28" height="252" rx="14"/>
+                <rect x="156" y="312" width="28" height="252" rx="14"/>
+              </g>
+              <g class="bm-hotspots">
+                <ellipse class="bm-hot" data-zone="face" cx="150" cy="54" rx="30" ry="33"><title>Лицо</title></ellipse>
+                <ellipse class="bm-hot" data-zone="neck" cx="150" cy="110" rx="66" ry="20"><title>Шея и плечи</title></ellipse>
+                <rect class="bm-hot" data-zone="chest" x="106" y="120" width="88" height="56" rx="22"><title>Грудь</title></rect>
+                <rect class="bm-hot" data-zone="belly" x="110" y="180" width="80" height="132" rx="24"><title>Живот</title></rect>
+                <rect class="bm-hot" data-zone="arms" x="70" y="120" width="30" height="156" rx="14"><title>Руки</title></rect>
+                <rect class="bm-hot" data-zone="arms" x="200" y="120" width="30" height="156" rx="14"><title>Руки</title></rect>
+                <rect class="bm-hot" data-zone="legs" x="112" y="312" width="36" height="254" rx="16"><title>Ноги</title></rect>
+                <rect class="bm-hot" data-zone="legs" x="152" y="312" width="36" height="254" rx="16"><title>Ноги</title></rect>
+              </g>
+            </svg>
+            <div class="bm-extra">
+              <button type="button" class="bm-zbtn" data-zone="back" data-ru="Спина" data-ro="Spate">Спина</button>
+              <button type="button" class="bm-zbtn" data-zone="full" data-ru="Всё тело" data-ro="Tot corpul">Всё тело</button>
+            </div>
+          </div>
+
+          <div class="bm-panel" id="bmPanel">
+            <p class="bm-panel__hint" data-ru="← Выберите зону тела, чтобы увидеть техники и эффект." data-ro="← Selectați o zonă a corpului pentru a vedea tehnicile.">← Выберите зону тела, чтобы увидеть техники и эффект.</p>
+          </div>
+        </div>
+      </div>
+
+      <script>
+      (function(){
+        var root = document.getElementById('bodymap');
+        if (!root) return;
+        var getLang = function(){ try { return localStorage.getItem('lang') === 'ro' ? 'ro' : 'ru'; } catch(e){ return 'ru'; } };
+        var t = function(ru, ro){ return getLang() === 'ro' ? ro : ru; };
+        function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+
+        var Z = {
+          face:  { ru:'Лицо', ro:'Față', subRu:'мимические и жевательные мышцы, ВНЧС', subRo:'mușchi mimici și masticatori, ATM',
+            tRu:['МФР лица','Интрабуккальный массаж','Лимфодренаж лица'], tRo:['Eliberare miofascială','Masaj intrabucal','Drenaj limfatic facial'],
+            eRu:'Лифтинг и тонус, снятие зажимов ВНЧС и бруксизма, уменьшение отёчности, «свежесть» лица.', eRo:'Lifting și tonus, eliberarea ATM, reducerea edemului.' },
+          neck:  { ru:'Шея и плечи (ШВЗ)', ro:'Gât și umeri', subRu:'трапеции, «холка», головные боли', subRo:'trapez, tensiune, dureri de cap',
+            tRu:['МФР','Триггерные точки','Дифиброзирующий массаж','Лимфодренаж'], tRo:['MFR','Puncte trigger','Masaj defibrozant','Drenaj limfatic'],
+            eRu:'Снятие боли и гипертонуса, меньше головных болей напряжения, восстановление подвижности шеи.', eRo:'Reducerea durerii și tensiunii, mobilitate.' },
+          chest: { ru:'Грудь и осанка', ro:'Piept și postură', subRu:'грудные мышцы, раскрытие плеч, дыхание', subRo:'mușchii pieptului, postură',
+            tRu:['Массаж груди','МФР грудной фасции','Триггеры малой грудной'], tRo:['Masajul pieptului','MFR','Puncte trigger'],
+            eRu:'Коррекция сутулости, раскрытие плеч, свободное дыхание, снятие напряжения.', eRo:'Corectarea posturii, respirație liberă.' },
+          belly: { ru:'Живот и ЖКТ', ro:'Abdomen și digestie', subRu:'висцеральная работа, диафрагма', subRo:'lucru visceral, diafragmă',
+            tRu:['Висцеральная терапия','Диафрагмальные техники','Мягкий лимфодренаж'], tRo:['Terapie viscerală','Tehnici diafragmatice','Drenaj limfatic'],
+            eRu:'Улучшение пищеварения и моторики, меньше вздутия, свободное дыхание, глубокая релаксация.', eRo:'Digestie mai bună, relaxare profundă.' },
+          back:  { ru:'Спина', ro:'Spate', subRu:'глубокие мышцы, триггеры, мобилизация', subRo:'mușchi profunzi, mobilizare',
+            tRu:['Deep tissue','МФР','Триггерные точки','ПИР'], tRo:['Deep tissue','MFR','Puncte trigger','PIR'],
+            eRu:'Снятие боли и скованности, восстановление подвижности и осанки, «длинные» расслабленные мышцы.', eRo:'Reducerea durerii, mobilitate și postură.' },
+          arms:  { ru:'Руки', ro:'Brațe', subRu:'лимфа, восстановление, тонус', subRo:'limfă, recuperare',
+            tRu:['Лимфодренаж','МФР','Восстановление'], tRo:['Drenaj limfatic','MFR','Recuperare'],
+            eRu:'Снятие тяжести и отёков, восстановление после нагрузки, лёгкость в руках.', eRo:'Reducerea greutății și edemului.' },
+          legs:  { ru:'Ноги', ro:'Picioare', subRu:'лимфа, «тяжёлые ноги», восстановление', subRo:'limfă, picioare grele',
+            tRu:['Лимфодренаж','Deep tissue','Рефлексология стоп'], tRo:['Drenaj limfatic','Deep tissue','Reflexoterapie'],
+            eRu:'Лёгкие ноги, меньше отёков и «тяжести», восстановление после нагрузки.', eRo:'Picioare ușoare, mai puțin edem.' },
+          full:  { ru:'Всё тело', ro:'Tot corpul', subRu:'интегративный сеанс под задачу', subRo:'ședință integrativă',
+            tRu:['МФР','Триггерные точки','Лимфодренаж','ПИР','Шиацу'], tRo:['MFR','Puncte trigger','Drenaj limfatic','PIR','Shiatsu'],
+            eRu:'Комплексная проработка тела: собираем сеанс под вашу задачу из разных техник метода.', eRo:'Lucru complex, ședință sub sarcina ta.' }
+        };
+
+        var panel = document.getElementById('bmPanel');
+        var allHot = root.querySelectorAll('.bm-hot');
+        var allBtn = root.querySelectorAll('.bm-zbtn');
+
+        function select(zone){
+          var z = Z[zone]; if (!z) return;
+          allHot.forEach(function(h){ h.classList.toggle('is-active', h.dataset.zone === zone); });
+          allBtn.forEach(function(b){ b.classList.toggle('is-active', b.dataset.zone === zone); });
+          var lang = getLang();
+          var name = lang==='ro'?z.ro:z.ru;
+          var sub = lang==='ro'?z.subRo:z.subRu;
+          var techs = lang==='ro'?z.tRo:z.tRu;
+          var eff = lang==='ro'?z.eRo:z.eRu;
+          panel.innerHTML =
+            '<p class="bm-panel__title">'+esc(name)+'</p>'+
+            '<p class="bm-panel__sub">'+esc(sub)+'</p>'+
+            '<p class="bm-h">'+t('Техники','Tehnici')+'</p>'+
+            '<div class="bm-chips">'+techs.map(function(x){return '<span class="bm-chip">'+esc(x)+'</span>';}).join('')+'</div>'+
+            '<div class="bm-effect"><b>'+t('Эффект','Efect')+':</b> '+esc(eff)+'</div>'+
+            '<button type="button" class="button button--primary" id="bmBook">'+t('Записаться на эту зону →','Programează-te →')+'</button>';
+          document.getElementById('bmBook').addEventListener('click', function(){
+            var notes = document.getElementById('clientNotes');
+            if (notes) notes.value = (t('Акцент','Accent')+': '+name+' — '+techs.join(', ')).slice(0,200);
+            var b = document.getElementById('booking');
+            if (b) b.scrollIntoView({ behavior:'smooth', block:'start' });
+          });
+        }
+
+        allHot.forEach(function(h){ h.addEventListener('click', function(){ select(h.dataset.zone); }); });
+        allBtn.forEach(function(b){ b.addEventListener('click', function(){ select(b.dataset.zone); }); });
+      })();
+      </script>
     </section>
 
     <section class="section" id="podbor">
