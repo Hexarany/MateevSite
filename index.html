@@ -105,7 +105,7 @@
         <a href="#services" class="nav__link" id="navServicesLink">Процедуры</a>
         <a href="#specialists" class="nav__link" id="navSpecialistsLink">Специалисты</a>
         <a href="#bodymap" class="nav__link" data-ru="Карта тела" data-ro="Harta corpului">Карта тела</a>
-        <a href="#podbor" class="nav__link" data-ru="AI-подбор" data-ro="Selecție AI">AI-подбор</a>
+        <a href="#podbor" class="nav__link" data-ru="Подобрать массаж" data-ro="Alege masajul">Подобрать массаж</a>
         <a href="#booking" class="nav__link" id="navBookingLink">Запись</a>
         <a href="#gift" class="nav__link" data-ru="Сертификаты" data-ro="Certificate">Сертификаты</a>
         <a href="/school" class="nav__link" data-ru="Школа" data-ro="Școală">Школа</a>
@@ -270,11 +270,10 @@
       <style>
         #bodymap .bm-wrap{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start}
         #bodymap .bm-figure{flex:0 0 300px;max-width:100%;margin:0 auto}
-        #bodymap .bm-svg{width:100%;height:auto;display:block}
-        #bodymap .bm-silhouette{fill:#e7ddcd}
-        #bodymap .bm-hot{fill:rgba(179,109,44,0);cursor:pointer;transition:fill .15s}
-        #bodymap .bm-hot:hover{fill:rgba(179,109,44,.28)}
-        #bodymap .bm-hot.is-active{fill:rgba(26,46,34,.34)}
+        #bodymap .bm-svg{width:100%;height:auto;display:block;max-height:560px}
+        #bodymap .bm-hot{fill:rgba(179,109,44,0);stroke:rgba(26,46,34,.22);stroke-width:1.4;stroke-dasharray:5 4;cursor:pointer;transition:fill .15s,stroke .15s}
+        #bodymap .bm-hot:hover{fill:rgba(179,109,44,.30);stroke:rgba(179,109,44,.7)}
+        #bodymap .bm-hot.is-active{fill:rgba(26,46,34,.28);stroke:rgba(26,46,34,.6);stroke-dasharray:none}
         #bodymap .bm-extra{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
         #bodymap .bm-zbtn{border:1px solid rgba(26,46,34,.18);background:#fff;color:#2b2620;border-radius:999px;padding:7px 15px;font-size:.88rem;cursor:pointer;font-family:inherit;transition:all .15s}
         #bodymap .bm-zbtn:hover{border-color:var(--amber,#b36d2c)}
@@ -297,27 +296,17 @@
 
         <div class="bm-wrap reveal">
           <div class="bm-figure">
-            <svg class="bm-svg" viewBox="0 0 300 620" role="img" aria-label="Карта тела">
-              <g class="bm-silhouette">
-                <circle cx="150" cy="54" r="33"/>
-                <rect x="138" y="82" width="24" height="22" rx="8"/>
-                <path d="M92 110 Q150 94 208 110 L216 130 Q150 118 84 130 Z"/>
-                <rect x="104" y="120" width="92" height="122" rx="26"/>
-                <rect x="112" y="230" width="76" height="90" rx="24"/>
-                <rect x="74" y="122" width="22" height="152" rx="11"/>
-                <rect x="204" y="122" width="22" height="152" rx="11"/>
-                <rect x="116" y="312" width="28" height="252" rx="14"/>
-                <rect x="156" y="312" width="28" height="252" rx="14"/>
-              </g>
+            <svg class="bm-svg" viewBox="8 12 300 600" role="img" aria-label="Карта тела">
+              <image href="/body-diagram.jpg" x="0" y="0" width="626" height="628" preserveAspectRatio="xMidYMid meet"/>
               <g class="bm-hotspots">
-                <ellipse class="bm-hot" data-zone="face" cx="150" cy="54" rx="30" ry="33"><title>Лицо</title></ellipse>
-                <ellipse class="bm-hot" data-zone="neck" cx="150" cy="110" rx="66" ry="20"><title>Шея и плечи</title></ellipse>
-                <rect class="bm-hot" data-zone="chest" x="106" y="120" width="88" height="56" rx="22"><title>Грудь</title></rect>
-                <rect class="bm-hot" data-zone="belly" x="110" y="180" width="80" height="132" rx="24"><title>Живот</title></rect>
-                <rect class="bm-hot" data-zone="arms" x="70" y="120" width="30" height="156" rx="14"><title>Руки</title></rect>
-                <rect class="bm-hot" data-zone="arms" x="200" y="120" width="30" height="156" rx="14"><title>Руки</title></rect>
-                <rect class="bm-hot" data-zone="legs" x="112" y="312" width="36" height="254" rx="16"><title>Ноги</title></rect>
-                <rect class="bm-hot" data-zone="legs" x="152" y="312" width="36" height="254" rx="16"><title>Ноги</title></rect>
+                <ellipse class="bm-hot" data-zone="face" cx="150" cy="52" rx="30" ry="38"><title>Лицо</title></ellipse>
+                <ellipse class="bm-hot" data-zone="neck" cx="150" cy="116" rx="80" ry="28"><title>Шея и плечи</title></ellipse>
+                <ellipse class="bm-hot" data-zone="chest" cx="150" cy="172" rx="52" ry="38"><title>Грудь</title></ellipse>
+                <ellipse class="bm-hot" data-zone="belly" cx="150" cy="246" rx="46" ry="46"><title>Живот</title></ellipse>
+                <ellipse class="bm-hot" data-zone="arms" cx="74" cy="220" rx="24" ry="86"><title>Руки</title></ellipse>
+                <ellipse class="bm-hot" data-zone="arms" cx="226" cy="220" rx="24" ry="86"><title>Руки</title></ellipse>
+                <ellipse class="bm-hot" data-zone="legs" cx="122" cy="455" rx="30" ry="150"><title>Ноги</title></ellipse>
+                <ellipse class="bm-hot" data-zone="legs" cx="178" cy="455" rx="30" ry="150"><title>Ноги</title></ellipse>
               </g>
             </svg>
             <div class="bm-extra">
@@ -422,7 +411,7 @@
       </style>
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker" data-ru="✨ AI-подбор сеанса" data-ro="✨ Selecție AI a ședinței">✨ AI-подбор сеанса</p>
+          <p class="section-kicker" data-ru="✨ Персональный подбор" data-ro="✨ Selecție personală">✨ Персональный подбор</p>
           <h2 data-ru="Не знаете, какой массаж выбрать? Ответьте на 5 вопросов" data-ro="Nu știți ce masaj să alegeți? Răspundeți la 5 întrebări">Не знаете, какой массаж выбрать? Ответьте на 5 вопросов</h2>
           <p class="section-copy" data-ru="Денис работает в интегративном подходе — сеанс собирается под вашу задачу из разных техник. Ответьте на пару вопросов, и мы подберём техники и программу, а также подготовим запись." data-ro="Denis lucrează într-o abordare integrativă — ședința se construiește sub sarcina ta. Răspundeți la câteva întrebări și vom selecta tehnicile și programul.">Денис работает в интегративном подходе — сеанс собирается под вашу задачу из разных техник. Ответьте на пару вопросов, и мы подберём техники и программу, а также подготовим запись.</p>
         </div>
