@@ -1617,6 +1617,7 @@ async function loadAdminData() {
   initCare();
   initResults();
   initFollowup();
+  initBookingCalendar();
   loadReferrals();
   // Peak hours rendered after admin data loads
   initPeakHours();
@@ -3374,6 +3375,7 @@ function renderAttentionBoard(items) {
 }
 
 function renderAdminTable() {
+  if (typeof renderBookingCalendar === "function") renderBookingCalendar();
   const bookings = state.adminData?.bookings || [];
 
   // Period filter
@@ -6627,6 +6629,128 @@ function fuOpenWhatsApp() {
   if (!text) { showToast("Сначала соберите или впишите сообщение.", "info"); return; }
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
 }
+
+// ─── Журнал заявок: вид «Календарь» ─────────────────────────────────────────
+let _bkView = "list";
+let _calMonth = (function () { const d = new Date(); d.setDate(1); return d; })();
+let _bkCalBound = false;
+function initBookingCalendar() {
+  if (_bkCalBound) return;
+  const listBtn = document.getElementById("bkViewList");
+  const calBtn = document.getElementById("bkViewCal");
+  if (!listBtn || !calBtn) return;
+  _bkCalBound = true;
+  listBtn.addEventListener("click", () => setBkView("list"));
+  calBtn.addEventListener("click", () => setBkView("calendar"));
+  document.getElementById("adminCalendar")?.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-cal-booking]");
+    if (chip) openBkModal(chip.dataset.calBooking);
+  });
+  const modal = document.getElementById("bkModal");
+  const body = document.getElementById("bkModalBody");
+  modal?.addEventListener("click", (e) => { if (e.target === modal || e.target.closest("[data-bk-close]")) closeBkModal(); });
+  body?.addEventListener("change", (e) => { handleAdminStatusChange(e); closeBkModal(); });
+  body?.addEventListener("click", (e) => {
+    if (e.target.closest("[data-edit-booking-id],[data-cancel-booking-id],[data-delete-booking-id]")) {
+      handleAdminTableClick(e);
+      closeBkModal();
+    }
+  });
+}
+function setBkView(v) {
+  _bkView = v;
+  document.getElementById("bkViewList")?.classList.toggle("is-active", v === "list");
+  document.getElementById("bkViewCal")?.classList.toggle("is-active", v === "calendar");
+  const cal = document.getElementById("adminCalendar");
+  const table = document.getElementById("adminTableBody");
+  const sortBtn = document.getElementById("sortDirBtn");
+  if (v === "calendar") {
+    if (cal) cal.hidden = false;
+    if (table) table.style.display = "none";
+    if (sortBtn) sortBtn.style.display = "none";
+    renderBookingCalendar();
+  } else {
+    if (cal) cal.hidden = true;
+    if (table) table.style.display = "";
+    if (sortBtn) sortBtn.style.display = "";
+    renderAdminTable();
+  }
+}
+function calFilteredBookings() {
+  const bookings = state.adminData?.bookings || [];
+  const st = state.filters.status, q = state.filters.search;
+  return bookings.filter((b) => {
+    if (st && st !== "all" && b.status !== st) return false;
+    if (!q) return true;
+    return [b.reference, b.clientName, b.phone, b.email, b.serviceName, b.specialistName, b.notes]
+      .filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
+}
+function renderBookingCalendar() {
+  const cal = document.getElementById("adminCalendar");
+  if (!cal || _bkView !== "calendar") return;
+  const y = _calMonth.getFullYear(), m = _calMonth.getMonth();
+  const startDow = (new Date(y, m, 1).getDay() + 6) % 7; // Пн = 0
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+  const byDate = {};
+  calFilteredBookings().forEach((b) => { if (b.date) (byDate[b.date] = byDate[b.date] || []).push(b); });
+  Object.values(byDate).forEach((arr) => arr.sort((a, b) => (a.slot || "").localeCompare(b.slot || "")));
+  const todayStr = (typeof getLocalDateString === "function") ? getLocalDateString() : new Date().toISOString().slice(0, 10);
+  const dows = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  let cells = "";
+  for (let i = 0; i < startDow; i++) {
+    cells += `<div class="bk-cal__day bk-cal__day--other"><span class="bk-cal__dnum">${prevDays - startDow + 1 + i}</span></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const items = byDate[ds] || [];
+    const shown = items.slice(0, 4);
+    const chips = shown.map((b) =>
+      `<div class="bk-cal__chip bk-cal__chip--${escapeHtml(b.status)}" data-cal-booking="${escapeHtml(b.id)}" title="${escapeHtml(b.clientName)} · ${escapeHtml(b.serviceName)}">${escapeHtml((b.slot || "").slice(0, 5))} ${escapeHtml(b.clientName || "")}</div>`
+    ).join("");
+    const more = items.length > 4 ? `<span class="bk-cal__more" data-cal-booking="${escapeHtml(items[4].id)}">+${items.length - 4} ещё</span>` : "";
+    cells += `<div class="bk-cal__day${ds === todayStr ? " bk-cal__day--today" : ""}"><span class="bk-cal__dnum">${d}</span>${chips}${more}</div>`;
+  }
+  const title = _calMonth.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+  cal.innerHTML =
+    `<div class="bk-cal__head">
+       <button type="button" id="bkCalPrev">‹</button>
+       <span class="bk-cal__title">${escapeHtml(title)}</span>
+       <button type="button" id="bkCalNext">›</button>
+     </div>
+     <div class="bk-cal__grid">${dows.map((d) => `<div class="bk-cal__dow">${d}</div>`).join("")}${cells}</div>`;
+  document.getElementById("bkCalPrev").addEventListener("click", () => { _calMonth.setMonth(_calMonth.getMonth() - 1); renderBookingCalendar(); });
+  document.getElementById("bkCalNext").addEventListener("click", () => { _calMonth.setMonth(_calMonth.getMonth() + 1); renderBookingCalendar(); });
+}
+function openBkModal(id) {
+  const b = state.adminData?.bookings?.find((x) => x.id === id);
+  if (!b) return;
+  const body = document.getElementById("bkModalBody");
+  if (!body) return;
+  body.innerHTML =
+    `<button type="button" class="bk-modal__close" data-bk-close>×</button>
+     <p class="section-kicker">${escapeHtml(b.reference || "")}</p>
+     <h3 style="font-size:1.2rem;margin:2px 0 14px;color:var(--forest,#1a2e22);">${escapeHtml(b.clientName || "")}</h3>
+     <div style="display:grid;gap:9px;font-size:.92rem;">
+       <div>📞 <a href="tel:${escapeHtml(b.phone || "")}" style="color:var(--forest,#1a2e22);">${escapeHtml(b.phone || "")}</a></div>
+       ${b.email ? `<div>✉️ <a href="mailto:${escapeHtml(b.email)}" style="color:var(--forest,#1a2e22);">${escapeHtml(b.email)}</a></div>` : ""}
+       <div>💆 ${escapeHtml(b.serviceName || "")} · ${escapeHtml(b.specialistName || "")} · ${formatCurrency(b.totalPrice)}</div>
+       <div>📅 ${escapeHtml(formatDate(b.date))}, ${escapeHtml(b.slot || "")}–${escapeHtml(b.endsAt || "")}</div>
+       ${b.notes ? `<div style="background:rgba(107,141,107,.08);border-radius:10px;padding:9px 11px;">📝 ${escapeHtml(b.notes)}</div>` : ""}
+     </div>
+     <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+       <select class="status-select" data-booking-id="${escapeHtml(b.id)}">
+         ${Object.entries(statusLabels).map(([v, l]) => `<option value="${escapeHtml(v)}" ${b.status === v ? "selected" : ""}>${escapeHtml(l)}</option>`).join("")}
+       </select>
+       <button type="button" class="button button--ghost button--mini" data-edit-booking-id="${escapeHtml(b.id)}">Ред.</button>
+       <button type="button" class="button button--ghost button--mini" data-cancel-booking-id="${escapeHtml(b.id)}">Отменить</button>
+       <button type="button" class="button button--ghost button--mini" data-delete-booking-id="${escapeHtml(b.id)}" style="color:var(--danger,#c0392b);">Уд.</button>
+     </div>`;
+  const m = document.getElementById("bkModal");
+  if (m) m.hidden = false;
+}
+function closeBkModal() { const m = document.getElementById("bkModal"); if (m) m.hidden = true; }
 
 async function loadCredentials() {
   try {
