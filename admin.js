@@ -1616,6 +1616,7 @@ async function loadAdminData() {
   initMaterials();
   initCare();
   initResults();
+  initFollowup();
   loadReferrals();
   // Peak hours rendered after admin data loads
   initPeakHours();
@@ -6583,6 +6584,48 @@ async function handleResListClick(e) {
   if (!confirm("Удалить пару до/после?")) return;
   try { await fetchJson(`/api/admin/results/${del.dataset.resDel}`, { method: "DELETE" }); await loadResults(); showToast("Удалено.", "success"); }
   catch (er) { showToast(er.message, "error"); }
+}
+
+// ─── Follow-up после сеанса ─────────────────────────────────────────────────
+let _fuBound = false;
+function initFollowup() {
+  if (_fuBound) return;
+  _fuBound = true;
+  document.getElementById("fuAiBtn")?.addEventListener("click", fuGenerate);
+  document.getElementById("fuTgBtn")?.addEventListener("click", fuSendTelegram);
+  document.getElementById("fuWaBtn")?.addEventListener("click", fuOpenWhatsApp);
+}
+async function fuGenerate() {
+  const body = {
+    clientName: document.getElementById("fuClient").value.trim(),
+    serviceName: document.getElementById("fuService").value.trim(),
+    zones: ""
+  };
+  const st = document.getElementById("fuStatus");
+  st.textContent = "Собираю сообщение…";
+  try {
+    const data = await fetchJson("/api/admin/followup-ai", { method: "POST", body: JSON.stringify(body) });
+    document.getElementById("fuText").value = data.reply;
+    st.textContent = "Готово — проверь и отправь.";
+  } catch (e) { st.textContent = e.message || "Ошибка. Проверьте ANTHROPIC_API_KEY."; }
+}
+async function fuSendTelegram() {
+  const phone = document.getElementById("fuPhone").value.trim();
+  const text = document.getElementById("fuText").value.trim();
+  if (!phone) { showToast("Укажите телефон клиента.", "info"); return; }
+  if (!text) { showToast("Сначала соберите или впишите сообщение.", "info"); return; }
+  try {
+    const data = await fetchJson("/api/admin/followup-send", { method: "POST", body: JSON.stringify({ phone, text }) });
+    if (data.sent > 0) showToast("Отправлено в Telegram.", "success");
+    else showToast("Клиент не привязан к Telegram — используйте WhatsApp.", "info");
+  } catch (e) { showToast(e.message || "Ошибка отправки.", "error"); }
+}
+function fuOpenWhatsApp() {
+  const phone = document.getElementById("fuPhone").value.replace(/\D/g, "");
+  const text = document.getElementById("fuText").value.trim();
+  if (!phone) { showToast("Укажите телефон клиента.", "info"); return; }
+  if (!text) { showToast("Сначала соберите или впишите сообщение.", "info"); return; }
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
 }
 
 async function loadCredentials() {

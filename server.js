@@ -1494,6 +1494,9 @@ const AI_CARE_PROMPT = `Ты — массажист Денис Матеев (Mat
 
 Пиши тепло и заботливо, без запугивания. Не ставь диагнозов и не обещай лечения. 250–400 слов.`;
 
+// Промпт для короткого follow-up сообщения клиенту через 1–2 дня после сеанса
+const AI_FOLLOWUP_PROMPT = `Ты — массажист Денис Матеев (Mateev Spa Studio, Кишинёв). Напиши КОРОТКОЕ (2–4 предложения) тёплое личное сообщение клиенту через 1–2 дня после сеанса — как в мессенджере, на «ты». Спроси, как самочувствие после массажа; при необходимости мягко напомни про воду/тепло/отдых; без напора предложи возвращаться, когда захочет. Без формальностей, без markdown, без подписи. Обращайся по имени, если оно есть. Пиши на {lang} языке.`;
+
 // Rule-based фолбэк для AI-подбора сеанса (работает без ключа/если AI не ответил)
 function sessionMatchFallback(a, services) {
   const has = (id) => services.some((s) => s.id === id);
@@ -5906,6 +5909,39 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     items.splice(idx, 1);
     await writeJson("care-notes.json", items);
     sendJson(response, 200, { ok: true });
+    return;
+  }
+  // POST /api/admin/followup-ai — AI-сообщение «как самочувствие после сеанса»
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/followup-ai") {
+    assertAdminPin(request);
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const payload = await parseJsonBody(request);
+    const clientName = sanitizeText(payload.clientName || "").slice(0, 80);
+    const serviceName = sanitizeText(payload.serviceName || "").slice(0, 120);
+    const zones = sanitizeText(payload.zones || "").slice(0, 200);
+    const langLabel = payload.lang === "ro" ? "румынском" : "русском";
+    const system = AI_FOLLOWUP_PROMPT.replace("{lang}", langLabel);
+    const userMsg = `Клиент: ${clientName || "—"}. Услуга: ${serviceName || "—"}. Проработанные зоны: ${zones || "—"}.`;
+    const reply = await callAnthropic(system, [{ role: "user", content: userMsg }], 400);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
+    return;
+  }
+  // POST /api/admin/followup-send — отправить follow-up клиенту в Telegram (если привязан)
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/followup-send") {
+    assertAdminPin(request);
+    if (!TELEGRAM_BOT_TOKEN) { sendJson(response, 503, { message: "Telegram-бот не настроен." }); return; }
+    const payload = await parseJsonBody(request);
+    const text = String(payload.text || "").trim().slice(0, 2000);
+    const digits = normalizePhoneDigits(payload.phone || "");
+    if (!text) { sendJson(response, 400, { message: "Пустое сообщение." }); return; }
+    if (!digits) { sendJson(response, 400, { message: "Нужен телефон клиента." }); return; }
+    const tokens = await readJson("portal-tokens.json").catch(() => []);
+    const targets = new Set();
+    for (const tkn of tokens) { if (tkn.telegramChatId && normalizePhoneDigits(tkn.phone || "") === digits) targets.add(String(tkn.telegramChatId)); }
+    let sent = 0;
+    for (const chat of targets) { try { await tgSend(chat, text); sent++; } catch {} }
+    sendJson(response, 200, { ok: true, sent, linked: targets.size > 0 });
     return;
   }
   // POST /api/admin/materials/upload — загрузка картинки для методички

@@ -70,6 +70,7 @@
         <a href="#materials" data-section="materials">📚 Материалы семинаров</a>
         <a href="#care" data-section="care">🌿 Памятка клиенту</a>
         <a href="#results" data-section="results">🪞 До / После</a>
+        <a href="#followup" data-section="followup">💬 Follow-up</a>
         <a href="#broadcast" data-section="broadcast">📣 Рассылка</a>
         <a href="#diary" data-section="diary">✍️ Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">⭐ Отзывы на сайте</a>
@@ -1427,6 +1428,34 @@
 
             <div id="resList" style="display:grid;gap:12px;"></div>
             <p id="resEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Пар пока нет. Нажмите «+ Новая пара».</p>
+          </section>
+
+          <!-- ═══════════════ FOLLOW-UP ═══════════════ -->
+          <section class="admin-section-block reveal" id="followup">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Клиентам · Забота</p>
+                <h2 class="admin-section-block__title">Follow-up после сеанса</h2>
+              </div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">Через 1–2 дня после сеанса — тёплое «как самочувствие?». AI напишет сообщение, вы отправляете в Telegram (если клиент привязан) или открываете в WhatsApp одной кнопкой.</p>
+
+            <div class="admin-widget" style="padding:22px;">
+              <div class="field-grid" style="margin-top:4px;">
+                <label class="field"><span>Имя клиента</span><input type="text" id="fuClient" placeholder="Напр.: Анна"></label>
+                <label class="field"><span>Телефон</span><input type="tel" id="fuPhone" placeholder="+373..."></label>
+              </div>
+              <label class="field field--full" style="margin-top:12px;"><span>Услуга / зоны (необязательно)</span><input type="text" id="fuService" placeholder="Напр.: спина и шея, МФР + триггеры"></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center;">
+                <button type="button" class="button button--ghost button--mini" id="fuAiBtn">✨ Собрать сообщение (AI)</button>
+                <span id="fuStatus" style="font-size:0.82rem;color:var(--muted);align-self:center;"></span>
+              </div>
+              <label class="field field--full"><span>Сообщение</span><textarea id="fuText" rows="5" placeholder="Текст появится после генерации — можно править."></textarea></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                <button type="button" class="button button--secondary" id="fuTgBtn">✈️ Отправить в Telegram</button>
+                <button type="button" class="button button--ghost" id="fuWaBtn">🟢 Открыть в WhatsApp</button>
+              </div>
+            </div>
           </section>
 
           <!-- ═══════════════ BROADCAST ═══════════════ -->
