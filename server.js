@@ -1477,6 +1477,68 @@ async function callStudioAI(messages) {
   return callAnthropic(`${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`, messages, 400);
 }
 
+// Rule-based фолбэк для AI-подбора сеанса (работает без ключа/если AI не ответил)
+function sessionMatchFallback(a, services) {
+  const has = (id) => services.some((s) => s.id === id);
+  const pick = (...ids) => ids.find(has) || (services[0] && services[0].id) || "classic";
+  const ro = a.lang === "ro";
+  const { goal, area, pressure } = a;
+  let serviceId = "classic", techniques = [], title = "", note = "", caution = "";
+
+  if (goal === "aesthetic" || area === "face") {
+    serviceId = pick("lymph", "relax", "classic");
+    techniques = ["Лимфодренаж лица", "Интрабуккальный массаж (жевательные мышцы)", "МФР лица и платизмы"];
+    title = ro ? "Sesiune estetică pentru față" : "Эстетический сеанс для лица";
+    note = "Акцент: лицо, овал, ВНЧС (уточнить эстетический/буккальный сеанс)";
+  } else if (area === "belly") {
+    serviceId = pick("classic", "relax");
+    techniques = ["Висцеральная работа (по часовой стрелке)", "Диафрагмальные техники", "Мягкий лимфодренаж"];
+    title = ro ? "Lucru cu abdomenul și digestia" : "Работа с животом и ЖКТ";
+    note = "Акцент: живот, пищеварение, диафрагма";
+  } else if (goal === "relax") {
+    serviceId = pick("relax", "stones", "classic");
+    techniques = ["Мягкий МФР", "Шиацу и акупрессура", "Общая релаксация"];
+    title = ro ? "Sesiune integrativă de relaxare" : "Расслабляющий интегративный сеанс";
+    note = "Акцент: расслабление, снятие стресса";
+  } else if (goal === "recovery" || pressure === "deep") {
+    serviceId = pick("deep", "sports", "classic");
+    techniques = ["Deep tissue", "МФР", "Триггерные точки", "ПИР"];
+    title = ro ? "Lucru profund de recuperare" : "Глубокая восстановительная работа";
+    note = "Акцент: глубокая проработка, восстановление";
+  } else if (area === "neck") {
+    serviceId = pick("classic", "deep");
+    techniques = ["МФР шеи и трапеций", "Триггерные точки", "Дифиброзирующий массаж «холки»", "Лимфодренаж"];
+    title = ro ? "Zona cervico-scapulară" : "Работа с шейно-воротниковой зоной";
+    note = "Акцент: шея, трапеции, головные боли напряжения";
+  } else if (area === "chest") {
+    serviceId = pick("classic", "deep");
+    techniques = ["Массаж груди (постура)", "МФР грудной фасции", "Триггеры малой грудной"];
+    title = ro ? "Postură și deschiderea pieptului" : "Постура и раскрытие грудного отдела";
+    note = "Акцент: осанка, раскрытие плеч, дыхание";
+  } else {
+    serviceId = pick("classic", "deep", "relax");
+    techniques = ["МФР", "Триггерные точки", "Лимфодренаж", "ПИР"];
+    title = ro ? "Sesiune integrativă personalizată" : "Интегративный сеанс под задачу";
+    note = a.extra ? ("Акцент: " + a.extra) : "Комплексная проработка";
+  }
+
+  if (a.condition === "pregnancy") {
+    caution = ro
+      ? "Sarcină: excludem masajul profund al abdomenului și lucrul visceral, regim blând. Recomandăm consultarea medicului."
+      : "Беременность: исключаем глубокий массаж живота и висцеральную работу, мягкий режим. Рекомендуем консультацию врача.";
+  } else if (a.condition === "surgery") {
+    caution = ro
+      ? "Operații/traume recente: lucrăm cu prudență, în zonă doar după acordul medicului."
+      : "Недавние операции/травмы: работаем осторожно, по зоне — только после согласования с врачом.";
+  }
+
+  const summary = ro
+    ? "Am selectat sesiunea și tehnicile în funcție de răspunsurile tale. La programare poți preciza detaliile — Denis ajustează sesiunea pe loc."
+    : "Подобрали сеанс и техники по вашим ответам. При записи можно уточнить детали — Денис адаптирует сеанс на месте.";
+
+  return { serviceId, title, techniques, summary, note, caution };
+}
+
 // ─── AI-ресепшн: агент записи (tool use) ─────────────────────────────────────
 async function anthropicRaw(system, messages, { tools, maxTokens = 1024 } = {}) {
   if (!ANTHROPIC_API_KEY || !Array.isArray(messages) || !messages.length) return null;
@@ -5747,6 +5809,60 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     // Если оформилась запись — шлём структурированное подтверждение в Telegram (если клиент привязан)
     if (result.booking) void sendClientBookingConfirmation(result.booking, null);
     sendJson(response, 200, { reply: result.reply });
+    return;
+  }
+
+  // POST /api/session-match — AI-подбор сеанса (интегративный метод → рекомендация + запись)
+  if (request.method === "POST" && urlObject.pathname === "/api/session-match") {
+    assertRateLimit({ scope: "session-match", key: getRequestIp(request), windowMs: 5 * 60 * 1000, limit: 30, message: "Слишком много запросов. Попробуйте чуть позже." });
+    const payload = await parseJsonBody(request);
+    const a = {
+      goal: sanitizeText(payload.goal || "").slice(0, 40),
+      area: sanitizeText(payload.area || "").slice(0, 40),
+      pressure: sanitizeText(payload.pressure || "").slice(0, 20),
+      condition: sanitizeText(payload.condition || "").slice(0, 40),
+      extra: sanitizeText(payload.extra || "").slice(0, 300),
+      lang: payload.lang === "ro" ? "ro" : "ru"
+    };
+    const services = await readJson("services.json").catch(() => []);
+    const allowed = services.map((s) => s.id);
+    let result = null;
+
+    if (ANTHROPIC_API_KEY) {
+      const svcList = services.map((s) => `${s.id}: ${s.name} (${s.duration} мин, ${s.price} MDL) — ${s.description}`).join("\n");
+      const langLabel = a.lang === "ro" ? "румынском" : "русском";
+      const system = `Ты — консультант студии Mateev Spa Studio (Кишинёв). Денис Матеев практикует АВТОРСКИЙ ИНТЕГРАТИВНЫЙ МАССАЖ — набор техник под задачу клиента: миофасциальный релиз (МФР), триггерные точки, постизометрическая релаксация (ПИР), дифиброзирующий массаж, лимфодренаж, висцеральная терапия, массаж груди/постуры, массаж лица (в т.ч. интрабуккальный), восточные техники (шиацу, акупрессура, рефлексология).
+
+По ответам клиента подбери сеанс. Пиши на ${langLabel} языке, тепло и по делу.
+
+ДОСТУПНЫЕ УСЛУГИ (serviceId выбирай СТРОГО из этих id):
+${svcList}
+
+БЕЗОПАСНОСТЬ: при беременности — исключить глубокий массаж живота и висцеральную работу, мягкий режим, рекомендовать консультацию; недавние операции/травмы — осторожно, по зоне только после согласования с врачом.
+
+Верни СТРОГО JSON без пояснений и без markdown:
+{"serviceId":"<id из списка>","title":"короткий заголовок рекомендации","techniques":["техника 1","техника 2","техника 3"],"summary":"2-3 предложения, почему подходит","note":"короткая заметка для комментария к записи (зоны/акцент)","caution":"предостережение по безопасности или пустая строка"}`;
+      const userMsg = `Ответы клиента:\n- Что беспокоит: ${a.goal}\n- Зона: ${a.area}\n- Глубина воздействия: ${a.pressure}\n- Особые условия: ${a.condition}\n- Дополнительно: ${a.extra || "—"}`;
+      const reply = await callAnthropic(system, [{ role: "user", content: userMsg }], 700);
+      if (reply) {
+        const m = reply.match(/\{[\s\S]*\}/);
+        if (m) { try { result = JSON.parse(m[0]); } catch { /* fallback ниже */ } }
+      }
+    }
+
+    if (!result || !allowed.includes(result.serviceId)) {
+      result = sessionMatchFallback(a, services);
+    } else {
+      result.techniques = Array.isArray(result.techniques) ? result.techniques.slice(0, 6).map((t) => String(t).slice(0, 120)) : [];
+      result.title = String(result.title || "").slice(0, 120);
+      result.summary = String(result.summary || "").slice(0, 600);
+      result.note = String(result.note || "").slice(0, 200);
+      result.caution = String(result.caution || "").slice(0, 300);
+    }
+    const svc = services.find((s) => s.id === result.serviceId) || null;
+    result.serviceName = svc ? svc.name : "";
+    result.aiPowered = Boolean(ANTHROPIC_API_KEY);
+    sendJson(response, 200, { match: result });
     return;
   }
 

@@ -104,6 +104,7 @@
         <a href="#platform" class="nav__link" id="navOverviewLink">Почему мы</a>
         <a href="#services" class="nav__link" id="navServicesLink">Процедуры</a>
         <a href="#specialists" class="nav__link" id="navSpecialistsLink">Специалисты</a>
+        <a href="#podbor" class="nav__link" data-ru="AI-подбор" data-ro="Selecție AI">AI-подбор</a>
         <a href="#booking" class="nav__link" id="navBookingLink">Запись</a>
         <a href="#gift" class="nav__link" data-ru="Сертификаты" data-ro="Certificate">Сертификаты</a>
         <a href="/school" class="nav__link" data-ru="Школа" data-ro="Școală">Школа</a>
@@ -262,6 +263,167 @@
 
         <div class="process-grid" id="processGrid"></div>
       </div>
+    </section>
+
+    <section class="section" id="podbor">
+      <style>
+        #podbor .pb-card{background:var(--card,#fff);border:1px solid rgba(26,46,34,.1);border-radius:20px;padding:28px 24px;box-shadow:0 14px 34px rgba(26,46,34,.08)}
+        #podbor .pb-q{margin:0 0 20px}
+        #podbor .pb-q__label{font-weight:600;color:var(--forest,#1a2e22);margin:0 0 10px;font-size:1rem}
+        #podbor .pb-opts{display:flex;flex-wrap:wrap;gap:8px}
+        #podbor .pb-opt{border:1px solid rgba(26,46,34,.18);background:#fff;color:#2b2620;border-radius:999px;padding:9px 16px;font-size:.92rem;cursor:pointer;transition:all .15s;font-family:inherit}
+        #podbor .pb-opt:hover{border-color:var(--amber,#b36d2c);background:rgba(179,109,44,.06)}
+        #podbor .pb-opt.is-active{background:var(--forest,#1a2e22);color:#fff;border-color:var(--forest,#1a2e22)}
+        #podbor .pb-extra{width:100%;border:1px solid rgba(26,46,34,.18);border-radius:12px;padding:11px 14px;font-size:.92rem;font-family:inherit;margin-top:2px}
+        #podbor .pb-actions{margin-top:8px}
+        #podbor .pb-result{margin-top:22px;border-top:1px dashed rgba(26,46,34,.18);padding-top:22px}
+        #podbor .pb-result__title{font-size:1.2rem;color:var(--forest,#1a2e22);font-weight:700;margin:0 0 6px}
+        #podbor .pb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+        #podbor .pb-chip{background:rgba(179,109,44,.1);color:#8a5320;border-radius:8px;padding:4px 11px;font-size:.85rem;font-weight:600}
+        #podbor .pb-svc{background:rgba(26,46,34,.05);border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.92rem}
+        #podbor .pb-caution{background:#fdecea;border-left:4px solid #d0492f;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:.9rem;color:#7a2a1c}
+        #podbor .pb-hint{color:var(--muted,#8a7a6c);font-size:.82rem;margin-top:10px}
+      </style>
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" data-ru="✨ AI-подбор сеанса" data-ro="✨ Selecție AI a ședinței">✨ AI-подбор сеанса</p>
+          <h2 data-ru="Не знаете, какой массаж выбрать? Ответьте на 5 вопросов" data-ro="Nu știți ce masaj să alegeți? Răspundeți la 5 întrebări">Не знаете, какой массаж выбрать? Ответьте на 5 вопросов</h2>
+          <p class="section-copy" data-ru="Денис работает в интегративном подходе — сеанс собирается под вашу задачу из разных техник. Ответьте на пару вопросов, и мы подберём техники и программу, а также подготовим запись." data-ro="Denis lucrează într-o abordare integrativă — ședința se construiește sub sarcina ta. Răspundeți la câteva întrebări și vom selecta tehnicile și programul.">Денис работает в интегративном подходе — сеанс собирается под вашу задачу из разных техник. Ответьте на пару вопросов, и мы подберём техники и программу, а также подготовим запись.</p>
+        </div>
+
+        <div class="pb-card reveal">
+          <div class="pb-q" data-q="goal">
+            <p class="pb-q__label" data-ru="1. Что беспокоит больше всего?" data-ro="1. Ce vă deranjează cel mai mult?">1. Что беспокоит больше всего?</p>
+            <div class="pb-opts">
+              <button type="button" class="pb-opt" data-value="pain" data-ru="Боль и напряжение" data-ro="Durere și tensiune">Боль и напряжение</button>
+              <button type="button" class="pb-opt" data-value="relax" data-ru="Стресс, сон" data-ro="Stres, somn">Стресс, сон</button>
+              <button type="button" class="pb-opt" data-value="aesthetic" data-ru="Эстетика лица" data-ro="Estetica feței">Эстетика лица</button>
+              <button type="button" class="pb-opt" data-value="recovery" data-ru="Восстановление после нагрузки" data-ro="Recuperare după efort">Восстановление после нагрузки</button>
+              <button type="button" class="pb-opt" data-value="complex" data-ru="Разобраться комплексно" data-ro="Abordare complexă">Разобраться комплексно</button>
+            </div>
+          </div>
+
+          <div class="pb-q" data-q="area">
+            <p class="pb-q__label" data-ru="2. Какая зона в приоритете?" data-ro="2. Ce zonă este prioritară?">2. Какая зона в приоритете?</p>
+            <div class="pb-opts">
+              <button type="button" class="pb-opt" data-value="neck" data-ru="Шея и плечи" data-ro="Gât și umeri">Шея и плечи</button>
+              <button type="button" class="pb-opt" data-value="back" data-ru="Спина" data-ro="Spate">Спина</button>
+              <button type="button" class="pb-opt" data-value="belly" data-ru="Живот / ЖКТ" data-ro="Abdomen / digestie">Живот / ЖКТ</button>
+              <button type="button" class="pb-opt" data-value="chest" data-ru="Грудь / осанка" data-ro="Piept / postură">Грудь / осанка</button>
+              <button type="button" class="pb-opt" data-value="face" data-ru="Лицо" data-ro="Față">Лицо</button>
+              <button type="button" class="pb-opt" data-value="full" data-ru="Всё тело" data-ro="Tot corpul">Всё тело</button>
+            </div>
+          </div>
+
+          <div class="pb-q" data-q="pressure">
+            <p class="pb-q__label" data-ru="3. Какое воздействие любите?" data-ro="3. Ce intensitate preferați?">3. Какое воздействие любите?</p>
+            <div class="pb-opts">
+              <button type="button" class="pb-opt" data-value="soft" data-ru="Мягко" data-ro="Blând">Мягко</button>
+              <button type="button" class="pb-opt" data-value="medium" data-ru="Средне" data-ro="Mediu">Средне</button>
+              <button type="button" class="pb-opt" data-value="deep" data-ru="Глубоко" data-ro="Profund">Глубоко</button>
+            </div>
+          </div>
+
+          <div class="pb-q" data-q="condition">
+            <p class="pb-q__label" data-ru="4. Есть особые условия?" data-ro="4. Există condiții speciale?">4. Есть особые условия?</p>
+            <div class="pb-opts">
+              <button type="button" class="pb-opt" data-value="none" data-ru="Ничего особенного" data-ro="Nimic deosebit">Ничего особенного</button>
+              <button type="button" class="pb-opt" data-value="pregnancy" data-ru="Беременность" data-ro="Sarcină">Беременность</button>
+              <button type="button" class="pb-opt" data-value="surgery" data-ru="Недавние операции / травмы" data-ro="Operații / traume recente">Недавние операции / травмы</button>
+            </div>
+          </div>
+
+          <div class="pb-q" data-q="extra">
+            <p class="pb-q__label" data-ru="5. Что ещё важно упомянуть? (необязательно)" data-ro="5. Ce mai este important de menționat? (opțional)">5. Что ещё важно упомянуть? (необязательно)</p>
+            <input type="text" class="pb-extra" id="pbExtra" maxlength="300" placeholder="Например: головные боли, бруксизм, отёк ног…" data-ru-ph="Например: головные боли, бруксизм, отёк ног…" data-ro-ph="Ex: dureri de cap, bruxism, edem…">
+          </div>
+
+          <div class="pb-actions">
+            <button type="button" class="button button--primary" id="pbSubmit" data-ru="Подобрать сеанс" data-ro="Selectează ședința">Подобрать сеанс</button>
+          </div>
+
+          <div class="pb-result" id="pbResult" hidden></div>
+        </div>
+      </div>
+
+      <script>
+      (function(){
+        var card = document.querySelector('#podbor .pb-card');
+        if (!card) return;
+        var answers = { goal:'', area:'', pressure:'', condition:'', extra:'' };
+        var getLang = function(){ try { return localStorage.getItem('lang') === 'ro' ? 'ro' : 'ru'; } catch(e){ return 'ru'; } };
+        var t = function(ru, ro){ return getLang() === 'ro' ? ro : ru; };
+        var pbEx = document.getElementById('pbExtra');
+        if (pbEx && getLang() === 'ro' && pbEx.dataset.roPh) pbEx.placeholder = pbEx.dataset.roPh;
+
+        card.querySelectorAll('.pb-q[data-q] .pb-opt').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var q = btn.closest('.pb-q').dataset.q;
+            btn.parentElement.querySelectorAll('.pb-opt').forEach(function(b){ b.classList.remove('is-active'); });
+            btn.classList.add('is-active');
+            answers[q] = btn.dataset.value;
+          });
+        });
+
+        var result = document.getElementById('pbResult');
+        var submit = document.getElementById('pbSubmit');
+
+        submit.addEventListener('click', async function(){
+          answers.extra = (document.getElementById('pbExtra').value || '').trim();
+          if (!answers.goal && !answers.area) {
+            result.hidden = false;
+            result.innerHTML = '<p class="pb-hint">' + t('Отметьте хотя бы «что беспокоит» и зону.', 'Selectați cel puțin „ce vă deranjează” și zona.') + '</p>';
+            return;
+          }
+          submit.disabled = true;
+          var original = submit.textContent;
+          submit.textContent = t('Подбираем…', 'Se selectează…');
+          try {
+            var res = await fetch('/api/session-match', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify(Object.assign({}, answers, { lang:getLang() }))
+            });
+            var data = await res.json();
+            var m = data && data.match;
+            if (!m) throw new Error('no match');
+            var chips = (m.techniques||[]).map(function(x){ return '<span class="pb-chip">'+escapeHtmlPb(x)+'</span>'; }).join('');
+            var caution = m.caution ? '<div class="pb-caution">⚠️ '+escapeHtmlPb(m.caution)+'</div>' : '';
+            var svc = m.serviceName ? '<div class="pb-svc">'+t('Рекомендуемая программа для записи: ','Programul recomandat: ')+'<b>'+escapeHtmlPb(m.serviceName)+'</b></div>' : '';
+            result.hidden = false;
+            result.innerHTML =
+              '<p class="pb-result__title">'+escapeHtmlPb(m.title||t('Ваш сеанс','Ședința ta'))+'</p>' +
+              (chips ? '<div class="pb-chips">'+chips+'</div>' : '') +
+              '<p>'+escapeHtmlPb(m.summary||'')+'</p>' +
+              caution + svc +
+              '<div class="pb-actions" style="margin-top:14px;"><button type="button" class="button button--primary" id="pbBook">'+t('Записаться на этот сеанс →','Programează-te →')+'</button></div>' +
+              '<p class="pb-hint">'+t('Техники и акцент подставятся в форму записи — их можно поправить.','Tehnicile se vor adăuga în formular — le puteți edita.')+'</p>';
+
+            document.getElementById('pbBook').addEventListener('click', function(){
+              var sel = document.getElementById('serviceSelect');
+              if (sel && m.serviceId) { try { sel.value = m.serviceId; sel.dispatchEvent(new Event('change', {bubbles:true})); } catch(e){} }
+              var notes = document.getElementById('clientNotes');
+              if (notes) {
+                var parts = [];
+                if (m.note) parts.push(m.note);
+                if (m.techniques && m.techniques.length) parts.push(m.techniques.join(', '));
+                notes.value = parts.join(' · ').slice(0, 200);
+              }
+              var b = document.getElementById('booking');
+              if (b) b.scrollIntoView({ behavior:'smooth', block:'start' });
+            });
+            result.scrollIntoView({ behavior:'smooth', block:'nearest' });
+          } catch(e) {
+            result.hidden = false;
+            result.innerHTML = '<p class="pb-hint">'+t('Не удалось подобрать сейчас. Попробуйте ещё раз или напишите нам.','Nu am reușit acum. Încercați din nou.')+'</p>';
+          } finally {
+            submit.disabled = false;
+            submit.textContent = original;
+          }
+        });
+
+        function escapeHtmlPb(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+      })();
+      </script>
     </section>
 
     <section class="section booking-section" id="booking">
