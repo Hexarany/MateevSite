@@ -92,6 +92,7 @@ const STATIC_FILES = {
   "/og-image.svg": "og-image.svg",
   "/favicon.svg": "favicon.svg",
   "/founder.png": "founder.png",
+  "/founder.webp": "founder.webp",
   "/client": "client.html",
   "/client.html": "client.html",
   "/master": "master.html",
@@ -99,7 +100,8 @@ const STATIC_FILES = {
   "/card": "card.html",
   "/card.html": "card.html",
   "/denis.png": "denis.png",
-  "/diploma-bg.png": "diploma-bg.png",
+  "/denis.jpg": "denis.jpg",
+  "/diploma-bg.jpg": "diploma-bg.jpg",
   "/mateev_logo.png": "mateev_logo.png",
   "/mateev_logo.jpg": "mateev_logo.jpg",
   "/school": "school.html",
@@ -8139,7 +8141,7 @@ function renderDiplomaCertPage(diploma, notFound = false, signatureUrl = "") {
 <meta name="description" content="Подтверждённый диплом Mateev Spa Studio: ${name} — ${course}. Код ${escapeHtml(diploma.code)}.">
 <meta property="og:title" content="🎓 Диплом Mateev Spa Studio — ${name}">
 <meta property="og:description" content="${course} · ${dateFmt}. Подлинность подтверждена студией.">
-<meta property="og:image" content="${base}/diploma-bg.png">
+<meta property="og:image" content="${base}/diploma-bg.jpg">
 <meta property="og:url" content="${certUrl}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
@@ -8153,7 +8155,7 @@ function renderDiplomaCertPage(diploma, notFound = false, signatureUrl = "") {
   .btn{background:#b36d2c;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
   .btn--ghost{background:#fff;border:1.5px solid #cfc3ac;color:#2d1a0a}
   .sheet-wrap{max-width:210mm;margin:0 auto;overflow:hidden}
-  .diploma-sheet{width:210mm;min-height:297mm;position:relative;background:#f5f0e4 url('/diploma-bg.png') center/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60mm 22mm 40mm;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18);transform-origin:top left}
+  .diploma-sheet{width:210mm;min-height:297mm;position:relative;background:#f5f0e4 url('/diploma-bg.jpg') center/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60mm 22mm 40mm;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18);transform-origin:top left}
   .dk{font-size:8pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#4a6b52;margin-bottom:14pt}
   .dh{font-family:'Cormorant Garamond',Georgia,serif;font-size:38pt;font-weight:600;color:#2d4a35;line-height:1;margin-bottom:22pt;letter-spacing:.04em}
   .dsub{font-family:'Cormorant Garamond',serif;font-size:13pt;font-style:italic;color:#5a6e5c;margin-bottom:10pt}
