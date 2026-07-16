@@ -549,6 +549,67 @@
       </script>
     </section>
 
+    <section class="section section--contrast" id="results-section" hidden>
+      <style>
+        #results-section .ba-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
+        #results-section .ba{margin:0}
+        #results-section .ba__stage{position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;border-radius:16px;box-shadow:0 14px 34px rgba(26,46,34,.12);touch-action:none;background:#eee}
+        #results-section .ba__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none;pointer-events:none}
+        #results-section .ba__after{clip-path:inset(0 50% 0 0)}
+        #results-section .ba__range{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+        #results-section .ba__handle{position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.35);pointer-events:none;transform:translateX(-1px)}
+        #results-section .ba__handle::after{content:'⇆';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;color:#1a2e22;display:flex;align-items:center;justify-content:center;font-size:.9rem;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+        #results-section .ba__label{position:absolute;top:10px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(26,46,34,.72);padding:3px 9px;border-radius:6px;pointer-events:none}
+        #results-section .ba__label--before{left:10px}
+        #results-section .ba__label--after{right:10px}
+        #results-section .ba figcaption{margin-top:10px;font-size:.9rem;color:var(--ink,#241c17)}
+        #results-section .ba figcaption .zone{color:var(--muted,#8a7a6c);font-size:.82rem}
+      </style>
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" data-ru="Результаты" data-ro="Rezultate">Результаты</p>
+          <h2 data-ru="До и после" data-ro="Înainte și după">До и после</h2>
+          <p class="section-copy" data-ru="Реальные результаты работы. Потяните ползунок, чтобы сравнить. Публикуется с согласия клиентов." data-ro="Rezultate reale. Trageți glisorul pentru a compara. Publicat cu acordul clienților.">Реальные результаты работы. Потяните ползунок, чтобы сравнить. Публикуется с согласия клиентов.</p>
+        </div>
+        <div class="ba-grid reveal" id="resultsGrid"></div>
+      </div>
+      <script>
+      (function(){
+        var getLang=function(){try{return localStorage.getItem('lang')==='ro'?'ro':'ru';}catch(e){return 'ru';}};
+        var t=function(ru,ro){return getLang()==='ro'?ro:ru;};
+        function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+        fetch('/api/results').then(function(r){return r.json();}).then(function(items){
+          if(!Array.isArray(items)||!items.length) return;
+          var sec=document.getElementById('results-section');
+          var grid=document.getElementById('resultsGrid');
+          grid.innerHTML=items.map(function(it){
+            var cap=[esc(it.caption||''),it.zone?('<span class="zone"> · '+esc(it.zone)+'</span>'):''].join('');
+            return '<figure class="ba">'+
+              '<div class="ba__stage">'+
+                '<img class="ba__img ba__before" src="'+esc(it.beforeUrl)+'" alt="'+t('До','Înainte')+'">'+
+                '<img class="ba__img ba__after" src="'+esc(it.afterUrl)+'" alt="'+t('После','După')+'">'+
+                '<span class="ba__label ba__label--before">'+t('До','Înainte')+'</span>'+
+                '<span class="ba__label ba__label--after">'+t('После','După')+'</span>'+
+                '<span class="ba__handle"></span>'+
+                '<input type="range" class="ba__range" min="0" max="100" value="50" aria-label="'+t('Сравнение до и после','Comparație')+'">'+
+              '</div>'+
+              (cap.trim()?'<figcaption>'+cap+'</figcaption>':'')+
+            '</figure>';
+          }).join('');
+          grid.querySelectorAll('.ba__stage').forEach(function(stage){
+            var after=stage.querySelector('.ba__after');
+            var handle=stage.querySelector('.ba__handle');
+            var range=stage.querySelector('.ba__range');
+            function set(v){ after.style.clipPath='inset(0 '+(100-v)+'% 0 0)'; handle.style.left=v+'%'; }
+            range.addEventListener('input',function(){ set(+range.value); });
+            set(50);
+          });
+          sec.hidden=false;
+        }).catch(function(){});
+      })();
+      </script>
+    </section>
+
     <section class="section booking-section" id="booking">
       <div class="container">
         <div class="section-heading reveal">

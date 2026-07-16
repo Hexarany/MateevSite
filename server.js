@@ -808,6 +808,7 @@ async function ensureDataFiles() {
     ["master-notes.json", "[]"],
     ["commission-payments.json", "[]"],
     ["gallery.json", "[]"],
+    ["results.json", "[]"],
     ["credentials.json", "[]"],
     ["materials.json", "[]"],
     ["care-notes.json", "[]"],
@@ -5611,6 +5612,77 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
     items.forEach((it, i) => { it.order = i; });
     await writeJson("gallery.json", items);
     try { await fs.unlink(path.join(GALLERY_UPLOADS_DIR, filename)); } catch {}
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // ─── Результаты «до/после» (before-after) ─────────────────────────────────
+  // POST /api/admin/results/upload — загрузка изображения (без записи в галерею)
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/results/upload") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request, 10 * 1024 * 1024);
+    const { photo } = payload;
+    if (!photo || typeof photo !== "string") { sendJson(response, 400, { message: "Поле photo обязательно." }); return; }
+    const match = photo.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/);
+    if (!match) { sendJson(response, 400, { message: "Неверный формат (JPEG, PNG, WebP)." }); return; }
+    const ext = match[2] === "jpeg" || match[2] === "jpg" ? "jpg" : match[2];
+    const buffer = Buffer.from(match[3], "base64");
+    if (buffer.length > 8 * 1024 * 1024) { sendJson(response, 400, { message: "Файл слишком большой (макс 8MB)." }); return; }
+    await fs.mkdir(GALLERY_UPLOADS_DIR, { recursive: true });
+    const filename = `result-${crypto.randomUUID()}.${ext}`;
+    await fs.writeFile(path.join(GALLERY_UPLOADS_DIR, filename), buffer);
+    sendJson(response, 201, { ok: true, url: `/uploads/gallery/${filename}`, filename });
+    return;
+  }
+  // GET /api/results — public
+  if (request.method === "GET" && urlObject.pathname === "/api/results") {
+    const items = await readJson("results.json").catch(() => []);
+    sendJson(response, 200, items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+    return;
+  }
+  // GET /api/admin/results — admin
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/results") {
+    assertAdminPin(request);
+    const items = await readJson("results.json").catch(() => []);
+    sendJson(response, 200, items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+    return;
+  }
+  // POST /api/admin/results — создать пару до/после
+  if (request.method === "POST" && urlObject.pathname === "/api/admin/results") {
+    assertAdminPin(request);
+    const payload = await parseJsonBody(request);
+    const beforeUrl = sanitizeText(payload.beforeUrl || "");
+    const afterUrl = sanitizeText(payload.afterUrl || "");
+    if (!/^\/uploads\/gallery\//.test(beforeUrl) || !/^\/uploads\/gallery\//.test(afterUrl)) {
+      sendJson(response, 400, { message: "Нужны оба изображения (до и после)." }); return;
+    }
+    const items = await readJson("results.json").catch(() => []);
+    const item = {
+      id: crypto.randomUUID(),
+      beforeUrl, afterUrl,
+      beforeFile: path.basename(beforeUrl), afterFile: path.basename(afterUrl),
+      caption: sanitizeText(payload.caption || "").slice(0, 200),
+      zone: sanitizeText(payload.zone || "").slice(0, 80),
+      order: items.length,
+      createdAt: new Date().toISOString()
+    };
+    items.push(item);
+    await writeJson("results.json", items);
+    sendJson(response, 201, { ok: true, item });
+    return;
+  }
+  // DELETE /api/admin/results/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/results/")) {
+    assertAdminPin(request);
+    const id = urlObject.pathname.replace("/api/admin/results/", "");
+    const items = await readJson("results.json").catch(() => []);
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) { sendJson(response, 404, { message: "Не найдено." }); return; }
+    const it = items[idx];
+    items.splice(idx, 1);
+    items.forEach((x, i) => { x.order = i; });
+    await writeJson("results.json", items);
+    for (const f of [it.beforeFile, it.afterFile]) { if (f) { try { await fs.unlink(path.join(GALLERY_UPLOADS_DIR, f)); } catch {} } }
     sendJson(response, 200, { ok: true });
     return;
   }

@@ -69,6 +69,7 @@
         <a href="#credentials" data-section="credentials">🎓 Мои дипломы</a>
         <a href="#materials" data-section="materials">📚 Материалы семинаров</a>
         <a href="#care" data-section="care">🌿 Памятка клиенту</a>
+        <a href="#results" data-section="results">🪞 До / После</a>
         <a href="#broadcast" data-section="broadcast">📣 Рассылка</a>
         <a href="#diary" data-section="diary">✍️ Дневник практики</a>
         <a href="#reviews-editor" data-section="reviews-editor">⭐ Отзывы на сайте</a>
@@ -1388,6 +1389,44 @@
 
             <div id="careList" style="display:grid;gap:12px;"></div>
             <p id="careEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Памяток пока нет. Нажмите «+ Новая памятка».</p>
+          </section>
+
+          <!-- ═══════════════ ДО / ПОСЛЕ ═══════════════ -->
+          <section class="admin-section-block reveal" id="results">
+            <div class="admin-section-block__head">
+              <div>
+                <p class="section-kicker">Сайт · Соцдоказательство</p>
+                <h2 class="admin-section-block__title">Результаты «до / после»</h2>
+              </div>
+              <button class="button button--secondary" id="resNewBtn" type="button">+ Новая пара</button>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">Пары фото показываются на главной со слайдером сравнения. Публикуйте только с согласия клиента. Кадр лучше вертикальный (портрет), «до» и «после» — с одного ракурса.</p>
+
+            <div class="admin-widget" id="resEditor" style="display:none;padding:22px;margin-bottom:20px;">
+              <div class="admin-widget__head"><div><p class="section-kicker">Новая пара</p><h3 class="admin-widget__title">До / После</h3></div></div>
+              <div class="field-grid" style="margin-top:10px;">
+                <div class="field"><span>Фото «До»</span>
+                  <input type="file" id="resBeforeInput" accept="image/jpeg,image/png,image/webp">
+                  <img id="resBeforePrev" alt="" style="display:none;margin-top:8px;max-height:150px;border-radius:10px;">
+                  <input type="hidden" id="resBeforeUrl">
+                </div>
+                <div class="field"><span>Фото «После»</span>
+                  <input type="file" id="resAfterInput" accept="image/jpeg,image/png,image/webp">
+                  <img id="resAfterPrev" alt="" style="display:none;margin-top:8px;max-height:150px;border-radius:10px;">
+                  <input type="hidden" id="resAfterUrl">
+                </div>
+              </div>
+              <label class="field field--full" style="margin-top:12px;"><span>Подпись (необязательно)</span><input type="text" id="resCaption" placeholder="Напр.: Отёчность лица — 1 сеанс лимфодренажа"></label>
+              <label class="field field--full" style="margin-top:12px;"><span>Зона (необязательно)</span><input type="text" id="resZone" placeholder="лицо / спина / ноги"></label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center;">
+                <button type="button" class="button button--secondary" id="resSaveBtn">Опубликовать</button>
+                <button type="button" class="button button--ghost" id="resCancelBtn">Отмена</button>
+                <span id="resStatus" style="font-size:0.82rem;color:var(--muted);"></span>
+              </div>
+            </div>
+
+            <div id="resList" style="display:grid;gap:12px;"></div>
+            <p id="resEmpty" style="display:none;color:var(--muted);font-size:0.88rem;padding:24px 0;">Пар пока нет. Нажмите «+ Новая пара».</p>
           </section>
 
           <!-- ═══════════════ BROADCAST ═══════════════ -->

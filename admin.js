@@ -1615,6 +1615,7 @@ async function loadAdminData() {
   loadCredentials();
   initMaterials();
   initCare();
+  initResults();
   loadReferrals();
   // Peak hours rendered after admin data loads
   initPeakHours();
@@ -6505,6 +6506,83 @@ async function handleCareListClick(e) {
     catch (er) { showToast(er.message, "error"); }
     return;
   }
+}
+
+// ─── Результаты «до / после» ────────────────────────────────────────────────
+let _resItems = [];
+let _resBound = false;
+function initResults() {
+  loadResults();
+  if (_resBound) return;
+  _resBound = true;
+  document.getElementById("resNewBtn")?.addEventListener("click", openResEditor);
+  document.getElementById("resCancelBtn")?.addEventListener("click", () => { document.getElementById("resEditor").style.display = "none"; });
+  document.getElementById("resSaveBtn")?.addEventListener("click", saveResult);
+  document.getElementById("resBeforeInput")?.addEventListener("change", (e) => resUpload(e, "before"));
+  document.getElementById("resAfterInput")?.addEventListener("change", (e) => resUpload(e, "after"));
+  document.getElementById("resList")?.addEventListener("click", handleResListClick);
+}
+async function loadResults() {
+  try { const d = await fetchJson("/api/admin/results"); _resItems = d || []; renderResList(); }
+  catch (e) { console.error("loadResults", e); }
+}
+function openResEditor() {
+  const ed = document.getElementById("resEditor"); ed.style.display = "";
+  ["resBeforeUrl", "resAfterUrl", "resCaption", "resZone"].forEach(id => document.getElementById(id).value = "");
+  ["resBeforePrev", "resAfterPrev"].forEach(id => { const el = document.getElementById(id); el.style.display = "none"; el.src = ""; });
+  document.getElementById("resStatus").textContent = "";
+  ed.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+async function resUpload(ev, which) {
+  const file = ev.target.files && ev.target.files[0]; if (!file) return;
+  const st = document.getElementById("resStatus");
+  st.textContent = "Загружаю " + (which === "before" ? "«До»" : "«После»") + "…";
+  try {
+    const base64 = await compressImageFile(file);
+    const data = await fetchJson("/api/admin/results/upload", { method: "POST", body: JSON.stringify({ photo: base64 }) });
+    document.getElementById(which === "before" ? "resBeforeUrl" : "resAfterUrl").value = data.url;
+    const prev = document.getElementById(which === "before" ? "resBeforePrev" : "resAfterPrev");
+    prev.src = data.url; prev.style.display = "";
+    st.textContent = "Готово.";
+  } catch (e) { st.textContent = e.message || "Ошибка загрузки."; }
+  ev.target.value = "";
+}
+async function saveResult() {
+  const body = {
+    beforeUrl: document.getElementById("resBeforeUrl").value,
+    afterUrl: document.getElementById("resAfterUrl").value,
+    caption: document.getElementById("resCaption").value.trim(),
+    zone: document.getElementById("resZone").value.trim()
+  };
+  if (!body.beforeUrl || !body.afterUrl) { showToast("Загрузите оба фото — до и после.", "info"); return; }
+  try {
+    await fetchJson("/api/admin/results", { method: "POST", body: JSON.stringify(body) });
+    document.getElementById("resEditor").style.display = "none";
+    await loadResults();
+    showToast("Опубликовано.", "success");
+  } catch (e) { showToast(e.message || "Ошибка.", "error"); }
+}
+function renderResList() {
+  const list = document.getElementById("resList"), empty = document.getElementById("resEmpty");
+  if (!list) return;
+  if (!_resItems.length) { list.innerHTML = ""; if (empty) empty.style.display = ""; return; }
+  if (empty) empty.style.display = "none";
+  list.innerHTML = _resItems.map(m => `
+    <div class="admin-widget" style="padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <img src="${m.beforeUrl}" alt="" style="width:56px;height:72px;object-fit:cover;border-radius:8px;">
+      <img src="${m.afterUrl}" alt="" style="width:56px;height:72px;object-fit:cover;border-radius:8px;">
+      <div style="flex:1;min-width:160px;">
+        <div style="font-weight:700;color:var(--ink);">${escapeHtml(m.caption || "Без подписи")}</div>
+        <div style="font-size:0.8rem;color:var(--muted);">${escapeHtml(m.zone || "—")}</div>
+      </div>
+      <button class="button button--ghost button--mini" data-res-del="${m.id}" style="color:#c0392b;">🗑 Удалить</button>
+    </div>`).join("");
+}
+async function handleResListClick(e) {
+  const del = e.target.closest("[data-res-del]"); if (!del) return;
+  if (!confirm("Удалить пару до/после?")) return;
+  try { await fetchJson(`/api/admin/results/${del.dataset.resDel}`, { method: "DELETE" }); await loadResults(); showToast("Удалено.", "success"); }
+  catch (er) { showToast(er.message, "error"); }
 }
 
 async function loadCredentials() {
