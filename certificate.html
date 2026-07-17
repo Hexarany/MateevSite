@@ -1131,7 +1131,8 @@
       btn.disabled = true; btn.textContent = "Готовлю картинку…";
       try {
         const el = document.getElementById("certCanvas");
-        const rendered = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true, logging: false });
+        // scale 3 → 2700×1350 px (~300 DPI на A5): годится и для мессенджера, и для печати
+        const rendered = await html2canvas(el, { scale: 3, backgroundColor: null, useCORS: true, logging: false });
         const link = document.createElement("a");
         link.download = `Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.png`;
         link.href = rendered.toDataURL("image/png");
