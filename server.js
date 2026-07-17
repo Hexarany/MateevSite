@@ -4746,6 +4746,19 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // DELETE /api/admin/certificates/:id — удалить сертификат (тестовые/ошибочные)
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/certificates/")) {
+    assertAdminPin(request);
+    const certId = urlObject.pathname.replace("/api/admin/certificates/", "");
+    const certs = await readJson("certificates.json");
+    const idx = certs.findIndex(c => c.id === certId);
+    if (idx === -1) { sendJson(response, 404, { message: "Сертификат не найден." }); return; }
+    certs.splice(idx, 1);
+    await writeJson("certificates.json", certs);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   // ─── Packages (Абонементы) ────────────────────────────────────────────────
   // GET /api/admin/packages
   if (request.method === "GET" && urlObject.pathname === "/api/admin/packages") {

@@ -745,6 +745,9 @@
       <button class="cert-action-btn cert-action-btn--primary" id="saveCertBtn">
         Сохранить сертификат
       </button>
+      <button class="cert-action-btn cert-action-btn--primary" id="pngCertBtn" style="background:#2d4a35;">
+        💾 Скачать картинку (для отправки)
+      </button>
       <button class="cert-action-btn cert-action-btn--ghost" id="printCertBtn">
         Распечатать
       </button>
@@ -871,6 +874,7 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     // ── State ─────────────────────────────────────────
     let certLang = 'ru';
@@ -1114,6 +1118,30 @@
 
       // Print button
       document.getElementById("printCertBtn").addEventListener("click", () => window.print());
+
+      // Download PNG button
+      document.getElementById("pngCertBtn").addEventListener("click", handleDownloadPng);
+    }
+
+    // ── Скачать сертификат картинкой (без полей, для мессенджеров) ──────────
+    async function handleDownloadPng() {
+      if (typeof html2canvas !== "function") { showToast("Библиотека не загрузилась. Обновите страницу.", "error"); return; }
+      const btn = document.getElementById("pngCertBtn");
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = "Готовлю картинку…";
+      try {
+        const el = document.getElementById("certCanvas");
+        const rendered = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true, logging: false });
+        const link = document.createElement("a");
+        link.download = `Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.png`;
+        link.href = rendered.toDataURL("image/png");
+        link.click();
+        showToast("Картинка сохранена — можно отправить клиенту.", "success");
+      } catch (e) {
+        showToast("Не удалось сохранить картинку. Попробуйте ещё раз.", "error");
+      } finally {
+        btn.disabled = false; btn.textContent = orig;
+      }
     }
 
     // ── Update theme ──────────────────────────────────

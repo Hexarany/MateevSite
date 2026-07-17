@@ -362,6 +362,20 @@ function bindEvents() {
     } catch { showToast("Не удалось обновить статус.", "error"); }
   });
 
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-cert-del]");
+    if (!btn) return;
+    const id = btn.dataset.certDel;
+    const cert = state.certificates.find(c => c.id === id);
+    if (!confirm(`Удалить сертификат ${cert ? cert.code : ""}? Это действие необратимо.`)) return;
+    try {
+      await fetchJson(`/api/admin/certificates/${id}`, { method: "DELETE" });
+      state.certificates = state.certificates.filter(c => c.id !== id);
+      renderCertificatesTable();
+      showToast("Сертификат удалён.", "success");
+    } catch { showToast("Не удалось удалить сертификат.", "error"); }
+  });
+
   document.getElementById("enrollmentStatusFilter")?.addEventListener("change", renderEnrollmentsTable);
   document.getElementById("enrollmentSearch")?.addEventListener("input", renderEnrollmentsTable);
 
@@ -1668,7 +1682,10 @@ function renderCertificatesTable() {
           <select class="cert-status-select" data-cert-id="${escapeHtml(c.id)}" style="font-size:0.82rem;color:${statusColors[c.status]||''};">
             ${["pending","active","used","cancelled"].map(s => `<option value="${s}"${c.status===s?" selected":""}>${statusLabels[s]}</option>`).join("")}
           </select>
-          ${c.status === "pending" ? `<a href="/certificate?from=${encodeURIComponent(c.id)}" target="_blank" class="button button--ghost button--mini" style="margin-top:12px;display:inline-block;white-space:nowrap;">📩 Оформить</a>` : ""}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+            <a href="/certificate?from=${encodeURIComponent(c.id)}" target="_blank" class="button button--ghost button--mini" style="white-space:nowrap;">${c.status === "pending" ? "📩 Оформить" : "🎫 Открыть"}</a>
+            <button type="button" class="button button--ghost button--mini" data-cert-del="${escapeHtml(c.id)}" style="color:var(--danger);border-color:var(--danger-soft);white-space:nowrap;">🗑</button>
+          </div>
         </td>
       </tr>`;
     }).join("");
