@@ -164,7 +164,8 @@ const DEFAULT_SITE_CONTENT = {
     eyebrow: "Студия массажа в Кишиневе",
     tagline: "Массаж и телесная терапия для восстановления и глубокого отдыха",
     city: "Кишинев",
-    address: "бул. Штефан чел Маре, 145",
+    address: "бул. Константин Негруцци, 7",
+    locationNote: "Отель «Кишинёв», 2-й этаж, кабинет 213",
     phone: "+373 69 555 210",
     email: "hello@mateevspa.md",
     telegram: "@mateevspa",
@@ -500,6 +501,7 @@ function normalizeSiteContent(siteInput = {}) {
       tagline: sanitizeText(brandInput.tagline, defaults.brand.tagline),
       city: sanitizeText(brandInput.city, defaults.brand.city),
       address: sanitizeText(brandInput.address, defaults.brand.address),
+      locationNote: sanitizeText(brandInput.locationNote, defaults.brand.locationNote),
       phone: sanitizeText(brandInput.phone, defaults.brand.phone),
       email: sanitizeText(brandInput.email, defaults.brand.email),
       telegram: sanitizeText(brandInput.telegram, defaults.brand.telegram),
@@ -924,6 +926,19 @@ async function ensureDataFiles() {
 
     if (changed) await fs.writeFile(matPath, JSON.stringify(mats, null, 2), "utf8");
   } catch { /* не критично — методички можно создать через админку */ }
+
+  // Актуализация адреса студии (в сообщениях клиентам): правильная улица + кабинет.
+  try {
+    const sitePath = path.join(DATA_DIR, "site.json");
+    const site = JSON.parse(await fs.readFile(sitePath, "utf8"));
+    if (site && site.brand) {
+      let touched = false;
+      const a = String(site.brand.address || "");
+      if (!a || /штефан|ștefan|stefan/i.test(a)) { site.brand.address = "бул. Константин Негруцци, 7"; touched = true; }
+      if (!site.brand.locationNote) { site.brand.locationNote = "Отель «Кишинёв», 2-й этаж, кабинет 213"; touched = true; }
+      if (touched) await fs.writeFile(sitePath, JSON.stringify(site, null, 2), "utf8");
+    }
+  } catch { /* не критично */ }
 }
 
 function sanitizeEnv(value) {
@@ -1683,8 +1698,9 @@ async function runReceptionAgent(messages) {
 // Структурированное подтверждение записи клиенту (Telegram)
 function buildClientConfirmation(b, site) {
   const brand = (site && site.brand) || {};
-  const addr = brand.address || "";
+  const addr = brand.address || "бул. Константин Негруцци, 7";
   const city = brand.city || "Кишинёв";
+  const locNote = brand.locationNote || "Отель «Кишинёв», 2-й этаж, кабинет 213";
   let dateFmt = b.date;
   try { dateFmt = new Date(b.date + "T00:00:00").toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" }); } catch {}
   const mapQuery = encodeURIComponent([addr, city].filter(Boolean).join(", "));
@@ -1695,7 +1711,8 @@ function buildClientConfirmation(b, site) {
     `👤 ${b.specialist}`,
     `📅 ${dateFmt}, ${b.time}`,
     b.price ? `💰 ${b.price} MDL` : "",
-    addr ? `📍 ${addr}, ${city}` : `📍 ${city}`,
+    `📍 ${addr}, ${city}`,
+    locNote ? `🏢 ${locNote}` : "",
     `🗺 Как добраться: https://maps.google.com/?q=${mapQuery}`,
     "",
     `Номер брони: ${b.reference}`,
