@@ -1303,6 +1303,7 @@ function buildBookingNotificationText(booking) {
     `Дата: ${booking.date}`,
     `Время: ${booking.slot}-${booking.endsAt}`,
     `Сумма: ${booking.totalPrice} MDL`,
+    booking.certificateCode ? `🎫 ПО СЕРТИФИКАТУ: ${booking.certificateCode}` : null,
     booking.referredByName ? `🎁 По реф-ссылке от: ${booking.referredByName} (−10% обоим)` : null,
     booking.notes ? `Комментарий: ${booking.notes}` : null
   ]
@@ -3310,10 +3311,12 @@ async function handleBookingCreate(request, response) {
     }
   });
 
+  const certCode = sanitizeText(payload.certificateCode || "");
+  if (certCode) booking.certificateCode = certCode;
+
   const nextBookings = sortBookings([...bookings, booking]);
   await writeJson("bookings.json", nextBookings);
 
-  const certCode = sanitizeText(payload.certificateCode || "");
   if (certCode) {
     const certs = await readJson("certificates.json");
     const certIdx = certs.findIndex(c => c.code.toUpperCase() === certCode.toUpperCase() && c.status === "active");

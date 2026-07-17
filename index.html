@@ -920,15 +920,6 @@
       }
       syncLang();
       document.addEventListener('click', function(e){ if (e.target.closest('.lang-btn')) setTimeout(syncLang, 60); });
-
-      /* QR с сертификата: подставляем код в поле записи */
-      try {
-        var certParam = new URLSearchParams(location.search).get('cert');
-        if (certParam) {
-          var ci = document.getElementById('certCode');
-          if (ci) ci.value = certParam.toUpperCase().slice(0, 40);
-        }
-      } catch (e) {}
     })();
   </script>
 </body>

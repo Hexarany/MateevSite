@@ -377,6 +377,18 @@ function bindEvents() {
 
   document.getElementById("certApplyBtn")?.addEventListener("click", handleCertApply);
 
+  // Скан QR с сертификата (?cert=CODE): подставляем код и сразу применяем скидку.
+  // Старые ваучеры без QR — по-прежнему вводятся вручную и кнопкой «Применить».
+  (function autoApplyCertFromUrl() {
+    try {
+      const certParam = new URLSearchParams(location.search).get("cert");
+      if (!certParam) return;
+      const input = document.getElementById("certCode");
+      if (input) input.value = certParam.toUpperCase().slice(0, 40);
+      handleCertApply();
+    } catch (e) { /* тихо игнорируем */ }
+  })();
+
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".waitlist-submit");
     if (!btn) return;
