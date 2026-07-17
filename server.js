@@ -166,7 +166,7 @@ const DEFAULT_SITE_CONTENT = {
     city: "Кишинев",
     address: "бул. Константин Негруцци, 7",
     locationNote: "Отель «Кишинёв», 2-й этаж, кабинет 213",
-    phone: "+373 69 555 210",
+    phone: "+373 69 158 475",
     email: "hello@mateevspa.md",
     telegram: "@mateevspa",
     instagram: "_mateevspa_",
@@ -936,6 +936,8 @@ async function ensureDataFiles() {
       const a = String(site.brand.address || "");
       if (!a || /штефан|ștefan|stefan/i.test(a)) { site.brand.address = "бул. Константин Негруцци, 7"; touched = true; }
       if (!site.brand.locationNote) { site.brand.locationNote = "Отель «Кишинёв», 2-й этаж, кабинет 213"; touched = true; }
+      const ph = String(site.brand.phone || "").replace(/\D/g, "");
+      if (!ph || ph === "37369555210") { site.brand.phone = "+373 69 158 475"; touched = true; }
       if (touched) await fs.writeFile(sitePath, JSON.stringify(site, null, 2), "utf8");
     }
   } catch { /* не критично */ }
