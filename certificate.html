@@ -748,6 +748,9 @@
       <button class="cert-action-btn cert-action-btn--primary" id="pngCertBtn" style="background:#2d4a35;">
         💾 Скачать картинку (для отправки)
       </button>
+      <button class="cert-action-btn cert-action-btn--ghost" id="pdfCertBtn">
+        📄 Скачать PDF (для печати)
+      </button>
       <button class="cert-action-btn cert-action-btn--ghost" id="printCertBtn">
         Распечатать
       </button>
@@ -875,6 +878,7 @@
   <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     // ── State ─────────────────────────────────────────
     let certLang = 'ru';
@@ -1121,6 +1125,33 @@
 
       // Download PNG button
       document.getElementById("pngCertBtn").addEventListener("click", handleDownloadPng);
+
+      // Download PDF button
+      document.getElementById("pdfCertBtn").addEventListener("click", handleDownloadPdf);
+    }
+
+    // ── Скачать сертификат в PDF (без полей, размер страницы = сам сертификат) ──
+    async function handleDownloadPdf() {
+      const jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+      if (typeof html2canvas !== "function" || !jsPDFCtor) { showToast("Библиотеки не загрузились. Обновите страницу.", "error"); return; }
+      const btn = document.getElementById("pdfCertBtn");
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = "Готовлю PDF…";
+      try {
+        const el = document.getElementById("certCanvas");
+        const rendered = await html2canvas(el, { scale: 4, backgroundColor: null, useCORS: true, logging: false });
+        const imgData = rendered.toDataURL("image/png");
+        // Страница ровно под сертификат (2:1) — без полей и без поворота
+        const W = 210, H = 105; // мм
+        const pdf = new jsPDFCtor({ orientation: "landscape", unit: "mm", format: [W, H], compress: true });
+        pdf.addImage(imgData, "PNG", 0, 0, W, H);
+        pdf.save(`Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.pdf`);
+        showToast("PDF сохранён — готов к печати.", "success");
+      } catch (e) {
+        showToast("Не удалось сохранить PDF. Попробуйте ещё раз.", "error");
+      } finally {
+        btn.disabled = false; btn.textContent = orig;
+      }
     }
 
     // ── Скачать сертификат картинкой (без полей, для мессенджеров) ──────────
