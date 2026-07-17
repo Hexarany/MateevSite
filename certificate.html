@@ -484,9 +484,21 @@
     .cert-canvas--ivory .cert-price { color: var(--cert-ivory-accent); }
 
     .cert-currency {
-      font-size: 1.6rem;
-      vertical-align: super;
+      font-size: 1.5rem;
+      vertical-align: baseline;
+      margin-left: 8px;
+      letter-spacing: 0.02em;
+      opacity: 0.8;
+      font-family: 'Instrument Serif', Georgia, serif;
     }
+
+    /* QR-код */
+    .cert-qr { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+    .cert-qr__box { background: #fff; padding: 4px; border-radius: 6px; line-height: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+    .cert-qr__box img, .cert-qr__box canvas { display: block; width: 54px; height: 54px; }
+    .cert-qr__label { font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+    .cert-canvas--dark .cert-qr__label { color: var(--cert-dark-muted); }
+    .cert-canvas--ivory .cert-qr__label { color: var(--cert-ivory-muted); }
 
     /* Procedure */
     .cert-procedure {
@@ -845,13 +857,13 @@
 
         <div style="text-align:center;">
           <div class="cert-price" id="certPriceDisplay">
-            <span class="cert-currency">MDL</span> —
+            —<span class="cert-currency">MDL</span>
           </div>
           <p class="cert-procedure" id="certProcedureDisplay">Любая процедура студии</p>
         </div>
 
-        <div>
-          <div class="cert-bottom-row">
+        <div style="display:flex;align-items:flex-end;gap:18px;">
+          <div class="cert-bottom-row" style="flex:1;">
             <div class="cert-bottom-field">
               <div class="cert-bottom-field__line"></div>
               <span class="cert-label" id="certIssuedLabel">Дата выдачи</span>
@@ -868,6 +880,10 @@
               <span class="cert-bottom-field__val" id="certCodeDisplay" style="font-family:'DM Mono',monospace; font-size:0.6rem;">—</span>
             </div>
           </div>
+          <div class="cert-qr">
+            <div class="cert-qr__box" id="certQr"></div>
+            <span class="cert-qr__label" id="certQrLabel">Записаться</span>
+          </div>
         </div>
       </div>
 
@@ -879,6 +895,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     // ── State ─────────────────────────────────────────
     let certLang = 'ru';
@@ -892,6 +909,7 @@
         issuedLabel:   'Дата выдачи',
         signLabel:     'Подпись',
         numLabel:      'Номер',
+        qrLabel:       'Записаться',
         stampBottom:   'ОРИГИНАЛЬНЫЙ СЕРТИФИКАТ',
         validityFn:    m => `Действителен ${m} ${m===1?'месяц':m<5?'месяца':'месяцев'}`,
       },
@@ -903,6 +921,7 @@
         issuedLabel:   'Data emiterii',
         signLabel:     'Semnătură',
         numLabel:      'Număr',
+        qrLabel:       'Programare',
         stampBottom:   'CERTIFICAT ORIGINAL',
         validityFn:    m => `Valabil ${m} ${m===1?'lună':'luni'}`,
       }
@@ -920,6 +939,8 @@
       document.getElementById('certIssuedLabel').textContent = t.issuedLabel;
       document.getElementById('certSignLabel').textContent  = t.signLabel;
       document.getElementById('certNumLabel').textContent   = t.numLabel;
+      const qrLabelEl = document.getElementById('certQrLabel');
+      if (qrLabelEl) qrLabelEl.textContent = t.qrLabel;
       // stamp bottom text
       const stampBottom = document.querySelector('#certStamp textPath[href="#st-inner-b"]');
       if (stampBottom) stampBottom.textContent = t.stampBottom;
@@ -1186,11 +1207,11 @@
       // Recipient
       recipientDisp.textContent = state.recipient || "Получатель";
 
-      // Price
+      // Price — крупное число, «MDL» аккуратным суффиксом
       if (state.amount > 0) {
-        priceDisp.innerHTML = `<span class="cert-currency">MDL</span> ${state.amount.toLocaleString("ru-RU")}`;
+        priceDisp.innerHTML = `${state.amount.toLocaleString("ru-RU")}<span class="cert-currency">MDL</span>`;
       } else {
-        priceDisp.innerHTML = `<span class="cert-currency">MDL</span> —`;
+        priceDisp.innerHTML = `—<span class="cert-currency">MDL</span>`;
       }
 
       // Procedure
@@ -1210,7 +1231,20 @@
       // Validity text
       updateValidityText();
 
+      renderQr();
       updateTheme();
+    }
+
+    // ── QR: ведёт на запись с подставленным кодом сертификата ──────────────
+    let _lastQrText = "";
+    function renderQr() {
+      const box = document.getElementById("certQr");
+      if (!box || typeof QRCode === "undefined") return;
+      const url = `https://mateevmassage.com/?cert=${encodeURIComponent(state.code || "")}#booking`;
+      if (url === _lastQrText) return;
+      _lastQrText = url;
+      box.innerHTML = "";
+      new QRCode(box, { text: url, width: 116, height: 116, colorDark: "#1a1a1a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
     }
 
     // ── Save ──────────────────────────────────────────
