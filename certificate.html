@@ -1159,20 +1159,62 @@
       const orig = btn.textContent;
       btn.disabled = true; btn.textContent = "Готовлю PDF…";
       try {
-        const el = document.getElementById("certCanvas");
-        const rendered = await html2canvas(el, { scale: 4, backgroundColor: null, useCORS: true, logging: false });
+        const rendered = await renderCertCanvas(4);
         const imgData = rendered.toDataURL("image/png");
         // Страница ровно под сертификат (2:1) — без полей и без поворота
         const W = 210, H = 105; // мм
         const pdf = new jsPDFCtor({ orientation: "landscape", unit: "mm", format: [W, H], compress: true });
         pdf.addImage(imgData, "PNG", 0, 0, W, H);
-        pdf.save(`Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.pdf`);
-        showToast("PDF сохранён — готов к печати.", "success");
+        const blob = pdf.output("blob");
+        await saveOrShare(blob, `Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.pdf`, "application/pdf");
+        showToast("PDF готов — сохраните или отправьте.", "success");
       } catch (e) {
         showToast("Не удалось сохранить PDF. Попробуйте ещё раз.", "error");
       } finally {
         btn.disabled = false; btn.textContent = orig;
       }
+    }
+
+    // На мобиле .cert-main скрыт (display:none) — html2canvas не снимет скрытое.
+    // Временно делаем канвас рендеримым за пределами экрана, снимаем, возвращаем.
+    async function renderCertCanvas(scale) {
+      const main = document.querySelector(".cert-main");
+      const el = document.getElementById("certCanvas");
+      const saved = main.getAttribute("style") || "";
+      main.style.setProperty("display", "block", "important");
+      main.style.setProperty("position", "fixed");
+      main.style.setProperty("left", "-10000px");
+      main.style.setProperty("top", "0");
+      main.style.setProperty("padding", "0");
+      main.style.setProperty("margin", "0");
+      try {
+        await new Promise((r) => requestAnimationFrame(() => r()));
+        return await html2canvas(el, { scale, backgroundColor: null, useCORS: true, logging: false });
+      } finally {
+        main.setAttribute("style", saved);
+      }
+    }
+
+    // Сохранить или (на мобиле) отправить через системное «Поделиться»
+    async function saveOrShare(blob, filename, type) {
+      try {
+        const file = new File([blob], filename, { type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: filename });
+          return true;
+        }
+      } catch (e) {
+        if (e && e.name === "AbortError") return true; // пользователь закрыл окно — не скачиваем повторно
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      return true;
     }
 
     // ── Скачать сертификат картинкой (без полей, для мессенджеров) ──────────
@@ -1182,14 +1224,11 @@
       const orig = btn.textContent;
       btn.disabled = true; btn.textContent = "Готовлю картинку…";
       try {
-        const el = document.getElementById("certCanvas");
         // scale 3 → 2700×1350 px (~300 DPI на A5): годится и для мессенджера, и для печати
-        const rendered = await html2canvas(el, { scale: 3, backgroundColor: null, useCORS: true, logging: false });
-        const link = document.createElement("a");
-        link.download = `Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.png`;
-        link.href = rendered.toDataURL("image/png");
-        link.click();
-        showToast("Картинка сохранена — можно отправить клиенту.", "success");
+        const rendered = await renderCertCanvas(3);
+        const blob = await new Promise((res) => rendered.toBlob(res, "image/png"));
+        await saveOrShare(blob, `Сертификат-${(state.code || "MateevSpa").replace(/[^\w-]/g, "")}.png`, "image/png");
+        showToast("Готово — сохраните или отправьте клиенту.", "success");
       } catch (e) {
         showToast("Не удалось сохранить картинку. Попробуйте ещё раз.", "error");
       } finally {
