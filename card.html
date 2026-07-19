@@ -150,7 +150,7 @@
         <div class="action-btn__icon">📸</div>
         <span class="action-btn__label">Instagram</span>
       </a>
-      <a class="action-btn action-btn--book" href="/#booking">
+      <a class="action-btn action-btn--book" href="/?src=card#booking">
         <div class="action-btn__icon">📅</div>
         <span class="action-btn__label">Записаться</span>
       </a>
@@ -177,6 +177,10 @@
       <a class="info-row" href="https://mateevmassage.com" target="_blank" rel="noopener">
         <div class="info-row__icon">🌐</div>
         <span>mateevmassage.com</span>
+      </a>
+      <a class="info-row" id="cardAddrRow" style="display:none" target="_blank" rel="noopener">
+        <div class="info-row__icon">📍</div>
+        <span id="cardAddrText"></span>
       </a>
     </div>
 
@@ -208,6 +212,16 @@ function saveContact() {
   a.href = url; a.download = "Denis_Matievici.vcf"; a.click();
   URL.revokeObjectURL(url);
 }
+
+// Адрес подтягивается из настроек сайта — меняешь один раз, визитки не трогаешь
+fetch("/api/brand").then(function(r){ return r.json(); }).then(function(b){
+  var parts = [b.address, b.locationNote].filter(Boolean).join(" · ");
+  if (!parts) return;
+  var row = document.getElementById("cardAddrRow");
+  document.getElementById("cardAddrText").textContent = parts;
+  row.href = b.mapUrl || ("https://maps.google.com/?q=" + encodeURIComponent([b.address, b.city].filter(Boolean).join(", ")));
+  row.style.display = "";
+}).catch(function(){});
 </script>
 </body>
 </html>

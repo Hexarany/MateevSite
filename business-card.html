@@ -2,6 +2,8 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MateevSpa — Редактор визиток</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&family=Italiana&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -378,19 +380,7 @@ const s = document.createElement('script');
 s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 s.onload = () => { sync(); updateQR(); };
 s.onerror = () => {
-  // Fallback: show QR as external image
-  const canvas = document.getElementById('qr-canvas');
-  if (!canvas) return;
-  const url = document.getElementById('inp-qr').value.trim() || 'https://mateevmassage.com/card';
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    qrDataUrl = canvas.toDataURL();
-    buildPrint();
-  };
-  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}`;
+  console.warn('QR: библиотека не загрузилась — проверьте интернет и обновите страницу.');
 };
 document.head.appendChild(s);
 

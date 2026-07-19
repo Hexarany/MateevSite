@@ -125,7 +125,9 @@ const STATIC_FILES = {
   "/materials/integrativnyy-massazh-programma": "materials/integrativnyy-massazh-programma.html",
   "/materials/integrativnyy-massazh-programma.html": "materials/integrativnyy-massazh-programma.html",
   "/materials/banner-hotel": "materials/banner-hotel.html",
-  "/materials/banner-hotel.html": "materials/banner-hotel.html"
+  "/materials/banner-hotel.html": "materials/banner-hotel.html",
+  "/business-card": "business-card.html",
+  "/business-card.html": "business-card.html"
 };
 
 const MIME_TYPES = {
@@ -5682,6 +5684,24 @@ ${expRows ? `<tr><td style="padding:0 36px 28px;">
   if (request.method === "GET" && urlObject.pathname === "/api/results") {
     const items = await readJson("results.json").catch(() => []);
     sendJson(response, 200, items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+    return;
+  }
+
+  // GET /api/brand — public: адрес/кабинет/телефон для страниц (визитка /card и т.п.)
+  if (request.method === "GET" && urlObject.pathname === "/api/brand") {
+    const site = await readJson("site.json").catch(() => ({}));
+    const brand = (site && site.brand) || {};
+    const address = brand.address || "бул. Константин Негруцци, 7";
+    const city = brand.city || "Кишинёв";
+    const mapUrl = `https://maps.google.com/?q=${encodeURIComponent([address, city].filter(Boolean).join(", "))}`;
+    sendJson(response, 200, {
+      name: brand.name || "Mateev Spa Studio",
+      address,
+      locationNote: brand.locationNote || "Отель «Кишинёв», 2-й этаж, кабинет 213",
+      city,
+      phone: brand.phone || "+373 69 158 475",
+      mapUrl,
+    });
     return;
   }
   // GET /api/admin/results — admin
