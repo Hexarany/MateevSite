@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Баннер для ресепшена — Mateev Spa Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Manrope',Arial,sans-serif;background:#e7e1d7;display:flex;flex-direction:column;align-items:center;padding:24px 12px 80px}
+  .bar{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:20}
+  .bar button{background:#b36d2c;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .bar button.ghost{background:#fff;color:#1a2e22}
+
+  /* Roll-up 85x200 → соотношение 0.425 */
+  .banner{width:640px;max-width:96vw;aspect-ratio:85/200;background:linear-gradient(180deg,#16261d 0%,#1a2e22 55%,#0f1c15 100%);
+    border-radius:6px;overflow:hidden;position:relative;color:#f3ece0;box-shadow:0 20px 60px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;align-items:center;text-align:center;padding:7% 8% 5%}
+  .banner::before{content:"";position:absolute;top:-12%;right:-18%;width:60%;height:32%;border-radius:50%;background:radial-gradient(circle,rgba(196,158,90,.18),transparent 70%)}
+  .banner::after{content:"";position:absolute;bottom:-14%;left:-16%;width:60%;height:30%;border-radius:50%;background:radial-gradient(circle,rgba(107,141,107,.16),transparent 70%)}
+  .z{position:relative;z-index:2;width:100%}
+
+  .logo{width:22%;filter:brightness(0) invert(1);opacity:.95;margin-bottom:3%}
+  .kicker{font-size:1.05vw;letter-spacing:.28em;text-transform:uppercase;color:#c49e5a;font-weight:700}
+  @media(max-width:680px){.kicker{font-size:.62rem}}
+  .brand{font-family:'Cormorant Garamond',serif;font-size:5.2%;font-weight:700;letter-spacing:.02em;margin:2% 0 6%}
+
+  .headline{font-family:'Cormorant Garamond',serif;font-weight:700;line-height:1.05;font-size:8.4%;color:#fff}
+  .headline .ro{color:#d8cdb8;font-size:70%;display:block;margin-top:2%;font-style:italic;font-weight:600}
+  .headline .en{color:rgba(255,255,255,.55);font-size:52%;display:block;margin-top:1.5%;letter-spacing:.02em;font-style:italic}
+
+  .loc{margin:6% 0;display:inline-block;border:1px solid rgba(196,158,90,.5);border-radius:999px;padding:2.4% 5%;
+    font-size:2.2%;font-weight:700;letter-spacing:.04em;color:#e8dcc8}
+  .loc b{color:#c49e5a}
+  @media(max-width:680px){.loc{font-size:.72rem}}
+
+  .benes{display:flex;flex-direction:column;gap:3.2%;margin:2% 0 6%;width:88%;margin-left:auto;margin-right:auto}
+  .bene{display:flex;align-items:center;gap:4%;text-align:left;font-size:2.5%}
+  @media(max-width:680px){.bene{font-size:.8rem}}
+  .bene .ic{flex:0 0 auto;width:8%;min-width:34px;height:34px;border-radius:50%;background:rgba(196,158,90,.14);display:flex;align-items:center;justify-content:center;font-size:1rem}
+  .bene .tx b{color:#fff;font-weight:700;display:block}
+  .bene .tx span{color:rgba(243,236,224,.6);font-size:.8em}
+
+  .qrwrap{margin-top:auto;background:#faf6ee;border-radius:16px;padding:5% 5% 4%;width:76%;color:#1a2e22}
+  .qrwrap .call{font-size:2.4%;font-weight:800;letter-spacing:.02em;margin-bottom:3%}
+  @media(max-width:680px){.qrwrap .call{font-size:.82rem}}
+  .qrbox{background:#fff;border-radius:12px;padding:10px;display:inline-block;line-height:0}
+  .qrbox img,.qrbox canvas{width:150px;height:150px;display:block}
+  .qrwrap .callro{font-size:1.9%;color:#6b7a5e;margin-top:3%;font-weight:600}
+  @media(max-width:680px){.qrwrap .callro{font-size:.68rem}}
+
+  .foot{margin-top:4%;font-size:2.3%;color:#e8dcc8;font-weight:600}
+  .foot b{color:#c49e5a}
+  @media(max-width:680px){.foot{font-size:.78rem}}
+  .offer{position:absolute;top:6%;left:-2%;background:#c49e5a;color:#1a2e22;font-weight:800;font-size:1.9%;
+    padding:1.4% 6% 1.4% 4%;transform:rotate(-6deg);box-shadow:0 6px 16px rgba(0,0,0,.25);letter-spacing:.02em;z-index:3}
+  @media(max-width:680px){.offer{font-size:.6rem}}
+  .note{max-width:640px;margin-top:18px;color:#5a5044;font-size:.82rem;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="bar">
+  <button id="pdfBtn">📄 Скачать PDF</button>
+  <button class="ghost" onclick="window.print()">Печать</button>
+</div>
+
+<div class="banner" id="banner">
+  <!-- Спец-предложение (можно убрать/поменять) -->
+  <div class="offer">Гостям отеля<br>приятный бонус</div>
+
+  <div class="z">
+    <img class="logo" src="/mateev_logo.png" alt="Mateev Spa Studio">
+    <div class="kicker">Spa &amp; Massage · Hotel Chișinău</div>
+    <div class="brand">Mateev Spa Studio</div>
+
+    <div class="headline">
+      Массаж — не выходя из отеля
+      <span class="ro">Masaj — fără să ieși din hotel</span>
+      <span class="en">Massage — without leaving the hotel</span>
+    </div>
+
+    <div class="loc">📍 2 этаж · кабинет <b>213</b> · etaj 2 · 2nd floor</div>
+
+    <div class="benes">
+      <div class="bene"><div class="ic">🧳</div><div class="tx"><b>Восстановление после дороги</b><span>Recuperare după drum · Recover after travel</span></div></div>
+      <div class="bene"><div class="ic">🌿</div><div class="tx"><b>Снятие напряжения и стресса</b><span>Relaxare · Relieve tension &amp; stress</span></div></div>
+      <div class="bene"><div class="ic">📅</div><div class="tx"><b>Запись онлайн за минуту</b><span>Programare online · Book online</span></div></div>
+    </div>
+
+    <div class="qrwrap">
+      <div class="call">Сканируйте — запишитесь за минуту</div>
+      <div class="qrbox" id="qr"></div>
+      <div class="callro">Scanați pentru programare · Scan to book</div>
+    </div>
+
+    <div class="foot">📞 <b>+373 69 158 475</b> · mateevmassage.com</div>
+  </div>
+</div>
+
+<p class="note">Это макет для ресепшена (пропорции roll-up 85×200 см). QR ведёт на онлайн-запись. «Печать» или «Скачать PDF» — для типографии; для большого формата типография масштабирует по этому референсу.</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // QR на запись (с меткой источника hotel)
+  new QRCode(document.getElementById('qr'), { text: 'https://mateevmassage.com/?src=hotel#booking', width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
+
+  document.getElementById('pdfBtn').addEventListener('click', async function(){
+    var btn=this, orig=btn.textContent; btn.disabled=true; btn.textContent='Готовлю…';
+    try{
+      var el=document.getElementById('banner');
+      var canvas=await html2canvas(el,{scale:3,backgroundColor:null,useCORS:true,logging:false});
+      var img=canvas.toDataURL('image/png');
+      var jsPDFCtor=window.jspdf.jsPDF;
+      // Страница в пропорции roll-up (850x2000 мм)
+      var pdf=new jsPDFCtor({orientation:'portrait',unit:'mm',format:[850,2000],compress:true});
+      pdf.addImage(img,'PNG',0,0,850,2000);
+      var blob=pdf.output('blob'); var url=URL.createObjectURL(blob);
+      var a=document.createElement('a'); a.href=url; a.download='Баннер-отель-MateevSpa.pdf'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){URL.revokeObjectURL(url)},5000);
+    }catch(e){ alert('Не удалось сделать PDF: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent=orig; }
+  });
+</script>
+</body>
+</html>

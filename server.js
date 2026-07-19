@@ -123,7 +123,9 @@ const STATIC_FILES = {
   "/materials/integrativnyy-massazh": "materials/integrativnyy-massazh.html",
   "/materials/integrativnyy-massazh.html": "materials/integrativnyy-massazh.html",
   "/materials/integrativnyy-massazh-programma": "materials/integrativnyy-massazh-programma.html",
-  "/materials/integrativnyy-massazh-programma.html": "materials/integrativnyy-massazh-programma.html"
+  "/materials/integrativnyy-massazh-programma.html": "materials/integrativnyy-massazh-programma.html",
+  "/materials/banner-hotel": "materials/banner-hotel.html",
+  "/materials/banner-hotel.html": "materials/banner-hotel.html"
 };
 
 const MIME_TYPES = {
