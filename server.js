@@ -129,7 +129,12 @@ const STATIC_FILES = {
   "/business-card": "business-card.html",
   "/business-card.html": "business-card.html",
   "/planner": "planner.html",
-  "/planner.html": "planner.html"
+  "/planner.html": "planner.html",
+  "/planner-sw.js": "planner-sw.js",
+  "/manifest-planner.json": "manifest-planner.json",
+  "/planner-icon-192.png": "planner-icon-192.png",
+  "/planner-icon-512.png": "planner-icon-512.png",
+  "/planner-icon-180.png": "planner-icon-180.png"
 };
 
 const MIME_TYPES = {

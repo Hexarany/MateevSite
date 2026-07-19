@@ -2,9 +2,17 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Мой день · Планер</title>
+<link rel="manifest" href="/manifest-planner.json">
+<meta name="theme-color" content="#b06a6a">
+<link rel="icon" type="image/png" href="/planner-icon-192.png">
+<link rel="apple-touch-icon" href="/planner-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Мой день">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -168,7 +176,17 @@
   </div>
   <button class="tbtn" id="todayBtn">Сегодня</button>
   <button class="tbtn" id="clearBtn">Очистить день</button>
+  <button class="tbtn" id="installBtn" style="display:none">📲 Установить</button>
   <button class="tbtn tbtn--primary" id="printBtn">🖨 Печать</button>
+</div>
+
+<div id="iosHint" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(64,49,39,.5);align-items:flex-end;justify-content:center;padding:0 0 22px">
+  <div style="background:var(--paper);border-radius:20px;max-width:340px;margin:0 16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center">
+    <div style="font-size:2rem">🌸</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--rose);margin:6px 0 10px" id="iosTitle">На главный экран</div>
+    <div style="font-size:.9rem;color:var(--ink);line-height:1.6" id="iosBody">Нажмите <b>Поделиться</b> ⬆️ внизу браузера, затем выберите <b>«На экран „Домой“»</b> — появится иконка 🌸.</div>
+    <button class="tbtn tbtn--primary" id="iosClose" style="margin-top:16px;width:100%">Понятно</button>
+  </div>
 </div>
 
 <div class="wrap">
@@ -272,6 +290,7 @@
       tasks:"Задачи", water:"Вода", mood:"Настроение", habits:"Привычки", addHabit:"добавить привычку",
       meals:"Питание", gratitude:"Благодарность", notes:"Заметки", backup:"Сделать резервную копию",
       restore:"Восстановить из копии", madeWith:"Планер · с любовью", saved:"✓ Сохранено",
+      install:"📲 Установить", iosTitle:"На главный экран", iosBody:"Нажмите «Поделиться» ⬆️ внизу браузера, затем «На экран „Домой“» — появится иконка 🌸.",
       addTask:"Добавить задачу…", gratitudePh:"За что я благодарна сегодня…", notesPh:"Мысли, идеи, что угодно…",
       newHabit:"Новая привычка", noTasks:"Пока нет задач — добавьте первую ✨", clearConfirm:"Очистить все данные этого дня?",
       meal:["Завтрак","Обед","Ужин","Перекус"], dow:["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"],
@@ -282,6 +301,7 @@
       tasks:"Sarcini", water:"Apă", mood:"Dispoziție", habits:"Obiceiuri", addHabit:"adaugă obicei",
       meals:"Alimentație", gratitude:"Recunoștință", notes:"Notițe", backup:"Creează copie de rezervă",
       restore:"Restaurează din copie", madeWith:"Planner · cu drag", saved:"✓ Salvat",
+      install:"📲 Instalează", iosTitle:"Pe ecranul principal", iosBody:"Apăsați «Partajează» ⬆️ jos în browser, apoi «La ecranul principal» — apare pictograma 🌸.",
       addTask:"Adaugă o sarcină…", gratitudePh:"Pentru ce sunt recunoscătoare azi…", notesPh:"Gânduri, idei, orice…",
       newHabit:"Obicei nou", noTasks:"Încă nu sunt sarcini — adaugă prima ✨", clearConfirm:"Ștergi toate datele acestei zile?",
       meal:["Mic dejun","Prânz","Cină","Gustare"], dow:["Duminică","Luni","Marți","Miercuri","Joi","Vineri","Sâmbătă"],
@@ -292,6 +312,7 @@
       tasks:"Tasks", water:"Water", mood:"Mood", habits:"Habits", addHabit:"add a habit",
       meals:"Meals", gratitude:"Gratitude", notes:"Notes", backup:"Make a backup",
       restore:"Restore from backup", madeWith:"Planner · made with love", saved:"✓ Saved",
+      install:"📲 Install", iosTitle:"Add to Home Screen", iosBody:"Tap Share ⬆️ at the bottom, then “Add to Home Screen” — the 🌸 icon appears.",
       addTask:"Add a task…", gratitudePh:"What am I grateful for today…", notesPh:"Thoughts, ideas, anything…",
       newHabit:"New habit", noTasks:"No tasks yet — add your first ✨", clearConfirm:"Clear all data for this day?",
       meal:["Breakfast","Lunch","Dinner","Snack"], dow:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
@@ -349,6 +370,9 @@
     document.querySelectorAll("[data-t]").forEach(function(el){ var k=el.getAttribute("data-t"); if(t[k]!=null) el.textContent=t[k]; });
     document.querySelectorAll("[data-ph]").forEach(function(el){ var k=el.getAttribute("data-ph"); if(t[k]!=null) el.placeholder=t[k]; });
     document.getElementById("todoInput").placeholder=t.addTask;
+    document.getElementById("installBtn").textContent=t.install;
+    document.getElementById("iosTitle").textContent=t.iosTitle;
+    document.getElementById("iosBody").innerHTML=t.iosBody;
     document.querySelectorAll(".lang button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-l")===lang); });
   }
   function renderHeader(){
@@ -512,6 +536,29 @@
     r.onload=function(){ try{ var obj=JSON.parse(r.result); if(obj && typeof obj==="object"){ store=obj; lang=store._lang||lang; persist(); renderChrome(); go(); } }catch(err){ alert("Файл не распознан"); } };
     r.readAsText(f);
   };
+
+  // ── Установка «на главный экран» (PWA) ──
+  var deferredPrompt = null;
+  var installBtn = document.getElementById("installBtn");
+  var isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault(); deferredPrompt = e;
+    if(!isStandalone) installBtn.style.display="";
+  });
+  window.addEventListener("appinstalled", function(){ installBtn.style.display="none"; deferredPrompt=null; });
+  // iOS не шлёт beforeinstallprompt — показываем кнопку с инструкцией
+  if(isIOS && !isStandalone) installBtn.style.display="";
+  installBtn.onclick=function(){
+    if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function(){ deferredPrompt=null; installBtn.style.display="none"; }); }
+    else { document.getElementById("iosHint").style.display="flex"; }
+  };
+  document.getElementById("iosClose").onclick=function(){ document.getElementById("iosHint").style.display="none"; };
+  document.getElementById("iosHint").addEventListener("click",function(e){ if(e.target===this) this.style.display="none"; });
+  // Сервис-воркер — офлайн-доступ (scope /planner)
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",function(){ navigator.serviceWorker.register("/planner-sw.js",{scope:"/planner"}).catch(function(){}); });
+  }
 
   // ── Boot ──
   renderChrome();
