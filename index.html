@@ -109,7 +109,7 @@
         <a href="#booking" class="nav__link" id="navBookingLink">Запись</a>
         <a href="#gift" class="nav__link" data-ru="Сертификаты" data-ro="Certificate">Сертификаты</a>
         <a href="/school" class="nav__link" data-ru="Школа" data-ro="Școală">Школа</a>
-        <a href="/graduates" class="nav__link" data-ru="Выпускники" data-ro="Absolvenți">Выпускники</a>
+        <a href="/registry" class="nav__link" data-ru="Реестр мастеров" data-ro="Registru">Реестр мастеров</a>
         <a href="/blog" class="nav__link" data-ru="Дневник" data-ro="Jurnal">Дневник</a>
         <a href="/client" class="nav__link" data-ru="Кабинет" data-ro="Cont">Кабинет</a>
         <a href="/first-visit" class="nav__link nav__link--mobile" data-ru="Первый визит" data-ro="Prima vizită">Первый визит</a>
@@ -803,7 +803,7 @@
         <a href="#specialists" id="footerSpecialistsLink">Специалисты</a>
         <a href="#booking" id="footerBookingLink">Запись</a>
         <a href="/school" data-ru="Школа" data-ro="Școală">Школа</a>
-        <a href="/graduates" data-ru="Выпускники" data-ro="Absolvenți">Выпускники</a>
+        <a href="/registry" data-ru="Реестр мастеров" data-ro="Registru">Реестр мастеров</a>
         <a href="/blog" data-ru="Дневник" data-ro="Jurnal">Дневник</a>
         <a href="/certificates" data-ru="Сертификаты" data-ro="Certificate">Сертификаты</a>
         <a href="/first-visit" data-ru="Первый визит" data-ro="Prima vizită">Первый визит</a>
@@ -909,11 +909,11 @@
 
   <script src="script.js" defer></script>
   <script>
-    /* Прокидываем текущий язык в серверные страницы (/graduates) */
+    /* Прокидываем текущий язык в серверные страницы (/registry) */
     (function(){
       function syncLang(){
         var lang = (function(){ try { return localStorage.getItem('lang') === 'ro' ? 'ro' : 'ru'; } catch(e){ return 'ru'; } })();
-        document.querySelectorAll('a[href^="/graduates"]').forEach(function(a){
+        document.querySelectorAll('a[href^="/registry"], a[href^="/graduates"]').forEach(function(a){
           var u = a.getAttribute('href').split('?')[0];
           a.setAttribute('href', lang === 'ro' ? (u + '?lang=ro') : u);
         });

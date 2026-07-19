@@ -4988,7 +4988,7 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
-  // PATCH /api/admin/diplomas/:id — переключить публичность (стена выпускников)
+  // PATCH /api/admin/diplomas/:id — публичность (стена выпускников) + профиль в реестре
   if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/admin/diplomas/")) {
     assertAdminPin(request);
     const dipId = urlObject.pathname.replace("/api/admin/diplomas/", "");
@@ -4997,6 +4997,12 @@ async function routeApi(request, response, urlObject) {
     const idx = diplomas.findIndex(d => d.id === dipId);
     if (idx === -1) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
     if (payload.public !== undefined) diplomas[idx].public = payload.public === true;
+    // Реестр сертифицированных: публичный профиль мастера (все поля опциональны)
+    if (payload.city !== undefined) diplomas[idx].city = sanitizeText(payload.city).slice(0, 80);
+    if (payload.specializations !== undefined) diplomas[idx].specializations = sanitizeText(payload.specializations).slice(0, 200);
+    if (payload.contact !== undefined) diplomas[idx].contact = sanitizeText(payload.contact).slice(0, 300);
+    if (payload.photo !== undefined) diplomas[idx].photo = sanitizeText(payload.photo).slice(0, 500);
+    if (payload.bio !== undefined) diplomas[idx].bio = sanitizeText(payload.bio).slice(0, 400);
     await writeJson("diplomas.json", diplomas);
     sendJson(response, 200, { ok: true, diploma: diplomas[idx] });
     return;
@@ -8267,7 +8273,7 @@ function renderDiplomaCertPage(diploma, notFound = false, signatureUrl = "") {
       </div>
     </div>
   </div>
-  <div class="foot">Этот диплом подтверждён студией Mateev Spa Studio. Код: <strong>${escapeHtml(diploma.code)}</strong> · Отсканируйте QR для проверки.<br><a href="${base}/graduates" style="color:#4a6b52;font-weight:700;">Все выпускники школы →</a></div>
+  <div class="foot">Этот диплом подтверждён студией Mateev Spa Studio. Код: <strong>${escapeHtml(diploma.code)}</strong> · Отсканируйте QR для проверки.<br><a href="${base}/registry" style="color:#4a6b52;font-weight:700;">Реестр сертифицированных мастеров →</a></div>
   <script>
     // Масштабируем лист под ширину экрана (сохраняя дизайн)
     function fit(){
@@ -8429,25 +8435,41 @@ function renderGraduatesPage(diplomas, lang = "ru") {
   const list = (diplomas || []).filter((d) => d.public).sort((a, b) => (b.completionDate || "").localeCompare(a.completionDate || ""));
   const fmt = (d) => { try { return new Date(d + "T00:00:00").toLocaleDateString(ro ? "ro-RO" : "ru-RU", { month: "long", year: "numeric" }); } catch { return d || ""; } };
   const initials = (name) => (name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase();
-  const cards = list.map((d) => `
-    <a class="grad-card" href="${base}/cert?code=${encodeURIComponent(d.code)}${ro ? "&lang=ro" : ""}">
-      <div class="grad-card__ava">${escapeHtml(initials(d.graduateName)) || "🎓"}</div>
-      <div class="grad-card__body">
-        <div class="grad-card__name">${escapeHtml(d.graduateName || t("Выпускник", "Absolvent"))}</div>
-        <div class="grad-card__course">${escapeHtml(d.courseName || "")}</div>
-        <div class="grad-card__meta">${escapeHtml(fmt(d.completionDate))} · ✓ ${t("подтверждён", "confirmat")}</div>
-      </div>
-      <span class="grad-card__arrow">→</span>
-    </a>`).join("");
+  // Нормализуем ссылку записи/контакта: URL как есть, иначе телефон → WhatsApp
+  const contactHref = (c) => {
+    const v = (c || "").trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v)) return v;
+    if (/^mailto:/i.test(v)) return v;
+    const digits = v.replace(/[^\d]/g, "");
+    if (digits.length >= 8) return "https://wa.me/" + digits;
+    return v;
+  };
+  // Данные для клиентского поиска/фильтра
+  const data = list.map((d) => ({
+    name: d.graduateName || t("Выпускник", "Absolvent"),
+    initials: initials(d.graduateName) || "🎓",
+    course: d.courseName || "",
+    date: fmt(d.completionDate),
+    code: d.code || "",
+    certUrl: `${base}/cert?code=${encodeURIComponent(d.code)}${ro ? "&lang=ro" : ""}`,
+    city: (d.city || "").trim(),
+    specs: (d.specializations || "").split(",").map((s) => s.trim()).filter(Boolean),
+    photo: (d.photo || "").trim(),
+    bio: (d.bio || "").trim(),
+    contact: contactHref(d.contact)
+  }));
+  const dataJson = JSON.stringify(data).replace(/</g, "\\u003c");
+  const cities = Array.from(new Set(data.map((d) => d.city).filter(Boolean))).sort((a, b) => a.localeCompare(b, ro ? "ro" : "ru"));
   return `<!DOCTYPE html>
 <html lang="${ro ? "ro" : "ru"}">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${t("Выпускники школы", "Absolvenții școlii")} — Mateev Spa Studio</title>
-<meta name="description" content="${t("Мастера, прошедшие обучение и сертификацию в школе массажа Mateev Spa Studio, Кишинёв. Подтверждённые дипломы с проверкой подлинности.", "Specialiști care au absolvit și au fost certificați la școala de masaj Mateev Spa Studio, Chișinău. Diplome confirmate cu verificarea autenticității.")}">
-<link rel="canonical" href="${base}/graduates">
-<meta property="og:title" content="${t("Выпускники школы Mateev Spa Studio", "Absolvenții școlii Mateev Spa Studio")}">
-<meta property="og:description" content="${t("Сертифицированные мастера школы массажа. Подтверждённые дипломы.", "Maeștri certificați ai școlii de masaj. Diplome confirmate.")}">
+<title>${t("Реестр сертифицированных мастеров", "Registrul maeștrilor certificați")} — Mateev Spa Studio</title>
+<meta name="description" content="${t("Официальный реестр сертифицированных мастеров школы массажа Mateev Spa Studio. Найдите мастера по городу и специализации, проверьте подлинность диплома по коду.", "Registrul oficial al maeștrilor certificați ai școlii de masaj Mateev Spa Studio. Găsiți un maestru după oraș și specializare, verificați autenticitatea diplomei după cod.")}">
+<link rel="canonical" href="${base}/registry${ro ? "?lang=ro" : ""}">
+<meta property="og:title" content="${t("Реестр сертифицированных мастеров Mateev Spa Studio", "Registrul maeștrilor certificați Mateev Spa Studio")}">
+<meta property="og:description" content="${t("Проверьте мастера и его диплом. Найдите специалиста рядом.", "Verificați maestrul și diploma. Găsiți un specialist în apropiere.")}">
 <meta property="og:image" content="${base}/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -8455,23 +8477,43 @@ function renderGraduatesPage(diplomas, lang = "ru") {
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.6}
   .topbar{background:rgba(250,242,233,.95);border-bottom:1px solid rgba(71,49,28,.08);padding:16px 0;position:sticky;top:0;z-index:10}
-  .topbar__inner{max-width:820px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+  .topbar__inner{max-width:900px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
   .topbar__brand{font-weight:700;font-size:.9rem;color:#241c17}
   .topbar__back{font-size:.85rem;color:#6b8d6b;font-weight:600;text-decoration:none}
-  .wrap{max-width:820px;margin:0 auto;padding:48px 24px 80px}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 24px 80px}
   .kicker{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
   h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:10px;line-height:1.15}
-  .sub{color:#7d6d60;max-width:560px;margin-bottom:36px;font-size:.98rem}
+  .sub{color:#7d6d60;max-width:600px;margin-bottom:28px;font-size:.98rem}
+  .trust{display:inline-flex;align-items:center;gap:8px;background:#eaf3ea;border:1.5px solid #6b8d6b;color:#2d4a35;border-radius:999px;padding:7px 15px;font-weight:700;font-size:.82rem;margin-bottom:28px}
+  /* Панель поиска/фильтров */
+  .search{position:relative;margin-bottom:14px}
+  .search input{width:100%;padding:15px 18px 15px 46px;border:1px solid rgba(71,49,28,.16);border-radius:14px;font-family:inherit;font-size:1rem;background:#fff;color:#241c17}
+  .search input:focus{outline:none;border-color:#6b8d6b;box-shadow:0 0 0 3px rgba(107,141,107,.15)}
+  .search__ic{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:1.1rem;opacity:.5}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .chip{border:1px solid rgba(71,49,28,.16);background:#fff;color:#3a2e26;border-radius:999px;padding:8px 15px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:#6b8d6b}
+  .chip.active{background:#1a2e22;color:#fff;border-color:#1a2e22}
+  .count{font-size:.82rem;color:#7d6d60;font-weight:600;margin-bottom:16px}
   .grid{display:grid;gap:14px}
-  .grad-card{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.7);border:1px solid rgba(71,49,28,.1);border-radius:18px;padding:18px 22px;text-decoration:none;color:inherit;transition:box-shadow .2s,transform .2s}
+  .grad-card{display:flex;align-items:flex-start;gap:16px;background:rgba(255,255,255,.72);border:1px solid rgba(71,49,28,.1);border-radius:18px;padding:20px 22px;transition:box-shadow .2s,transform .2s}
   .grad-card:hover{box-shadow:0 10px 28px rgba(36,28,23,.09);transform:translateY(-2px)}
-  .grad-card__ava{width:52px;height:52px;flex:0 0 52px;border-radius:50%;background:#1a2e22;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600}
+  .grad-card__ava{width:56px;height:56px;flex:0 0 56px;border-radius:50%;background:#1a2e22;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;overflow:hidden}
+  .grad-card__ava img{width:100%;height:100%;object-fit:cover}
   .grad-card__body{flex:1;min-width:0}
-  .grad-card__name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:#1a2e22;line-height:1.2}
+  .grad-card__name{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:#1a2e22;line-height:1.2;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .grad-card__badge{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#eaf3ea;color:#2d4a35;border:1px solid #a9c3a9;border-radius:999px;padding:2px 8px}
   .grad-card__course{font-size:.9rem;color:#3a2e26;margin-top:2px}
-  .grad-card__meta{font-size:.78rem;color:#6b8d6b;font-weight:600;margin-top:4px;text-transform:capitalize}
-  .grad-card__arrow{color:#b36d2c;font-size:1.2rem;flex:0 0 auto}
-  .empty{text-align:center;color:#7d6d60;padding:48px 0}
+  .grad-card__where{font-size:.82rem;color:#6b8d6b;font-weight:600;margin-top:4px}
+  .grad-card__bio{font-size:.86rem;color:#7d6d60;margin-top:6px}
+  .grad-card__tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .tag{font-size:.72rem;font-weight:600;color:#5a4a3a;background:rgba(179,109,44,.1);border-radius:8px;padding:3px 9px}
+  .grad-card__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .gbtn{display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:8px 15px;font-weight:700;font-size:.82rem;text-decoration:none;transition:opacity .15s}
+  .gbtn:hover{opacity:.88}
+  .gbtn--book{background:#b36d2c;color:#fff}
+  .gbtn--verify{background:#fff;border:1.5px solid #6b8d6b;color:#2d4a35}
+  .empty{text-align:center;color:#7d6d60;padding:48px 0;grid-column:1/-1}
   .cta{margin-top:40px;background:#1a2e22;border-radius:20px;padding:32px;text-align:center}
   .cta h2{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.6rem;margin-bottom:6px}
   .cta p{color:rgba(255,255,255,.7);font-size:.92rem;margin-bottom:18px}
@@ -8482,17 +8524,84 @@ function renderGraduatesPage(diplomas, lang = "ru") {
 <body>
   <header class="topbar"><div class="topbar__inner"><span class="topbar__brand">Mateev Spa Studio · ${t("Школа массажа", "Școala de masaj")}</span><a href="${base}/" class="topbar__back">← ${t("На главную", "Acasă")}</a></div></header>
   <main class="wrap">
-    <p class="kicker">${t("Выпускники", "Absolvenți")}</p>
-    <h1>${t("Наши сертифицированные мастера", "Maeștrii noștri certificați")}</h1>
-    <p class="sub">${t("Специалисты, прошедшие авторское обучение и сертификацию в школе Mateev Spa Studio. Каждый диплом подтверждён — нажмите, чтобы проверить подлинность.", "Specialiști care au absolvit cursurile de autor și au fost certificați la școala Mateev Spa Studio. Fiecare diplomă este confirmată — apăsați pentru a verifica autenticitatea.")}</p>
-    ${cards ? `<div class="grid">${cards}</div>` : `<div class="empty">${t("Скоро здесь появятся наши выпускники.", "În curând aici vor apărea absolvenții noștri.")}</div>`}
+    <p class="kicker">${t("Официальный реестр", "Registrul oficial")}</p>
+    <h1>${t("Реестр сертифицированных мастеров", "Registrul maeștrilor certificați")}</h1>
+    <p class="sub">${t("Специалисты, прошедшие авторское обучение и сертификацию в школе Mateev Spa Studio. Найдите мастера по городу и специализации или проверьте подлинность диплома по коду.", "Specialiști care au absolvit cursurile de autor și au fost certificați la școala Mateev Spa Studio. Găsiți un maestru după oraș și specializare sau verificați autenticitatea diplomei după cod.")}</p>
+    <div class="trust">🛡 ${t("Каждая запись подтверждена дипломом с QR-верификацией", "Fiecare intrare este confirmată printr-o diplomă cu verificare QR")}</div>
+
+    <div class="search">
+      <span class="search__ic">🔎</span>
+      <input type="search" id="q" placeholder="${t("Имя мастера, код диплома или техника…", "Nume, cod diplomă sau tehnică…")}" autocomplete="off">
+    </div>
+    ${cities.length ? `<div class="filters" id="cityFilters">
+      <button class="chip active" data-city="">${t("Все города", "Toate orașele")}</button>
+      ${cities.map((c) => `<button class="chip" data-city="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join("")}
+    </div>` : ""}
+    <div class="count" id="count"></div>
+    <div class="grid" id="grid"></div>
+
     <div class="cta">
-      <h2>${t("Хотите так же?", "Vreți la fel?")}</h2>
-      <p>${t("Присоединяйтесь к обучению массажу в нашей школе.", "Alăturați-vă cursurilor de masaj din școala noastră.")}</p>
+      <h2>${t("Хотите в реестр?", "Vreți în registru?")}</h2>
+      <p>${t("Пройдите авторское обучение и сертификацию в нашей школе.", "Absolviți cursurile de autor și obțineți certificarea în școala noastră.")}</p>
       <a href="${base}/school">${t("Узнать о курсах", "Despre cursuri")}</a>
     </div>
   </main>
   <footer>© ${new Date().getFullYear()} Mateev Spa Studio · ${t("Кишинёв", "Chișinău")}</footer>
+
+  <script>
+    var DATA = ${dataJson};
+    var L = ${ro ? "1" : "0"};
+    var T = {
+      book: L ? "Programare" : "Записаться",
+      verify: L ? "Verifică diploma" : "Проверить диплом",
+      certified: L ? "Certificat" : "Сертифицирован",
+      none: L ? "Nu s-a găsit niciun maestru. Încercați altă căutare." : "Мастеров не найдено. Измените запрос.",
+      found: function(n){ return L ? (n + (n===1?" maestru":" maeștri")) : (n + " " + (n%10===1&&n%100!==11?"мастер":(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?"мастера":"мастеров"))); }
+    };
+    var q = document.getElementById("q");
+    var grid = document.getElementById("grid");
+    var count = document.getElementById("count");
+    var esc = function(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); };
+    var state = { q:"", city:"" };
+    function card(d){
+      var ava = d.photo ? '<img src="'+esc(d.photo)+'" alt="'+esc(d.name)+'">' : esc(d.initials);
+      var tags = d.specs.map(function(s){ return '<span class="tag">'+esc(s)+'</span>'; }).join("");
+      var where = [d.city, d.date].filter(Boolean).join(" · ");
+      var actions = '';
+      if (d.contact) actions += '<a class="gbtn gbtn--book" href="'+esc(d.contact)+'" target="_blank" rel="noopener">📅 '+T.book+'</a>';
+      actions += '<a class="gbtn gbtn--verify" href="'+esc(d.certUrl)+'">✓ '+T.verify+'</a>';
+      return '<div class="grad-card">'+
+        '<div class="grad-card__ava">'+ava+'</div>'+
+        '<div class="grad-card__body">'+
+          '<div class="grad-card__name">'+esc(d.name)+' <span class="grad-card__badge">✓ '+T.certified+'</span></div>'+
+          (d.course?'<div class="grad-card__course">'+esc(d.course)+'</div>':'')+
+          (where?'<div class="grad-card__where">📍 '+esc(where)+'</div>':'')+
+          (d.bio?'<div class="grad-card__bio">'+esc(d.bio)+'</div>':'')+
+          (tags?'<div class="grad-card__tags">'+tags+'</div>':'')+
+          '<div class="grad-card__actions">'+actions+'</div>'+
+        '</div></div>';
+    }
+    function render(){
+      var term = state.q.trim().toLowerCase();
+      var rows = DATA.filter(function(d){
+        if (state.city && d.city !== state.city) return false;
+        if (!term) return true;
+        var hay = (d.name+" "+d.course+" "+d.code+" "+d.city+" "+d.specs.join(" ")).toLowerCase();
+        return hay.indexOf(term) !== -1;
+      });
+      count.textContent = T.found(rows.length);
+      grid.innerHTML = rows.length ? rows.map(card).join("") : '<div class="empty">'+T.none+'</div>';
+    }
+    q.addEventListener("input", function(){ state.q = q.value; render(); });
+    var cf = document.getElementById("cityFilters");
+    if (cf) cf.addEventListener("click", function(e){
+      var b = e.target.closest("[data-city]"); if(!b) return;
+      state.city = b.getAttribute("data-city") || "";
+      Array.prototype.forEach.call(cf.querySelectorAll(".chip"), function(c){ c.classList.toggle("active", c===b); });
+      render();
+    });
+    render();
+  </script>
 </body>
 </html>`;
 }
@@ -9263,7 +9372,9 @@ function createServer() {
         return;
       }
 
-      if (urlObject.pathname === "/graduates" || urlObject.pathname === "/graduates/") {
+      if (urlObject.pathname === "/graduates" || urlObject.pathname === "/graduates/" ||
+          urlObject.pathname === "/registry" || urlObject.pathname === "/registry/" ||
+          urlObject.pathname === "/reestr" || urlObject.pathname === "/reestr/") {
         const diplomas = await readJson("diplomas.json").catch(() => []);
         const gradLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
         const html = renderGraduatesPage(diplomas, gradLang);
@@ -9397,7 +9508,7 @@ function createServer() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${base}/</loc><lastmod>${now}</lastmod><priority>1.0</priority></url>
   <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
-  <url><loc>${base}/graduates</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
+  <url><loc>${base}/registry</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/blog</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>

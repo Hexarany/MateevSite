@@ -412,8 +412,25 @@
           <button type="button" id="publicLinkCopy" class="btn btn--ghost" style="font-size:0.8rem;padding:8px 14px;">Скопировать ссылку</button>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.8rem;color:#2d4a35;cursor:pointer;">
-          <input type="checkbox" id="dipPublicToggle"> Показывать на «Стене выпускников» (с согласия ученика)
+          <input type="checkbox" id="dipPublicToggle"> Показывать в «Реестре сертифицированных» (с согласия ученика)
         </label>
+
+        <div id="dipProfileBox" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed #a9c3a9;">
+          <p style="font-size:0.78rem;font-weight:700;color:#2d4a35;margin:0 0 2px;">👤 Профиль в реестре</p>
+          <p style="font-size:0.72rem;color:#5a6e5c;margin:0 0 8px;">Всё необязательно. Заполните — и мастер станет находимым по городу/технике, с кнопкой «Записаться».</p>
+          <div style="display:grid;gap:8px;">
+            <input type="text" id="dipCity" placeholder="Город (напр. Кишинёв)" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;">
+            <input type="text" id="dipSpecs" placeholder="Специализации через запятую (спина, шея, спорт…)" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;">
+            <input type="text" id="dipContact" placeholder="Ссылка записи / WhatsApp / телефон" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;">
+            <input type="text" id="dipPhoto" placeholder="Ссылка на фото (необязательно)" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;">
+            <textarea id="dipBio" rows="2" placeholder="Короткое описание (необязательно)" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
+            <button type="button" id="dipProfileSave" class="btn btn--primary" style="font-size:0.8rem;padding:8px 14px;">Сохранить профиль</button>
+            <a id="dipRegistryOpen" href="/registry" target="_blank" rel="noopener" style="font-size:0.76rem;color:#4a6b52;font-weight:700;text-decoration:none;">Открыть реестр →</a>
+            <span id="dipProfileMsg" style="font-size:0.75rem;color:#2d4a35;"></span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -570,6 +587,8 @@
         });
       }
       var toggle = document.getElementById("dipPublicToggle");
+      var profileBox = document.getElementById("dipProfileBox");
+      var syncProfileBox = function () { if (profileBox) profileBox.style.display = toggle && toggle.checked ? "block" : "none"; };
       if (toggle) {
         toggle.checked = !!(currentDiploma && currentDiploma.public);
         if (!toggle._bound) {
@@ -579,10 +598,44 @@
             try {
               await fetchJson("/api/admin/diplomas/" + currentDiploma.id, { method: "PATCH", body: JSON.stringify({ public: toggle.checked }) });
               currentDiploma.public = toggle.checked;
+              syncProfileBox();
             } catch (e) { alert("Не удалось сохранить: " + e.message); toggle.checked = !toggle.checked; }
           });
         }
       }
+      // Профиль в реестре
+      var byId = function (id) { return document.getElementById(id); };
+      if (currentDiploma) {
+        if (byId("dipCity")) byId("dipCity").value = currentDiploma.city || "";
+        if (byId("dipSpecs")) byId("dipSpecs").value = currentDiploma.specializations || "";
+        if (byId("dipContact")) byId("dipContact").value = currentDiploma.contact || "";
+        if (byId("dipPhoto")) byId("dipPhoto").value = currentDiploma.photo || "";
+        if (byId("dipBio")) byId("dipBio").value = currentDiploma.bio || "";
+      }
+      var saveBtn = byId("dipProfileSave");
+      if (saveBtn && !saveBtn._bound) {
+        saveBtn._bound = true;
+        saveBtn.addEventListener("click", async function () {
+          if (!currentDiploma) return;
+          var body = {
+            city: byId("dipCity").value.trim(),
+            specializations: byId("dipSpecs").value.trim(),
+            contact: byId("dipContact").value.trim(),
+            photo: byId("dipPhoto").value.trim(),
+            bio: byId("dipBio").value.trim()
+          };
+          saveBtn.disabled = true;
+          var msg = byId("dipProfileMsg");
+          try {
+            var res = await fetchJson("/api/admin/diplomas/" + currentDiploma.id, { method: "PATCH", body: JSON.stringify(body) });
+            Object.assign(currentDiploma, body);
+            if (res && res.diploma) currentDiploma = res.diploma;
+            if (msg) { msg.textContent = "✓ Сохранено"; setTimeout(function(){ msg.textContent = ""; }, 1800); }
+          } catch (e) { if (msg) msg.textContent = "Ошибка: " + e.message; }
+          finally { saveBtn.disabled = false; }
+        });
+      }
+      syncProfileBox();
     }
 
     function onCourseChange() {
