@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Ссылки каналов и открытки — Mateev Spa Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--forest:#1a2e22;--sage:#6b8d6b;--sand:#f7f0e6;--warm:#e8ddd0;--gold:#b36d2c;--muted:#7d6d60;--ink:#241c17}
+  body{font-family:'Manrope',sans-serif;background:#efe7db;color:var(--ink);padding:24px 16px 60px;line-height:1.5}
+  .head{max-width:960px;margin:0 auto 20px}
+  .head h1{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--forest);font-weight:600}
+  .head p{color:var(--muted);font-size:.9rem;margin-top:4px}
+  .wrap{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  @media(max-width:760px){.wrap{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid rgba(71,49,28,.12);border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(36,28,23,.07)}
+  .card h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--gold);margin-bottom:14px}
+  label{display:block;font-size:.8rem;font-weight:700;color:#3a2e26;margin:12px 0 5px}
+  label:first-of-type{margin-top:0}
+  input,select{width:100%;padding:11px 12px;border:1px solid var(--warm);border-radius:10px;font-family:inherit;font-size:.92rem;background:var(--sand);outline:none}
+  input:focus,select:focus{border-color:var(--sage)}
+  .row{display:flex;gap:8px}
+  .linkbox{display:flex;gap:8px;align-items:center;background:var(--sand);border:1px solid var(--warm);border-radius:10px;padding:8px 8px 8px 12px;margin-top:6px}
+  .linkbox input{border:none;background:transparent;padding:0;font-size:.8rem;font-family:monospace;color:var(--forest)}
+  .btn{border:none;border-radius:9px;padding:10px 14px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap}
+  .btn--dark{background:var(--forest);color:#fff}
+  .btn--gold{background:var(--gold);color:#fff}
+  .btn--wa{background:#25d366;color:#fff}
+  .btn--ghost{background:#fff;border:1px solid var(--warm);color:var(--ink)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .hint{font-size:.76rem;color:var(--muted);margin-top:6px}
+  .tag{display:inline-block;background:#eef3ee;border:1px solid var(--sage);color:#2d4a35;border-radius:8px;padding:3px 9px;font-size:.78rem;font-weight:700;margin-top:8px}
+
+  /* Postcard preview (A6 ratio) */
+  .pc-wrap{display:flex;justify-content:center}
+  .postcard{width:100%;max-width:320px;aspect-ratio:105/148;background:linear-gradient(160deg,#1c3025,#16261d 60%,#0f1c15);
+    border-radius:16px;overflow:hidden;position:relative;color:#f3ece0;padding:24px 22px;display:flex;flex-direction:column;
+    align-items:center;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,.3)}
+  .postcard::before{content:"";position:absolute;top:-10%;right:-14%;width:56%;height:26%;border-radius:50%;background:radial-gradient(circle,rgba(196,158,90,.22),transparent 70%)}
+  .pc-kick{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:#c49e5a;font-weight:700;position:relative}
+  .pc-brand{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;margin:2px 0 auto;position:relative}
+  .pc-offer{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:700;line-height:1.1;color:#fff;position:relative;margin-bottom:4px}
+  .pc-offer small{display:block;font-family:'Manrope';font-size:.72rem;font-weight:600;color:#d8cdb8;letter-spacing:.02em;margin-top:6px;font-style:normal}
+  .pc-qr{background:#faf6ee;border-radius:12px;padding:9px;margin:12px 0 8px;line-height:0;position:relative}
+  .pc-qr img,.pc-qr canvas{width:120px;height:120px;display:block}
+  .pc-scan{font-size:.74rem;color:#e8dcc8;font-weight:700;position:relative}
+  .pc-foot{font-size:.64rem;color:rgba(255,255,255,.55);margin-top:auto;position:relative}
+
+  /* Stats */
+  #stats{margin-top:20px}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--warm)}
+  th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .statnote{font-size:.78rem;color:var(--muted);margin-bottom:10px}
+
+  @media print{
+    @page{size:A6 portrait;margin:0}
+    body{background:#fff;padding:0}
+    body *{visibility:hidden}
+    .postcard,.postcard *{visibility:visible}
+    .postcard{position:fixed;inset:0;width:105mm;height:148mm;max-width:none;border-radius:0;box-shadow:none;aspect-ratio:auto}
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>🔗 Ссылки каналов и открытки</h1>
+  <p>Сделай ссылку с меткой для любого канала (Instagram, блогер, кафе, реклама) — и увидишь, сколько записей он приносит. Плюс печатная QR-открытка для партнёров.</p>
+</div>
+
+<div class="wrap">
+  <!-- Controls -->
+  <div class="card">
+    <h2>Настрой ссылку</h2>
+    <label>Канал</label>
+    <select id="channel">
+      <option value="instagram">📸 Instagram</option>
+      <option value="google">🔎 Google</option>
+      <option value="ads">🎯 Реклама (таргет)</option>
+      <option value="blogger">🌟 Блогер</option>
+      <option value="cafe">☕ Кафе-партнёр</option>
+      <option value="fitness">🏋️ Фитнес-партнёр</option>
+      <option value="salon">💇 Салон-партнёр</option>
+      <option value="qr">🔳 QR-открытка</option>
+      <option value="custom">✏️ Своя метка</option>
+    </select>
+
+    <div id="nameWrap" style="display:none">
+      <label id="nameLabel">Название / имя</label>
+      <input id="name" placeholder="напр. Ирина, Кафе Central">
+    </div>
+
+    <label>Оффер на открытке</label>
+    <input id="offer" value="−15% на первый визит">
+
+    <label>Готовая ссылка</label>
+    <div class="linkbox">
+      <input id="url" readonly>
+      <button class="btn btn--dark" id="copyBtn">Копировать</button>
+    </div>
+    <div class="tag" id="tagView"></div>
+    <div class="hint">Метка: клиент запишется по этой ссылке — запись придёт с пометкой канала.</div>
+
+    <div class="actions">
+      <a class="btn btn--wa" id="waBtn" target="_blank" rel="noopener">💬 Отправить в WhatsApp</a>
+      <button class="btn btn--gold" id="printBtn">🖨 Печать открытки (A6)</button>
+    </div>
+
+    <div id="stats"></div>
+  </div>
+
+  <!-- Preview -->
+  <div class="card">
+    <h2>Открытка</h2>
+    <div class="pc-wrap">
+      <div class="postcard" id="postcard">
+        <div class="pc-kick">Spa &amp; Massage · Chișinău</div>
+        <div class="pc-brand">Mateev Spa Studio</div>
+        <div class="pc-offer" id="pcOffer">−15% на первый визит<small>по QR — запись за минуту</small></div>
+        <div class="pc-qr" id="pcQr"></div>
+        <div class="pc-scan">📱 Наведи камеру на QR</div>
+        <div class="pc-foot">mateevmassage.com · +373 69 158 475</div>
+      </div>
+    </div>
+    <div class="hint" style="text-align:center;margin-top:12px">Печать — только открытка, на A6 (или распечатай на A4 и обрежь).</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var base = location.origin;
+  var NEEDS_NAME = { blogger:1, cafe:1, fitness:1, salon:1, custom:1 };
+  var $ = function(id){ return document.getElementById(id); };
+  var qr = null;
+
+  function slug(s){ return String(s||"").toLowerCase().trim().replace(/\s+/g,"-").replace(/[^\wа-яё\-]/gi,"").replace(/\-+/g,"-").replace(/^\-|\-$/g,""); }
+  function tag(){
+    var ch = $("channel").value;
+    var nm = slug($("name").value);
+    if (ch === "custom") return nm || "promo";
+    if (NEEDS_NAME[ch] && nm) return ch + "-" + nm;
+    return ch;
+  }
+  function url(){ return base + "/?src=" + encodeURIComponent(tag()) + "#booking"; }
+
+  function renderQR(link){
+    $("pcQr").innerHTML = "";
+    qr = new QRCode($("pcQr"), { text: link, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+    requestAnimationFrame(function(){
+      var c = $("pcQr").querySelector("canvas");
+      if (c){ try{ var d=c.toDataURL("image/png"); $("pcQr").innerHTML='<img src="'+d+'" alt="QR">'; }catch(e){} }
+    });
+  }
+  function refresh(){
+    var ch = $("channel").value;
+    $("nameWrap").style.display = NEEDS_NAME[ch] ? "block" : "none";
+    var link = url();
+    $("url").value = link;
+    $("tagView").textContent = "src = " + tag();
+    var offer = $("offer").value || "−15% на первый визит";
+    $("pcOffer").innerHTML = offer.replace(/</g,"&lt;") + '<small>по QR — запись за минуту</small>';
+    $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent("Запишись на массаж — " + offer + ": " + link);
+    renderQR(link);
+  }
+
+  $("channel").addEventListener("change", refresh);
+  $("name").addEventListener("input", refresh);
+  $("offer").addEventListener("input", refresh);
+  $("copyBtn").addEventListener("click", function(){
+    var i=$("url"); i.select();
+    navigator.clipboard.writeText(i.value).then(function(){ var b=$("copyBtn"); b.textContent="✓ Скопировано"; setTimeout(function(){b.textContent="Копировать";},1500); }).catch(function(){ prompt("Скопируйте ссылку:", i.value); });
+  });
+  $("printBtn").addEventListener("click", function(){ window.print(); });
+
+  // Статистика по каналам (если открыто из админки — есть сессия)
+  fetch("/api/admin/sources", { credentials:"include" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+    if (!d || !d.sources) return;
+    var el = $("stats");
+    if (!d.sources.length){ el.innerHTML = '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:#b36d2c;margin:18px 0 8px">Статистика</h2><div class="statnote">Пока нет записей с метками. Начни раздавать ссылки — и здесь появятся цифры.</div>'; return; }
+    var rows = d.sources.map(function(s){
+      return '<tr><td>'+s.label+'</td><td class="num">'+s.total+'</td><td class="num">'+s.completed+'</td><td class="num">'+(s.revenue||0)+'</td></tr>';
+    }).join("");
+    el.innerHTML = '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:#b36d2c;margin:18px 0 8px">📊 Записи по каналам</h2>'+
+      '<div class="statnote">Всего с метками: '+d.totals.taggedBookings+' из '+d.totals.allBookings+' записей.</div>'+
+      '<table><thead><tr><th>Канал</th><th class="num">Записей</th><th class="num">Завершено</th><th class="num">MDL</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }).catch(function(){});
+
+  refresh();
+})();
+</script>
+</body>
+</html>

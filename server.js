@@ -128,6 +128,8 @@ const STATIC_FILES = {
   "/materials/banner-hotel.html": "materials/banner-hotel.html",
   "/business-card": "business-card.html",
   "/business-card.html": "business-card.html",
+  "/promo": "promo.html",
+  "/promo.html": "promo.html",
   "/planner": "planner.html",
   "/planner.html": "planner.html",
   "/planner-sw.js": "planner-sw.js",
@@ -1302,6 +1304,36 @@ function hasLegacyAdminPin(request) {
   return Boolean(providedPin) && providedPin === ADMIN_PIN;
 }
 
+// Читаемые ярлыки каналов трафика (метка ?src=…) — для уведомлений и статистики
+const SOURCE_LABELS = {
+  hotel: "🏨 Баннер отеля",
+  card: "💳 Визитка",
+  instagram: "📸 Instagram",
+  ig: "📸 Instagram",
+  google: "🔎 Google",
+  ads: "🎯 Реклама",
+  facebook: "📘 Facebook",
+  fb: "📘 Facebook",
+  tiktok: "🎵 TikTok",
+  whatsapp: "💬 WhatsApp",
+  telegram: "✈️ Telegram",
+  cafe: "☕ Кафе-партнёр",
+  fitness: "🏋️ Фитнес-партнёр",
+  salon: "💇 Салон-партнёр",
+  blogger: "🌟 Блогер",
+  qr: "🔳 QR-открытка",
+  site: "🌐 Сайт"
+};
+function labelSource(src) {
+  if (!src) return "";
+  const key = String(src).toLowerCase().trim();
+  if (SOURCE_LABELS[key]) return SOURCE_LABELS[key];
+  // Составные метки: blogger-irina, partner-cafe, ads-poyasnica → «🌟 Блогер: irina»
+  const m = key.match(/^([a-z]+)[-_](.+)$/);
+  if (m && SOURCE_LABELS[m[1]]) return `${SOURCE_LABELS[m[1]]}: ${m[2]}`;
+  return `🔗 ${src}`;
+}
+
 function buildBookingNotificationText(booking) {
   return [
     `Новая запись ${booking.reference}`,
@@ -1314,9 +1346,9 @@ function buildBookingNotificationText(booking) {
     `Дата: ${booking.date}`,
     `Время: ${booking.slot}-${booking.endsAt}`,
     `Сумма: ${booking.totalPrice} MDL`,
-    booking.src ? `📣 Источник: ${booking.src === "hotel" ? "🏨 БАННЕР ОТЕЛЯ" : booking.src}` : null,
+    booking.src ? `📣 Канал: ${labelSource(booking.src)}` : null,
     booking.certificateCode ? `🎫 ПО СЕРТИФИКАТУ: ${booking.certificateCode}` : null,
-    booking.referredByName ? `🎁 По реф-ссылке от: ${booking.referredByName} (−10% обоим)` : null,
+    booking.referredByName ? `🎁 По реф-ссылке от: ${booking.referredByName} (−15% обоим)` : null,
     booking.notes ? `Комментарий: ${booking.notes}` : null
   ]
     .filter(Boolean)
@@ -2738,9 +2770,9 @@ function createBookingRecord({ payload, cleanPayload, service, specialist, meta 
   const now = new Date().toISOString();
   const startMins = toMinutes(payload.slot);
   const endMins = startMins + service.duration;
-  // Реферал: другу −10% на этот визит (авто)
+  // Реферал: другу −15% на этот визит (авто)
   const hasReferral = !!meta.referredByCode;
-  const totalPrice = hasReferral ? Math.round(service.price * 0.9) : service.price;
+  const totalPrice = hasReferral ? Math.round(service.price * 0.85) : service.price;
 
   return {
     id: crypto.randomUUID(),
@@ -2763,7 +2795,7 @@ function createBookingRecord({ payload, cleanPayload, service, specialist, meta 
     notes: cleanPayload.notes,
     source: meta.source || "public",
     ...(sanitizeText(payload.src) ? { src: sanitizeText(payload.src).slice(0, 40) } : {}),
-    ...(hasReferral ? { referredByCode: meta.referredByCode, referredByName: meta.referredByName, referralDiscount: 10 } : {})
+    ...(hasReferral ? { referredByCode: meta.referredByCode, referredByName: meta.referredByName, referralDiscount: 15 } : {})
   };
 }
 
@@ -5147,6 +5179,27 @@ async function routeApi(request, response, urlObject) {
     sendJson(response, 200, { referrals: list, totals });
     return;
   }
+
+  // GET /api/admin/sources — статистика записей по каналам (метка ?src=)
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/sources") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const bookings = await readJson("bookings.json").catch(() => []);
+    const map = new Map();
+    let tagged = 0;
+    for (const b of bookings) {
+      if (!b.src) continue;
+      tagged++;
+      const key = String(b.src).toLowerCase().trim();
+      if (!map.has(key)) map.set(key, { src: key, label: labelSource(key), total: 0, completed: 0, revenue: 0 });
+      const row = map.get(key);
+      row.total++;
+      if (b.status === "completed") { row.completed++; row.revenue += Number(b.totalPrice) || 0; }
+    }
+    const sources = Array.from(map.values()).sort((a, b) => b.total - a.total);
+    sendJson(response, 200, { sources, totals: { channels: sources.length, taggedBookings: tagged, allBookings: bookings.length } });
+    return;
+  }
+
   // POST /api/admin/referrals/:code/redeem — отметить использование награды (delta ±1)
   if (request.method === "POST" && urlObject.pathname.startsWith("/api/admin/referrals/") && urlObject.pathname.endsWith("/redeem")) {
     assertAdminPin(request);
