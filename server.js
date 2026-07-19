@@ -1305,6 +1305,7 @@ function buildBookingNotificationText(booking) {
     `Дата: ${booking.date}`,
     `Время: ${booking.slot}-${booking.endsAt}`,
     `Сумма: ${booking.totalPrice} MDL`,
+    booking.src ? `📣 Источник: ${booking.src === "hotel" ? "🏨 БАННЕР ОТЕЛЯ" : booking.src}` : null,
     booking.certificateCode ? `🎫 ПО СЕРТИФИКАТУ: ${booking.certificateCode}` : null,
     booking.referredByName ? `🎁 По реф-ссылке от: ${booking.referredByName} (−10% обоим)` : null,
     booking.notes ? `Комментарий: ${booking.notes}` : null
@@ -2752,6 +2753,7 @@ function createBookingRecord({ payload, cleanPayload, service, specialist, meta 
     email: cleanPayload.email,
     notes: cleanPayload.notes,
     source: meta.source || "public",
+    ...(sanitizeText(payload.src) ? { src: sanitizeText(payload.src).slice(0, 40) } : {}),
     ...(hasReferral ? { referredByCode: meta.referredByCode, referredByName: meta.referredByName, referralDiscount: 10 } : {})
   };
 }

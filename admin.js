@@ -3505,6 +3505,7 @@ function renderAdminTable() {
               </div>
             </div>
           </div>
+          ${booking.src ? `<div class="bk-card__notes" style="color:#2d5236;font-weight:700;">📣 Источник: ${booking.src === "hotel" ? "🏨 Баннер отеля" : escapeHtml(booking.src)}</div>` : ""}
           ${booking.certificateCode ? `<div class="bk-card__notes" style="color:#8a5320;font-weight:700;">🎫 По сертификату: ${escapeHtml(booking.certificateCode)}</div>` : ""}
           ${booking.notes ? `<div class="bk-card__notes">${escapeHtml(booking.notes)}</div>` : ""}
           ${completedExtras}
@@ -6755,6 +6756,7 @@ function openBkModal(id) {
        ${b.email ? `<div>✉️ <a href="mailto:${escapeHtml(b.email)}" style="color:var(--forest,#1a2e22);">${escapeHtml(b.email)}</a></div>` : ""}
        <div>💆 ${escapeHtml(b.serviceName || "")} · ${escapeHtml(b.specialistName || "")} · ${formatCurrency(b.totalPrice)}</div>
        <div>📅 ${escapeHtml(formatDate(b.date))}, ${escapeHtml(b.slot || "")}–${escapeHtml(b.endsAt || "")}</div>
+       ${b.src ? `<div style="background:rgba(45,82,54,.10);border-radius:10px;padding:9px 11px;color:#2d5236;font-weight:700;">📣 Источник: ${b.src === "hotel" ? "🏨 Баннер отеля" : escapeHtml(b.src)}</div>` : ""}
        ${b.certificateCode ? `<div style="background:rgba(179,109,44,.12);border-radius:10px;padding:9px 11px;color:#8a5320;font-weight:700;">🎫 По сертификату: ${escapeHtml(b.certificateCode)}</div>` : ""}
        ${b.notes ? `<div style="background:rgba(107,141,107,.08);border-radius:10px;padding:9px 11px;">📝 ${escapeHtml(b.notes)}</div>` : ""}
      </div>

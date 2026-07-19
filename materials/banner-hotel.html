@@ -8,67 +8,61 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Manrope',Arial,sans-serif;background:#e7e1d7;display:flex;flex-direction:column;align-items:center;padding:24px 12px 80px}
+  body{font-family:'Manrope',Arial,sans-serif;background:#e7e1d7;display:flex;flex-direction:column;align-items:center;padding:24px 12px 60px}
   .bar{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:20}
   .bar button{background:#b36d2c;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,.2)}
   .bar button.ghost{background:#fff;color:#1a2e22}
 
-  /* Roll-up 85x200 → соотношение 0.425 */
-  .banner{width:640px;max-width:96vw;aspect-ratio:85/200;background:linear-gradient(180deg,#16261d 0%,#1a2e22 55%,#0f1c15 100%);
-    border-radius:6px;overflow:hidden;position:relative;color:#f3ece0;box-shadow:0 20px 60px rgba(0,0,0,.35);
-    display:flex;flex-direction:column;align-items:center;text-align:center;padding:7% 8% 5%}
-  .banner::before{content:"";position:absolute;top:-12%;right:-18%;width:60%;height:32%;border-radius:50%;background:radial-gradient(circle,rgba(196,158,90,.18),transparent 70%)}
-  .banner::after{content:"";position:absolute;bottom:-14%;left:-16%;width:60%;height:30%;border-radius:50%;background:radial-gradient(circle,rgba(107,141,107,.16),transparent 70%)}
-  .z{position:relative;z-index:2;width:100%}
+  /* A-серия (портрет 210×297) — годится для A5 и A4 */
+  .banner{container-type:inline-size;width:min(600px,94vw);aspect-ratio:210/297;
+    background:linear-gradient(180deg,#16261d 0%,#1a2e22 55%,#0f1c15 100%);
+    border-radius:6px;overflow:hidden;position:relative;color:#f3ece0;
+    display:flex;flex-direction:column;align-items:center;text-align:center;padding:7cqw 7.5cqw;
+    box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .banner::before{content:"";position:absolute;top:-10%;right:-16%;width:55%;height:26%;border-radius:50%;background:radial-gradient(circle,rgba(196,158,90,.20),transparent 70%)}
+  .banner::after{content:"";position:absolute;bottom:-12%;left:-14%;width:55%;height:24%;border-radius:50%;background:radial-gradient(circle,rgba(107,141,107,.16),transparent 70%)}
+  .z{position:relative;z-index:2;width:100%;display:flex;flex-direction:column;align-items:center;height:100%}
 
-  .logo{width:22%;filter:brightness(0) invert(1);opacity:.95;margin-bottom:3%}
-  .kicker{font-size:1.05vw;letter-spacing:.28em;text-transform:uppercase;color:#c49e5a;font-weight:700}
-  @media(max-width:680px){.kicker{font-size:.62rem}}
-  .brand{font-family:'Cormorant Garamond',serif;font-size:5.2%;font-weight:700;letter-spacing:.02em;margin:2% 0 6%}
+  .logo{width:12cqw;filter:brightness(0) invert(1);opacity:.95;margin-bottom:1.5cqw}
+  .kicker{font-size:1.9cqw;letter-spacing:.22em;text-transform:uppercase;color:#c49e5a;font-weight:700}
+  .brand{font-family:'Cormorant Garamond',serif;font-size:4.4cqw;font-weight:700;letter-spacing:.02em;margin:1.2cqw 0 4cqw;color:#f3ece0}
 
-  .headline{font-family:'Cormorant Garamond',serif;font-weight:700;line-height:1.05;font-size:8.4%;color:#fff}
-  .headline .ro{color:#d8cdb8;font-size:70%;display:block;margin-top:2%;font-style:italic;font-weight:600}
-  .headline .en{color:rgba(255,255,255,.55);font-size:52%;display:block;margin-top:1.5%;letter-spacing:.02em;font-style:italic}
+  .headline{font-family:'Cormorant Garamond',serif;font-weight:700;line-height:1.08;font-size:6cqw;color:#fff}
+  .headline .ro{color:#d8cdb8;font-size:60%;display:block;margin-top:1cqw;font-style:italic;font-weight:600}
+  .headline .en{color:rgba(255,255,255,.55);font-size:42%;display:block;margin-top:.6cqw;letter-spacing:.02em;font-style:italic}
 
-  .loc{margin:6% 0;display:inline-block;border:1px solid rgba(196,158,90,.5);border-radius:999px;padding:2.4% 5%;
-    font-size:2.2%;font-weight:700;letter-spacing:.04em;color:#e8dcc8}
+  .loc{margin:4.5cqw 0;display:inline-block;border:1px solid rgba(196,158,90,.5);border-radius:999px;padding:1.8cqw 4cqw;
+    font-size:2.4cqw;font-weight:700;letter-spacing:.03em;color:#e8dcc8}
   .loc b{color:#c49e5a}
-  @media(max-width:680px){.loc{font-size:.72rem}}
 
-  .benes{display:flex;flex-direction:column;gap:3.2%;margin:2% 0 6%;width:88%;margin-left:auto;margin-right:auto}
-  .bene{display:flex;align-items:center;gap:4%;text-align:left;font-size:2.5%}
-  @media(max-width:680px){.bene{font-size:.8rem}}
-  .bene .ic{flex:0 0 auto;width:8%;min-width:34px;height:34px;border-radius:50%;background:rgba(196,158,90,.14);display:flex;align-items:center;justify-content:center;font-size:1rem}
-  .bene .tx b{color:#fff;font-weight:700;display:block}
-  .bene .tx span{color:rgba(243,236,224,.6);font-size:.8em}
+  .benes{display:flex;flex-direction:column;gap:2.6cqw;margin-bottom:auto;width:92%}
+  .bene{display:flex;align-items:center;gap:3.5cqw;text-align:left}
+  .bene .ic{flex:0 0 auto;width:9cqw;height:9cqw;border-radius:50%;background:rgba(196,158,90,.14);display:flex;align-items:center;justify-content:center;font-size:4cqw}
+  .bene .tx b{color:#fff;font-weight:700;display:block;font-size:2.7cqw;line-height:1.2}
+  .bene .tx span{color:rgba(243,236,224,.6);font-size:2cqw}
 
-  .qrwrap{margin-top:auto;background:#faf6ee;border-radius:16px;padding:5% 5% 4%;width:76%;color:#1a2e22}
-  .qrwrap .call{font-size:2.4%;font-weight:800;letter-spacing:.02em;margin-bottom:3%}
-  @media(max-width:680px){.qrwrap .call{font-size:.82rem}}
-  .qrbox{background:#fff;border-radius:12px;padding:10px;display:inline-block;line-height:0}
-  .qrbox img,.qrbox canvas{width:150px;height:150px;display:block}
-  .qrwrap .callro{font-size:1.9%;color:#6b7a5e;margin-top:3%;font-weight:600}
-  @media(max-width:680px){.qrwrap .callro{font-size:.68rem}}
+  .qrwrap{margin-top:4cqw;background:#faf6ee;border-radius:3cqw;padding:4cqw 4cqw 3cqw;width:74%;color:#1a2e22}
+  .qrwrap .call{font-size:2.7cqw;font-weight:800;letter-spacing:.02em;margin-bottom:2.4cqw}
+  .qrbox{background:#fff;border-radius:2.4cqw;padding:2cqw;display:inline-block;line-height:0}
+  .qrbox img,.qrbox canvas{width:26cqw;height:26cqw;display:block}
+  .qrwrap .callro{font-size:2cqw;color:#6b7a5e;margin-top:2cqw;font-weight:600}
 
-  .foot{margin-top:4%;font-size:2.3%;color:#e8dcc8;font-weight:600}
+  .foot{margin-top:3cqw;font-size:2.5cqw;color:#e8dcc8;font-weight:600}
   .foot b{color:#c49e5a}
-  @media(max-width:680px){.foot{font-size:.78rem}}
-  .offer{position:absolute;top:6%;left:-2%;background:#c49e5a;color:#1a2e22;font-weight:800;font-size:1.9%;
-    padding:1.4% 6% 1.4% 4%;transform:rotate(-6deg);box-shadow:0 6px 16px rgba(0,0,0,.25);letter-spacing:.02em;z-index:3}
-  @media(max-width:680px){.offer{font-size:.6rem}}
-  .note{max-width:640px;margin-top:18px;color:#5a5044;font-size:.82rem;text-align:center;line-height:1.5}
+  .offer{position:absolute;top:5.5cqw;left:-1.5cqw;background:#c49e5a;color:#1a2e22;font-weight:800;font-size:2cqw;line-height:1.25;
+    padding:1.6cqw 5cqw 1.6cqw 4cqw;transform:rotate(-6deg);box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:3;text-align:left}
+
+  .note{max-width:600px;margin-top:16px;color:#5a5044;font-size:.82rem;text-align:center;line-height:1.5}
 </style>
 </head>
 <body>
 <div class="bar">
-  <button id="pdfBtn">📄 Скачать PDF</button>
+  <button id="pdfBtn">📄 Скачать PDF (A4)</button>
   <button class="ghost" onclick="window.print()">Печать</button>
 </div>
 
 <div class="banner" id="banner">
-  <!-- Спец-предложение (можно убрать/поменять) -->
-  <div class="offer">Гостям отеля<br>приятный бонус</div>
-
+  <div class="offer">Гостям&nbsp;отеля<br>приятный&nbsp;бонус</div>
   <div class="z">
     <img class="logo" src="/mateev_logo.png" alt="Mateev Spa Studio">
     <div class="kicker">Spa &amp; Massage · Hotel Chișinău</div>
@@ -80,7 +74,7 @@
       <span class="en">Massage — without leaving the hotel</span>
     </div>
 
-    <div class="loc">📍 2 этаж · кабинет <b>213</b> · etaj 2 · 2nd floor</div>
+    <div class="loc">📍 2 этаж · каб. <b>213</b> · etaj 2 · 2nd floor</div>
 
     <div class="benes">
       <div class="bene"><div class="ic">🧳</div><div class="tx"><b>Восстановление после дороги</b><span>Recuperare după drum · Recover after travel</span></div></div>
@@ -98,30 +92,30 @@
   </div>
 </div>
 
-<p class="note">Это макет для ресепшена (пропорции roll-up 85×200 см). QR ведёт на онлайн-запись. «Печать» или «Скачать PDF» — для типографии; для большого формата типография масштабирует по этому референсу.</p>
+<p class="note">Макет для ресепшена в пропорции A-серии (годится для печати A5 и A4). QR ведёт на онлайн-запись с меткой источника «hotel».</p>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-  // QR на запись (с меткой источника hotel)
   new QRCode(document.getElementById('qr'), { text: 'https://mateevmassage.com/?src=hotel#booking', width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
 
   document.getElementById('pdfBtn').addEventListener('click', async function(){
     var btn=this, orig=btn.textContent; btn.disabled=true; btn.textContent='Готовлю…';
+    var el=document.getElementById('banner');
+    var savedW=el.style.width;
     try{
-      var el=document.getElementById('banner');
-      var canvas=await html2canvas(el,{scale:3,backgroundColor:null,useCORS:true,logging:false});
+      el.style.width='600px'; // фикс. ширина для полного разрешения
+      await new Promise(function(r){requestAnimationFrame(function(){r()})});
+      var canvas=await html2canvas(el,{scale:3,backgroundColor:null,useCORS:true,logging:false,width:600});
       var img=canvas.toDataURL('image/png');
-      var jsPDFCtor=window.jspdf.jsPDF;
-      // Страница в пропорции roll-up (850x2000 мм)
-      var pdf=new jsPDFCtor({orientation:'portrait',unit:'mm',format:[850,2000],compress:true});
-      pdf.addImage(img,'PNG',0,0,850,2000);
+      var pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+      pdf.addImage(img,'PNG',0,0,210,297);
       var blob=pdf.output('blob'); var url=URL.createObjectURL(blob);
-      var a=document.createElement('a'); a.href=url; a.download='Баннер-отель-MateevSpa.pdf'; document.body.appendChild(a); a.click(); a.remove();
+      var a=document.createElement('a'); a.href=url; a.download='Баннер-отель-A4-MateevSpa.pdf'; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){URL.revokeObjectURL(url)},5000);
     }catch(e){ alert('Не удалось сделать PDF: '+e.message); }
-    finally{ btn.disabled=false; btn.textContent=orig; }
+    finally{ el.style.width=savedW; btn.disabled=false; btn.textContent=orig; }
   });
 </script>
 </body>

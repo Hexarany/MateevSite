@@ -389,6 +389,15 @@ function bindEvents() {
     } catch (e) { /* тихо игнорируем */ }
   })();
 
+  // Метка источника (QR-баннер отеля и т.п.): ?src=hotel → сохраняем на сессию
+  (function captureBookingSource() {
+    try {
+      const src = new URLSearchParams(location.search).get("src");
+      if (src) localStorage.setItem("bookingSrc", src.slice(0, 40));
+      state.bookingSrc = localStorage.getItem("bookingSrc") || "";
+    } catch (e) { /* ignore */ }
+  })();
+
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".waitlist-submit");
     if (!btn) return;
@@ -1349,6 +1358,7 @@ async function handleBookingSubmit(event) {
       ? { customDuration: state.bookingDuration }
       : {}),
     ...(state.appliedCert ? { certificateCode: state.appliedCert.code } : {}),
+    ...(state.bookingSrc ? { src: state.bookingSrc } : {}),
     ...((function(){ var manual=(document.getElementById("referralCodeInput")||{}).value; var code=(manual||"").trim()||localStorage.getItem("referralCode")||""; return code?{referralCode:code.toUpperCase()}:{}; })())
   };
 
