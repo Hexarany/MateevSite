@@ -5008,6 +5008,23 @@ async function routeApi(request, response, urlObject) {
     return;
   }
 
+  // POST /api/admin/diplomas/:id/profile-link — ссылка самообслуживания (get-or-create/reset)
+  if (request.method === "POST" && urlObject.pathname.startsWith("/api/admin/diplomas/") && urlObject.pathname.endsWith("/profile-link")) {
+    assertAdminPin(request);
+    const dipId = urlObject.pathname.replace("/api/admin/diplomas/", "").replace("/profile-link", "");
+    const diplomas = await readJson("diplomas.json");
+    const idx = diplomas.findIndex(d => d.id === dipId);
+    if (idx === -1) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
+    const reset = urlObject.searchParams.get("reset") === "1";
+    if (!diplomas[idx].profileToken || reset) {
+      diplomas[idx].profileToken = crypto.randomBytes(24).toString("hex");
+      await writeJson("diplomas.json", diplomas);
+    }
+    const base = SITE_URL || "https://mateevmassage.com";
+    sendJson(response, 200, { url: `${base}/my-profile?token=${diplomas[idx].profileToken}`, token: diplomas[idx].profileToken, reset });
+    return;
+  }
+
   // DELETE /api/admin/diplomas/:id
   if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/admin/diplomas/")) {
     assertAdminPin(request);
@@ -5018,6 +5035,41 @@ async function routeApi(request, response, urlObject) {
     diplomas.splice(idx, 1);
     await writeJson("diplomas.json", diplomas);
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // GET /api/registry/profile?token= — мастер читает свой профиль для редактирования
+  if (request.method === "GET" && urlObject.pathname === "/api/registry/profile") {
+    const token = sanitizeText(urlObject.searchParams.get("token") || "");
+    if (!token) { sendJson(response, 400, { message: "Нет токена." }); return; }
+    const diplomas = await readJson("diplomas.json").catch(() => []);
+    const d = diplomas.find(x => x.profileToken && x.profileToken === token);
+    if (!d) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+    sendJson(response, 200, {
+      graduateName: d.graduateName || "", courseName: d.courseName || "",
+      code: d.code || "", public: d.public === true,
+      city: d.city || "", specializations: d.specializations || "",
+      contact: d.contact || "", photo: d.photo || "", bio: d.bio || ""
+    });
+    return;
+  }
+
+  // POST /api/registry/profile — мастер сам сохраняет свой профиль (по токену)
+  if (request.method === "POST" && urlObject.pathname === "/api/registry/profile") {
+    assertRateLimit({ scope: "registry-profile", key: getRequestIp(request), windowMs: 10 * 60 * 1000, limit: 30, message: "Слишком часто. Попробуйте позже." });
+    const payload = await parseJsonBody(request);
+    const token = sanitizeText(payload.token || "");
+    if (!token) { sendJson(response, 400, { message: "Нет токена." }); return; }
+    const diplomas = await readJson("diplomas.json");
+    const idx = diplomas.findIndex(x => x.profileToken && x.profileToken === token);
+    if (idx === -1) { sendJson(response, 404, { message: "Ссылка недействительна." }); return; }
+    if (payload.city !== undefined) diplomas[idx].city = sanitizeText(payload.city).slice(0, 80);
+    if (payload.specializations !== undefined) diplomas[idx].specializations = sanitizeText(payload.specializations).slice(0, 200);
+    if (payload.contact !== undefined) diplomas[idx].contact = sanitizeText(payload.contact).slice(0, 300);
+    if (payload.photo !== undefined) diplomas[idx].photo = sanitizeText(payload.photo).slice(0, 500);
+    if (payload.bio !== undefined) diplomas[idx].bio = sanitizeText(payload.bio).slice(0, 400);
+    await writeJson("diplomas.json", diplomas);
+    sendJson(response, 200, { ok: true, public: diplomas[idx].public === true });
     return;
   }
 
@@ -5114,7 +5166,8 @@ async function routeApi(request, response, urlObject) {
     const diplomas = await readJson("diplomas.json");
     const diploma = diplomas.find(d => d.code.toUpperCase() === code);
     if (!diploma) { sendJson(response, 404, { message: "Диплом не найден." }); return; }
-    sendJson(response, 200, diploma);
+    const { profileToken, ...safe } = diploma; // не отдаём токен самообслуживания
+    sendJson(response, 200, safe);
     return;
   }
 
@@ -8452,6 +8505,7 @@ function renderGraduatesPage(diplomas, lang = "ru") {
     course: d.courseName || "",
     date: fmt(d.completionDate),
     code: d.code || "",
+    mUrl: `${base}/m?code=${encodeURIComponent(d.code)}${ro ? "&lang=ro" : ""}`,
     certUrl: `${base}/cert?code=${encodeURIComponent(d.code)}${ro ? "&lang=ro" : ""}`,
     city: (d.city || "").trim(),
     specs: (d.specializations || "").split(",").map((s) => s.trim()).filter(Boolean),
@@ -8496,8 +8550,9 @@ function renderGraduatesPage(diplomas, lang = "ru") {
   .chip.active{background:#1a2e22;color:#fff;border-color:#1a2e22}
   .count{font-size:.82rem;color:#7d6d60;font-weight:600;margin-bottom:16px}
   .grid{display:grid;gap:14px}
-  .grad-card{display:flex;align-items:flex-start;gap:16px;background:rgba(255,255,255,.72);border:1px solid rgba(71,49,28,.1);border-radius:18px;padding:20px 22px;transition:box-shadow .2s,transform .2s}
+  .grad-card{display:flex;align-items:flex-start;gap:16px;background:rgba(255,255,255,.72);border:1px solid rgba(71,49,28,.1);border-radius:18px;padding:20px 22px;transition:box-shadow .2s,transform .2s;text-decoration:none;color:inherit}
   .grad-card:hover{box-shadow:0 10px 28px rgba(36,28,23,.09);transform:translateY(-2px)}
+  .grad-card__arrow{color:#b36d2c;font-size:1.3rem;flex:0 0 auto;align-self:center}
   .grad-card__ava{width:56px;height:56px;flex:0 0 56px;border-radius:50%;background:#1a2e22;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;overflow:hidden}
   .grad-card__ava img{width:100%;height:100%;object-fit:cover}
   .grad-card__body{flex:1;min-width:0}
@@ -8567,10 +8622,7 @@ function renderGraduatesPage(diplomas, lang = "ru") {
       var ava = d.photo ? '<img src="'+esc(d.photo)+'" alt="'+esc(d.name)+'">' : esc(d.initials);
       var tags = d.specs.map(function(s){ return '<span class="tag">'+esc(s)+'</span>'; }).join("");
       var where = [d.city, d.date].filter(Boolean).join(" · ");
-      var actions = '';
-      if (d.contact) actions += '<a class="gbtn gbtn--book" href="'+esc(d.contact)+'" target="_blank" rel="noopener">📅 '+T.book+'</a>';
-      actions += '<a class="gbtn gbtn--verify" href="'+esc(d.certUrl)+'">✓ '+T.verify+'</a>';
-      return '<div class="grad-card">'+
+      return '<a class="grad-card" href="'+esc(d.mUrl)+'">'+
         '<div class="grad-card__ava">'+ava+'</div>'+
         '<div class="grad-card__body">'+
           '<div class="grad-card__name">'+esc(d.name)+' <span class="grad-card__badge">✓ '+T.certified+'</span></div>'+
@@ -8578,8 +8630,8 @@ function renderGraduatesPage(diplomas, lang = "ru") {
           (where?'<div class="grad-card__where">📍 '+esc(where)+'</div>':'')+
           (d.bio?'<div class="grad-card__bio">'+esc(d.bio)+'</div>':'')+
           (tags?'<div class="grad-card__tags">'+tags+'</div>':'')+
-          '<div class="grad-card__actions">'+actions+'</div>'+
-        '</div></div>';
+        '</div>'+
+        '<span class="grad-card__arrow">→</span></a>';
     }
     function render(){
       var term = state.q.trim().toLowerCase();
@@ -8601,6 +8653,221 @@ function renderGraduatesPage(diplomas, lang = "ru") {
       render();
     });
     render();
+  </script>
+</body>
+</html>`;
+}
+
+// Публичная карточка мастера — цель QR/ссылки из реестра. Показывается, если public.
+function renderMasterCardPage(diploma, lang = "ru") {
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  if (!diploma || diploma.public !== true) {
+    return `<!DOCTYPE html><html lang="${ro ? "ro" : "ru"}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${t("Мастер не найден", "Maestru negăsit")}</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;background:#1a2e22;color:#f3ece0;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}.c{max-width:420px}a{color:#c49e5a;font-weight:700}</style></head>
+<body><div class="c"><p style="font-size:2.4rem;margin:0">🔍</p><h1 style="font-size:1.4rem;margin:12px 0">${t("Мастер не найден или профиль скрыт", "Maestrul nu a fost găsit sau profilul este ascuns")}</h1><p style="color:rgba(255,255,255,.6)">${t("Проверьте ссылку или откройте реестр сертифицированных мастеров.", "Verificați linkul sau deschideți registrul maeștrilor certificați.")}</p><a href="${base}/registry${ro ? "?lang=ro" : ""}">${t("Открыть реестр →", "Deschide registrul →")}</a></div></body></html>`;
+  }
+  const fmt = (d) => { try { return new Date(d + "T00:00:00").toLocaleDateString(ro ? "ro-RO" : "ru-RU", { month: "long", year: "numeric" }); } catch { return d || ""; } };
+  const initials = (name) => (name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase();
+  const contactHref = (c) => {
+    const v = (c || "").trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v) || /^mailto:/i.test(v)) return v;
+    const digits = v.replace(/[^\d]/g, "");
+    return digits.length >= 8 ? "https://wa.me/" + digits : v;
+  };
+  const name = escapeHtml(diploma.graduateName || t("Выпускник", "Absolvent"));
+  const course = escapeHtml(diploma.courseName || "");
+  const city = escapeHtml((diploma.city || "").trim());
+  const bio = escapeHtml((diploma.bio || "").trim());
+  const specs = (diploma.specializations || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const contact = contactHref(diploma.contact);
+  const mUrl = `${base}/m?code=${encodeURIComponent(diploma.code)}`;
+  const certUrl = `${base}/cert?code=${encodeURIComponent(diploma.code)}${ro ? "&lang=ro" : ""}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&qzone=1&color=1a2e22&bgcolor=faf6ee&data=${encodeURIComponent(mUrl)}`;
+  const avatar = diploma.photo ? `<img src="${escapeHtml(diploma.photo.trim())}" alt="${name}">` : (escapeHtml(initials(diploma.graduateName)) || "🎓");
+  const where = [city, fmt(diploma.completionDate)].filter(Boolean).join(" · ");
+  return `<!DOCTYPE html>
+<html lang="${ro ? "ro" : "ru"}">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>${diploma.graduateName ? escapeHtml(diploma.graduateName) + " — " : ""}${t("Сертифицированный мастер", "Maestru certificat")} · Mateev Spa Studio</title>
+<meta name="description" content="${name}${course ? " — " + course : ""}. ${t("Сертифицированный мастер школы Mateev Spa Studio. Запись онлайн.", "Maestru certificat al școlii Mateev Spa Studio. Programare online.")}">
+<meta property="og:title" content="${name} — ${t("сертифицированный мастер Mateev Spa Studio", "maestru certificat Mateev Spa Studio")}">
+<meta property="og:description" content="${course}${city ? " · " + city : ""}. ${t("Подтверждённый диплом.", "Diplomă confirmată.")}">
+<meta property="og:image" content="${diploma.photo ? escapeHtml(diploma.photo.trim()) : base + "/og-image.jpg"}">
+<link rel="canonical" href="${mUrl}">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Manrope',sans-serif;background:#1a2e22;color:#241c17;min-height:100vh;padding:0 0 48px}
+  .head{background:#1a2e22;text-align:center;padding:40px 24px 28px;color:#fff}
+  .ava{width:104px;height:104px;border-radius:50%;overflow:hidden;margin:0 auto 16px;border:3px solid rgba(196,158,90,.5);background:#24402f;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:#c49e5a;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .ava img{width:100%;height:100%;object-fit:cover}
+  .name{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;line-height:1.1}
+  .badge{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:rgba(196,158,90,.16);border:1px solid rgba(196,158,90,.5);color:#e8dcc8;border-radius:999px;padding:5px 13px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .body{width:calc(100% - 32px);max-width:440px;margin:-14px auto 0;background:#f7f0e6;border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.3)}
+  .sec{padding:20px 24px;border-bottom:1px solid #e8ddd0}
+  .sec:last-child{border-bottom:none}
+  .course{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:#1a2e22;font-weight:600}
+  .where{font-size:.85rem;color:#6b8d6b;font-weight:600;margin-top:4px}
+  .bio{font-size:.92rem;color:#3a2e26;line-height:1.6}
+  .tlabel{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7d6d60;margin-bottom:10px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px}
+  .tag{font-size:.82rem;font-weight:600;color:#5a4a3a;background:rgba(179,109,44,.1);border-radius:9px;padding:5px 12px}
+  .actions{display:flex;flex-direction:column;gap:10px;padding:20px 24px}
+  .gbtn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:15px;font-weight:700;font-size:.95rem;text-decoration:none;font-family:inherit;cursor:pointer;border:none}
+  .gbtn--book{background:#b36d2c;color:#fff}
+  .gbtn--verify{background:#fff;border:1.5px solid #6b8d6b;color:#2d4a35}
+  .gbtn--share{background:transparent;color:#6b8d6b;font-weight:600}
+  .qrbox{text-align:center;padding:22px 24px}
+  .qrbox img{width:150px;height:150px;background:#faf6ee;padding:8px;border-radius:14px;border:1px solid #e8ddd0}
+  .qrbox p{font-size:.78rem;color:#7d6d60;margin-top:10px}
+  .foot{text-align:center;color:rgba(255,255,255,.4);font-size:.75rem;margin-top:26px;padding:0 24px}
+  .foot a{color:rgba(255,255,255,.6);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="ava">${avatar}</div>
+    <h1 class="name">${name}</h1>
+    <div class="badge">🛡 ✓ ${t("Сертифицирован Mateev Spa Studio", "Certificat Mateev Spa Studio")}</div>
+  </div>
+  <div class="body">
+    ${course || where ? `<div class="sec">${course ? `<div class="course">${course}</div>` : ""}${where ? `<div class="where">📍 ${escapeHtml(where)}</div>` : ""}</div>` : ""}
+    ${bio ? `<div class="sec"><p class="bio">${bio}</p></div>` : ""}
+    ${specs.length ? `<div class="sec"><div class="tlabel">${t("Специализации", "Specializări")}</div><div class="tags">${specs.map((s) => `<span class="tag">${escapeHtml(s)}</span>`).join("")}</div></div>` : ""}
+    <div class="actions">
+      ${contact ? `<a class="gbtn gbtn--book" href="${escapeHtml(contact)}" target="_blank" rel="noopener">📅 ${t("Записаться", "Programare")}</a>` : ""}
+      <a class="gbtn gbtn--verify" href="${certUrl}">✓ ${t("Проверить диплом", "Verifică diploma")}</a>
+      <button class="gbtn gbtn--share" id="shareBtn">🔗 ${t("Поделиться профилем", "Distribuie profilul")}</button>
+    </div>
+    <div class="qrbox">
+      <img src="${qrUrl}" alt="QR">
+      <p>${t("Наведите камеру — откроется этот профиль", "Îndreptați camera — se va deschide acest profil")}</p>
+    </div>
+  </div>
+  <div class="foot"><a href="${base}/registry${ro ? "?lang=ro" : ""}">${t("Реестр сертифицированных мастеров", "Registrul maeștrilor certificați")} →</a><br>© ${new Date().getFullYear()} Mateev Spa Studio · ${t("Кишинёв", "Chișinău")}</div>
+  <script>
+    document.getElementById("shareBtn").addEventListener("click", async function(){
+      var data = { title: ${JSON.stringify(diploma.graduateName || "Mateev Spa Studio")}, url: ${JSON.stringify(mUrl)} };
+      try { if (navigator.share) { await navigator.share(data); return; } } catch(e){ if(e && e.name==="AbortError") return; }
+      try { await navigator.clipboard.writeText(data.url); this.textContent = "✓ ${t("Ссылка скопирована", "Link copiat")}"; } catch(e){ prompt("${t("Скопируйте ссылку", "Copiați linkul")}:", data.url); }
+    });
+  </script>
+</body>
+</html>`;
+}
+
+// Страница самообслуживания: мастер редактирует свой профиль по токен-ссылке.
+function renderProfileEditPage(lang = "ru") {
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  return `<!DOCTYPE html>
+<html lang="${ro ? "ro" : "ru"}">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>${t("Мой профиль в реестре", "Profilul meu în registru")} — Mateev Spa Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.6;padding:32px 16px 60px}
+  .wrap{max-width:520px;margin:0 auto}
+  .kicker{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b36d2c;margin-bottom:8px}
+  h1{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:600;color:#1a2e22;line-height:1.15;margin-bottom:6px}
+  .who{color:#3a2e26;font-size:.95rem;margin-bottom:4px}
+  .who b{color:#1a2e22}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;border-radius:999px;padding:4px 12px;margin:10px 0 20px}
+  .status--on{background:#eaf3ea;border:1px solid #6b8d6b;color:#2d4a35}
+  .status--off{background:#fbeee2;border:1px solid #d9a15f;color:#8a5218}
+  .card{background:#fff;border:1px solid rgba(71,49,28,.12);border-radius:18px;padding:22px;box-shadow:0 8px 30px rgba(36,28,23,.06)}
+  label{display:block;font-size:.8rem;font-weight:700;color:#3a2e26;margin:14px 0 5px}
+  label:first-child{margin-top:0}
+  .hint{font-weight:500;color:#8a7a6a;font-size:.74rem}
+  input,textarea{width:100%;padding:11px 13px;border:1px solid #cfc3ac;border-radius:10px;font-family:inherit;font-size:.95rem;background:#fff;color:#241c17}
+  input:focus,textarea:focus{outline:none;border-color:#6b8d6b;box-shadow:0 0 0 3px rgba(107,141,107,.14)}
+  textarea{resize:vertical;min-height:70px}
+  .save{width:100%;margin-top:20px;background:#1a2e22;color:#fff;border:none;border-radius:12px;padding:15px;font-family:inherit;font-size:.98rem;font-weight:700;cursor:pointer}
+  .save:disabled{opacity:.6}
+  .msg{text-align:center;font-size:.9rem;font-weight:600;margin-top:12px;min-height:1.2em}
+  .msg--ok{color:#2d4a35}.msg--err{color:#b91c1c}
+  .links{text-align:center;margin-top:16px;font-size:.85rem}
+  .links a{color:#4a6b52;font-weight:700;text-decoration:none}
+  .state-loading,.state-error{text-align:center;color:#7d6d60;padding:60px 20px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="loading" class="state-loading">${t("Загрузка профиля…", "Se încarcă profilul…")}</div>
+    <div id="error" class="state-error" style="display:none">${t("Ссылка недействительна или устарела. Попросите новую у студии.", "Linkul este invalid sau expirat. Solicitați unul nou de la studio.")}</div>
+    <div id="form" style="display:none">
+      <p class="kicker">${t("Реестр сертифицированных", "Registrul certificaților")}</p>
+      <h1>${t("Мой профиль", "Profilul meu")}</h1>
+      <p class="who"><b id="whoName"></b> <span id="whoCourse" style="color:#7d6d60"></span></p>
+      <div id="status"></div>
+      <div class="card">
+        <label>${t("Город", "Oraș")}<span class="hint"> — ${t("где принимаете", "unde lucrați")}</span></label>
+        <input id="city" placeholder="${t("напр. Кишинёв", "ex. Chișinău")}">
+        <label>${t("Специализации", "Specializări")}<span class="hint"> — ${t("через запятую", "separate prin virgulă")}</span></label>
+        <input id="specializations" placeholder="${t("спина, шея, спорт, реабилитация", "spate, gât, sport, reabilitare")}">
+        <label>${t("Контакт для записи", "Contact pentru programare")}<span class="hint"> — ${t("ссылка, WhatsApp или телефон", "link, WhatsApp sau telefon")}</span></label>
+        <input id="contact" placeholder="+373… ${t("или", "sau")} https://…">
+        <label>${t("Ссылка на фото", "Link foto")}<span class="hint"> — ${t("необязательно", "opțional")}</span></label>
+        <input id="photo" placeholder="https://…">
+        <label>${t("О себе", "Despre mine")}<span class="hint"> — ${t("коротко, необязательно", "scurt, opțional")}</span></label>
+        <textarea id="bio" placeholder="${t("Например: специализируюсь на работе со спиной и осанкой…", "De exemplu: mă specializez în lucrul cu spatele și postura…")}"></textarea>
+        <button class="save" id="save">${t("Сохранить", "Salvează")}</button>
+        <div class="msg" id="msg"></div>
+      </div>
+      <div class="links" id="publicLink"></div>
+    </div>
+  </div>
+  <script>
+    var L = ${ro ? "1" : "0"};
+    var params = new URLSearchParams(location.search);
+    var token = params.get("token") || "";
+    var byId = function(id){ return document.getElementById(id); };
+    var myCode = "";
+    function show(id){ ["loading","error","form"].forEach(function(x){ byId(x).style.display = x===id ? "block":"none"; }); }
+    function renderStatus(pub, code){
+      byId("status").innerHTML = pub
+        ? '<span class="status status--on">✓ '+(L?"Sunteți în registrul public":"Вы в публичном реестре")+'</span>'
+        : '<span class="status status--off">⏳ '+(L?"Încă neafișat — studioul vă va publica":"Пока не опубликован — студия включит показ")+'</span>';
+      byId("publicLink").innerHTML = (pub && code) ? '<a href="/m?code='+encodeURIComponent(code)+'" target="_blank">'+(L?"Deschide profilul meu →":"Открыть мою карточку →")+'</a>' : '';
+    }
+    async function load(){
+      if(!token){ show("error"); return; }
+      try{
+        var r = await fetch("/api/registry/profile?token="+encodeURIComponent(token));
+        if(!r.ok) throw new Error();
+        var d = await r.json();
+        byId("whoName").textContent = d.graduateName || "";
+        byId("whoCourse").textContent = d.courseName ? "· "+d.courseName : "";
+        byId("city").value = d.city||""; byId("specializations").value = d.specializations||"";
+        byId("contact").value = d.contact||""; byId("photo").value = d.photo||""; byId("bio").value = d.bio||"";
+        myCode = d.code || "";
+        renderStatus(d.public, myCode);
+        show("form");
+      }catch(e){ show("error"); }
+    }
+    byId("save").addEventListener("click", async function(){
+      var btn = this, msg = byId("msg");
+      btn.disabled = true; msg.className = "msg"; msg.textContent = "";
+      try{
+        var r = await fetch("/api/registry/profile", { method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({ token:token, city:byId("city").value.trim(), specializations:byId("specializations").value.trim(),
+            contact:byId("contact").value.trim(), photo:byId("photo").value.trim(), bio:byId("bio").value.trim() }) });
+        var d = await r.json();
+        if(!r.ok) throw new Error(d.message||"");
+        msg.className = "msg msg--ok"; msg.textContent = L?"✓ Salvat":"✓ Сохранено";
+        renderStatus(d.public, myCode);
+      }catch(e){ msg.className="msg msg--err"; msg.textContent=(L?"Eroare: ":"Ошибка: ")+(e.message||""); }
+      finally{ btn.disabled = false; }
+    });
+    load();
   </script>
 </body>
 </html>`;
@@ -9380,6 +9647,24 @@ function createServer() {
         const html = renderGraduatesPage(diplomas, gradLang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
         response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/m" || urlObject.pathname === "/m/") {
+        const code = (urlObject.searchParams.get("code") || "").toUpperCase();
+        const diplomas = await readJson("diplomas.json").catch(() => []);
+        const diploma = code ? diplomas.find((d) => (d.code || "").toUpperCase() === code) : null;
+        const mLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderMasterCardPage(diploma, mLang);
+        response.writeHead(diploma && diploma.public ? 200 : 404, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=120" });
+        response.end(html);
+        return;
+      }
+
+      if (urlObject.pathname === "/my-profile" || urlObject.pathname === "/my-profile/") {
+        const mpLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
+        response.end(renderProfileEditPage(mpLang));
         return;
       }
 

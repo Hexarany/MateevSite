@@ -425,10 +425,19 @@
             <input type="text" id="dipPhoto" placeholder="Ссылка на фото (необязательно)" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;">
             <textarea id="dipBio" rows="2" placeholder="Короткое описание (необязательно)" style="font-size:0.82rem;padding:8px 10px;border:1px solid #cfc3ac;border-radius:8px;font-family:inherit;resize:vertical;"></textarea>
           </div>
-          <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;">
             <button type="button" id="dipProfileSave" class="btn btn--primary" style="font-size:0.8rem;padding:8px 14px;">Сохранить профиль</button>
             <a id="dipRegistryOpen" href="/registry" target="_blank" rel="noopener" style="font-size:0.76rem;color:#4a6b52;font-weight:700;text-decoration:none;">Открыть реестр →</a>
             <span id="dipProfileMsg" style="font-size:0.75rem;color:#2d4a35;"></span>
+          </div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #a9c3a9;">
+            <p style="font-size:0.74rem;color:#5a6e5c;margin:0 0 6px;">✍️ Пусть мастер сам заполнит профиль — отправьте ему личную ссылку:</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <button type="button" id="dipSelfLinkBtn" class="btn btn--ghost" style="font-size:0.78rem;padding:7px 12px;">Ссылка для мастера</button>
+              <button type="button" id="dipSelfLinkCopy" class="btn btn--ghost" style="font-size:0.78rem;padding:7px 12px;display:none;">Скопировать</button>
+              <a id="dipSelfLinkOpen" href="#" target="_blank" rel="noopener" style="font-size:0.76rem;color:#4a6b52;font-weight:700;text-decoration:none;display:none;">Открыть</a>
+            </div>
+            <input id="dipSelfLinkUrl" readonly style="display:none;width:100%;margin-top:6px;font-size:0.72rem;padding:6px 8px;border:1px solid #cfc3ac;border-radius:6px;font-family:monospace;background:#f4f9f4;">
           </div>
         </div>
       </div>
@@ -633,6 +642,33 @@
             if (msg) { msg.textContent = "✓ Сохранено"; setTimeout(function(){ msg.textContent = ""; }, 1800); }
           } catch (e) { if (msg) msg.textContent = "Ошибка: " + e.message; }
           finally { saveBtn.disabled = false; }
+        });
+      }
+      // Ссылка самообслуживания для мастера
+      var linkBtn = byId("dipSelfLinkBtn");
+      if (linkBtn && !linkBtn._bound) {
+        linkBtn._bound = true;
+        var showSelfLink = function (url) {
+          var inp = byId("dipSelfLinkUrl"), copy = byId("dipSelfLinkCopy"), open = byId("dipSelfLinkOpen");
+          inp.value = url; inp.style.display = "block";
+          copy.style.display = "inline-block"; open.style.display = "inline-block"; open.href = url;
+          linkBtn.textContent = "Сбросить ссылку";
+        };
+        linkBtn.addEventListener("click", async function () {
+          if (!currentDiploma) return;
+          var reset = byId("dipSelfLinkUrl").value ? "?reset=1" : "";
+          if (reset && !confirm("Сбросить старую ссылку? Прежняя перестанет работать.")) return;
+          linkBtn.disabled = true;
+          try {
+            var res = await fetchJson("/api/admin/diplomas/" + currentDiploma.id + "/profile-link" + reset, { method: "POST" });
+            showSelfLink(res.url);
+          } catch (e) { alert("Не удалось: " + e.message); }
+          finally { linkBtn.disabled = false; }
+        });
+        byId("dipSelfLinkCopy").addEventListener("click", async function () {
+          var url = byId("dipSelfLinkUrl").value; if (!url) return;
+          try { await navigator.clipboard.writeText(url); this.textContent = "✓ Скопировано"; var b = this; setTimeout(function(){ b.textContent = "Скопировать"; }, 1500); }
+          catch (e) { prompt("Скопируйте ссылку:", url); }
         });
       }
       syncProfileBox();
