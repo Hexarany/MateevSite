@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Подарочный сертификат на массаж — Mateev Spa Studio</title>
+<meta name="description" content="Подарите массаж на любой повод: 8 марта, Новый год, день рождения. Красивый подарочный сертификат Mateev Spa Studio — оформите онлайн за минуту.">
+<meta property="og:title" content="Подарите массаж — Mateev Spa Studio">
+<meta property="og:description" content="Подарочный сертификат на массаж. Красивый повод порадовать близкого.">
+<meta property="og:image" content="https://mateevmassage.com/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--forest:#1a2e22;--sage:#6b8d6b;--sand:#f7f0e6;--warm:#e8ddd0;--gold:#b36d2c;--muted:#7d6d60;--ink:#241c17;--accent:#b36d2c}
+  body{font-family:'Manrope',sans-serif;background:var(--sand);color:var(--ink);line-height:1.6}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(247,240,230,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--warm)}
+  .topbar__in{max-width:1000px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--forest);font-size:1.1rem}
+  .lang{display:inline-flex;border:1px solid var(--warm);border-radius:9px;overflow:hidden}
+  .lang button{border:none;background:#fff;padding:6px 10px;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer}
+  .lang button.on{background:var(--forest);color:#fff}
+  .wrap{max-width:1000px;margin:0 auto;padding:34px 22px 70px}
+  .head{text-align:center;margin-bottom:30px}
+  .kicker{font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5.5vw,3rem);font-weight:600;color:var(--forest);line-height:1.1;margin-bottom:10px}
+  .head p{color:var(--muted);max-width:540px;margin:0 auto}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .panel{background:#fff;border:1px solid var(--warm);border-radius:20px;padding:24px;box-shadow:0 12px 34px rgba(36,28,23,.07)}
+  label{display:block;font-size:.8rem;font-weight:700;color:#3a2e26;margin:14px 0 6px}
+  label:first-of-type{margin-top:0}
+  input,select,textarea{width:100%;padding:12px 13px;border:1px solid var(--warm);border-radius:10px;font-family:inherit;font-size:.95rem;background:var(--sand);outline:none;color:var(--ink)}
+  input:focus,select:focus,textarea:focus{border-color:var(--sage)}
+  textarea{resize:vertical;min-height:64px}
+  .occ{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .occ button{border:1px solid var(--warm);background:var(--sand);border-radius:12px;padding:10px 4px;cursor:pointer;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink);transition:.12s;line-height:1.3}
+  .occ button .e{display:block;font-size:1.4rem;margin-bottom:3px}
+  .occ button.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+  .amts{display:flex;gap:8px;flex-wrap:wrap}
+  .amts button{border:1px solid var(--warm);background:var(--sand);border-radius:10px;padding:10px 16px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.9rem;color:var(--ink)}
+  .amts button.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.frow{grid-template-columns:1fr}}
+  .btn{width:100%;margin-top:18px;background:var(--gold);color:#fff;border:none;border-radius:12px;padding:15px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
+  .btn:disabled{opacity:.6}
+  .msg{text-align:center;margin-top:12px;font-weight:600;min-height:1.2em}
+  .ok{color:#2d6a4f}.err{color:#b91c1c}
+  .note{font-size:.78rem;color:var(--muted);text-align:center;margin-top:10px}
+
+  /* Gift card */
+  .gc{aspect-ratio:105/148;border-radius:20px;overflow:hidden;position:relative;color:#fff;padding:26px 24px;display:flex;flex-direction:column;text-align:center;box-shadow:0 18px 46px rgba(0,0,0,.28);transition:background .3s}
+  .gc__kick{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;opacity:.85}
+  .gc__brand{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;margin-top:2px}
+  .gc__emoji{font-size:2.6rem;margin:14px 0 4px}
+  .gc__occ{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:700;line-height:1.15}
+  .gc__to{font-size:.9rem;margin-top:10px;opacity:.92}
+  .gc__to b{font-weight:700}
+  .gc__amt{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:700;margin:12px 0 2px}
+  .gc__amt small{font-size:.9rem;font-weight:600;opacity:.85}
+  .gc__msg{font-size:.85rem;font-style:italic;opacity:.92;margin-top:6px;min-height:1.2em}
+  .gc__foot{margin-top:auto;font-size:.68rem;opacity:.8}
+  .gc__code{font-family:monospace;font-weight:700;letter-spacing:.06em;background:rgba(255,255,255,.16);border-radius:8px;padding:5px 10px;display:inline-block;margin-top:8px;font-size:.78rem}
+  .gc__glow{position:absolute;top:-14%;right:-16%;width:60%;height:28%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.25),transparent 70%)}
+
+  .share{display:none;gap:8px;margin-top:14px}
+  .share a,.share button{flex:1;text-align:center;text-decoration:none;border:none;border-radius:10px;padding:12px;font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
+  .share .wa{background:#25d366;color:#fff}
+  .share .pr{background:var(--forest);color:#fff}
+  [data-ro]{display:none}
+  html[lang="ro"] [data-ru]{display:none}
+  html[lang="ro"] [data-ro]{display:inline}
+
+  @media print{
+    @page{size:A6 portrait;margin:0}
+    body *{visibility:hidden}
+    #card, #card *{visibility:visible}
+    #card{position:fixed;inset:0;width:105mm;height:148mm;border-radius:0;box-shadow:none;aspect-ratio:auto}
+    .gc__code{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar__in">
+  <span class="brand">Mateev Spa Studio</span>
+  <div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
+</div></header>
+
+<div class="wrap">
+  <div class="head">
+    <p class="kicker"><span data-ru>Подарочный сертификат</span><span data-ro>Certificat cadou</span></p>
+    <h1><span data-ru>Подарите массаж</span><span data-ro>Dăruiește un masaj</span></h1>
+    <p><span data-ru>Тёплый подарок на любой повод. Оформите за минуту — красивую открытку можно распечатать или отправить в мессенджере.</span><span data-ro>Un cadou cald pentru orice ocazie. Îl completați într-un minut — cardul poate fi printat sau trimis.</span></p>
+  </div>
+
+  <div class="grid">
+    <!-- Form -->
+    <div class="panel" id="formPanel">
+      <label><span data-ru>Повод</span><span data-ro>Ocazia</span></label>
+      <div class="occ" id="occ"></div>
+
+      <label><span data-ru>Сумма подарка</span><span data-ro>Suma cadoului</span></label>
+      <div class="amts" id="amts">
+        <button data-a="500">500</button><button data-a="800" class="on">800</button><button data-a="1200">1200</button>
+      </div>
+      <input id="amtCustom" type="number" min="100" max="100000" placeholder="MDL — своя сумма" style="margin-top:8px">
+
+      <div class="frow">
+        <div><label><span data-ru>Кому (имя)</span><span data-ro>Pentru cine</span></label><input id="recipient" placeholder="—"></div>
+        <div><label><span data-ru>Ваше имя *</span><span data-ro>Numele dvs. *</span></label><input id="buyerName" placeholder="—"></div>
+      </div>
+      <div class="frow">
+        <div><label><span data-ru>Ваш телефон *</span><span data-ro>Telefon *</span></label><input id="buyerPhone" placeholder="+373 …"></div>
+        <div><label>Email</label><input id="buyerEmail" placeholder="—"></div>
+      </div>
+      <label><span data-ru>Пожелание получателю</span><span data-ro>Mesaj pentru destinatar</span></label>
+      <input id="message" maxlength="90" placeholder="—">
+
+      <button class="btn" id="order"><span data-ru>Оформить подарок</span><span data-ro>Comandă cadoul</span></button>
+      <div class="msg" id="msg"></div>
+      <div class="note"><span data-ru>Оплата офлайн: свяжемся с вами и активируем сертификат. Действует 12 месяцев.</span><span data-ro>Plata offline: vă contactăm și activăm certificatul. Valabil 12 luni.</span></div>
+    </div>
+
+    <!-- Live gift card -->
+    <div>
+      <div class="gc" id="card">
+        <div class="gc__glow"></div>
+        <div class="gc__kick">Mateev Spa Studio</div>
+        <div class="gc__brand"><span data-ru>Подарочный сертификат</span><span data-ro>Certificat cadou</span></div>
+        <div class="gc__emoji" id="cEmoji">🎁</div>
+        <div class="gc__occ" id="cOcc">С праздником!</div>
+        <div class="gc__to" id="cTo"></div>
+        <div class="gc__amt" id="cAmt">800 <small>MDL</small></div>
+        <div class="gc__msg" id="cMsg"></div>
+        <div class="gc__foot">
+          <span data-ru>на массаж в Mateev Spa Studio · Кишинёв</span><span data-ro>pentru masaj la Mateev Spa Studio</span>
+          <div class="gc__code" id="cCode" style="display:none"></div>
+        </div>
+      </div>
+      <div class="share" id="share">
+        <a class="wa" id="waShare" target="_blank" rel="noopener">💬 WhatsApp</a>
+        <button class="pr" id="printCard">🖨 <span data-ru>Печать</span><span data-ro>Print</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var OCC = [
+    { k:"march8",  e:"🌷", ru:"8 Марта",     ro:"8 Martie",    grRu:"С 8 Марта!",         grRo:"La mulți ani de 8 Martie!", c1:"#c65b7c", c2:"#8e3a5a", msgRu:"Ты прекрасна — отдохни ✨" },
+    { k:"newyear", e:"🎄", ru:"Новый год",   ro:"Anul Nou",    grRu:"С Новым годом!",     grRo:"La mulți ani!",             c1:"#1f5133", c2:"#0f2b1a", msgRu:"Пусть год начнётся с заботы" },
+    { k:"bday",    e:"🎂", ru:"День рождения",ro:"Zi de naștere",grRu:"С Днём рождения!",  grRo:"La mulți ani!",             c1:"#c98a3a", c2:"#8a5a1a", msgRu:"Здоровья и лёгкости!" },
+    { k:"just",    e:"💚", ru:"Просто так",   ro:"Pur și simplu",grRu:"Тебе — с теплом",   grRo:"Cu drag",                   c1:"#4a6b52", c2:"#243a2b", msgRu:"Просто хочу порадовать тебя" }
+  ];
+  var state = { occ: OCC[0], amount: 800 };
+  var $ = function(id){ return document.getElementById(id); };
+  function ro(){ return document.documentElement.lang === "ro"; }
+
+  // build occasion buttons
+  var occEl = $("occ");
+  OCC.forEach(function(o, i){
+    var b = document.createElement("button");
+    b.innerHTML = '<span class="e">'+o.e+'</span><span class="lru" '+(0)+'>'+o.ru+'</span><span class="lro" style="display:none">'+o.ro+'</span>';
+    if(i===0) b.classList.add("on");
+    b.onclick=function(){ state.occ=o; occEl.querySelectorAll("button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on"); if(!$("message").value) {} render(); };
+    occEl.appendChild(b);
+  });
+
+  function setLang(l){
+    document.documentElement.lang=l;
+    try{ localStorage.setItem("lang", l); }catch(e){}
+    document.querySelectorAll("#lang button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-l")===l); });
+    occEl.querySelectorAll(".lru").forEach(function(x){ x.style.display = l==="ro"?"none":"inline"; });
+    occEl.querySelectorAll(".lro").forEach(function(x){ x.style.display = l==="ro"?"inline":"none"; });
+    render();
+  }
+
+  function render(){
+    var o = state.occ;
+    $("card").style.background = "linear-gradient(160deg,"+o.c1+","+o.c2+")";
+    $("cEmoji").textContent = o.e;
+    $("cOcc").textContent = ro()? o.grRo : o.grRu;
+    var rec = $("recipient").value.trim();
+    $("cTo").innerHTML = rec ? ((ro()?"Pentru ":"Для ")+"<b>"+rec.replace(/</g,"&lt;")+"</b>") : "";
+    $("cAmt").innerHTML = state.amount + ' <small>MDL</small>';
+    var m = $("message").value.trim();
+    $("cMsg").textContent = m || (ro()? "" : o.msgRu);
+  }
+
+  // amounts
+  $("amts").addEventListener("click", function(e){
+    var b = e.target.closest("[data-a]"); if(!b) return;
+    state.amount = parseInt(b.getAttribute("data-a"),10);
+    $("amtCustom").value=""; $("amts").querySelectorAll("button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+    render();
+  });
+  $("amtCustom").addEventListener("input", function(){
+    var v = parseInt(this.value,10);
+    if(v>0){ state.amount=v; $("amts").querySelectorAll("button").forEach(function(x){x.classList.remove("on");}); }
+    render();
+  });
+  ["recipient","message"].forEach(function(id){ $(id).addEventListener("input", render); });
+
+  // lang
+  var saved="ru"; try{ saved = localStorage.getItem("lang")==="ro"?"ro":"ru"; }catch(e){}
+  document.querySelectorAll("#lang button").forEach(function(b){ b.onclick=function(){ setLang(b.getAttribute("data-l")); }; });
+  setLang(saved);
+
+  // order
+  $("order").addEventListener("click", async function(){
+    var msg=$("msg");
+    var buyerName=$("buyerName").value.trim(), buyerPhone=$("buyerPhone").value.trim();
+    if(buyerName.length<2 || buyerPhone.replace(/\D/g,"").length<8){ msg.className="msg err"; msg.textContent=ro()?"Completați numele și telefonul.":"Укажите имя и телефон."; return; }
+    if(state.amount<100 || state.amount>100000){ msg.className="msg err"; msg.textContent=ro()?"Sumă de la 100 MDL.":"Сумма от 100 MDL."; return; }
+    this.disabled=true; msg.className="msg"; msg.textContent="…";
+    try{
+      var r = await fetch("/api/gift-certificate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        amount:state.amount, buyerName:buyerName, buyerPhone:buyerPhone, buyerEmail:$("buyerEmail").value.trim(),
+        recipient:$("recipient").value.trim(), message:$("message").value.trim()
+      })});
+      var d = await r.json();
+      if(!r.ok) throw new Error(d.message||"");
+      // показываем код на открытке + шаринг
+      $("cCode").style.display="inline-block";
+      $("cCode").textContent = (ro()?"Cod: ":"Код: ")+d.code;
+      $("share").style.display="flex";
+      var link = location.origin + "/certificates";
+      var txt = (ro()?"Ai primit un certificat cadou de masaj":"Тебе подарочный сертификат на массаж")+" — "+state.amount+" MDL. "+(ro()?"Cod":"Код")+": "+d.code+". "+link;
+      $("waShare").href = "https://wa.me/?text="+encodeURIComponent(txt);
+      msg.className="msg ok"; msg.textContent=ro()?"Готово! Открытка ниже — распечатайте или отправьте. Свяжемся для оплаты.":"Готово! Открытка справа — распечатайте или отправьте. Свяжемся для оплаты.";
+      $("order").style.display="none";
+    }catch(e){ msg.className="msg err"; msg.textContent=(ro()?"Eroare: ":"Ошибка: ")+(e.message||""); this.disabled=false; }
+  });
+  $("printCard").addEventListener("click", function(){ window.print(); });
+})();
+</script>
+</body>
+</html>

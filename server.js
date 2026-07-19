@@ -130,6 +130,12 @@ const STATIC_FILES = {
   "/business-card.html": "business-card.html",
   "/promo": "promo.html",
   "/promo.html": "promo.html",
+  "/corporate": "corporate.html",
+  "/corporate.html": "corporate.html",
+  "/gift": "gift.html",
+  "/gift.html": "gift.html",
+  "/offer": "offer.html",
+  "/offer.html": "offer.html",
   "/planner": "planner.html",
   "/planner.html": "planner.html",
   "/planner-sw.js": "planner-sw.js",
@@ -4795,6 +4801,41 @@ async function routeApi(request, response, urlObject) {
     }
 
     sendJson(response, 201, { ok: true, code: cert.code });
+    return;
+  }
+
+  // POST /api/corporate-lead — заявка на корпоративный/офисный массаж (B2B)
+  if (request.method === "POST" && urlObject.pathname === "/api/corporate-lead") {
+    assertRateLimit({ scope: "corporate-lead", key: getRequestIp(request), windowMs: 10 * 60 * 1000, limit: 8, message: "Слишком много заявок. Попробуйте позже." });
+    const payload = await parseJsonBody(request);
+    const company = sanitizeText(payload.company || "").slice(0, 140);
+    const contact = sanitizeText(payload.contact || "").slice(0, 120);
+    const phone = sanitizeText(payload.phone || "").slice(0, 60);
+    if (!contact || phone.replace(/\D/g, "").length < 8) { sendJson(response, 400, { message: "Укажите имя и телефон для связи." }); return; }
+    const lead = {
+      id: crypto.randomUUID(),
+      company, contact, phone,
+      email: sanitizeText(payload.email || "").slice(0, 160),
+      teamSize: sanitizeText(payload.teamSize || "").slice(0, 40),
+      format: sanitizeText(payload.format || "").slice(0, 60),
+      note: sanitizeText(payload.note || "").slice(0, 600),
+      src: sanitizeText(payload.src || "").slice(0, 40),
+      createdAt: new Date().toISOString()
+    };
+    const leads = await readJson("corporate-leads.json").catch(() => []);
+    leads.push(lead);
+    await writeJson("corporate-leads.json", leads);
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      void tgSend(TELEGRAM_CHAT_ID, `💼 Заявка: корпоративный массаж\n\n🏢 ${lead.company || "—"}\n👤 ${lead.contact}\n📞 ${lead.phone}${lead.email ? `\n✉️ ${lead.email}` : ""}${lead.teamSize ? `\n👥 Команда: ${lead.teamSize}` : ""}${lead.format ? `\n🧾 Формат: ${lead.format}` : ""}${lead.note ? `\n📝 ${lead.note}` : ""}`);
+    }
+    sendJson(response, 201, { ok: true });
+    return;
+  }
+  // GET /api/admin/corporate-leads — список B2B-заявок
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/corporate-leads") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    const leads = await readJson("corporate-leads.json").catch(() => []);
+    sendJson(response, 200, { leads: leads.slice().reverse() });
     return;
   }
 
@@ -9856,6 +9897,8 @@ function createServer() {
   <url><loc>${base}/registry</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/blog</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
+  <url><loc>${base}/gift</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
+  <url><loc>${base}/corporate</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
 ${teamUrls}
 ${cityUrls}

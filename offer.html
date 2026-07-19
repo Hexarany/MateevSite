@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Специальное предложение — Mateev Spa Studio</title>
+<meta name="description" content="Специальное предложение на первый сеанс массажа в Mateev Spa Studio, Кишинёв. Запишитесь со скидкой.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Первый сеанс массажа со скидкой — Mateev Spa Studio">
+<meta property="og:image" content="https://mateevmassage.com/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--forest:#1a2e22;--sage:#6b8d6b;--sand:#f7f0e6;--warm:#e8ddd0;--gold:#b36d2c;--muted:#7d6d60;--ink:#241c17}
+  html{scroll-behavior:smooth}
+  body{font-family:'Manrope',sans-serif;background:var(--sand);color:var(--ink);line-height:1.6}
+  .lang{position:fixed;top:12px;right:12px;z-index:30;display:inline-flex;border:1px solid var(--warm);border-radius:9px;overflow:hidden;background:#fff}
+  .lang button{border:none;background:#fff;padding:6px 10px;font-size:.76rem;font-weight:700;color:var(--muted);cursor:pointer}
+  .lang button.on{background:var(--forest);color:#fff}
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px}
+
+  .hero{background:linear-gradient(165deg,#1c3025,#16261d);color:#fff;text-align:center;padding:70px 0 56px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;top:-20%;right:-10%;width:50%;height:40%;border-radius:50%;background:radial-gradient(circle,rgba(196,158,90,.2),transparent 70%)}
+  .badge{display:inline-block;background:rgba(196,158,90,.18);border:1px solid rgba(196,158,90,.5);color:#e8dcc8;border-radius:999px;padding:7px 16px;font-size:.78rem;font-weight:700;letter-spacing:.04em;margin-bottom:18px;position:relative}
+  .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,6vw,3.2rem);font-weight:600;line-height:1.12;margin-bottom:14px;position:relative}
+  .hero p{color:rgba(255,255,255,.8);font-size:1.05rem;max-width:520px;margin:0 auto 26px;position:relative}
+  .offerbig{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#fff;margin-bottom:22px;position:relative}
+  .offerbig b{color:#e8b563;font-size:1.15em}
+  .btn{display:inline-block;background:var(--gold);color:#fff;text-decoration:none;padding:16px 34px;border-radius:12px;font-weight:700;font-size:1.05rem;position:relative;transition:.15s;border:none;cursor:pointer;font-family:inherit}
+  .btn:hover{background:#c47a2f;transform:translateY(-1px)}
+  .microtrust{margin-top:16px;font-size:.82rem;color:rgba(255,255,255,.6);position:relative}
+
+  section{padding:44px 0}
+  .h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--forest);text-align:center;margin-bottom:24px}
+  .pains{display:grid;gap:12px}
+  .pain{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--warm);border-radius:14px;padding:16px 18px}
+  .pain .ic{font-size:1.4rem;flex:0 0 auto}
+  .pain b{color:var(--forest)}
+  .pain span{color:var(--muted);font-size:.92rem}
+  .trust{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .tcard{background:#fff;border:1px solid var(--warm);border-radius:16px;padding:16px 22px;text-align:center;min-width:130px}
+  .tcard b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--forest)}
+  .tcard span{font-size:.8rem;color:var(--muted)}
+  .final{background:#fff;border:1px solid var(--warm);border-radius:22px;padding:34px;text-align:center;box-shadow:0 14px 36px rgba(36,28,23,.07)}
+  .final h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--forest);margin-bottom:10px}
+  .final p{color:var(--muted);margin-bottom:20px}
+  footer{text-align:center;padding:26px 22px;color:var(--muted);font-size:.82rem}
+  footer a{color:var(--sage);text-decoration:none;font-weight:600}
+  [data-ro]{display:none}
+  html[lang="ro"] [data-ru]{display:none}
+  html[lang="ro"] [data-ro]{display:inline}
+</style>
+</head>
+<body>
+<div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="badge" id="badge">🎯 <span data-ru>Только для новых клиентов</span><span data-ro>Doar pentru clienți noi</span></span>
+    <h1 id="headline"></h1>
+    <p id="subline"></p>
+    <div class="offerbig"><span data-ru>Первый сеанс со скидкой</span><span data-ro>Prima ședință cu reducere</span> <b id="discBig">−20%</b></div>
+    <a class="btn" id="cta1"><span data-ru>Записаться со скидкой</span><span data-ro>Programează cu reducere</span></a>
+    <div class="microtrust">⭐ <span data-ru>Более 10 лет практики · Кишинёв, отель «Кишинёв»</span><span data-ro>Peste 10 ani de practică · Chișinău</span></div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2 class="h2" id="painsTitle"></h2>
+    <div class="pains" id="pains"></div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="trust">
+      <div class="tcard"><b>10+</b><span data-ru>лет опыта</span><span data-ro>ani experiență</span></div>
+      <div class="tcard"><b>3000+</b><span data-ru>довольных клиентов</span><span data-ro>clienți mulțumiți</span></div>
+      <div class="tcard"><b>★ 5.0</b><span data-ru>отзывы</span><span data-ro>recenzii</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="final">
+      <h2><span data-ru>Тело скажет спасибо</span><span data-ro>Corpul îți va mulțumi</span></h2>
+      <p><span data-ru>Запишитесь сейчас — скидка на первый сеанс действует ограниченное время.</span><span data-ro>Programează-te acum — reducerea la prima ședință este limitată.</span></p>
+      <a class="btn" id="cta2"><span data-ru>Записаться со скидкой</span><span data-ro>Programează cu reducere</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>© <span id="yr"></span> Mateev Spa Studio · <a href="/">mateevmassage.com</a> · <a href="tel:+37369158475">+373 69 158 475</a></footer>
+
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  document.getElementById("yr").textContent = new Date().getFullYear();
+  var params = new URLSearchParams(location.search);
+
+  var PRESETS = {
+    back:   { ru:"Болит спина или поясница?", ro:"Te doare spatele?",
+      subRu:"Снимем напряжение и вернём лёгкость движению — глубокий проработанный массаж спины.", subRo:"Eliberăm tensiunea din spate și readucem ușurința mișcării.",
+      painsRu:[["🪑","Сидячая работа","Спина устаёт и ноет к вечеру"],["😣","Скованность","Тяжело наклоняться и поворачиваться"],["😴","Плохой сон","Напряжение мешает расслабиться"]],
+      painsRo:[["🪑","Muncă sedentară","Spatele obosește spre seară"],["😣","Rigiditate","Greu să te apleci"],["😴","Somn prost","Tensiunea nu te lasă să te relaxezi"]] },
+    neck:   { ru:"Шея и плечи как каменные?", ro:"Gât și umeri încordați?",
+      subRu:"Разомнём зажимы шеи и плеч, уберём тяжесть и головную боль от экрана.", subRo:"Relaxăm gâtul și umerii, reducem durerile de cap.",
+      painsRu:[["💻","Работа за экраном","Шея немеет, плечи вверх"],["🤕","Головные боли","Напряжение отдаёт в голову"],["🔧","«Загруженность»","Плечи как каменные к вечеру"]],
+      painsRo:[["💻","Lucru la ecran","Gâtul amorțește"],["🤕","Dureri de cap","Tensiunea urcă în cap"],["🔧","Încordare","Umerii ca piatra"]] },
+    stress: { ru:"Стресс не отпускает?", ro:"Stresul nu te lasă?",
+      subRu:"Глубокое расслабление тела и нервной системы — выдохните наконец.", subRo:"Relaxare profundă a corpului și minții.",
+      painsRu:[["😮‍💨","Постоянное напряжение","Тело не расслабляется даже дома"],["😴","Сон урывками","Трудно выключить голову"],["⚡","Нет энергии","Усталость копится днями"]],
+      painsRo:[["😮‍💨","Tensiune constantă","Corpul nu se relaxează"],["😴","Somn agitat","Greu să oprești gândurile"],["⚡","Fără energie","Oboseala se adună"]] },
+    office: { ru:"Сидячая работа выматывает тело?", ro:"Munca la birou te epuizează?",
+      subRu:"Вернём телу лёгкость после долгих часов за столом — массаж под офисную нагрузку.", subRo:"Readucem ușurința corpului după ore la birou.",
+      painsRu:[["🪑","8+ часов сидя","Спина и шея расплачиваются"],["📱","Экраны весь день","Плечи и глаза устают"],["🚶","Мало движения","Тело «застывает»"]],
+      painsRo:[["🪑","8+ ore așezat","Spatele suferă"],["📱","Ecrane toată ziua","Umerii obosesc"],["🚶","Puțină mișcare","Corpul înțepenește"]] },
+    "":     { ru:"Пора позаботиться о теле", ro:"E timpul să ai grijă de corp",
+      subRu:"Профессиональный массаж, который реально снимает боль и напряжение.", subRo:"Masaj profesionist care chiar elimină durerea.",
+      painsRu:[["😣","Боль и напряжение","Тело сигналит об усталости"],["🪑","Сидячий образ жизни","Спина и шея страдают"],["😴","Плохое восстановление","Сон и энергия не те"]],
+      painsRo:[["😣","Durere și tensiune","Corpul e obosit"],["🪑","Viață sedentară","Spatele suferă"],["😴","Recuperare slabă","Somn și energie scăzute"]] }
+  };
+  var key = (params.get("t")||"").toLowerCase();
+  var P = PRESETS[key] || PRESETS[""];
+  var disc = parseInt(params.get("d")||"20",10); if(!(disc>0&&disc<90)) disc=20;
+  var src = params.get("src") || (key ? "ads-"+key : "ads");
+  var bookUrl = "/?src="+encodeURIComponent(src)+"#booking";
+
+  function render(){
+    var isRo = document.documentElement.lang==="ro";
+    document.getElementById("headline").textContent = isRo?P.ro:P.ru;
+    document.getElementById("subline").textContent = isRo?P.subRo:P.subRu;
+    document.getElementById("discBig").textContent = "−"+disc+"%";
+    document.getElementById("painsTitle").textContent = isRo?"Îți sună cunoscut?":"Знакомо?";
+    var pains = isRo?P.painsRo:P.painsRu;
+    document.getElementById("pains").innerHTML = pains.map(function(p){
+      return '<div class="pain"><span class="ic">'+p[0]+'</span><div><b>'+p[1]+'</b><br><span>'+p[2]+'</span></div></div>';
+    }).join("");
+    document.getElementById("cta1").href = bookUrl;
+    document.getElementById("cta2").href = bookUrl;
+  }
+  function setLang(l){
+    document.documentElement.lang=l;
+    try{ localStorage.setItem("lang",l); }catch(e){}
+    document.querySelectorAll("#lang button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-l")===l); });
+    render();
+  }
+  var saved="ru"; try{ saved=localStorage.getItem("lang")==="ro"?"ro":"ru"; }catch(e){}
+  document.querySelectorAll("#lang button").forEach(function(b){ b.onclick=function(){ setLang(b.getAttribute("data-l")); }; });
+  setLang(saved);
+})();
+</script>
+</body>
+</html>

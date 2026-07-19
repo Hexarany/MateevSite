@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Корпоративный массаж для компаний — Mateev Spa Studio</title>
+<meta name="description" content="Массаж для вашей команды в офисе: меньше стресса и больничных, выше лояльность. Выезд в офис в Кишинёве, гибкие пакеты. Оставьте заявку — рассчитаем под вашу команду.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Корпоративный массаж — Mateev Spa Studio">
+<meta property="og:description" content="Массаж для команды прямо в офисе. Меньше стресса, выше продуктивность.">
+<meta property="og:image" content="https://mateevmassage.com/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--forest:#1a2e22;--sage:#6b8d6b;--sand:#f7f0e6;--warm:#e8ddd0;--gold:#b36d2c;--muted:#7d6d60;--ink:#241c17}
+  html{scroll-behavior:smooth}
+  body{font-family:'Manrope',sans-serif;background:var(--sand);color:var(--ink);line-height:1.6}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(247,240,230,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--warm)}
+  .topbar__in{max-width:1000px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--forest);font-size:1.1rem}
+  .top-actions{display:flex;align-items:center;gap:12px}
+  .lang{display:inline-flex;border:1px solid var(--warm);border-radius:9px;overflow:hidden}
+  .lang button{border:none;background:#fff;padding:6px 10px;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer}
+  .lang button.on{background:var(--forest);color:#fff}
+  .cta-top{background:var(--gold);color:#fff;text-decoration:none;padding:9px 16px;border-radius:10px;font-weight:700;font-size:.85rem}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+
+  .hero{padding:64px 0 48px;text-align:center}
+  .kicker{font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.6rem);font-weight:600;color:var(--forest);line-height:1.1;margin-bottom:16px}
+  .hero p{font-size:1.08rem;color:var(--muted);max-width:620px;margin:0 auto 28px}
+  .btn{display:inline-block;background:var(--gold);color:#fff;text-decoration:none;padding:15px 30px;border-radius:12px;font-weight:700;font-size:1rem;border:none;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn:hover{background:#9a5c22}
+  .btn--dark{background:var(--forest)}.btn--dark:hover{background:#12211a}
+
+  .stats{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:34px}
+  .stat{background:#fff;border:1px solid var(--warm);border-radius:16px;padding:16px 22px;min-width:140px}
+  .stat b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--forest)}
+  .stat span{font-size:.8rem;color:var(--muted)}
+
+  section{padding:44px 0}
+  .h2{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--forest);text-align:center;margin-bottom:8px}
+  .sub{text-align:center;color:var(--muted);max-width:560px;margin:0 auto 30px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  .cardb{background:#fff;border:1px solid var(--warm);border-radius:18px;padding:22px}
+  .cardb .ic{font-size:1.7rem}
+  .cardb h3{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--forest);margin:8px 0 6px}
+  .cardb p{font-size:.9rem;color:var(--muted)}
+
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;counter-reset:s}
+  .step{background:var(--forest);color:#fff;border-radius:18px;padding:22px;position:relative}
+  .step::before{counter-increment:s;content:counter(s);position:absolute;top:14px;right:18px;font-family:'Cormorant Garamond',serif;font-size:2rem;color:rgba(196,158,90,.6);font-weight:700}
+  .step h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;margin-bottom:6px}
+  .step p{font-size:.88rem;color:rgba(255,255,255,.72)}
+
+  .formwrap{background:#fff;border:1px solid var(--warm);border-radius:22px;padding:32px;max-width:640px;margin:0 auto;box-shadow:0 16px 40px rgba(36,28,23,.08)}
+  .formwrap h2{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--forest);text-align:center;margin-bottom:6px}
+  .formwrap .sub{margin-bottom:22px}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.frow{grid-template-columns:1fr}}
+  label{display:block;font-size:.8rem;font-weight:700;color:#3a2e26;margin:12px 0 5px}
+  input,select,textarea{width:100%;padding:12px 13px;border:1px solid var(--warm);border-radius:10px;font-family:inherit;font-size:.95rem;background:var(--sand);outline:none;color:var(--ink)}
+  input:focus,select:focus,textarea:focus{border-color:var(--sage)}
+  textarea{resize:vertical;min-height:70px}
+  .submit{width:100%;margin-top:18px}
+  .formmsg{text-align:center;margin-top:14px;font-weight:600;min-height:1.2em}
+  .ok{color:#2d6a4f}.err{color:#b91c1c}
+  .thanks{display:none;text-align:center;padding:30px 10px}
+  .thanks .big{font-size:2.6rem}
+  footer{text-align:center;padding:30px 22px;color:var(--muted);font-size:.82rem;border-top:1px solid var(--warm)}
+  footer a{color:var(--sage);text-decoration:none;font-weight:600}
+  [data-ro]{display:none}
+  html[lang="ro"] [data-ru]{display:none}
+  html[lang="ro"] [data-ro]{display:inline}
+  html[lang="ro"] [data-ro].block{display:block}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar__in">
+  <span class="brand">Mateev Spa Studio</span>
+  <div class="top-actions">
+    <div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
+    <a class="cta-top" href="#form"><span data-ru>Оставить заявку</span><span data-ro>Trimite cererea</span></a>
+  </div>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <p class="kicker"><span data-ru>Массаж для бизнеса</span><span data-ro>Masaj pentru afaceri</span></p>
+    <h1><span data-ru>Массаж для вашей команды — прямо в офисе</span><span data-ro>Masaj pentru echipa ta — chiar la birou</span></h1>
+    <p>
+      <span data-ru>Забота, которую сотрудники чувствуют сразу: меньше стресса и напряжения, выше энергия и лояльность. Мы приезжаем к вам — без оборудования и переодеваний.</span>
+      <span data-ro>O grijă pe care angajații o simt imediat: mai puțin stres, mai multă energie și loialitate. Venim la voi — fără echipament și fără schimbat hainele.</span>
+    </p>
+    <a class="btn" href="#form"><span data-ru>Рассчитать под мою команду</span><span data-ro>Calculează pentru echipa mea</span></a>
+    <div class="stats">
+      <div class="stat"><b>15–20</b><span data-ru class="block">мин на сотрудника</span><span data-ro class="block">min / angajat</span></div>
+      <div class="stat"><b>0</b><span data-ru class="block">переодеваний</span><span data-ro class="block">schimbări de haine</span></div>
+      <div class="stat"><b>+</b><span data-ru class="block">энергия и фокус</span><span data-ro class="block">energie și focus</span></div>
+    </div>
+  </div>
+</div>
+
+<section style="background:#fff;border-block:1px solid var(--warm)">
+  <div class="wrap">
+    <h2 class="h2"><span data-ru>Зачем это компании</span><span data-ro>De ce merită</span></h2>
+    <p class="sub"><span data-ru>Небольшая инвестиция с заметной отдачей для команды.</span><span data-ro>O investiție mică cu efect vizibil.</span></p>
+    <div class="grid">
+      <div class="cardb"><div class="ic">😌</div><h3><span data-ru>Меньше стресса</span><span data-ro>Mai puțin stres</span></h3><p><span data-ru>Снимаем напряжение шеи и спины от сидячей работы — сотрудник возвращается к задачам свежим.</span><span data-ro>Eliberăm tensiunea din gât și spate — angajatul revine la lucru odihnit.</span></p></div>
+      <div class="cardb"><div class="ic">❤️</div><h3><span data-ru>Лояльность</span><span data-ro>Loialitate</span></h3><p><span data-ru>Забота о теле — сильный сигнал «вас ценят». Работает на удержание лучше многих бонусов.</span><span data-ro>Grija reală arată că sunt apreciați — ține echipa unită.</span></p></div>
+      <div class="cardb"><div class="ic">⚡</div><h3><span data-ru>Продуктивность</span><span data-ro>Productivitate</span></h3><p><span data-ru>Меньше усталости и головных болей — больше фокуса во второй половине дня.</span><span data-ro>Mai puțină oboseală — mai mult focus.</span></p></div>
+      <div class="cardb"><div class="ic">🎉</div><h3><span data-ru>Событие для команды</span><span data-ro>Un eveniment</span></h3><p><span data-ru>«День массажа» в офисе — приятный повод и тема для разговоров, отлично для атмосферы.</span><span data-ro>„Ziua de masaj” la birou — o experiență plăcută pentru toți.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="h2"><span data-ru>Форматы</span><span data-ro>Formate</span></h2>
+    <p class="sub"><span data-ru>Подберём под размер команды и задачу.</span><span data-ro>Alegem în funcție de echipă.</span></p>
+    <div class="grid">
+      <div class="cardb"><div class="ic">💺</div><h3><span data-ru>Стул-массаж</span><span data-ro>Masaj pe scaun</span></h3><p><span data-ru>15–20 мин, шея-плечи-спина, одетый, прямо на рабочем месте. Идеально для дня в офисе.</span><span data-ro>15–20 min, gât-umeri-spate, îmbrăcat, la birou.</span></p></div>
+      <div class="cardb"><div class="ic">🗓️</div><h3><span data-ru>День массажа</span><span data-ro>Ziua de masaj</span></h3><p><span data-ru>Приезжаем на несколько часов и проходим всю команду по расписанию.</span><span data-ro>Venim câteva ore și trecem toată echipa pe rând.</span></p></div>
+      <div class="cardb"><div class="ic">🔁</div><h3><span data-ru>Регулярно</span><span data-ro>Recurent</span></h3><p><span data-ru>Раз в неделю/месяц — как часть заботы о команде. Фиксированный пакет и цена.</span><span data-ro>Săptămânal/lunar — ca beneficiu constant.</span></p></div>
+      <div class="cardb"><div class="ic">🎁</div><h3><span data-ru>Подарок команде</span><span data-ro>Cadou pentru echipă</span></h3><p><span data-ru>К празднику или закрытию проекта — сертификаты на массаж для сотрудников.</span><span data-ro>De sărbători — certificate de masaj pentru angajați.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:#fff;border-block:1px solid var(--warm)">
+  <div class="wrap">
+    <h2 class="h2"><span data-ru>Как это работает</span><span data-ro>Cum funcționează</span></h2>
+    <p class="sub"><span data-ru>Три простых шага — остальное на нас.</span><span data-ro>Trei pași — restul e treaba noastră.</span></p>
+    <div class="steps">
+      <div class="step"><h3><span data-ru>Заявка</span><span data-ro>Cererea</span></h3><p><span data-ru>Оставляете размер команды и удобный формат.</span><span data-ro>Ne spuneți mărimea echipei și formatul.</span></p></div>
+      <div class="step"><h3><span data-ru>Расчёт</span><span data-ro>Oferta</span></h3><p><span data-ru>Готовим предложение и цену, согласуем дату.</span><span data-ro>Pregătim oferta și stabilim data.</span></p></div>
+      <div class="step"><h3><span data-ru>Выезд</span><span data-ro>Vizita</span></h3><p><span data-ru>Приезжаем в офис и заботимся о команде.</span><span data-ro>Venim la birou și avem grijă de echipă.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="form">
+  <div class="wrap">
+    <div class="formwrap">
+      <div id="formInner">
+        <h2><span data-ru>Заявка на корпоративный массаж</span><span data-ro>Cerere pentru masaj corporativ</span></h2>
+        <p class="sub"><span data-ru>Заполните — свяжемся в течение дня и рассчитаем под вашу команду.</span><span data-ro>Completați — revenim în aceeași zi cu o ofertă.</span></p>
+        <div class="frow">
+          <div><label><span data-ru>Компания</span><span data-ro>Companie</span></label><input id="company" placeholder="—"></div>
+          <div><label><span data-ru>Контактное лицо *</span><span data-ro>Persoană de contact *</span></label><input id="contact" placeholder="—"></div>
+        </div>
+        <div class="frow">
+          <div><label><span data-ru>Телефон *</span><span data-ro>Telefon *</span></label><input id="phone" placeholder="+373 …"></div>
+          <div><label>Email</label><input id="email" placeholder="—"></div>
+        </div>
+        <div class="frow">
+          <div><label><span data-ru>Размер команды</span><span data-ro>Mărimea echipei</span></label>
+            <select id="teamSize"><option value="">—</option><option>1–10</option><option>10–25</option><option>25–50</option><option>50+</option></select></div>
+          <div><label><span data-ru>Формат</span><span data-ro>Format</span></label>
+            <select id="format">
+              <option value="">—</option>
+              <option data-ru value="Стул-массаж в офисе">Стул-массаж в офисе</option>
+              <option data-ru value="День массажа">День массажа</option>
+              <option data-ru value="Регулярно">Регулярно</option>
+              <option data-ru value="Подарок команде">Подарок команде</option>
+              <option data-ro value="Masaj pe scaun">Masaj pe scaun</option>
+              <option data-ro value="Ziua de masaj">Ziua de masaj</option>
+              <option data-ro value="Recurent">Recurent</option>
+              <option data-ro value="Cadou pentru echipă">Cadou pentru echipă</option>
+            </select></div>
+        </div>
+        <label><span data-ru>Комментарий</span><span data-ro>Mesaj</span></label>
+        <textarea id="note" placeholder="—"></textarea>
+        <button class="btn submit" id="send"><span data-ru>Отправить заявку</span><span data-ro>Trimite cererea</span></button>
+        <div class="formmsg" id="msg"></div>
+      </div>
+      <div class="thanks" id="thanks">
+        <div class="big">✅</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;color:var(--forest);margin:10px 0"><span data-ru>Заявка принята!</span><span data-ro>Cerere primită!</span></h2>
+        <p style="color:var(--muted)"><span data-ru>Свяжемся с вами в ближайшее время и подготовим предложение.</span><span data-ro>Vă contactăm în curând cu o ofertă.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © <span id="yr"></span> Mateev Spa Studio · <span data-ru>Кишинёв</span><span data-ro>Chișinău</span> ·
+  <a href="/">mateevmassage.com</a> · <a href="tel:+37369158475">+373 69 158 475</a>
+</footer>
+
+<script>
+(function(){
+  document.getElementById("yr").textContent = new Date().getFullYear();
+  var params = new URLSearchParams(location.search);
+  function setLang(l){
+    document.documentElement.lang = l;
+    try{ localStorage.setItem("lang", l); }catch(e){}
+    document.querySelectorAll("#lang button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-l")===l); });
+    // показываем нужные option в select (RU/RO)
+    document.querySelectorAll("#format option[data-ru]").forEach(function(o){ o.hidden = (l==="ro"); });
+    document.querySelectorAll("#format option[data-ro]").forEach(function(o){ o.hidden = (l!=="ro"); });
+  }
+  var saved = "ru"; try{ saved = localStorage.getItem("lang")==="ro" ? "ro" : "ru"; }catch(e){}
+  setLang(saved);
+  document.querySelectorAll("#lang button").forEach(function(b){ b.onclick=function(){ setLang(b.getAttribute("data-l")); }; });
+
+  var send = document.getElementById("send");
+  send.addEventListener("click", async function(){
+    var msg = document.getElementById("msg");
+    var contact = document.getElementById("contact").value.trim();
+    var phone = document.getElementById("phone").value.trim();
+    if(contact.length<2 || phone.replace(/\D/g,"").length<8){
+      msg.className="formmsg err"; msg.textContent = document.documentElement.lang==="ro" ? "Completați numele și telefonul." : "Укажите имя и телефон."; return;
+    }
+    send.disabled=true; msg.className="formmsg"; msg.textContent="…";
+    try{
+      var r = await fetch("/api/corporate-lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        company:document.getElementById("company").value.trim(), contact:contact, phone:phone,
+        email:document.getElementById("email").value.trim(), teamSize:document.getElementById("teamSize").value,
+        format:document.getElementById("format").value, note:document.getElementById("note").value.trim(),
+        src: params.get("src") || "corporate"
+      })});
+      if(!r.ok){ var d=await r.json().catch(function(){return {};}); throw new Error(d.message||""); }
+      document.getElementById("formInner").style.display="none";
+      document.getElementById("thanks").style.display="block";
+    }catch(e){ msg.className="formmsg err"; msg.textContent=(document.documentElement.lang==="ro"?"Eroare: ":"Ошибка: ")+(e.message||""); send.disabled=false; }
+  });
+})();
+</script>
+</body>
+</html>
