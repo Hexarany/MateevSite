@@ -127,7 +127,9 @@ const STATIC_FILES = {
   "/materials/banner-hotel": "materials/banner-hotel.html",
   "/materials/banner-hotel.html": "materials/banner-hotel.html",
   "/business-card": "business-card.html",
-  "/business-card.html": "business-card.html"
+  "/business-card.html": "business-card.html",
+  "/planner": "planner.html",
+  "/planner.html": "planner.html"
 };
 
 const MIME_TYPES = {
