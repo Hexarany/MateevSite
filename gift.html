@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Подарочный сертификат на массаж — Mateev Spa Studio</title>
-<meta name="description" content="Подарите массаж на любой повод: 8 марта, Новый год, день рождения. Красивый подарочный сертификат Mateev Spa Studio — оформите онлайн за минуту.">
-<meta property="og:title" content="Подарите массаж — Mateev Spa Studio">
-<meta property="og:description" content="Подарочный сертификат на массаж. Красивый повод порадовать близкого.">
+<title>Подарочный сертификат на массаж в Кишинёве — Mateev Spa Studio</title>
+<meta name="description" content="Подарочный сертификат на массаж в Кишинёве: 8 Марта, Новый год, день рождения. Любая сумма, срок 12 месяцев. Красивую открытку оформите онлайн за минуту — Mateev Spa Studio.">
+<link rel="canonical" href="https://mateevmassage.com/gift">
+<meta property="og:title" content="Подарочный сертификат на массаж — Mateev Spa Studio">
+<meta property="og:description" content="Подарите массаж близкому: сертификат на любую сумму, красивая открытка, срок 12 месяцев. Кишинёв.">
 <meta property="og:image" content="https://mateevmassage.com/og-image.jpg">
+<meta property="og:url" content="https://mateevmassage.com/gift">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Подарочный сертификат на массаж","description":"Подарочный сертификат на сеанс массажа в Mateev Spa Studio, Кишинёв. Любая сумма, срок действия 12 месяцев.","brand":{"@type":"Brand","name":"Mateev Spa Studio"},"image":"https://mateevmassage.com/og-image.jpg","offers":{"@type":"AggregateOffer","priceCurrency":"MDL","lowPrice":"500","highPrice":"2000","availability":"https://schema.org/InStock","seller":{"@type":"LocalBusiness","name":"Mateev Spa Studio","telephone":"+373 69 158 475","address":{"@type":"PostalAddress","addressLocality":"Кишинёв","addressCountry":"MD"}}}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -69,6 +72,15 @@
   .share a,.share button{flex:1;text-align:center;text-decoration:none;border:none;border-radius:10px;padding:12px;font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
   .share .wa{background:#25d366;color:#fff}
   .share .pr{background:var(--forest);color:#fff}
+  .check{max-width:520px;margin:34px auto 0;background:#fff;border:1px solid var(--warm);border-radius:18px;padding:22px;text-align:center}
+  .check h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--forest);margin-bottom:14px}
+  .check-row{display:flex;gap:8px;max-width:380px;margin:0 auto}
+  .check-row input{flex:1;padding:12px 13px;border:1px solid var(--warm);border-radius:10px;font-family:inherit;font-size:.95rem;background:var(--sand);outline:none;text-transform:uppercase}
+  .check-row input:focus{border-color:var(--sage)}
+  .check-row button{background:var(--forest);color:#fff;border:none;border-radius:10px;padding:0 18px;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer}
+  .check-msg{margin-top:12px;font-size:.92rem;font-weight:600;min-height:1.2em}
+  .check-msg.ok{color:#2d6a4f}.check-msg.err{color:#b91c1c}
+  @media print{.check{display:none}}
   [data-ro]{display:none}
   html[lang="ro"] [data-ru]{display:none}
   html[lang="ro"] [data-ro]{display:inline}
@@ -145,6 +157,15 @@
         <button class="pr" id="printCard">🖨 <span data-ru>Печать</span><span data-ro>Print</span></button>
       </div>
     </div>
+  </div>
+
+  <div class="check">
+    <h2><span data-ru>Получили сертификат? Проверьте код</span><span data-ro>Ați primit un certificat? Verificați codul</span></h2>
+    <div class="check-row">
+      <input id="checkCode" placeholder="GC-…" autocomplete="off">
+      <button id="checkBtn"><span data-ru>Проверить</span><span data-ro>Verifică</span></button>
+    </div>
+    <div id="checkMsg" class="check-msg"></div>
   </div>
 </div>
 
@@ -228,7 +249,7 @@
       $("cCode").style.display="inline-block";
       $("cCode").textContent = (ro()?"Cod: ":"Код: ")+d.code;
       $("share").style.display="flex";
-      var link = location.origin + "/certificates";
+      var link = location.origin + "/gift";
       var txt = (ro()?"Ai primit un certificat cadou de masaj":"Тебе подарочный сертификат на массаж")+" — "+state.amount+" MDL. "+(ro()?"Cod":"Код")+": "+d.code+". "+link;
       $("waShare").href = "https://wa.me/?text="+encodeURIComponent(txt);
       msg.className="msg ok"; msg.textContent=ro()?"Готово! Открытка ниже — распечатайте или отправьте. Свяжемся для оплаты.":"Готово! Открытка справа — распечатайте или отправьте. Свяжемся для оплаты.";
@@ -236,6 +257,24 @@
     }catch(e){ msg.className="msg err"; msg.textContent=(ro()?"Eroare: ":"Ошибка: ")+(e.message||""); this.disabled=false; }
   });
   $("printCard").addEventListener("click", function(){ window.print(); });
+
+  // Проверка сертификата по коду (для тех, кому подарили)
+  $("checkBtn").addEventListener("click", async function(){
+    var code = $("checkCode").value.trim().toUpperCase();
+    var m = $("checkMsg");
+    if(!code){ m.className="check-msg err"; m.textContent=ro()?"Introduceți codul.":"Введите код."; return; }
+    this.disabled=true; m.className="check-msg"; m.textContent="…";
+    try{
+      var r = await fetch("/api/certificates/validate?code="+encodeURIComponent(code));
+      var d = await r.json();
+      if(!r.ok) throw new Error(d.message||(ro()?"Certificat negăsit.":"Сертификат не найден."));
+      var c = d.certificate || {};
+      m.className="check-msg ok";
+      m.textContent = (ro()?"✓ Valid":"✓ Действителен")+": "+(c.amount?c.amount+" MDL":"")+(c.recipient?" · "+c.recipient:"");
+    }catch(e){ m.className="check-msg err"; m.textContent = e.message || (ro()?"Eroare.":"Ошибка."); }
+    finally{ this.disabled=false; }
+  });
+  $("checkCode").addEventListener("keydown", function(e){ if(e.key==="Enter") $("checkBtn").click(); });
 })();
 </script>
 </body>

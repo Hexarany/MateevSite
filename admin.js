@@ -2067,7 +2067,7 @@ async function aiGenerateGooglePost() {
     const btnIdx = lines.findIndex(l => /^\s*кнопка\s*:/i.test(l));
     if (btnIdx !== -1) { btn = lines[btnIdx].replace(/^\s*кнопка\s*:/i, "").replace(/[*_]/g, "").trim(); lines.splice(btnIdx); }
     const postText = lines.join("\n").replace(/[*]{2,}/g, "").replace(/^\s*[-*]{2,}\s*$/gm, "").trim();
-    const btnLinkHint = { "Забронировать": "→ ссылка: mateevmassage.com", "Зарегистрироваться": "→ ссылка на курс школы", "Подробнее": "→ ссылка на страницу услуги", "Позвонить": "→ номер студии", "Заказать": "→ ссылка: mateevmassage.com", "Купить": "→ ссылка: mateevmassage.com/certificates" };
+    const btnLinkHint = { "Забронировать": "→ ссылка: mateevmassage.com", "Зарегистрироваться": "→ ссылка на курс школы", "Подробнее": "→ ссылка на страницу услуги", "Позвонить": "→ номер студии", "Заказать": "→ ссылка: mateevmassage.com", "Купить": "→ ссылка: mateevmassage.com/gift" };
     out.innerHTML = `<div style="background:#fffaf4;border:1px solid var(--line);border-radius:14px;padding:16px 18px;white-space:pre-wrap;font-size:0.92rem;line-height:1.55;">${escapeHtml(postText)}</div>
       <button type="button" class="button button--ghost button--mini" style="margin-top:8px;" id="aiGCopy">📋 Скопировать текст</button>
       ${btn ? `<div style="margin-top:12px;padding:10px 14px;background:#eef4ff;border:1px solid #cfe0ff;border-radius:12px;font-size:0.88rem;">👉 В Google выбери кнопку: <strong>${escapeHtml(btn)}</strong> ${escapeHtml(btnLinkHint[btn] || "")}</div>` : ""}`;

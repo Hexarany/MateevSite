@@ -7902,7 +7902,7 @@ function render404Page() {
   <div class="links">
     <a href="${base}/blog" class="link">Дневник практики</a>
     <a href="${base}/school" class="link">Школа</a>
-    <a href="${base}/certificates" class="link">Сертификаты</a>
+    <a href="${base}/gift" class="link">Подарить массаж</a>
     <a href="${base}/card" class="link">Визитка</a>
   </div>
   <div class="num">404</div>
@@ -10162,12 +10162,11 @@ function createServer() {
         return;
       }
 
+      // Старая страница сертификатов объединена с /gift — постоянный редирект (301)
       if (urlObject.pathname === "/certificates" || urlObject.pathname === "/certificates/") {
-        const site = await readJson("site.json").catch(() => ({}));
-        const certLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
-        const html = renderCertificatesPage(site, certLang);
-        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });
-        response.end(html);
+        const q = urlObject.searchParams.get("lang") === "ro" ? "?lang=ro" : "";
+        response.writeHead(301, { Location: `/gift${q}`, "Cache-Control": "public, max-age=3600" });
+        response.end();
         return;
       }
 
@@ -10280,8 +10279,7 @@ function createServer() {
   <url><loc>${base}/school</loc><lastmod>${now}</lastmod><priority>0.9</priority></url>
   <url><loc>${base}/registry</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/blog</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
-  <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
-  <url><loc>${base}/gift</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
+  <url><loc>${base}/gift</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/corporate</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/uslugi</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   ${SEO_LANDINGS.map((p) => `<url><loc>${base}/uslugi/${p.slug}</loc><lastmod>${now}</lastmod><priority>0.75</priority></url>`).join("\n  ")}
