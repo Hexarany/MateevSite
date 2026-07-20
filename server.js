@@ -9946,6 +9946,16 @@ function createServer() {
       }
 
       const host = request.headers.host || "localhost";
+
+      // SEO: склеиваем хост — www.mateevmassage.com → mateevmassage.com (301).
+      // Только для GET/HEAD, чтобы не ломать API/POST/вебхуки.
+      if ((request.method === "GET" || request.method === "HEAD") && /^www\./i.test(host)) {
+        const canonicalHost = host.replace(/^www\./i, "");
+        response.writeHead(301, { Location: `https://${canonicalHost}${request.url}`, "Cache-Control": "public, max-age=86400" });
+        response.end();
+        return;
+      }
+
       const urlObject = new URL(request.url, `http://${host}`);
 
       if (urlObject.pathname.startsWith("/api/")) {
