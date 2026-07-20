@@ -6217,6 +6217,7 @@ function hideBroadcastPreview() {
 // ─── Gallery ────────────────────────────────────────────────────────────────
 
 let _galleryItems = [];
+let _galleryBound = false;
 
 let _credItems = [];
 let _credBound = false;
@@ -6918,6 +6919,8 @@ function renderGalleryGrid() {
 }
 
 function bindGalleryEvents() {
+  if (_galleryBound) return; // слушатели вешаем один раз (иначе загрузка дублируется)
+  _galleryBound = true;
   const fileInput = document.getElementById("galleryFileInput");
   fileInput?.addEventListener("change", async () => {
     const files = Array.from(fileInput.files || []);
