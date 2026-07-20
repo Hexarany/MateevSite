@@ -377,7 +377,7 @@ function buildPrint() {
 
 /* ── Load QR library then init ── */
 const s = document.createElement('script');
-s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+s.src = '/vendor/qrcode-generator.min.js';
 s.onload = () => { sync(); updateQR(); };
 s.onerror = () => {
   console.warn('QR: библиотека не загрузилась — проверьте интернет и обновите страницу.');

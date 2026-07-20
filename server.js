@@ -68,6 +68,8 @@ const EMAIL_NOTIFICATION_RECIPIENTS = splitCommaList(process.env.EMAIL_NOTIFICAT
 const COOKIE_FORCE_SECURE = process.env.COOKIE_SECURE === "true";
 const CANCEL_CUTOFF_HOURS = Math.max(0, Number(process.env.CANCEL_CUTOFF_HOURS) || 2);
 const SITE_URL = sanitizeEnv(process.env.SITE_URL).replace(/\/$/, "");
+// Канонический хост (для безопасной www-склейки, без open-redirect).
+const APEX_HOST = (() => { try { return new URL(SITE_URL || "https://mateevmassage.com").host; } catch { return "mateevmassage.com"; } })();
 const GITHUB_WEBHOOK_SECRET = sanitizeEnv(process.env.GITHUB_WEBHOOK_SECRET);
 // AI-ресепшн (Claude). Без ключа фича мягко выключена.
 const ANTHROPIC_API_KEY = sanitizeEnv(process.env.ANTHROPIC_API_KEY);
@@ -143,7 +145,9 @@ const STATIC_FILES = {
   "/planner-icon-192.png": "planner-icon-192.png",
   "/planner-icon-512.png": "planner-icon-512.png",
   "/planner-icon-180.png": "planner-icon-180.png",
-  "/googlea2034b1cba2249ff.html": "googlea2034b1cba2249ff.html"
+  "/googlea2034b1cba2249ff.html": "googlea2034b1cba2249ff.html",
+  "/vendor/qrcode.min.js": "vendor/qrcode.min.js",
+  "/vendor/qrcode-generator.min.js": "vendor/qrcode-generator.min.js"
 };
 
 const MIME_TYPES = {
@@ -1052,8 +1056,8 @@ async function serveStaticFile(requestPath, response) {
       "Cache-Control": "no-store"
     });
     response.end(fileBuffer);
-  } catch (error) {
-    sendText(response, 500, `Failed to read static file: ${error.message}`);
+  } catch {
+    sendText(response, 500, "Internal error");
   }
 }
 
@@ -8963,7 +8967,12 @@ function renderSeoLanding(page, lang = "ru") {
         areaServed: "Chișinău"
       },
       { "@type": "Service", serviceType: c.h1, provider: { "@type": "LocalBusiness", name: SEO_BRAND.name }, areaServed: "Chișinău", url: `${base}${path}` },
-      { "@type": "FAQPage", mainEntity: c.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }
+      { "@type": "FAQPage", mainEntity: c.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
+      { "@type": "BreadcrumbList", itemListElement: [
+        { "@type": "ListItem", position: 1, name: t("Главная", "Acasă"), item: base },
+        { "@type": "ListItem", position: 2, name: t("Услуги", "Servicii"), item: `${base}/uslugi` },
+        { "@type": "ListItem", position: 3, name: c.h1, item: `${base}${path}` }
+      ] }
     ]
   };
   const benefits = c.benefits.map(([ic, ti, d]) => `<div class="sb-card"><div class="sb-ic">${ic}</div><h3>${escapeHtml(ti)}</h3><p>${escapeHtml(d)}</p></div>`).join("");
@@ -9948,11 +9957,17 @@ function createServer() {
 
       const host = request.headers.host || "localhost";
 
-      // SEO: склеиваем хост — www.mateevmassage.com → mateevmassage.com (301).
-      // Только для GET/HEAD, чтобы не ломать API/POST/вебхуки.
+      // Заголовки безопасности на все ответы (defense-in-depth).
+      response.setHeader("X-Content-Type-Options", "nosniff");
+      response.setHeader("X-Frame-Options", "SAMEORIGIN");
+      response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      response.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()");
+
+      // SEO: склеиваем хост — www.* → канонический APEX_HOST (301).
+      // Редирект всегда на известный домен (не на значение из заголовка Host) —
+      // так не создаём open-redirect. Только GET/HEAD, чтобы не ломать API/POST.
       if ((request.method === "GET" || request.method === "HEAD") && /^www\./i.test(host)) {
-        const canonicalHost = host.replace(/^www\./i, "");
-        response.writeHead(301, { Location: `https://${canonicalHost}${request.url}`, "Cache-Control": "public, max-age=86400" });
+        response.writeHead(301, { Location: `https://${APEX_HOST}${request.url}`, "Cache-Control": "public, max-age=86400" });
         response.end();
         return;
       }
