@@ -9962,6 +9962,21 @@ function createServer() {
       response.setHeader("X-Frame-Options", "SAMEORIGIN");
       response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
       response.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()");
+      // Content-Security-Policy. 'unsafe-inline' оставлен осознанно — сайт активно
+      // использует инлайн-стили/обработчики; CSP всё равно даёт защиту: блокирует
+      // сторонние скрипты (кроме GA/cdnjs), ограничивает connect/frame/object/base.
+      response.setHeader("Content-Security-Policy", [
+        "default-src 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "frame-ancestors 'self'",
+        "form-action 'self'",
+        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdnjs.cloudflare.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: https:",
+        "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.googletagmanager.com"
+      ].join("; "));
 
       // SEO: склеиваем хост — www.* → канонический APEX_HOST (301).
       // Редирект всегда на известный домен (не на значение из заголовка Host) —

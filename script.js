@@ -1665,6 +1665,18 @@ function showToast(message, tone = "info") {
 }
 
 function showBookingSuccess(booking) {
+  // GA4: конверсия «Запись». В GA пометь событие generate_lead как ключевое.
+  try {
+    if (typeof gtag === "function") {
+      gtag("event", "generate_lead", {
+        currency: "MDL",
+        value: Number(booking.totalPrice) || 0,
+        service: booking.serviceName || "",
+        specialist: booking.specialistName || "",
+        source: booking.src || "site"
+      });
+    }
+  } catch (e) { /* аналитика не должна ломать запись */ }
   const p = new URLSearchParams({
     ref:          booking.reference || "",
     service:      booking.serviceName || "",
