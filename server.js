@@ -6336,11 +6336,12 @@ ${svcList}
       sendJson(response, 404, { message: "Записей с таким номером не найдено. Проверьте номер или запишитесь впервые." });
       return;
     }
-    if (matches.length > 1) {
-      sendJson(response, 409, { message: "Найдено несколько записей с этим номером. Свяжитесь со студией для доступа." });
-      return;
-    }
-    const client = matches[0];
+    // Один человек мог записаться, вводя номер по-разному → несколько профилей
+    // с одинаковыми последними 8 цифрами. Не блокируем — входим в основной
+    // (с самой полной историей), а не отказываем в доступе.
+    const client = matches.length === 1
+      ? matches[0]
+      : matches.slice().sort((a, b) => (b.history?.length || 0) - (a.history?.length || 0))[0];
     const tgUser = payload.initData ? verifyTelegramInitData(payload.initData) : null;
     const tokens = await readJson("portal-tokens.json").catch(() => []);
     let entry = tokens.find((t) => t.clientId === client.id);
