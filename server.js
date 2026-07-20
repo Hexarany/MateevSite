@@ -142,7 +142,8 @@ const STATIC_FILES = {
   "/manifest-planner.json": "manifest-planner.json",
   "/planner-icon-192.png": "planner-icon-192.png",
   "/planner-icon-512.png": "planner-icon-512.png",
-  "/planner-icon-180.png": "planner-icon-180.png"
+  "/planner-icon-180.png": "planner-icon-180.png",
+  "/googlea2034b1cba2249ff.html": "googlea2034b1cba2249ff.html"
 };
 
 const MIME_TYPES = {
