@@ -3585,7 +3585,8 @@ async function handleBookingStatusUpdate(request, response, bookingId) {
     specialist,
     bookings,
     schedule,
-    excludeBookingId: bookingId
+    excludeBookingId: bookingId,
+    adminMode: true // админ переносит свободно: без клиентского «мин. срока предупреждения»
   });
 
   if (!availability.slots.some((entry) => entry.time === safePayload.slot)) {
