@@ -6635,9 +6635,10 @@ ${svcList}
       p.clientName === entry.clientName
     ).filter(p => p.status === "active");
     const now = new Date().toISOString().slice(0, 10);
-    const upcoming = client.history.filter(b => b.date >= now && b.status !== "cancelled")
+    // Предстоящие = будущие и ещё активные (не завершённые и не отменённые).
+    const upcoming = client.history.filter(b => b.date >= now && b.status !== "cancelled" && b.status !== "completed")
       .sort((a, b) => a.date.localeCompare(b.date) || a.slot.localeCompare(b.slot));
-    const past = client.history.filter(b => b.date < now || b.status === "completed")
+    const past = client.history.filter(b => b.status === "completed" || (b.date < now && b.status !== "cancelled"))
       .sort((a, b) => b.date.localeCompare(a.date) || b.slot.localeCompare(a.slot))
       .slice(0, 15);
 
