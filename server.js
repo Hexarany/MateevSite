@@ -8761,6 +8761,366 @@ function renderGraduatesPage(diplomas, lang = "ru") {
 </html>`;
 }
 
+// ─── SEO-лендинги услуг (локальный поиск) ──────────────────────────────────
+const SEO_BRAND = { name: "Mateev Spa Studio", phone: "+373 69 158 475", street: "бул. Константин Негруцци, 7", locality: "Кишинёв", country: "MD" };
+const SEO_LANDINGS = [
+  {
+    slug: "massazh-spiny", src: "seo-spina",
+    ru: {
+      h1: "Массаж спины и поясницы в Кишинёве",
+      lead: "Профессиональный массаж спины при боли, напряжении и усталости от сидячей работы. Снимаем зажимы и возвращаем лёгкость движению — в студии Mateev Spa Studio, Кишинёв.",
+      who: ["Сидячая работа", "Боль в пояснице", "Скованность спины", "Усталость мышц"],
+      benefits: [
+        ["🎯", "Точечная работа", "Прорабатываем конкретные зажимы, а не «просто гладим»."],
+        ["🧠", "Разбор причины", "Смотрим осанку и паттерн напряжения, работаем по источнику."],
+        ["😌", "Меньше боли", "Снижаем напряжение спины и связанные головные боли."],
+        ["🔁", "Долгий эффект", "Даём рекомендации для дома, чтобы результат держался."]
+      ],
+      faq: [
+        ["Сколько длится сеанс массажа спины?", "Обычно 45–60 минут в зависимости от задачи. Точное время подскажем при записи."],
+        ["Поможет ли при боли в пояснице?", "Да, при мышечном напряжении и перегрузке. При острой боли или травме сначала проконсультируйтесь с врачом."],
+        ["Как часто ходить на массаж спины?", "Для снятия напряжения — курсом раз в неделю, далее поддерживающе раз в 2–4 недели."]
+      ]
+    },
+    ro: {
+      h1: "Masaj de spate în Chișinău",
+      lead: "Masaj profesionist de spate pentru durere, tensiune și oboseală de la munca sedentară. Eliberăm blocajele și readucem ușurința mișcării — la Mateev Spa Studio, Chișinău.",
+      who: ["Muncă sedentară", "Durere lombară", "Rigiditate", "Oboseală musculară"],
+      benefits: [
+        ["🎯", "Lucru punctual", "Lucrăm blocajele concrete, nu doar „netezim”."],
+        ["🧠", "Cauza, nu simptomul", "Analizăm postura și tiparul de tensiune."],
+        ["😌", "Mai puțină durere", "Reducem tensiunea și durerile de cap asociate."],
+        ["🔁", "Efect de durată", "Oferim recomandări pentru acasă."]
+      ],
+      faq: [
+        ["Cât durează o ședință?", "De obicei 45–60 minute, în funcție de obiectiv."],
+        ["Ajută la durerea lombară?", "Da, în caz de tensiune musculară. La durere acută sau traumă, consultați mai întâi medicul."],
+        ["Cât de des?", "În cură, o dată pe săptămână, apoi de întreținere."]
+      ]
+    }
+  },
+  {
+    slug: "massazh-shei-i-plech", src: "seo-sheya",
+    ru: {
+      h1: "Массаж шеи и плеч в Кишинёве",
+      lead: "Массаж шеи, воротниковой зоны и плеч при работе за компьютером: убираем зажимы, тяжесть и головные боли от экрана. Mateev Spa Studio, Кишинёв.",
+      who: ["Работа за экраном", "Головные боли", "Зажатая шея", "«Каменные» плечи"],
+      benefits: [
+        ["💻", "Для офисных", "Снимаем перегрузку шеи и плеч от долгих часов за столом."],
+        ["🤕", "Меньше головных болей", "Расслабляем зоны, из-за которых «стреляет» в голову."],
+        ["🌿", "Расслабление", "Уходит тяжесть, возвращается подвижность шеи."],
+        ["🔁", "Профилактика", "Советы по осанке и рабочему месту."]
+      ],
+      faq: [
+        ["Поможет при головной боли напряжения?", "Часто да — если причина в зажимах шеи и плеч. При регулярных болях проконсультируйтесь с врачом."],
+        ["Можно ли в обеденный перерыв?", "Да, есть короткие форматы 20–30 минут на шею-плечи."],
+        ["Сколько сеансов нужно?", "Обычно заметно легче уже после первого; для устойчивости — курс."]
+      ]
+    },
+    ro: {
+      h1: "Masaj de gât și umeri în Chișinău",
+      lead: "Masaj pentru gât, zona cervicală și umeri pentru cei care lucrează la calculator: eliberăm tensiunea, greutatea și durerile de cap de la ecran.",
+      who: ["Lucru la ecran", "Dureri de cap", "Gât încordat", "Umeri „de piatră”"],
+      benefits: [
+        ["💻", "Pentru birou", "Eliberăm suprasolicitarea gâtului și umerilor."],
+        ["🤕", "Mai puține dureri de cap", "Relaxăm zonele care declanșează durerea."],
+        ["🌿", "Relaxare", "Revine mobilitatea gâtului."],
+        ["🔁", "Prevenție", "Sfaturi pentru postură."]
+      ],
+      faq: [
+        ["Ajută la durerea de cap de tensiune?", "Adesea da, dacă originea este în gât și umeri."],
+        ["Se poate în pauza de prânz?", "Da, avem formate scurte de 20–30 minute."],
+        ["Câte ședințe?", "De obicei se simte ușurare după prima; pentru stabilitate — o cură."]
+      ]
+    }
+  },
+  {
+    slug: "lechebnyy-massazh", src: "seo-lech",
+    ru: {
+      h1: "Лечебный массаж в Кишинёве",
+      lead: "Лечебный и реабилитационный массаж при боли, напряжении и восстановлении. Индивидуальный подход и разбор проблемы — Mateev Spa Studio, Кишинёв.",
+      who: ["Хроническое напряжение", "Восстановление", "Боль в мышцах", "После нагрузок"],
+      benefits: [
+        ["🩺", "Индивидуально", "Составляем работу под вашу ситуацию, а не по шаблону."],
+        ["🎯", "По источнику", "Работаем с причиной напряжения, а не только симптомом."],
+        ["💪", "Восстановление", "Помогаем телу вернуться в ресурс после нагрузок."],
+        ["📋", "Рекомендации", "Домашние упражнения и советы для закрепления."]
+      ],
+      faq: [
+        ["Чем лечебный массаж отличается от расслабляющего?", "Он адреснее: работаем с конкретной зоной и задачей, а не только на общее расслабление."],
+        ["Нужна ли справка от врача?", "Не обязательно, но при заболеваниях и травмах — желательна консультация врача."],
+        ["Сколько сеансов в курсе?", "Чаще 5–10, зависит от задачи. Подскажем на первом визите."]
+      ]
+    },
+    ro: {
+      h1: "Masaj terapeutic în Chișinău",
+      lead: "Masaj terapeutic și de recuperare pentru durere, tensiune și refacere. Abordare individuală și analiza problemei — Mateev Spa Studio, Chișinău.",
+      who: ["Tensiune cronică", "Recuperare", "Durere musculară", "După efort"],
+      benefits: [
+        ["🩺", "Individual", "Adaptăm lucrul la situația dvs."],
+        ["🎯", "La sursă", "Lucrăm cauza, nu doar simptomul."],
+        ["💪", "Refacere", "Ajutăm corpul să revină după efort."],
+        ["📋", "Recomandări", "Exerciții pentru acasă."]
+      ],
+      faq: [
+        ["Prin ce diferă de masajul de relaxare?", "Este mai țintit: lucrăm o zonă și un obiectiv concret."],
+        ["Am nevoie de trimitere?", "Nu obligatoriu, dar la boli/traume e recomandată consultația medicului."],
+        ["Câte ședințe?", "De obicei 5–10, în funcție de obiectiv."]
+      ]
+    }
+  },
+  {
+    slug: "antitsellyulitnyy-massazh", src: "seo-anti",
+    ru: {
+      h1: "Антицеллюлитный массаж в Кишинёве",
+      lead: "Антицеллюлитный массаж для тонуса кожи и проработки проблемных зон. Курсовой подход и реальные ожидания без обещаний «чуда» — Mateev Spa Studio, Кишинёв.",
+      who: ["Тонус кожи", "Проблемные зоны", "Отёчность", "Курс к сезону"],
+      benefits: [
+        ["✨", "Тонус кожи", "Улучшаем микроциркуляцию и внешний вид кожи."],
+        ["💧", "Меньше отёчности", "Стимулируем лимфоток в проблемных зонах."],
+        ["📆", "Курсом", "Лучший результат — регулярный курс, а не разовый сеанс."],
+        ["🤝", "Честно", "Реалистичные ожидания и рекомендации по образу жизни."]
+      ],
+      faq: [
+        ["Сколько нужно сеансов?", "Обычно курс 8–12 сеансов 2 раза в неделю, далее поддержка."],
+        ["Это больно?", "Интенсивность подбирается индивидуально — работаем комфортно."],
+        ["Будет ли эффект без спорта и питания?", "Массаж усиливает результат, но лучший эффект — в связке с активностью и питанием."]
+      ]
+    },
+    ro: {
+      h1: "Masaj anticelulitic în Chișinău",
+      lead: "Masaj anticelulitic pentru tonusul pielii și zonele problematice. Abordare în cură și așteptări realiste — Mateev Spa Studio, Chișinău.",
+      who: ["Tonusul pielii", "Zone problematice", "Retenție de apă", "Cură de sezon"],
+      benefits: [
+        ["✨", "Tonus", "Îmbunătățim microcirculația și aspectul pielii."],
+        ["💧", "Mai puțină retenție", "Stimulăm drenajul limfatic."],
+        ["📆", "În cură", "Cel mai bun rezultat — o cură regulată."],
+        ["🤝", "Sincer", "Așteptări realiste și recomandări."]
+      ],
+      faq: [
+        ["Câte ședințe?", "De obicei 8–12, de 2 ori pe săptămână, apoi întreținere."],
+        ["Doare?", "Intensitatea se adaptează — lucrăm confortabil."],
+        ["Merge fără sport și dietă?", "Masajul ajută, dar rezultatul optim e împreună cu activitatea și alimentația."]
+      ]
+    }
+  },
+  {
+    slug: "rasslablyayushchiy-massazh", src: "seo-relax",
+    ru: {
+      h1: "Расслабляющий массаж в Кишинёве",
+      lead: "Расслабляющий массаж всего тела для снятия стресса и глубокого отдыха. Спокойная атмосфера и внимательный подход — Mateev Spa Studio, Кишинёв.",
+      who: ["Стресс и усталость", "Плохой сон", "Перегрузка", "Забота о себе"],
+      benefits: [
+        ["😮‍💨", "Снятие стресса", "Тело и нервная система выдыхают — вы наконец расслабляетесь."],
+        ["😴", "Лучше сон", "После сеанса легче засыпать и восстанавливаться."],
+        ["🌿", "Атмосфера", "Спокойная обстановка, приятные масла, ваш темп."],
+        ["🎁", "В подарок", "Отличный подарок близкому — можно сертификатом."]
+      ],
+      faq: [
+        ["Сколько длится расслабляющий массаж?", "Обычно 60–90 минут — так тело успевает по-настоящему отдохнуть."],
+        ["Можно подарить сеанс?", "Да, оформите подарочный сертификат — красиво и просто."],
+        ["Как часто можно?", "Хоть регулярно — это забота о себе без противопоказаний в норме."]
+      ]
+    },
+    ro: {
+      h1: "Masaj de relaxare în Chișinău",
+      lead: "Masaj de relaxare pentru tot corpul, pentru eliminarea stresului și odihnă profundă. Atmosferă calmă și atenție — Mateev Spa Studio, Chișinău.",
+      who: ["Stres și oboseală", "Somn prost", "Suprasolicitare", "Grijă de sine"],
+      benefits: [
+        ["😮‍💨", "Anti-stres", "Corpul și sistemul nervos se relaxează cu adevărat."],
+        ["😴", "Somn mai bun", "Adormiți și vă refaceți mai ușor."],
+        ["🌿", "Atmosferă", "Ambient calm, uleiuri plăcute, ritmul dvs."],
+        ["🎁", "Cadou", "Un cadou minunat — prin certificat."]
+      ],
+      faq: [
+        ["Cât durează?", "De obicei 60–90 minute."],
+        ["Pot dărui o ședință?", "Da, prin certificat cadou."],
+        ["Cât de des?", "Chiar și regulat — e grijă de sine."]
+      ]
+    }
+  }
+];
+
+function seoBase() { return (SITE_URL || "https://mateevmassage.com").replace(/\/$/, ""); }
+
+function renderSeoLanding(page, lang = "ru") {
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
+  const c = ro ? page.ro : page.ru;
+  const base = seoBase();
+  const path = `/uslugi/${page.slug}`;
+  const bookUrl = `${base}/?src=${page.src}#booking`;
+  const others = SEO_LANDINGS.filter((p) => p.slug !== page.slug);
+  const ld = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["LocalBusiness", "HealthAndBeautyBusiness"],
+        name: SEO_BRAND.name, telephone: SEO_BRAND.phone, url: base,
+        image: `${base}/og-image.jpg`, priceRange: "$$",
+        address: { "@type": "PostalAddress", streetAddress: SEO_BRAND.street, addressLocality: SEO_BRAND.locality, addressCountry: SEO_BRAND.country },
+        areaServed: "Chișinău"
+      },
+      { "@type": "Service", serviceType: c.h1, provider: { "@type": "LocalBusiness", name: SEO_BRAND.name }, areaServed: "Chișinău", url: `${base}${path}` },
+      { "@type": "FAQPage", mainEntity: c.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }
+    ]
+  };
+  const benefits = c.benefits.map(([ic, ti, d]) => `<div class="sb-card"><div class="sb-ic">${ic}</div><h3>${escapeHtml(ti)}</h3><p>${escapeHtml(d)}</p></div>`).join("");
+  const chips = c.who.map((w) => `<span class="sb-chip">${escapeHtml(w)}</span>`).join("");
+  const faq = c.faq.map(([q, a]) => `<details class="sb-faq"><summary>${escapeHtml(q)}</summary><p>${escapeHtml(a)}</p></details>`).join("");
+  const related = others.map((p) => `<a class="sb-rel" href="${base}/uslugi/${p.slug}${ro ? "?lang=ro" : ""}">${escapeHtml((ro ? p.ro : p.ru).h1)} →</a>`).join("");
+  return `<!DOCTYPE html>
+<html lang="${ro ? "ro" : "ru"}">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(c.h1)} — Mateev Spa Studio</title>
+<meta name="description" content="${escapeHtml(c.lead)}">
+<link rel="canonical" href="${base}${path}${ro ? "?lang=ro" : ""}">
+<link rel="alternate" hreflang="ru" href="${base}${path}">
+<link rel="alternate" hreflang="ro" href="${base}${path}?lang=ro">
+<link rel="alternate" hreflang="x-default" href="${base}${path}">
+<meta property="og:title" content="${escapeHtml(c.h1)} — Mateev Spa Studio">
+<meta property="og:description" content="${escapeHtml(c.lead)}">
+<meta property="og:image" content="${base}/og-image.jpg">
+<meta property="og:url" content="${base}${path}">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<style>${SEO_CSS}</style>
+</head>
+<body>
+<header class="sb-top"><div class="sb-top__in">
+  <a class="sb-brand" href="${base}/">Mateev Spa Studio</a>
+  <div class="sb-top__r">
+    <a class="sb-lang" href="${base}${path}${ro ? "" : "?lang=ro"}">${t("RO", "RU")}</a>
+    <a class="sb-cta-top" href="${bookUrl}">${t("Записаться", "Programare")}</a>
+  </div>
+</div></header>
+<main class="sb-wrap">
+  <p class="sb-kick">${t("Массаж · Кишинёв", "Masaj · Chișinău")}</p>
+  <h1>${escapeHtml(c.h1)}</h1>
+  <p class="sb-lead">${escapeHtml(c.lead)}</p>
+  <div class="sb-chips">${chips}</div>
+  <a class="sb-cta" href="${bookUrl}">${t("Записаться на массаж", "Programează-te")}</a>
+
+  <section><h2>${t("Что вы получите", "Ce primiți")}</h2><div class="sb-grid">${benefits}</div></section>
+
+  <section class="sb-trust">
+    <div><b>10+</b><span>${t("лет опыта", "ani experiență")}</span></div>
+    <div><b>3000+</b><span>${t("клиентов", "clienți")}</span></div>
+    <div><b>★ 5.0</b><span>${t("отзывы", "recenzii")}</span></div>
+  </section>
+
+  <section><h2>${t("Частые вопросы", "Întrebări frecvente")}</h2>${faq}</section>
+
+  <section class="sb-final">
+    <h2>${t("Запишитесь сегодня", "Programează-te azi")}</h2>
+    <p>${t("Онлайн-запись за минуту. Кишинёв, отель «Кишинёв», кабинет 213.", "Programare online într-un minut. Chișinău, hotel „Chișinău”, cab. 213.")}</p>
+    <a class="sb-cta" href="${bookUrl}">${t("Выбрать время", "Alege ora")}</a>
+  </section>
+
+  <nav class="sb-related"><h2>${t("Другие виды массажа", "Alte tipuri de masaj")}</h2>${related}</nav>
+</main>
+<footer class="sb-foot">© ${new Date().getFullYear()} Mateev Spa Studio · <a href="${base}/">${t("Главная", "Acasă")}</a> · <a href="tel:+37369158475">${SEO_BRAND.phone}</a></footer>
+</body>
+</html>`;
+}
+
+function renderSeoHub(lang = "ru") {
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
+  const base = seoBase();
+  const cards = SEO_LANDINGS.map((p) => {
+    const c = ro ? p.ro : p.ru;
+    return `<a class="sb-hub-card" href="${base}/uslugi/${p.slug}${ro ? "?lang=ro" : ""}"><h3>${escapeHtml(c.h1)}</h3><p>${escapeHtml(c.lead)}</p><span class="sb-hub-go">${t("Подробнее", "Detalii")} →</span></a>`;
+  }).join("");
+  return `<!DOCTYPE html>
+<html lang="${ro ? "ro" : "ru"}">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${t("Массаж в Кишинёве — услуги", "Masaj în Chișinău — servicii")} — Mateev Spa Studio</title>
+<meta name="description" content="${t("Виды массажа в Кишинёве: спина, шея и плечи, лечебный, антицеллюлитный, расслабляющий. Онлайн-запись в студию Mateev Spa Studio.", "Tipuri de masaj în Chișinău: spate, gât și umeri, terapeutic, anticelulitic, relaxare. Programare online la Mateev Spa Studio.")}">
+<link rel="canonical" href="${base}/uslugi${ro ? "?lang=ro" : ""}">
+<link rel="alternate" hreflang="ru" href="${base}/uslugi">
+<link rel="alternate" hreflang="ro" href="${base}/uslugi?lang=ro">
+<link rel="alternate" hreflang="x-default" href="${base}/uslugi">
+<meta property="og:title" content="${t("Массаж в Кишинёве — услуги", "Masaj în Chișinău")} — Mateev Spa Studio">
+<meta property="og:image" content="${base}/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>${SEO_CSS}</style>
+</head>
+<body>
+<header class="sb-top"><div class="sb-top__in">
+  <a class="sb-brand" href="${base}/">Mateev Spa Studio</a>
+  <div class="sb-top__r">
+    <a class="sb-lang" href="${base}/uslugi${ro ? "" : "?lang=ro"}">${t("RO", "RU")}</a>
+    <a class="sb-cta-top" href="${base}/?src=seo#booking">${t("Записаться", "Programare")}</a>
+  </div>
+</div></header>
+<main class="sb-wrap">
+  <p class="sb-kick">${t("Массаж · Кишинёв", "Masaj · Chișinău")}</p>
+  <h1>${t("Массаж в Кишинёве", "Masaj în Chișinău")}</h1>
+  <p class="sb-lead">${t("Выберите вид массажа — под боль, напряжение, восстановление или отдых. Профессиональный подход и онлайн-запись в студию Mateev Spa Studio.", "Alegeți tipul de masaj — pentru durere, tensiune, recuperare sau relaxare. Abordare profesionistă și programare online la Mateev Spa Studio.")}</p>
+  <div class="sb-hub">${cards}</div>
+</main>
+<footer class="sb-foot">© ${new Date().getFullYear()} Mateev Spa Studio · <a href="${base}/">${t("Главная", "Acasă")}</a> · <a href="tel:+37369158475">${SEO_BRAND.phone}</a></footer>
+</body>
+</html>`;
+}
+
+const SEO_CSS = `
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--forest:#1a2e22;--sage:#6b8d6b;--sand:#f7f0e6;--warm:#e8ddd0;--gold:#b36d2c;--muted:#7d6d60;--ink:#241c17}
+  body{font-family:'Manrope',sans-serif;background:var(--sand);color:var(--ink);line-height:1.65}
+  a{color:inherit}
+  .sb-top{position:sticky;top:0;z-index:10;background:rgba(247,240,230,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--warm)}
+  .sb-top__in{max-width:820px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .sb-brand{font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--forest);font-size:1.1rem;text-decoration:none}
+  .sb-top__r{display:flex;align-items:center;gap:10px}
+  .sb-lang{font-size:.78rem;font-weight:700;color:var(--muted);text-decoration:none;border:1px solid var(--warm);border-radius:8px;padding:6px 10px}
+  .sb-cta-top{background:var(--gold);color:#fff;text-decoration:none;padding:8px 15px;border-radius:9px;font-weight:700;font-size:.83rem}
+  .sb-wrap{max-width:820px;margin:0 auto;padding:40px 22px 60px}
+  .sb-kick{font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5.5vw,3rem);font-weight:600;color:var(--forest);line-height:1.12;margin-bottom:14px}
+  .sb-lead{font-size:1.06rem;color:#3a2e26;margin-bottom:20px;max-width:640px}
+  .sb-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+  .sb-chip{background:#fff;border:1px solid var(--warm);border-radius:999px;padding:7px 14px;font-size:.84rem;font-weight:600;color:#3a2e26}
+  .sb-cta{display:inline-block;background:var(--gold);color:#fff;text-decoration:none;padding:14px 30px;border-radius:12px;font-weight:700;font-size:1rem;transition:.15s}
+  .sb-cta:hover{background:#9a5c22}
+  section{margin-top:44px}
+  h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--forest);margin-bottom:16px}
+  .sb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .sb-card{background:#fff;border:1px solid var(--warm);border-radius:16px;padding:20px}
+  .sb-ic{font-size:1.6rem}
+  .sb-card h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--forest);margin:8px 0 5px}
+  .sb-card p{font-size:.9rem;color:var(--muted)}
+  .sb-trust{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;background:transparent}
+  .sb-trust div{background:#fff;border:1px solid var(--warm);border-radius:16px;padding:14px 22px;text-align:center;min-width:120px}
+  .sb-trust b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--forest)}
+  .sb-trust span{font-size:.78rem;color:var(--muted)}
+  .sb-faq{background:#fff;border:1px solid var(--warm);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+  .sb-faq summary{font-weight:700;color:var(--forest);cursor:pointer;list-style:none}
+  .sb-faq summary::-webkit-details-marker{display:none}
+  .sb-faq summary::before{content:"＋ ";color:var(--gold);font-weight:700}
+  .sb-faq[open] summary::before{content:"− "}
+  .sb-faq p{margin-top:10px;color:#3a2e26;font-size:.94rem}
+  .sb-final{background:var(--forest);border-radius:20px;padding:34px;text-align:center}
+  .sb-final h2{color:#fff}
+  .sb-final p{color:rgba(255,255,255,.72);margin-bottom:18px}
+  .sb-related{margin-top:44px}
+  .sb-rel{display:block;background:#fff;border:1px solid var(--warm);border-radius:12px;padding:14px 18px;margin-bottom:9px;text-decoration:none;color:var(--forest);font-weight:600;font-family:'Cormorant Garamond',serif;font-size:1.1rem}
+  .sb-rel:hover{border-color:var(--gold)}
+  .sb-hub{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:26px}
+  .sb-hub-card{background:#fff;border:1px solid var(--warm);border-radius:18px;padding:24px;text-decoration:none;color:inherit;transition:.15s;display:flex;flex-direction:column}
+  .sb-hub-card:hover{box-shadow:0 12px 30px rgba(36,28,23,.09);transform:translateY(-2px)}
+  .sb-hub-card h3{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--forest);margin-bottom:8px}
+  .sb-hub-card p{font-size:.9rem;color:var(--muted);flex:1}
+  .sb-hub-go{color:var(--gold);font-weight:700;font-size:.88rem;margin-top:14px}
+  .sb-foot{text-align:center;padding:26px 22px;color:var(--muted);font-size:.82rem;border-top:1px solid var(--warm)}
+  .sb-foot a{color:var(--sage);text-decoration:none;font-weight:600}
+`;
+
 // Публичная карточка мастера — цель QR/ссылки из реестра. Показывается, если public.
 function renderMasterCardPage(diploma, lang = "ru") {
   const ro = lang === "ro";
@@ -9811,6 +10171,28 @@ function createServer() {
         return;
       }
 
+      // SEO-лендинги услуг: /uslugi (хаб) и /uslugi/:slug
+      if (urlObject.pathname === "/uslugi" || urlObject.pathname === "/uslugi/") {
+        const seoLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=600" });
+        response.end(renderSeoHub(seoLang));
+        return;
+      }
+      if (urlObject.pathname.startsWith("/uslugi/")) {
+        const slug = urlObject.pathname.replace("/uslugi/", "").replace(/\/$/, "");
+        const page = SEO_LANDINGS.find((p) => p.slug === slug);
+        const seoLang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        if (page) {
+          response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=600" });
+          response.end(renderSeoLanding(page, seoLang));
+          return;
+        }
+        // неизвестный slug → на хаб
+        response.writeHead(302, { Location: "/uslugi" });
+        response.end();
+        return;
+      }
+
       if (urlObject.pathname.startsWith("/blog/") && urlObject.pathname.endsWith("/og.svg")) {
         const entryId = urlObject.pathname.replace("/blog/", "").replace("/og.svg", "");
         const raw = await readJson("diary.json").catch(() => []);
@@ -9901,6 +10283,8 @@ function createServer() {
   <url><loc>${base}/certificates</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   <url><loc>${base}/gift</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
   <url><loc>${base}/corporate</loc><lastmod>${now}</lastmod><priority>0.7</priority></url>
+  <url><loc>${base}/uslugi</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
+  ${SEO_LANDINGS.map((p) => `<url><loc>${base}/uslugi/${p.slug}</loc><lastmod>${now}</lastmod><priority>0.75</priority></url>`).join("\n  ")}
   <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
 ${teamUrls}
 ${cityUrls}
