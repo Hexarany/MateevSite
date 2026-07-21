@@ -147,7 +147,14 @@ const STATIC_FILES = {
   "/planner-icon-180.png": "planner-icon-180.png",
   "/googlea2034b1cba2249ff.html": "googlea2034b1cba2249ff.html",
   "/vendor/qrcode.min.js": "vendor/qrcode.min.js",
-  "/vendor/qrcode-generator.min.js": "vendor/qrcode-generator.min.js"
+  "/vendor/qrcode-generator.min.js": "vendor/qrcode-generator.min.js",
+  "/track": "track.html",
+  "/track.html": "track.html",
+  "/track-sw.js": "track-sw.js",
+  "/track-manifest.json": "track-manifest.json",
+  "/track-icon-192.png": "track-icon-192.png",
+  "/track-icon-512.png": "track-icon-512.png",
+  "/track-icon-180.png": "track-icon-180.png"
 };
 
 const MIME_TYPES = {

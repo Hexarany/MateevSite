@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Путь мастера · 90 дней</title>
+<link rel="manifest" href="/track-manifest.json">
+<meta name="theme-color" content="#1a2e22">
+<link rel="icon" type="image/png" href="/track-icon-192.png">
+<link rel="apple-touch-icon" href="/track-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Путь мастера">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --forest:#1a2e22; --forest2:#0f1c15; --sand:#f7f0e6; --paper:#fffdf9; --warm:#e8ddd0;
+    --gold:#b98a3e; --gold2:#c49e5a; --sage:#6b8d6b; --ink:#241c17; --muted:#7d6d60;
+    --line:rgba(64,49,39,.13); --shadow:0 10px 30px rgba(26,46,34,.10);
+  }
+  html,body{background:var(--sand);color:var(--ink);font-family:'Manrope',sans-serif;line-height:1.55}
+  body{padding:0 0 84px;max-width:640px;margin:0 auto;min-height:100svh}
+  input,textarea,button{font-family:inherit;color:inherit}
+  ::placeholder{color:#b6aa9d}
+
+  .top{background:linear-gradient(160deg,var(--forest),var(--forest2));color:#fff;padding:20px 20px 18px;position:relative}
+  .top__brand{display:flex;align-items:center;gap:9px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.2rem;color:#f3ece0}
+  .top__brand .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--gold2);position:relative;flex:0 0 auto}
+  .top__brand .dot::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--gold2)}
+  .top__meta{margin-top:14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .top__day{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:700;line-height:1;color:#fff}
+  .top__day small{font-size:1rem;color:rgba(255,255,255,.55);font-weight:600}
+  .top__pill{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(196,158,90,.18);border:1px solid rgba(196,158,90,.45);color:#e8dcc8;border-radius:999px;padding:4px 11px}
+  .top__bar{margin-top:14px;height:6px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+  .top__bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px}
+  .installbtn{position:absolute;top:16px;right:16px;background:var(--gold);color:#fff;border:none;border-radius:9px;padding:7px 12px;font-size:.78rem;font-weight:700;cursor:pointer;display:none}
+
+  .wrap{padding:18px 16px 0}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+  .card__k{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+  .card__t{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--forest);line-height:1.15}
+  .card__f{color:#3a2e26;font-size:.94rem;margin-top:6px}
+
+  .target{display:flex;align-items:center;gap:13px;background:linear-gradient(160deg,#20362a,#16261d);color:#f3ece0;border-radius:16px;padding:16px 18px;margin-bottom:14px}
+  .target__ic{font-size:1.5rem}
+  .target__l{flex:1}
+  .target__k{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
+  .target__v{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;margin-top:2px;line-height:1.15}
+  .target__chk{width:30px;height:30px;flex:0 0 30px;border:2px solid var(--gold2);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#16261d;transition:.15s}
+  .target__chk.on{background:var(--gold2)}
+
+  .habits{display:flex;flex-direction:column;gap:2px}
+  .habit{display:flex;align-items:center;gap:13px;padding:12px 2px;border-top:1px solid var(--line);cursor:pointer}
+  .habits .habit:first-child{border-top:none}
+  .habit__chk{width:26px;height:26px;flex:0 0 26px;border:2px solid var(--sage);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;transition:.15s}
+  .habit__chk.on{background:var(--sage);border-color:var(--sage)}
+  .habit__t{font-size:.94rem;color:var(--ink)}
+  .habit.done .habit__t{color:var(--muted)}
+
+  textarea.journal{width:100%;border:none;background:transparent;resize:vertical;min-height:92px;font-size:.95rem;outline:none;line-height:1.6}
+  textarea.journal:focus{background:#fdf8f1;border-radius:10px;padding:8px}
+  .hint{font-size:.75rem;color:var(--muted);margin-top:4px}
+
+  /* Plan */
+  .phase{margin-bottom:8px}
+  .phase__h{display:flex;align-items:center;gap:10px;margin:18px 2px 10px}
+  .phase__n{width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:var(--forest);color:var(--gold2);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700}
+  .phase__t{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--forest);font-weight:600;line-height:1.1}
+  .phase__d{font-size:.72rem;color:var(--muted);font-weight:600}
+  details.week{background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-bottom:9px;overflow:hidden}
+  details.week[data-cur="1"]{border-color:var(--gold);box-shadow:0 6px 18px rgba(185,138,62,.14)}
+  details.week>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:12px}
+  details.week>summary::-webkit-details-marker{display:none}
+  .week__num{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:var(--sand);color:var(--forest);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
+  details.week[data-cur="1"] .week__num{background:var(--gold);color:#fff}
+  .week__ti{flex:1}
+  .week__ti b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--forest);font-weight:600}
+  .week__ti span{font-size:.78rem;color:var(--muted)}
+  .week__cur{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:2px 8px}
+  .week__body{padding:0 16px 16px 58px}
+  .week__body li{font-size:.9rem;color:#3a2e26;margin:5px 0;list-style:none;position:relative;padding-left:16px}
+  .week__body li::before{content:"·";position:absolute;left:2px;color:var(--gold);font-weight:700}
+  .cp{background:linear-gradient(160deg,#20362a,#14231a);color:#f3ece0;border-radius:16px;padding:18px;margin:10px 0 4px}
+  .cp__h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cp__t{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600}
+  .cp__date{font-size:.74rem;color:var(--gold2);font-weight:700}
+  .cp__i{display:flex;align-items:flex-start;gap:10px;padding:9px 0;cursor:pointer;border-top:1px solid rgba(255,255,255,.08);margin-top:8px}
+  .cp__box{width:22px;height:22px;flex:0 0 22px;border:2px solid var(--gold2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#14231a;margin-top:1px}
+  .cp__box.on{background:var(--gold2)}
+  .cp__x{font-size:.9rem;line-height:1.4}
+
+  /* Journal list */
+  .jitem{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+  .jitem__d{font-size:.72rem;font-weight:700;color:var(--gold);text-transform:capitalize;margin-bottom:5px}
+  .jitem__x{font-size:.92rem;color:#3a2e26;white-space:pre-wrap}
+  .empty{text-align:center;color:var(--muted);font-style:italic;padding:40px 10px}
+
+  /* Progress */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center}
+  .stat b{display:block;font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--forest);line-height:1}
+  .stat span{font-size:.78rem;color:var(--muted);margin-top:4px;display:block}
+  .prow{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:.9rem}
+  .prow:first-child{border-top:none}
+  .prow b{color:var(--forest)}
+  .settings{margin-top:6px}
+  .settings label{font-size:.8rem;font-weight:700;color:#3a2e26;display:block;margin-bottom:5px}
+  .settings input{border:1px solid var(--warm);border-radius:9px;padding:9px 11px;font-size:.9rem;background:var(--sand)}
+
+  /* Tab bar */
+  .tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:rgba(255,253,249,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20}
+  .tab{flex:1;background:none;border:none;cursor:pointer;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:.68rem;font-weight:600}
+  .tab .i{font-size:1.25rem;line-height:1}
+  .tab.on{color:var(--forest)}
+  .tab.on .i{transform:scale(1.06)}
+  .view{display:none}
+  .view.on{display:block}
+  h2.sec{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--forest);margin:6px 2px 12px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <button class="installbtn" id="installBtn">📲 Установить</button>
+  <div class="top__brand"><span class="dot"></span>Путь мастера</div>
+  <div class="top__meta">
+    <div class="top__day" id="dayBig">День 1<small> / 90</small></div>
+    <span class="top__pill" id="weekPill">Неделя 1</span>
+    <span class="top__pill" id="phasePill">Фаза 1</span>
+  </div>
+  <div class="top__bar"><i id="topBar" style="width:1%"></i></div>
+</div>
+
+<div class="wrap">
+  <!-- СЕГОДНЯ -->
+  <section class="view on" id="v-today">
+    <div class="card">
+      <div class="card__k" id="tWeekK">Тема недели</div>
+      <div class="card__t" id="tWeekTitle">—</div>
+      <div class="card__f" id="tWeekFocus">—</div>
+    </div>
+
+    <div class="target" id="tTarget" style="display:none">
+      <div class="target__ic">🎯</div>
+      <div class="target__l">
+        <div class="target__k">Цель дня</div>
+        <div class="target__v" id="tTargetV">—</div>
+      </div>
+      <div class="target__chk" id="tTargetChk">✓</div>
+    </div>
+
+    <div class="card">
+      <div class="card__k">Ежедневные привычки</div>
+      <div class="habits" id="tHabits"></div>
+    </div>
+
+    <div class="card">
+      <div class="card__k">Дневник практики · сегодня</div>
+      <textarea class="journal" id="tJournal" placeholder="1 клиент → что увидел · гипотеза · что изменю в следующий раз…"></textarea>
+      <div class="hint" id="tSaved" style="opacity:0;color:var(--sage);font-weight:600;">✓ Сохранено</div>
+    </div>
+  </section>
+
+  <!-- ПЛАН -->
+  <section class="view" id="v-plan">
+    <h2 class="sec">Программа · 90 дней</h2>
+    <div id="planBody"></div>
+  </section>
+
+  <!-- ДНЕВНИК -->
+  <section class="view" id="v-journal">
+    <h2 class="sec">Дневник практики</h2>
+    <div id="journalBody"></div>
+  </section>
+
+  <!-- ПРОГРЕСС -->
+  <section class="view" id="v-progress">
+    <h2 class="sec">Прогресс</h2>
+    <div class="stats" id="progStats"></div>
+    <div class="card" style="margin-top:14px" id="progRows"></div>
+    <div class="card settings">
+      <label>Дата старта трека</label>
+      <input type="date" id="startDate">
+      <div class="hint">Если сдвинул начало — поправь дату, и «День N» пересчитается.</div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs">
+  <button class="tab on" data-v="today"><span class="i">🎯</span>Сегодня</button>
+  <button class="tab" data-v="plan"><span class="i">🗺️</span>План</button>
+  <button class="tab" data-v="journal"><span class="i">📓</span>Дневник</button>
+  <button class="tab" data-v="progress"><span class="i">📈</span>Прогресс</button>
+</nav>
+
+<script>
+(function(){
+  "use strict";
+  var STORE = "mastery-track-v1";
+  var DEFAULT_START = "2026-07-20";
+
+  var HABITS = [
+    "🧠 Анатомия / дифференциация — 10 мин",
+    "📓 1 клиент → запись в дневник",
+    "🤸 Своя механика / мобилити — 5–7 мин",
+    "🎯 Микро-принцип недели — на каждом сеансе"
+  ];
+  var PHASES = [
+    { n:1, t:"Диагностический фундамент", d:"Дни 1–30" },
+    { n:2, t:"Регион и дифференциация", d:"Дни 31–60" },
+    { n:3, t:"Интеграция · тело · преподавание", d:"Дни 61–90" }
+  ];
+  var WEEKS = [
+    { ph:1, t:"Послойная палпация", f:"Пере-сенсибилизируем пальцы: читаем выбранный слой и называем структуру.",
+      p:["Глубина — намерением, а не силой: тони медленно, жди релиз.","Палпируй к цели, называй структуру вслух.","Сравнивай: слой vs слой, лево vs право.","Дифференцируй сокращением (резист-тест «всплывает» мышцу)."],
+      targets:["Трапеция ↔ леватор лопатки","ГКС ↔ передняя лестничная","Ромбовидные под трапецией","QL ↔ выпрямитель спины","Грушевидная (под ягодичной)","Надостная ↔ трапеция над ней","Сухожилие ↔ брюшко (переход)"] },
+    { ph:1, t:"Оценка осанки", f:"Что значимо, а что шум. Читаем паттерны компенсации.",
+      p:["Не гонись за «идеалом» — ищи значимое.","Фото до/после, паттерны компенсации.","Связывай осанку с жалобой клиента."] },
+    { ph:1, t:"Функциональные тесты", f:"Активные / пассивные / на сопротивление — ограничение и провокация.",
+      p:["Активные / пассивные / резист-тесты.","Ищи ограничение И провокацию симптома.","Тест → гипотеза, а не «просто размял»."] },
+    { ph:1, t:"Каркас рассуждения + красные флаги", f:"Жалоба → гипотеза → тест → план → переоценка.",
+      p:["Проведи каждый сеанс по каркасу.","Красные флаги: когда НЕ массаж, когда к врачу.","На каждый сеанс — гипотеза вслух."] },
+    { ph:2, t:"Шея / грудной / плечевой пояс", f:"ГКС ↔ лестничные ↔ верхняя трапеция; грудной выход; ГБН.",
+      p:["Дифференцируй ГКС / лестничные / трапецию.","Грудной выход, головные боли напряжения.","Механика лопатки и первого ребра."] },
+    { ph:2, t:"Поясница / таз", f:"QL ↔ psoas ↔ квадратная; крестцово-подвздошный; грушевидная ↔ корешок.",
+      p:["QL ↔ psoas ↔ квадратная — дифференцируй.","Крестцово-подвздошный, паттерны таза.","Грушевидная ↔ корешок (седалищная)."] },
+    { ph:2, t:"Плечо / рука", f:"Ротаторная манжета, ритм лопатки, импинджмент ↔ «замороженное».",
+      p:["Ротаторная манжета, ритм лопатки.","Импинджмент ↔ «замороженное плечо».","Цепочка шея → плечо → рука."] },
+    { ph:2, t:"Таз / бедро / нога", f:"Хамстринги ↔ седалищная; ITB, стопа-голень; походка.",
+      p:["Хамстринги ↔ седалищная.","ITB, механика колена, стопа-голень.","Чтение походки."] },
+    { ph:3, t:"Мульти-факторные кейсы", f:"Цепи и компенсации: боль не там, где причина.",
+      p:["Цепи и компенсации: боль ≠ причина.","Приоритезируй: с чего начать.","Переоценка после каждого блока."] },
+    { ph:3, t:"Наука о боли на практике", f:"Сенситизация, хроника, работа с ожиданиями и словом.",
+      p:["Центральная сенситизация, хроника.","Работа с ожиданиями и словом.","Что реально работает, а что миф."] },
+    { ph:3, t:"Своя механика / долголетие", f:"Механика корпуса, экономия кистей — карьера на годы.",
+      p:["Механика корпуса, экономия кистей.","Дыхание, стойки, «дорогие» движения.","Личная программа профилактики."] },
+    { ph:3, t:"Из мастерства — в метод", f:"Собери свой фреймворк оценки + обучающий модуль.",
+      p:["Собери сигнатурный фреймворк оценки.","Оформи 1 обучающий модуль (в платформу).","Объясни как ученику — вскрой пробелы."] },
+    { ph:3, t:"Капстоун", f:"Сложный мульти-регион кейс end-to-end + план на следующие 90.",
+      p:["Сложный мульти-регион кейс end-to-end.","Отшлифуй метод.","План на следующие 90 дней."] }
+  ];
+  var CHECKPOINTS = [
+    { afterWeek:4, dayNo:30, t:"Чекпоинт · День 30", items:["Структурная оценка нового клиента за 5 мин","На каждый сеанс — сформулированная гипотеза"] },
+    { afterWeek:8, dayNo:60, t:"Чекпоинт · День 60", items:["Различаю путающиеся пары по каждому региону","Объясняю выбор техники доказательно, без мифов"] },
+    { afterWeek:12, dayNo:90, t:"Чекпоинт · День 90", items:["Веду сложный мульти-регион кейс end-to-end","Готов авторский фреймворк + обучающий модуль","Измеримое улучшение своей механики"] }
+  ];
+
+  // ── state ──
+  var data = load();
+  if (!data.start) data.start = DEFAULT_START;
+  if (!data.days) data.days = {};
+  if (!data.checks) data.checks = {};
+
+  function load(){ try{ return JSON.parse(localStorage.getItem(STORE)) || {}; }catch(e){ return {}; } }
+  function save(){ localStorage.setItem(STORE, JSON.stringify(data)); }
+
+  // ── dates ──
+  function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate()); }
+  function p2(n){ return (n<10?"0":"")+n; }
+  function parse(s){ var a=s.split("-"); return new Date(+a[0],+a[1]-1,+a[2]); }
+  function addDays(s,n){ var d=parse(s); d.setDate(d.getDate()+n); return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate()); }
+  function diffDays(a,b){ return Math.round((parse(b)-parse(a))/86400000); }
+  function fmtDate(s){ try{ return parse(s).toLocaleDateString("ru-RU",{day:"numeric",month:"long"}); }catch(e){ return s; } }
+
+  function dayNum(){ return Math.min(90, Math.max(1, diffDays(data.start, todayStr())+1)); }
+  function weekNum(){ return Math.min(13, Math.max(1, Math.ceil(dayNum()/7))); }
+  function curWeek(){ return WEEKS[weekNum()-1]; }
+  function dayRec(dateStr){ if(!data.days[dateStr]) data.days[dateStr]={h:[false,false,false,false],j:"",t:false}; return data.days[dateStr]; }
+
+  // ── render: today ──
+  function renderTop(){
+    var dn=dayNum(), wn=weekNum(), w=curWeek();
+    document.getElementById("dayBig").innerHTML="День "+dn+"<small> / 90</small>";
+    document.getElementById("weekPill").textContent="Неделя "+wn;
+    document.getElementById("phasePill").textContent="Фаза "+w.ph;
+    document.getElementById("topBar").style.width=(dn/90*100).toFixed(1)+"%";
+  }
+  function renderToday(){
+    var w=curWeek(), rec=dayRec(todayStr());
+    document.getElementById("tWeekK").textContent="Тема недели "+weekNum();
+    document.getElementById("tWeekTitle").textContent=w.t;
+    document.getElementById("tWeekFocus").textContent=w.f;
+    // target of day
+    var tEl=document.getElementById("tTarget");
+    if(w.targets && w.targets.length){
+      var idx=(new Date().getDay()+6)%7; // Пн=0
+      var tgt=w.targets[idx % w.targets.length];
+      document.getElementById("tTargetV").textContent=tgt;
+      document.getElementById("tTargetChk").classList.toggle("on", !!rec.t);
+      tEl.style.display="flex";
+    } else tEl.style.display="none";
+    // habits
+    var hEl=document.getElementById("tHabits"); hEl.innerHTML="";
+    HABITS.forEach(function(h,i){
+      var row=document.createElement("div"); row.className="habit"+(rec.h[i]?" done":"");
+      row.innerHTML='<div class="habit__chk'+(rec.h[i]?" on":"")+'">'+(rec.h[i]?"✓":"")+'</div><div class="habit__t">'+h+'</div>';
+      row.onclick=function(){ rec.h[i]=!rec.h[i]; save(); renderToday(); renderTopSoft(); };
+      hEl.appendChild(row);
+    });
+    document.getElementById("tJournal").value=rec.j||"";
+  }
+  function renderTopSoft(){ /* progress bar unaffected by habits; keep for future */ }
+
+  document.getElementById("tTargetChk").onclick=function(){ var r=dayRec(todayStr()); r.t=!r.t; save(); this.classList.toggle("on", r.t); };
+  var jt;
+  document.getElementById("tJournal").addEventListener("input",function(e){
+    var r=dayRec(todayStr()); r.j=e.target.value;
+    clearTimeout(jt); jt=setTimeout(function(){ save(); var s=document.getElementById("tSaved"); s.style.opacity="1"; setTimeout(function(){s.style.opacity="0";},1200); }, 400);
+  });
+
+  // ── render: plan ──
+  function renderPlan(){
+    var wn=weekNum(), out="";
+    PHASES.forEach(function(ph){
+      out+='<div class="phase"><div class="phase__h"><div class="phase__n">'+ph.n+'</div><div><div class="phase__t">'+ph.t+'</div><div class="phase__d">'+ph.d+'</div></div></div>';
+      WEEKS.forEach(function(w,i){
+        if(w.ph!==ph.n) return;
+        var num=i+1, cur=num===wn;
+        out+='<details class="week" data-cur="'+(cur?1:0)+'"'+(cur?" open":"")+'>'
+          +'<summary><div class="week__num">'+num+'</div><div class="week__ti"><b>'+w.t+'</b><span>Неделя '+num+'</span></div>'+(cur?'<span class="week__cur">сейчас</span>':'')+'</summary>'
+          +'<div class="week__body"><ul>'+w.p.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul></div></details>';
+      });
+      // checkpoint at end of phase
+      CHECKPOINTS.forEach(function(cp){
+        if(WEEKS[cp.afterWeek-1] && WEEKS[cp.afterWeek-1].ph===ph.n){
+          var date=fmtDate(addDays(data.start, cp.dayNo-1));
+          out+='<div class="cp"><div class="cp__h"><div class="cp__t">✅ '+cp.t+'</div><div class="cp__date">'+date+'</div></div>';
+          cp.items.forEach(function(it,ii){
+            var key="cp"+cp.dayNo+"-"+ii, on=!!data.checks[key];
+            out+='<div class="cp__i" data-cp="'+key+'"><div class="cp__box'+(on?" on":"")+'">'+(on?"✓":"")+'</div><div class="cp__x">'+it+'</div></div>';
+          });
+          out+='</div>';
+        }
+      });
+      out+='</div>';
+    });
+    var el=document.getElementById("planBody"); el.innerHTML=out;
+    el.querySelectorAll("[data-cp]").forEach(function(row){
+      row.onclick=function(){ var k=row.getAttribute("data-cp"); data.checks[k]=!data.checks[k]; save(); renderPlan(); };
+    });
+  }
+
+  // ── render: journal list ──
+  function renderJournal(){
+    var keys=Object.keys(data.days).filter(function(d){ return (data.days[d].j||"").trim(); }).sort().reverse();
+    var el=document.getElementById("journalBody");
+    if(!keys.length){ el.innerHTML='<div class="empty">Записей пока нет. Веди дневник во вкладке «Сегодня» — после каждого клиента.</div>'; return; }
+    el.innerHTML=keys.map(function(d){
+      return '<div class="jitem"><div class="jitem__d">'+fmtDate(d)+'</div><div class="jitem__x">'+esc(data.days[d].j)+'</div></div>';
+    }).join("");
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+  // ── render: progress ──
+  function renderProgress(){
+    var dn=dayNum();
+    // streak: подряд дней с любой привычкой или дневником, вплоть до сегодня
+    var streak=0, cur=todayStr();
+    for(var i=0;i<400;i++){
+      var r=data.days[cur];
+      var active=r && (r.j.trim() || r.h.some(Boolean) || r.t);
+      if(i===0 && !active){ /* сегодня ещё не отмечал — не рвём стрик */ }
+      else if(!active) break;
+      if(active) streak++;
+      cur=addDays(cur,-1);
+    }
+    // % привычек за 7 дней
+    var done=0,total=0, dd=todayStr();
+    for(var k=0;k<7;k++){ var rr=data.days[dd]; if(rr){ done+=rr.h.filter(Boolean).length; } total+=HABITS.length; dd=addDays(dd,-1); }
+    var pct=total?Math.round(done/total*100):0;
+    document.getElementById("progStats").innerHTML=
+      '<div class="stat"><b>'+dn+'<span style="font-size:1rem;color:var(--muted)"> / 90</span></b><span>день трека</span></div>'
+      +'<div class="stat"><b>'+streak+'</b><span>дней подряд 🔥</span></div>'
+      +'<div class="stat"><b>'+pct+'%</b><span>привычек за 7 дней</span></div>'
+      +'<div class="stat"><b>'+weekNum()+'<span style="font-size:1rem;color:var(--muted)"> / 13</span></b><span>неделя</span></div>';
+    // next checkpoint
+    var next=CHECKPOINTS.find(function(cp){ return cp.dayNo>=dn; });
+    var rows="";
+    if(next){ rows+='<div class="prow"><span>Следующий чекпоинт</span><b>День '+next.dayNo+' · через '+(next.dayNo-dn)+' дн.</b></div>'; }
+    else { rows+='<div class="prow"><span>Все чекпоинты</span><b>позади 🎉</b></div>'; }
+    rows+='<div class="prow"><span>Текущая фаза</span><b>'+PHASES[curWeek().ph-1].t+'</b></div>';
+    rows+='<div class="prow"><span>Старт</span><b>'+fmtDate(data.start)+'</b></div>';
+    rows+='<div class="prow"><span>Финиш (День 90)</span><b>'+fmtDate(addDays(data.start,89))+'</b></div>';
+    document.getElementById("progRows").innerHTML=rows;
+    document.getElementById("startDate").value=data.start;
+  }
+  document.getElementById("startDate").addEventListener("change",function(e){ if(e.target.value){ data.start=e.target.value; save(); renderAll(); } });
+
+  // ── tabs ──
+  function show(v){
+    document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
+    document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")===v); });
+    if(v==="plan") renderPlan(); if(v==="journal") renderJournal(); if(v==="progress") renderProgress();
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll(".tab").forEach(function(b){ b.onclick=function(){ show(b.getAttribute("data-v")); }; });
+
+  function renderAll(){ renderTop(); renderToday(); }
+
+  // ── PWA install + SW ──
+  var deferred=null, installBtn=document.getElementById("installBtn");
+  var isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferred=e; if(!isStandalone) installBtn.style.display="block"; });
+  window.addEventListener("appinstalled",function(){ installBtn.style.display="none"; deferred=null; });
+  if(isIOS && !isStandalone) installBtn.style.display="block";
+  installBtn.onclick=function(){
+    if(deferred){ deferred.prompt(); deferred.userChoice.finally(function(){ deferred=null; installBtn.style.display="none"; }); }
+    else { alert("На iPhone: нажми «Поделиться» ⬆️ внизу браузера → «На экран „Домой“» — появится иконка 🎯."); }
+  };
+  if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("/track-sw.js",{scope:"/track"}).catch(function(){}); }); }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
