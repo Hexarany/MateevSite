@@ -94,6 +94,20 @@
   .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(138,90,26,.3);border-top-color:#8a5a1a;border-radius:50%;animation:sp .7s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
 
+  /* Reader (режим чтения) */
+  #reader{display:none;position:fixed;inset:0;z-index:28;background:var(--sand);overflow-y:auto;max-width:680px;margin:0 auto}
+  .rd-body{padding:18px 16px 50px}
+  .rd-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .rd-title{font-family:'Cormorant Garamond',serif;font-size:1.75rem;color:var(--forest);line-height:1.15;margin-bottom:16px}
+  .rd-sec{margin-bottom:16px}
+  .rd-k{font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .rd-hook{font-size:1.08rem;font-weight:600;color:var(--ink);background:#fbf3e6;border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;white-space:pre-wrap;line-height:1.5}
+  .rd-text{font-size:1.05rem;color:var(--ink);white-space:pre-wrap;line-height:1.75;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .rd-cta{font-size:1rem;color:#2d5a3a;font-weight:600;background:#eef3ee;border-radius:8px;padding:11px 14px;white-space:pre-wrap}
+  .rd-tags{font-size:.95rem;color:#5a4a8a;word-break:break-word;line-height:1.6;white-space:pre-wrap}
+  .rd-meta{font-size:.78rem;color:var(--muted);margin:14px 0 4px}
+  .rd-copy{width:100%;background:var(--forest);color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:.95rem;cursor:pointer;margin-top:6px}
+  .badge--stat{background:#eae6f3;color:#3a3060}
   .importbtn{width:100%;border:1px dashed var(--warm);background:var(--paper);border-radius:12px;padding:12px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;margin-bottom:14px}
   .importbtn:active{background:var(--sand)}
   .sheet{display:none;position:fixed;inset:0;z-index:50;background:rgba(26,46,34,.5);align-items:flex-end;justify-content:center}
@@ -169,6 +183,25 @@
         <button class="btn-go" id="impGo">Добавить</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- READER -->
+<div id="reader">
+  <div class="ed-top">
+    <button class="ed-top__b" id="rdBack">← Назад</button>
+    <div class="ed-top__t">Сценарий</div>
+    <button class="ed-top__b ed-top__save" id="rdEdit">✏️ Править</button>
+  </div>
+  <div class="rd-body">
+    <div class="rd-badges" id="rdBadges"></div>
+    <h1 class="rd-title" id="rdTitle"></h1>
+    <div class="rd-sec" id="rdHookSec"><div class="rd-k">Хук</div><div class="rd-hook" id="rdHook"></div></div>
+    <div class="rd-sec"><div class="rd-k">Сценарий</div><div class="rd-text" id="rdText"></div></div>
+    <div class="rd-sec" id="rdCtaSec"><div class="rd-k">Призыв</div><div class="rd-cta" id="rdCta"></div></div>
+    <div class="rd-sec" id="rdTagsSec"><div class="rd-k">Хэштеги</div><div class="rd-tags" id="rdTags"></div></div>
+    <div class="rd-meta" id="rdMeta"></div>
+    <button class="rd-copy" id="rdCopy">📋 Скопировать весь текст</button>
   </div>
 </div>
 
@@ -298,8 +331,38 @@
       out+='</div>';
     });
     el.innerHTML=out;
-    el.querySelectorAll("[data-id]").forEach(function(c){ c.onclick=function(){ openEditor(scripts.find(function(s){return s.id===c.getAttribute("data-id");})); }; });
+    el.querySelectorAll("[data-id]").forEach(function(c){ c.onclick=function(){ openReader(scripts.find(function(s){return s.id===c.getAttribute("data-id");})); }; });
   }
+
+  // ── режим чтения ──
+  var readerCurrent=null;
+  function rdSec(secId,fieldId,val){ var v=(val||"").trim(); $(secId).style.display=v?"block":"none"; if(v) $(fieldId).textContent=val; }
+  function openReader(s){
+    if(!s) return; readerCurrent=s;
+    var typeL=(TYPES.find(function(t){return t.k===s.type;})||{}).l||s.type;
+    var st=(STATUS.find(function(x){return x.k===(s.status||"idea");})||{});
+    var rub=(RUBRICS.find(function(r){return r.k===s.rubric;})||{}).l; if(rub==="—") rub="";
+    $("rdBadges").innerHTML='<span class="badge badge--type">'+esc(typeL)+'</span>'
+      +(st.l?'<span class="badge badge--stat">'+st.e+' '+esc(st.l)+'</span>':'')
+      +(rub?'<span class="badge badge--rub">'+esc(rub)+'</span>':'')
+      +'<span class="badge badge--lang">'+(s.lang==="ro"?"RO":"RU")+'</span>';
+    $("rdTitle").textContent=s.title||"Без названия";
+    rdSec("rdHookSec","rdHook",s.hook);
+    $("rdText").textContent=(s.body||"").trim()||"—";
+    rdSec("rdCtaSec","rdCta",s.cta);
+    rdSec("rdTagsSec","rdTags",s.hashtags);
+    var meta=[]; if(s.author) meta.push("✍ "+s.author);
+    if(s.updatedAt){ try{ meta.push(new Date(s.updatedAt).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"})); }catch(e){} }
+    $("rdMeta").textContent=meta.join(" · ");
+    $("reader").style.display="block"; window.scrollTo(0,0);
+  }
+  $("rdBack").onclick=function(){ $("reader").style.display="none"; };
+  $("rdEdit").onclick=function(){ $("reader").style.display="none"; openEditor(readerCurrent); };
+  $("rdCopy").onclick=function(){
+    var s=readerCurrent||{}; var parts=[s.hook,s.body,s.cta,s.hashtags].map(function(x){return (x||"").trim();}).filter(Boolean);
+    var txt=parts.join("\n\n"); var b=$("rdCopy");
+    navigator.clipboard.writeText(txt).then(function(){ b.textContent="✓ Скопировано"; setTimeout(function(){b.textContent="📋 Скопировать весь текст";},1500); }).catch(function(){ prompt("Скопируйте текст:",txt); });
+  };
   $("search").addEventListener("input",function(e){ filter.q=e.target.value; renderBoard(); });
   $("refreshBtn").onclick=function(){ loadScripts().catch(function(){}); };
   $("fab").onclick=function(){ openEditor(null); };
@@ -379,7 +442,10 @@
     $("fCta").value=draft.cta||""; $("fTags").value=draft.hashtags||""; $("fAuthor").value=draft.author||"";
     renderSelectors(); $("aiPanel").style.display="none";
     $("editor").style.display="block"; window.scrollTo(0,0);
+    growBody();
   }
+  function growBody(){ var t=$("fBody"); t.style.height="auto"; t.style.height=Math.max(150,t.scrollHeight+4)+"px"; }
+  $("fBody").addEventListener("input",growBody);
   function renderSelectors(){
     selchips("fType",TYPES,draft.type,function(k){ draft.type=k; renderSelectors(); });
     selchips("fStatus",STATUS.map(function(s){return {k:s.k,l:s.e+" "+s.l};}),draft.status,function(k){ draft.status=k; renderSelectors(); },"st");
