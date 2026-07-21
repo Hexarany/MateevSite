@@ -842,6 +842,7 @@ async function ensureDataFiles() {
     ["certificates.json", "[]"],
     ["diplomas.json", "[]"],
     ["scripts.json", "[]"],
+    ["script-rubrics.json", "[]"],
     ["expenses.json", "[]"],
     ["packages.json", "[]"],
     ["inventory.json", "[]"],
@@ -5293,6 +5294,46 @@ async function routeApi(request, response, urlObject) {
     const reply = await callAnthropic(sys, [{ role: "user", content: user }], 900);
     if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
     sendJson(response, 200, { reply });
+    return;
+  }
+
+  // GET /api/scripts-rubrics — свои рубрики (доступ по коду)
+  if (request.method === "GET" && urlObject.pathname === "/api/scripts-rubrics") {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const rubrics = await readJson("script-rubrics.json").catch(() => []);
+    sendJson(response, 200, { rubrics });
+    return;
+  }
+
+  // POST /api/scripts-rubrics — добавить рубрику
+  if (request.method === "POST" && urlObject.pathname === "/api/scripts-rubrics") {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const p = await parseJsonBody(request);
+    const label = sanitizeText(p.label || "").slice(0, 60);
+    if (!label) { sendJson(response, 400, { message: "Укажите название рубрики." }); return; }
+    const rubric = {
+      id: "r-" + crypto.randomBytes(4).toString("hex"),
+      label,
+      hook: sanitizeText(p.hook || "").slice(0, 600),
+      body: sanitizeText(p.body || "").slice(0, 2000),
+      createdAt: new Date().toISOString()
+    };
+    const rubrics = await readJson("script-rubrics.json").catch(() => []);
+    rubrics.push(rubric);
+    await writeJson("script-rubrics.json", rubrics);
+    sendJson(response, 201, { ok: true, rubric });
+    return;
+  }
+
+  // DELETE /api/scripts-rubrics/:id — удалить свою рубрику
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/scripts-rubrics/")) {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const id = urlObject.pathname.replace("/api/scripts-rubrics/", "");
+    const rubrics = await readJson("script-rubrics.json").catch(() => []);
+    const next = rubrics.filter((r) => r.id !== id);
+    if (next.length === rubrics.length) { sendJson(response, 404, { message: "Рубрика не найдена." }); return; }
+    await writeJson("script-rubrics.json", next);
+    sendJson(response, 200, { ok: true });
     return;
   }
 

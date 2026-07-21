@@ -115,6 +115,11 @@
   .sheet__t{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--forest);margin-bottom:6px}
   .sheet__p{font-size:.85rem;color:var(--muted);margin-bottom:12px}
   .sheet textarea{width:100%;min-height:140px;padding:12px 14px;border:1px solid var(--warm);border-radius:12px;font-size:.95rem;background:var(--sand);outline:none;resize:vertical;line-height:1.55}
+  .sheet input{width:100%;padding:11px 13px;border:1px solid var(--warm);border-radius:10px;font-size:.95rem;background:var(--sand);outline:none}
+  #rbBody{min-height:70px}
+  #rbList{margin-top:14px}
+  .rbrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:.92rem;color:#3a2e26}
+  .rbrow button{background:none;border:none;color:#b91c1c;font-size:1.1rem;cursor:pointer;padding:0 4px}
   .sheet .filebtn{display:block;text-align:center;border:1px dashed var(--sage);border-radius:12px;padding:12px;font-weight:600;color:var(--sage);cursor:pointer;margin-top:10px}
   .sheet__row{display:flex;gap:8px;margin-top:12px}
   .sheet__row button{flex:1;border:none;border-radius:11px;padding:13px;font-weight:700;cursor:pointer}
@@ -182,6 +187,24 @@
         <button class="btn-cancel" id="impCancel">Отмена</button>
         <button class="btn-go" id="impGo">Добавить</button>
       </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="rubricSheet">
+    <div class="sheet__c">
+      <div class="sheet__t">🧩 Своя рубрика</div>
+      <div class="sheet__p">Рубрика = формат-шаблон. Хук и текст (необязательно) подставятся при выборе рубрики, если поля пустые. Рубрики общие — видны и жене.</div>
+      <label class="f">Название *</label>
+      <input id="rbLabel" placeholder="напр. Разбор упражнения" maxlength="60">
+      <label class="f">Шаблон хука (необязательно)</label>
+      <input id="rbHook" placeholder="напр. Делаешь [упражнение] неправильно?">
+      <label class="f">Шаблон текста (необязательно)</label>
+      <textarea id="rbBody" rows="3" placeholder="Структура сценария…"></textarea>
+      <div class="sheet__row">
+        <button class="btn-cancel" id="rbClose">Закрыть</button>
+        <button class="btn-go" id="rbAdd">Добавить рубрику</button>
+      </div>
+      <div id="rbList"></div>
     </div>
   </div>
 </div>
@@ -254,7 +277,7 @@
   var CODE_KEY="studio-code";
   var STATUS=[{k:"idea",l:"Идея",e:"💡"},{k:"script",l:"Сценарий",e:"✍️"},{k:"shoot",l:"Съёмка",e:"🎥"},{k:"edit",l:"Монтаж",e:"✂️"},{k:"published",l:"Опубликовано",e:"✅"}];
   var TYPES=[{k:"reel",l:"Reels"},{k:"stories",l:"Stories"},{k:"post",l:"Пост"},{k:"carousel",l:"Карусель"}];
-  var RUBRICS=[
+  var DEFAULT_RUBRICS=[
     {k:"",l:"—"},
     {k:"muscle",l:"1 мышца—1 боль—1 приём",hook:"Знаешь, почему болит [зона]?",body:"1) Мышца: [название]\n2) Почему болит: [паттерн]\n3) Что делаем/показываем: [приём]"},
     {k:"beforeafter",l:"До / после",hook:"Смотри, что меняется за один сеанс",body:"— Что было (до)\n— Что делали\n— Что стало (после)"},
@@ -264,6 +287,13 @@
     {k:"backstage",l:"За кулисами",hook:"Как проходит сеанс в студии",body:"— Атмосфера\n— Момент работы\n— Приглашение"},
     {k:"qa",l:"Вопрос-ответ",hook:"«Как часто можно ходить на массаж?»",body:"Короткий понятный ответ + нюанс + приглашение."}
   ];
+  var RUBRICS=DEFAULT_RUBRICS.slice();
+  function loadRubrics(){
+    return api("/api/scripts-rubrics").then(function(d){
+      var custom=(d.rubrics||[]).map(function(r){ return {k:r.id,l:r.label,hook:r.hook,body:r.body,custom:true}; });
+      RUBRICS=DEFAULT_RUBRICS.concat(custom);
+    }).catch(function(){ RUBRICS=DEFAULT_RUBRICS.slice(); });
+  }
   var $=function(id){return document.getElementById(id);};
   var esc=function(s){return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});};
   var code=""; try{ code=localStorage.getItem(CODE_KEY)||""; }catch(e){}
@@ -426,6 +456,34 @@
     alert("Добавлено сценариев: "+ok+(ok<items.length?(" (ошибок: "+(items.length-ok)+")"):""));
   };
 
+  // ── свои рубрики ──
+  function openRubricSheet(){ $("rbLabel").value=""; $("rbHook").value=""; $("rbBody").value=""; renderRbList(); $("rubricSheet").style.display="flex"; }
+  $("rbClose").onclick=function(){ $("rubricSheet").style.display="none"; };
+  $("rubricSheet").addEventListener("click",function(e){ if(e.target===this) this.style.display="none"; });
+  function renderRbList(){
+    var custom=RUBRICS.filter(function(r){return r.custom;});
+    $("rbList").innerHTML = custom.length
+      ? ('<div class="rd-k" style="margin:6px 0">Свои рубрики</div>'+custom.map(function(r){ return '<div class="rbrow"><span>'+esc(r.l)+'</span><button data-del="'+r.k+'">✕</button></div>'; }).join(""))
+      : "";
+    $("rbList").querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){ deleteRubric(b.getAttribute("data-del")); }; });
+  }
+  $("rbAdd").onclick=async function(){
+    var label=$("rbLabel").value.trim(); if(!label){ alert("Введите название."); return; }
+    this.disabled=true;
+    try{
+      var d=await api("/api/scripts-rubrics",{method:"POST",body:JSON.stringify({label:label,hook:$("rbHook").value.trim(),body:$("rbBody").value})});
+      await loadRubrics();
+      draft.rubric=d.rubric.id; renderSelectors();
+      $("rubricSheet").style.display="none";
+    }catch(e){ alert("Ошибка: "+e.message); } finally{ this.disabled=false; }
+  };
+  function deleteRubric(k){
+    if(!confirm("Удалить рубрику? Сценарии не пострадают.")) return;
+    api("/api/scripts-rubrics/"+k,{method:"DELETE"}).then(function(){ return loadRubrics(); }).then(function(){
+      if(draft.rubric===k) draft.rubric=""; renderSelectors(); renderRbList();
+    }).catch(function(e){ alert(e.message); });
+  }
+
   // ── editor ──
   function selchips(elId,items,cur,onPick,extraClass){
     var el=$(elId);
@@ -449,8 +507,15 @@
   function renderSelectors(){
     selchips("fType",TYPES,draft.type,function(k){ draft.type=k; renderSelectors(); });
     selchips("fStatus",STATUS.map(function(s){return {k:s.k,l:s.e+" "+s.l};}),draft.status,function(k){ draft.status=k; renderSelectors(); },"st");
-    selchips("fRubric",RUBRICS,draft.rubric,function(k){ applyRubric(k); },"");
+    renderRubricChips();
     selchips("fLang",[{k:"ru",l:"RU"},{k:"ro",l:"RO"}],draft.lang,function(k){ draft.lang=k; renderSelectors(); });
+  }
+  function renderRubricChips(){
+    var el=$("fRubric");
+    el.innerHTML=RUBRICS.map(function(r){ return '<button class="selchip'+(r.k===draft.rubric?" on":"")+'" data-k="'+r.k+'">'+esc(r.l)+'</button>'; }).join("")
+      +'<button class="selchip" id="addRubricChip" style="border-style:dashed;color:var(--gold);border-color:var(--gold)">＋ своя</button>';
+    el.querySelectorAll("[data-k]").forEach(function(b){ b.onclick=function(){ applyRubric(b.getAttribute("data-k")); }; });
+    $("addRubricChip").onclick=openRubricSheet;
   }
   function applyRubric(k){
     draft.rubric=k;
@@ -530,6 +595,7 @@
   // ── boot ──
   function boot(){
     showApp(); renderTypeFilter();
+    loadRubrics().finally(function(){ renderBoard(); });
     loadScripts().catch(function(e){
       if(String(e.message).indexOf("код")>=0 || String(e.message).indexOf("401")>=0){ code=""; try{localStorage.removeItem(CODE_KEY);}catch(x){} showGate(); }
     });
