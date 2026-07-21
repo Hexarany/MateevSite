@@ -117,6 +117,7 @@
   <div class="top">
     <img class="pl" src="/studio-icon-192.png" alt="">
     <div class="top__t">Контент-студия</div>
+    <button class="top__b" id="shareBtn" title="Код доступа">🔑</button>
     <button class="top__b" id="refreshBtn" title="Обновить">⟳</button>
   </div>
   <div class="wrap">
@@ -125,6 +126,22 @@
     <div id="board"></div>
   </div>
   <button class="fab" id="fab">＋</button>
+
+  <div id="shareModal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(26,46,34,.5);align-items:flex-end;justify-content:center">
+    <div style="background:var(--paper);border-radius:20px 20px 0 0;width:100%;max-width:680px;padding:22px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.25)">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--forest);margin-bottom:6px">🔑 Код доступа</div>
+      <p style="font-size:.86rem;color:var(--muted);margin-bottom:14px">Дай этот код жене — она введёт его один раз на <b>mateevmassage.com/studio</b>, и вы окажетесь в одной базе.</p>
+      <div style="display:flex;gap:8px;align-items:center;background:var(--sand);border:1px solid var(--warm);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+        <code id="shareCode" style="flex:1;font-size:1.15rem;letter-spacing:.08em;color:var(--forest);font-weight:800">—</code>
+        <button id="copyCode" style="background:var(--forest);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer">Копировать</button>
+      </div>
+      <a id="waCode" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#25d366;color:#fff;border-radius:12px;padding:13px;font-weight:700;text-decoration:none;margin-bottom:10px">💬 Отправить в WhatsApp</a>
+      <div style="display:flex;gap:8px">
+        <button id="logoutBtn" style="flex:1;background:none;border:1px solid var(--warm);border-radius:10px;padding:11px;font-weight:600;color:var(--muted);cursor:pointer">Выйти на этом устройстве</button>
+        <button id="shareClose" style="flex:1;background:var(--warm);border:none;border-radius:10px;padding:11px;font-weight:700;cursor:pointer">Закрыть</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- EDITOR -->
@@ -258,6 +275,25 @@
   $("search").addEventListener("input",function(e){ filter.q=e.target.value; renderBoard(); });
   $("refreshBtn").onclick=function(){ loadScripts().catch(function(){}); };
   $("fab").onclick=function(){ openEditor(null); };
+
+  // ── поделиться кодом доступа ──
+  $("shareBtn").onclick=function(){
+    $("shareCode").textContent = code || "—";
+    var msg="Код доступа к нашей контент-студии: "+code+"\nОткрой "+location.origin+"/studio и введи его 🎬";
+    $("waCode").href="https://wa.me/?text="+encodeURIComponent(msg);
+    $("shareModal").style.display="flex";
+  };
+  $("shareClose").onclick=function(){ $("shareModal").style.display="none"; };
+  $("shareModal").addEventListener("click",function(e){ if(e.target===this) this.style.display="none"; });
+  $("copyCode").onclick=function(){
+    var b=this;
+    navigator.clipboard.writeText(code).then(function(){ b.textContent="✓"; setTimeout(function(){b.textContent="Копировать";},1300); }).catch(function(){ prompt("Скопируйте код:",code); });
+  };
+  $("logoutBtn").onclick=function(){
+    if(!confirm("Выйти из студии на этом устройстве? Данные не удалятся, просто попросит код снова.")) return;
+    try{ localStorage.removeItem(CODE_KEY); }catch(e){}
+    code=""; $("shareModal").style.display="none"; showGate();
+  };
 
   // ── editor ──
   function selchips(elId,items,cur,onPick,extraClass){
