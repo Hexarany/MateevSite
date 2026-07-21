@@ -94,6 +94,19 @@
   .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(138,90,26,.3);border-top-color:#8a5a1a;border-radius:50%;animation:sp .7s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
 
+  .importbtn{width:100%;border:1px dashed var(--warm);background:var(--paper);border-radius:12px;padding:12px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;margin-bottom:14px}
+  .importbtn:active{background:var(--sand)}
+  .sheet{display:none;position:fixed;inset:0;z-index:50;background:rgba(26,46,34,.5);align-items:flex-end;justify-content:center}
+  .sheet__c{background:var(--paper);border-radius:20px 20px 0 0;width:100%;max-width:680px;padding:22px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.25);max-height:92svh;overflow-y:auto}
+  .sheet__t{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--forest);margin-bottom:6px}
+  .sheet__p{font-size:.85rem;color:var(--muted);margin-bottom:12px}
+  .sheet textarea{width:100%;min-height:140px;padding:12px 14px;border:1px solid var(--warm);border-radius:12px;font-size:.95rem;background:var(--sand);outline:none;resize:vertical;line-height:1.55}
+  .sheet .filebtn{display:block;text-align:center;border:1px dashed var(--sage);border-radius:12px;padding:12px;font-weight:600;color:var(--sage);cursor:pointer;margin-top:10px}
+  .sheet__row{display:flex;gap:8px;margin-top:12px}
+  .sheet__row button{flex:1;border:none;border-radius:11px;padding:13px;font-weight:700;cursor:pointer}
+  .btn-cancel{background:var(--warm);color:#3a2e26}
+  .btn-go{background:var(--forest);color:#fff}
+  .btn-go:disabled{opacity:.5}
   .installbtn{position:fixed;top:12px;right:calc(50% - 340px + 14px);z-index:40;background:var(--gold);color:#fff;border:none;border-radius:9px;padding:7px 12px;font-size:.78rem;font-weight:700;cursor:pointer;display:none}
   @media(max-width:700px){.installbtn{right:14px}}
 </style>
@@ -123,6 +136,7 @@
   <div class="wrap">
     <input class="search" id="search" placeholder="Поиск по сценариям…">
     <div class="chips" id="typeFilter"></div>
+    <button class="importbtn" id="importBtn">⬇ Импорт готовых сценариев</button>
     <div id="board"></div>
   </div>
   <button class="fab" id="fab">＋</button>
@@ -139,6 +153,20 @@
       <div style="display:flex;gap:8px">
         <button id="logoutBtn" style="flex:1;background:none;border:1px solid var(--warm);border-radius:10px;padding:11px;font-weight:600;color:var(--muted);cursor:pointer">Выйти на этом устройстве</button>
         <button id="shareClose" style="flex:1;background:var(--warm);border:none;border-radius:10px;padding:11px;font-weight:700;cursor:pointer">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="importSheet">
+    <div class="sheet__c">
+      <div class="sheet__t">⬇ Импорт сценариев</div>
+      <div class="sheet__p">Вставь готовый текст (один или несколько сценариев) или загрузи файл <b>.txt / .md</b>. Несколько сценариев раздели строкой из трёх дефисов <b>---</b> на отдельной строке. Название возьмётся из первой строки каждого.</div>
+      <textarea id="impText" placeholder="Вставь текст сюда…&#10;&#10;---&#10;&#10;Следующий сценарий…"></textarea>
+      <label class="filebtn">📄 Загрузить .txt / .md<input type="file" id="impFile" accept=".txt,.md,.markdown,text/plain" style="display:none"></label>
+      <div style="margin-top:12px"><span style="font-size:.78rem;font-weight:700;color:#3a2e26">Статус для импортируемых:</span><div class="selchips" id="impStatus" style="margin-top:6px"></div></div>
+      <div class="sheet__row">
+        <button class="btn-cancel" id="impCancel">Отмена</button>
+        <button class="btn-go" id="impGo">Добавить</button>
       </div>
     </div>
   </div>
@@ -293,6 +321,46 @@
     if(!confirm("Выйти из студии на этом устройстве? Данные не удалятся, просто попросит код снова.")) return;
     try{ localStorage.removeItem(CODE_KEY); }catch(e){}
     code=""; $("shareModal").style.display="none"; showGate();
+  };
+
+  // ── импорт готовых сценариев ──
+  var impStatus="idea";
+  function renderImpStatus(){
+    var el=$("impStatus");
+    el.innerHTML=STATUS.map(function(s){return '<button class="selchip st'+(s.k===impStatus?" on":"")+'" data-k="'+s.k+'">'+s.e+' '+s.l+'</button>';}).join("");
+    el.querySelectorAll("[data-k]").forEach(function(b){ b.onclick=function(){ impStatus=b.getAttribute("data-k"); renderImpStatus(); }; });
+  }
+  $("importBtn").onclick=function(){ $("impText").value=""; renderImpStatus(); $("importSheet").style.display="flex"; };
+  $("impCancel").onclick=function(){ $("importSheet").style.display="none"; };
+  $("importSheet").addEventListener("click",function(e){ if(e.target===this) this.style.display="none"; });
+  $("impFile").addEventListener("change",function(e){
+    var f=e.target.files[0]; if(!f) return;
+    if(/\.(docx?|rtf|pages)$/i.test(f.name)){ alert("Word/RTF пока не читаю. Открой файл, выдели весь текст (Ctrl+A → Ctrl+C) и вставь сюда."); e.target.value=""; return; }
+    var r=new FileReader();
+    r.onload=function(){ var cur=$("impText").value; $("impText").value = cur ? (cur+"\n\n---\n\n"+r.result) : r.result; };
+    r.readAsText(f); e.target.value="";
+  });
+  function parseScripts(text){
+    return text.split(/\n[ \t]*-{3,}[ \t]*\n|\n[ \t]*={3,}[ \t]*\n/).map(function(ch){return ch.trim();}).filter(Boolean).map(function(ch){
+      var lines=ch.split("\n"); var title=(lines[0]||"").trim().slice(0,120) || "Без названия";
+      return { title:title, body:ch, type:"reel", status:impStatus, rubric:"", lang:"ru" };
+    });
+  }
+  $("impGo").onclick=async function(){
+    var text=$("impText").value.trim();
+    if(!text){ alert("Вставь текст или загрузи файл."); return; }
+    var items=parseScripts(text);
+    if(!items.length){ alert("Не нашёл текста."); return; }
+    if(!confirm("Добавить сценариев: "+items.length+"?")) return;
+    var btn=this; btn.disabled=true; var oldT=btn.textContent; var ok=0;
+    for(var i=0;i<items.length;i++){
+      btn.textContent="Добавляю "+(i+1)+"/"+items.length+"…";
+      try{ await api("/api/scripts",{method:"POST",body:JSON.stringify(items[i])}); ok++; }catch(e){}
+    }
+    btn.disabled=false; btn.textContent=oldT;
+    $("importSheet").style.display="none";
+    await loadScripts().catch(function(){});
+    alert("Добавлено сценариев: "+ok+(ok<items.length?(" (ошибок: "+(items.length-ok)+")"):""));
   };
 
   // ── editor ──
