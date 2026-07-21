@@ -112,6 +112,27 @@
   .settings label{font-size:.8rem;font-weight:700;color:#3a2e26;display:block;margin-bottom:5px}
   .settings input{border:1px solid var(--warm);border-radius:9px;padding:9px 11px;font-size:.9rem;background:var(--sand)}
 
+  /* Library */
+  .lib-sum{display:flex;gap:10px;margin-bottom:12px}
+  .lib-sum div{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .lib-sum b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--forest);line-height:1}
+  .lib-sum span{font-size:.72rem;color:var(--muted)}
+  .lib-cat{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin:16px 2px 8px}
+  .book{display:flex;align-items:center;gap:11px;background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:8px}
+  .book.read{opacity:.62}
+  .book__b{flex:1;min-width:0}
+  .book__t{font-size:.92rem;font-weight:600;color:var(--ink);line-height:1.25}
+  .book__a{font-size:.78rem;color:var(--muted)}
+  .book__fmt{font-size:.6rem;font-weight:700;border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+  .book__fmt.pdf{background:#f3e3d3;color:#8a5a1a}
+  .book__fmt.epub{background:#e3eee3;color:#2d5a3a}
+  .book__st{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s}
+  .book__st.s0{background:#fff;color:var(--muted)}
+  .book__st.s1{background:#e7efe7;color:#2d5a3a;border-color:#a9c3a9}
+  .book__st.s2{background:var(--forest);color:#fff;border-color:var(--forest)}
+  .lib-link{display:block;font-size:.86rem;color:var(--sage);font-weight:600;text-decoration:none;padding:6px 0;border-top:1px solid var(--line)}
+  .lib-link:first-of-type{border-top:none}
+
   /* Tab bar */
   .tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:rgba(255,253,249,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20}
   .tab{flex:1;background:none;border:none;cursor:pointer;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:.68rem;font-weight:600}
@@ -189,12 +210,27 @@
       <div class="hint">Если сдвинул начало — поправь дату, и «День N» пересчитается.</div>
     </div>
   </section>
+
+  <!-- БИБЛИОТЕКА -->
+  <section class="view" id="v-library">
+    <h2 class="sec">Библиотека</h2>
+    <div class="lib-sum" id="libSum"></div>
+    <div id="libBody"></div>
+    <div class="card" style="margin-top:4px">
+      <div class="card__k">Ресурсы (статьи)</div>
+      <a class="lib-link" href="https://www.painscience.com" target="_blank" rel="noopener">⭐ PainScience.com — доказательные разборы + PDF-гайды →</a>
+      <a class="lib-link" href="https://www.bettermovement.org" target="_blank" rel="noopener">bettermovement.org — движение и боль →</a>
+      <a class="lib-link" href="https://pubmed.ncbi.nlm.nih.gov" target="_blank" rel="noopener">PubMed — под вопрос недели →</a>
+      <div class="hint" style="margin-top:8px">📖 PocketBook X (серый E-Ink): атласы — PDF (предпочитай линейные рисунки), текст — EPUB/FB2.</div>
+    </div>
+  </section>
 </div>
 
 <nav class="tabs">
   <button class="tab on" data-v="today"><span class="i">🎯</span>Сегодня</button>
   <button class="tab" data-v="plan"><span class="i">🗺️</span>План</button>
   <button class="tab" data-v="journal"><span class="i">📓</span>Дневник</button>
+  <button class="tab" data-v="library"><span class="i">📚</span>Книги</button>
   <button class="tab" data-v="progress"><span class="i">📈</span>Прогресс</button>
 </nav>
 
@@ -249,12 +285,37 @@
     { afterWeek:8, dayNo:60, t:"Чекпоинт · День 60", items:["Различаю путающиеся пары по каждому региону","Объясняю выбор техники доказательно, без мифов"] },
     { afterWeek:12, dayNo:90, t:"Чекпоинт · День 90", items:["Веду сложный мульти-регион кейс end-to-end","Готов авторский фреймворк + обучающий модуль","Измеримое улучшение своей механики"] }
   ];
+  var CAT_ORDER = ["pain","anat","fascia","clin","biomech","tech","body","mastery"];
+  var CATS = { pain:"🔥 Наука о боли", anat:"🖐 Анатомия и палпация", fascia:"🕸 Фасция и цепи", clin:"🧠 Клин. мышление / оценка", biomech:"⚙️ Биомеханика / движение", tech:"💆 Техника", body:"🧑‍🔧 Своё тело / долголетие", mastery:"🎓 Мастерство / преподавание" };
+  var BOOKS = [
+    { id:"explain-pain", t:"Explain Pain", a:"Moseley & Butler", fmt:"epub", star:1, cat:"pain" },
+    { id:"explain-pain-sc", t:"Explain Pain Supercharged", a:"Moseley & Butler", fmt:"epub", cat:"pain" },
+    { id:"body-score", t:"The Body Keeps the Score · «Тело помнит всё»", a:"Bessel van der Kolk", fmt:"epub", cat:"pain" },
+    { id:"trail-body", t:"Trail Guide to the Body", a:"Andrew Biel", fmt:"pdf", star:1, cat:"anat" },
+    { id:"trail-move", t:"Trail Guide to Movement", a:"Andrew Biel", fmt:"pdf", cat:"anat" },
+    { id:"concise-muscles", t:"The Concise Book of Muscles", a:"Chris Jarmey", fmt:"pdf", cat:"anat" },
+    { id:"netter", t:"Atlas of Human Anatomy", a:"Frank Netter", fmt:"pdf", cat:"anat" },
+    { id:"anatomy-trains", t:"Anatomy Trains · «Анатомические поезда»", a:"Thomas Myers", fmt:"pdf", star:1, cat:"fascia" },
+    { id:"jobs-body", t:"Job's Body", a:"Deane Juhan", fmt:"epub", cat:"fascia" },
+    { id:"magee", t:"Orthopedic Physical Assessment", a:"David Magee", fmt:"pdf", cat:"clin" },
+    { id:"clin-massage", t:"Clinical Massage Therapy", a:"Rattray & Ludwig", fmt:"pdf", cat:"clin" },
+    { id:"aches-pains", t:"Aches and Pains", a:"Louis Gifford", fmt:"epub", cat:"clin" },
+    { id:"neumann", t:"Kinesiology of the Musculoskeletal System", a:"Donald Neumann", fmt:"pdf", cat:"biomech" },
+    { id:"better-movement", t:"A Guide to Better Movement", a:"Todd Hargrove", fmt:"epub", cat:"biomech" },
+    { id:"deep-tissue", t:"Deep Tissue Massage", a:"Art Riggs", fmt:"epub", star:1, cat:"tech" },
+    { id:"tp-workbook", t:"The Trigger Point Therapy Workbook", a:"Clair Davies", fmt:"epub", cat:"tech" },
+    { id:"travell", t:"Travell & Simons' Trigger Point Manual", a:"Travell & Simons", fmt:"pdf", cat:"tech" },
+    { id:"save-hands", t:"Save Your Hands!", a:"Greene & Goggins", fmt:"epub", star:1, cat:"body" },
+    { id:"peak", t:"Peak · «Пик»", a:"Anders Ericsson", fmt:"epub", star:1, cat:"mastery" },
+    { id:"make-stick", t:"Make It Stick", a:"Brown, Roediger, McDaniel", fmt:"epub", cat:"mastery" }
+  ];
 
   // ── state ──
   var data = load();
   if (!data.start) data.start = DEFAULT_START;
   if (!data.days) data.days = {};
   if (!data.checks) data.checks = {};
+  if (!data.books) data.books = {};
 
   function load(){ try{ return JSON.parse(localStorage.getItem(STORE)) || {}; }catch(e){ return {}; } }
   function save(){ localStorage.setItem(STORE, JSON.stringify(data)); }
@@ -391,11 +452,37 @@
   }
   document.getElementById("startDate").addEventListener("change",function(e){ if(e.target.value){ data.start=e.target.value; save(); renderAll(); } });
 
+  // ── render: library ──
+  function renderLibrary(){
+    var st=data.books, dl=0, rd=0;
+    BOOKS.forEach(function(b){ var s=st[b.id]||0; if(s>=1)dl++; if(s===2)rd++; });
+    document.getElementById("libSum").innerHTML=
+      '<div><b>'+dl+'<span style="font-size:.9rem;color:var(--muted)"> / '+BOOKS.length+'</span></b><span>скачано</span></div>'+
+      '<div><b>'+rd+'</b><span>прочитано</span></div>';
+    var STAT=["Хочу","⬇ Скачал","✓ Прочёл"], out="";
+    CAT_ORDER.forEach(function(cat){
+      var inCat=BOOKS.filter(function(b){return b.cat===cat;});
+      if(!inCat.length) return;
+      out+='<div class="lib-cat">'+CATS[cat]+'</div>';
+      inCat.forEach(function(b){
+        var s=st[b.id]||0;
+        out+='<div class="book'+(s===2?" read":"")+'"><div class="book__b">'
+          +'<div class="book__t">'+(b.star?"⭐ ":"")+esc(b.t)+'<span class="book__fmt '+b.fmt+'">'+b.fmt.toUpperCase()+'</span></div>'
+          +'<div class="book__a">'+esc(b.a)+'</div></div>'
+          +'<button class="book__st s'+s+'" data-book="'+b.id+'">'+STAT[s]+'</button></div>';
+      });
+    });
+    var el=document.getElementById("libBody"); el.innerHTML=out;
+    el.querySelectorAll("[data-book]").forEach(function(btn){
+      btn.onclick=function(){ var id=btn.getAttribute("data-book"); data.books[id]=((data.books[id]||0)+1)%3; save(); renderLibrary(); };
+    });
+  }
+
   // ── tabs ──
   function show(v){
     document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
     document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-v")===v); });
-    if(v==="plan") renderPlan(); if(v==="journal") renderJournal(); if(v==="progress") renderProgress();
+    if(v==="plan") renderPlan(); if(v==="journal") renderJournal(); if(v==="progress") renderProgress(); if(v==="library") renderLibrary();
     window.scrollTo(0,0);
   }
   document.querySelectorAll(".tab").forEach(function(b){ b.onclick=function(){ show(b.getAttribute("data-v")); }; });
