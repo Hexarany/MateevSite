@@ -1,0 +1,17 @@
+{
+  "name": "Контент-студия · Mateev",
+  "short_name": "Контент-студия",
+  "description": "Общая база сценариев Instagram",
+  "start_url": "/studio",
+  "scope": "/studio",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f0e6",
+  "theme_color": "#1a2e22",
+  "lang": "ru",
+  "icons": [
+    { "src": "/studio-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/studio-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/studio-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -154,7 +154,14 @@ const STATIC_FILES = {
   "/track-manifest.json": "track-manifest.json",
   "/track-icon-192.png": "track-icon-192.png",
   "/track-icon-512.png": "track-icon-512.png",
-  "/track-icon-180.png": "track-icon-180.png"
+  "/track-icon-180.png": "track-icon-180.png",
+  "/studio": "studio.html",
+  "/studio.html": "studio.html",
+  "/studio-sw.js": "studio-sw.js",
+  "/studio-manifest.json": "studio-manifest.json",
+  "/studio-icon-192.png": "studio-icon-192.png",
+  "/studio-icon-512.png": "studio-icon-512.png",
+  "/studio-icon-180.png": "studio-icon-180.png"
 };
 
 const MIME_TYPES = {
@@ -834,6 +841,7 @@ async function ensureDataFiles() {
     ["enrollments.json", "[]"],
     ["certificates.json", "[]"],
     ["diplomas.json", "[]"],
+    ["scripts.json", "[]"],
     ["expenses.json", "[]"],
     ["packages.json", "[]"],
     ["inventory.json", "[]"],
@@ -1559,6 +1567,20 @@ async function callAnthropic(system, messages, maxTokens = 500) {
 async function callStudioAI(messages) {
   const facts = await buildStudioFacts();
   return callAnthropic(`${AI_SYSTEM_PROMPT}\n\n=== ФАКТЫ О СТУДИИ ===\n${facts}`, messages, 400);
+}
+
+// ── Контент-студия: общий код доступа (сценарии Instagram) ──
+async function getStudioCode() {
+  const s = await readJson("content-studio.json").catch(() => ({}));
+  if (s && s.code) return s.code;
+  const code = crypto.randomBytes(6).toString("hex");
+  await writeJson("content-studio.json", { code, createdAt: new Date().toISOString() });
+  return code;
+}
+async function studioAuthorized(request) {
+  const provided = sanitizeText(request.headers["x-studio-code"] || "");
+  if (!provided) return false;
+  return provided === (await getStudioCode());
 }
 
 // Промпт для памятки клиенту после сеанса (клиентоориентированный, тёплый)
@@ -5163,6 +5185,114 @@ async function routeApi(request, response, urlObject) {
     if (payload.bio !== undefined) diplomas[idx].bio = sanitizeText(payload.bio).slice(0, 400);
     await writeJson("diplomas.json", diplomas);
     sendJson(response, 200, { ok: true, public: diplomas[idx].public === true });
+    return;
+  }
+
+  // ─── Контент-студия (сценарии Instagram) ────────────────────────────────────
+  // GET /api/admin/studio-code — общий код доступа (get-or-create, ?reset=1 — сброс)
+  if (request.method === "GET" && urlObject.pathname === "/api/admin/studio-code") {
+    if (!getAdminSession(request)) { sendJson(response, 401, { message: "Not authorized." }); return; }
+    if (urlObject.searchParams.get("reset") === "1") {
+      await writeJson("content-studio.json", { code: crypto.randomBytes(6).toString("hex"), createdAt: new Date().toISOString() });
+    }
+    const code = await getStudioCode();
+    sendJson(response, 200, { code, url: `${(SITE_URL || "https://mateevmassage.com")}/studio` });
+    return;
+  }
+
+  // GET /api/scripts — список сценариев (доступ по коду студии)
+  if (request.method === "GET" && urlObject.pathname === "/api/scripts") {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const scripts = await readJson("scripts.json").catch(() => []);
+    sendJson(response, 200, { scripts });
+    return;
+  }
+
+  // POST /api/scripts — создать сценарий
+  if (request.method === "POST" && urlObject.pathname === "/api/scripts") {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const p = await parseJsonBody(request);
+    const now = new Date().toISOString();
+    const script = {
+      id: crypto.randomUUID(),
+      title: sanitizeText(p.title || "").slice(0, 200) || "Без названия",
+      type: sanitizeText(p.type || "reel").slice(0, 20),
+      rubric: sanitizeText(p.rubric || "").slice(0, 60),
+      hook: sanitizeText(p.hook || "").slice(0, 600),
+      body: sanitizeText(p.body || "").slice(0, 8000),
+      cta: sanitizeText(p.cta || "").slice(0, 400),
+      hashtags: sanitizeText(p.hashtags || "").slice(0, 600),
+      status: sanitizeText(p.status || "idea").slice(0, 20),
+      lang: p.lang === "ro" ? "ro" : "ru",
+      author: sanitizeText(p.author || "").slice(0, 40),
+      createdAt: now, updatedAt: now
+    };
+    const scripts = await readJson("scripts.json").catch(() => []);
+    scripts.push(script);
+    await writeJson("scripts.json", scripts);
+    sendJson(response, 201, { ok: true, script });
+    return;
+  }
+
+  // PATCH /api/scripts/:id — обновить
+  if (request.method === "PATCH" && urlObject.pathname.startsWith("/api/scripts/")) {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const id = urlObject.pathname.replace("/api/scripts/", "");
+    const p = await parseJsonBody(request);
+    const scripts = await readJson("scripts.json");
+    const idx = scripts.findIndex((s) => s.id === id);
+    if (idx === -1) { sendJson(response, 404, { message: "Сценарий не найден." }); return; }
+    const FIELDS = { title: 200, type: 20, rubric: 60, hook: 600, body: 8000, cta: 400, hashtags: 600, status: 20, author: 40 };
+    for (const f in FIELDS) if (p[f] !== undefined) scripts[idx][f] = sanitizeText(p[f]).slice(0, FIELDS[f]);
+    if (p.lang !== undefined) scripts[idx].lang = p.lang === "ro" ? "ro" : "ru";
+    scripts[idx].updatedAt = new Date().toISOString();
+    await writeJson("scripts.json", scripts);
+    sendJson(response, 200, { ok: true, script: scripts[idx] });
+    return;
+  }
+
+  // DELETE /api/scripts/:id
+  if (request.method === "DELETE" && urlObject.pathname.startsWith("/api/scripts/")) {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    const id = urlObject.pathname.replace("/api/scripts/", "");
+    const scripts = await readJson("scripts.json");
+    const next = scripts.filter((s) => s.id !== id);
+    if (next.length === scripts.length) { sendJson(response, 404, { message: "Сценарий не найден." }); return; }
+    await writeJson("scripts.json", next);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  // POST /api/scripts-ai — AI: идеи / хуки / сценарий / перевод (доступ по коду)
+  if (request.method === "POST" && urlObject.pathname === "/api/scripts-ai") {
+    if (!(await studioAuthorized(request))) { sendJson(response, 401, { message: "Неверный код доступа." }); return; }
+    assertRateLimit({ scope: "scripts-ai", key: getRequestIp(request), windowMs: 10 * 60 * 1000, limit: 40, message: "Слишком часто. Попробуйте позже." });
+    if (!ANTHROPIC_API_KEY) { sendJson(response, 503, { message: "AI недоступен: не задан ANTHROPIC_API_KEY на сервере." }); return; }
+    const p = await parseJsonBody(request);
+    const mode = sanitizeText(p.mode || "");
+    const topic = sanitizeText(p.topic || "").slice(0, 300);
+    const text = sanitizeText(p.text || "").slice(0, 8000);
+    const lang = p.lang === "ro" ? "ro" : "ru";
+    const langName = lang === "ro" ? "румынском" : "русском";
+    const brand = "Mateev Spa Studio — массажная студия в Кишинёве (массаж, восстановление, работа с болью, обучение массажу).";
+    let sys, user;
+    if (mode === "ideas") {
+      sys = `Ты — контент-стратег Instagram для массажной студии. ${brand} Пиши на ${langName} языке.`;
+      user = `Дай 7 свежих идей для Reels/постов на тему: «${topic || "массаж и восстановление"}». Каждая идея — одной строкой: формат + суть. Без воды и без нумерации-заголовков.`;
+    } else if (mode === "hooks") {
+      sys = `Ты — копирайтер коротких видео. ${brand} Пиши на ${langName} языке.`;
+      user = `Дай 8 сильных хуков (первая фраза 1–2 сек) для Reels на тему: «${topic || text || "массаж"}». Разные подходы: боль, вопрос, миф, интрига, польза. Каждый — отдельной строкой.`;
+    } else if (mode === "script") {
+      sys = `Ты — сценарист Reels для массажной студии. ${brand} Пиши на ${langName} языке — живо, по делу, без markdown-звёздочек.`;
+      user = `Напиши сценарий Reels (20–40 сек) на тему: «${topic || text}». Структура: ХУК (1–2 сек) · ОСНОВНАЯ ЧАСТЬ (2–4 коротких пункта — что говорить и показывать) · CTA (призыв записаться или сохранить). В конце — строка из 8–12 релевантных хэштегов.`;
+    } else if (mode === "translate") {
+      const to = p.to === "ro" ? "румынский (Молдова)" : "русский";
+      sys = `Ты — переводчик. Переведи текст на ${to} язык, сохранив смысл, тон и структуру. Верни только перевод, без комментариев.`;
+      user = text;
+    } else { sendJson(response, 400, { message: "Неизвестный режим." }); return; }
+    const reply = await callAnthropic(sys, [{ role: "user", content: user }], 900);
+    if (!reply) { sendJson(response, 502, { message: "AI не ответил. Попробуйте ещё раз." }); return; }
+    sendJson(response, 200, { reply });
     return;
   }
 

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Контент-студия</title>
+<link rel="manifest" href="/studio-manifest.json">
+<meta name="theme-color" content="#1a2e22">
+<link rel="icon" type="image/png" href="/studio-icon-192.png">
+<link rel="apple-touch-icon" href="/studio-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Контент-студия">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--forest:#1a2e22;--forest2:#0f1c15;--sand:#f7f0e6;--paper:#fffdf9;--warm:#e8ddd0;--gold:#b98a3e;--gold2:#c49e5a;--sage:#6b8d6b;--ink:#241c17;--muted:#7d6d60;--line:rgba(64,49,39,.13);--shadow:0 10px 30px rgba(26,46,34,.10)}
+  html,body{background:var(--sand);color:var(--ink);font-family:'Manrope',sans-serif;line-height:1.5}
+  body{max-width:680px;margin:0 auto;min-height:100svh;padding-bottom:90px}
+  input,textarea,select,button{font-family:inherit;color:inherit}
+  ::placeholder{color:#b6aa9d}
+
+  /* Gate */
+  #gate{display:none;min-height:100svh;flex-direction:column;align-items:center;justify-content:center;padding:30px 22px;text-align:center}
+  #gate .logo{width:74px;height:74px;margin-bottom:16px}
+  #gate h1{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--forest);margin-bottom:6px}
+  #gate p{color:var(--muted);font-size:.92rem;max-width:340px;margin-bottom:20px}
+  #gate input{width:100%;max-width:320px;padding:14px 16px;border:1px solid var(--warm);border-radius:12px;font-size:1rem;text-align:center;background:var(--paper);letter-spacing:.06em}
+  #gate button{width:100%;max-width:320px;margin-top:10px;background:var(--forest);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer}
+  #gate .adminlink{margin-top:16px;font-size:.82rem;color:var(--sage);background:none;border:none;cursor:pointer;text-decoration:underline}
+  #gate .msg{font-size:.85rem;color:#b91c1c;font-weight:600;margin-top:10px;min-height:1.1em}
+
+  .top{background:linear-gradient(160deg,var(--forest),var(--forest2));color:#fff;padding:16px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+  .top .pl{width:22px;height:22px;flex:0 0 auto}
+  .top__t{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.2rem;flex:1}
+  .top__b{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:9px;width:36px;height:36px;font-size:1rem;cursor:pointer}
+
+  .wrap{padding:14px 14px 0}
+  .search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:.95rem;outline:none;margin-bottom:10px}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+  .chip{white-space:nowrap;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:7px 13px;font-size:.82rem;font-weight:600;color:#3a2e26;cursor:pointer}
+  .chip.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+
+  .col{margin-bottom:18px}
+  .col__h{display:flex;align-items:center;gap:8px;margin:4px 2px 9px;font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .col__h .cnt{background:var(--warm);color:#5a4a3a;border-radius:99px;padding:1px 8px;font-size:.72rem}
+  .scard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:var(--shadow)}
+  .scard:active{transform:scale(.995)}
+  .scard__t{font-size:.98rem;font-weight:700;color:var(--ink);line-height:1.3}
+  .scard__m{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+  .badge{font-size:.68rem;font-weight:700;border-radius:6px;padding:2px 7px}
+  .badge--type{background:#eef3ee;color:#2d5a3a}
+  .badge--rub{background:#f6ead6;color:#8a5a1a}
+  .badge--lang{background:#eae6f3;color:#5a4a8a}
+  .scard__p{font-size:.82rem;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .empty{text-align:center;color:var(--muted);font-style:italic;padding:14px 0;font-size:.86rem}
+  .emptyall{text-align:center;color:var(--muted);padding:60px 20px}
+
+  .fab{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:calc(50% - 340px + 18px);z-index:15;background:var(--gold);color:#fff;border:none;border-radius:50%;width:58px;height:58px;font-size:1.7rem;box-shadow:0 8px 24px rgba(185,138,62,.4);cursor:pointer}
+  @media(max-width:700px){.fab{right:18px}}
+
+  /* Editor */
+  #editor{display:none;position:fixed;inset:0;z-index:30;background:var(--sand);overflow-y:auto;max-width:680px;margin:0 auto}
+  .ed-top{background:var(--forest);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+  .ed-top__b{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:9px;padding:8px 12px;font-size:.85rem;font-weight:700;cursor:pointer}
+  .ed-top__t{flex:1;font-weight:700}
+  .ed-top__save{background:var(--gold);color:#fff}
+  .ed-body{padding:14px 14px 40px}
+  label.f{display:block;font-size:.78rem;font-weight:700;color:#3a2e26;margin:14px 0 6px}
+  label.f:first-child{margin-top:0}
+  .ed-body input,.ed-body textarea{width:100%;padding:11px 13px;border:1px solid var(--warm);border-radius:10px;font-size:.95rem;background:var(--paper);outline:none}
+  .ed-body input:focus,.ed-body textarea:focus{border-color:var(--sage)}
+  textarea.big{min-height:150px;resize:vertical;line-height:1.6}
+  .selchips{display:flex;gap:6px;flex-wrap:wrap}
+  .selchip{border:1px solid var(--warm);background:var(--paper);border-radius:999px;padding:7px 12px;font-size:.82rem;font-weight:600;cursor:pointer;color:#3a2e26}
+  .selchip.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+  .selchip.st.on{background:var(--gold);border-color:var(--gold)}
+  .aibar{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 2px}
+  .aibtn{border:1px solid var(--gold);background:#fbf3e6;color:#8a5a1a;border-radius:10px;padding:9px 13px;font-size:.83rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .aibtn:disabled{opacity:.5}
+  .aipanel{display:none;background:#fff;border:1px solid var(--gold2);border-radius:12px;padding:14px;margin-top:10px}
+  .aipanel__h{font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between}
+  .aipanel__x{cursor:pointer;color:var(--muted)}
+  .airow{padding:9px 0;border-top:1px solid var(--line);font-size:.9rem;cursor:pointer;color:#3a2e26}
+  .airow:first-child{border-top:none}
+  .airow:active{color:var(--forest)}
+  .aitext{white-space:pre-wrap;font-size:.9rem;color:#3a2e26;line-height:1.55}
+  .aiins{margin-top:10px;background:var(--forest);color:#fff;border:none;border-radius:9px;padding:10px 14px;font-size:.85rem;font-weight:700;cursor:pointer}
+  .ed-del{margin-top:24px;width:100%;background:none;border:1px solid #e0b4b4;color:#b91c1c;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(138,90,26,.3);border-top-color:#8a5a1a;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .installbtn{position:fixed;top:12px;right:calc(50% - 340px + 14px);z-index:40;background:var(--gold);color:#fff;border:none;border-radius:9px;padding:7px 12px;font-size:.78rem;font-weight:700;cursor:pointer;display:none}
+  @media(max-width:700px){.installbtn{right:14px}}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <img class="logo" src="/studio-icon-192.png" alt="">
+  <h1>Контент-студия</h1>
+  <p>Общая база сценариев для Instagram. Введите код доступа (его даёт Денис).</p>
+  <input id="gateCode" placeholder="код доступа" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button id="gateBtn">Войти</button>
+  <div class="msg" id="gateMsg"></div>
+  <button class="adminlink" id="adminCodeBtn">Я админ — показать код</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <button class="installbtn" id="installBtn">📲 Установить</button>
+  <div class="top">
+    <img class="pl" src="/studio-icon-192.png" alt="">
+    <div class="top__t">Контент-студия</div>
+    <button class="top__b" id="refreshBtn" title="Обновить">⟳</button>
+  </div>
+  <div class="wrap">
+    <input class="search" id="search" placeholder="Поиск по сценариям…">
+    <div class="chips" id="typeFilter"></div>
+    <div id="board"></div>
+  </div>
+  <button class="fab" id="fab">＋</button>
+</div>
+
+<!-- EDITOR -->
+<div id="editor">
+  <div class="ed-top">
+    <button class="ed-top__b" id="edBack">← Назад</button>
+    <div class="ed-top__t" id="edTitle">Сценарий</div>
+    <button class="ed-top__b ed-top__save" id="edSave">Сохранить</button>
+  </div>
+  <div class="ed-body">
+    <label class="f">Название / тема</label>
+    <input id="fTitle" placeholder="напр. Почему болит шея у офисных">
+
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:150px"><label class="f">Формат</label><div class="selchips" id="fType"></div></div>
+    </div>
+    <label class="f">Статус</label><div class="selchips" id="fStatus"></div>
+    <label class="f">Рубрика</label><div class="selchips" id="fRubric"></div>
+
+    <div class="aibar">
+      <button class="aibtn" data-ai="ideas">💡 Идеи</button>
+      <button class="aibtn" data-ai="hooks">🪝 Хуки</button>
+      <button class="aibtn" data-ai="script">✍️ Сценарий</button>
+      <button class="aibtn" data-ai="translate">🌐 RU↔RO</button>
+    </div>
+    <div class="aipanel" id="aiPanel"></div>
+
+    <label class="f">Хук (первая фраза)</label>
+    <textarea id="fHook" rows="2" placeholder="Цепляющее начало 1–2 сек…"></textarea>
+    <label class="f">Сценарий / текст</label>
+    <textarea id="fBody" class="big" placeholder="Что говорить и показывать…"></textarea>
+    <label class="f">Призыв (CTA)</label>
+    <input id="fCta" placeholder="Запишись на массаж / Сохрани, чтобы не потерять">
+    <label class="f">Хэштеги</label>
+    <textarea id="fTags" rows="2" placeholder="#массаж #кишинёв #masaj…"></textarea>
+
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px">
+      <div><label class="f">Язык</label><div class="selchips" id="fLang"></div></div>
+      <div style="flex:1;min-width:130px"><label class="f">Автор</label><input id="fAuthor" placeholder="кто пишет"></div>
+    </div>
+
+    <button class="ed-del" id="edDelete" style="display:none">Удалить сценарий</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var CODE_KEY="studio-code";
+  var STATUS=[{k:"idea",l:"Идея",e:"💡"},{k:"script",l:"Сценарий",e:"✍️"},{k:"shoot",l:"Съёмка",e:"🎥"},{k:"edit",l:"Монтаж",e:"✂️"},{k:"published",l:"Опубликовано",e:"✅"}];
+  var TYPES=[{k:"reel",l:"Reels"},{k:"stories",l:"Stories"},{k:"post",l:"Пост"},{k:"carousel",l:"Карусель"}];
+  var RUBRICS=[
+    {k:"",l:"—"},
+    {k:"muscle",l:"1 мышца—1 боль—1 приём",hook:"Знаешь, почему болит [зона]?",body:"1) Мышца: [название]\n2) Почему болит: [паттерн]\n3) Что делаем/показываем: [приём]"},
+    {k:"beforeafter",l:"До / после",hook:"Смотри, что меняется за один сеанс",body:"— Что было (до)\n— Что делали\n— Что стало (после)"},
+    {k:"myth",l:"Миф vs факт",hook:"Массаж «выводит токсины»? Разбираемся.",body:"Миф: [...]\nФакт: [...]\nПочему это важно: [...]"},
+    {k:"selfhelp",l:"Самопомощь",hook:"Болит шея к вечеру? Попробуй это.",body:"Упражнение: [название]\nКак делать: [шаги]\nСколько: [время/повторы]"},
+    {k:"review",l:"Отзыв клиента",hook:"«…» — отзыв клиента",body:"— С чем пришёл\n— Что делали\n— Результат словами клиента"},
+    {k:"backstage",l:"За кулисами",hook:"Как проходит сеанс в студии",body:"— Атмосфера\n— Момент работы\n— Приглашение"},
+    {k:"qa",l:"Вопрос-ответ",hook:"«Как часто можно ходить на массаж?»",body:"Короткий понятный ответ + нюанс + приглашение."}
+  ];
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});};
+  var code=""; try{ code=localStorage.getItem(CODE_KEY)||""; }catch(e){}
+  var scripts=[]; var filter={q:"",type:""}; var editing=null;
+
+  function api(path,opts){
+    opts=opts||{}; opts.headers=Object.assign({"Content-Type":"application/json","x-studio-code":code},opts.headers||{});
+    return fetch(path,opts).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.message||("HTTP "+r.status)); return d; }); });
+  }
+
+  // ── gate ──
+  function showGate(){ $("gate").style.display="flex"; $("app").style.display="none"; }
+  function showApp(){ $("gate").style.display="none"; $("app").style.display="block"; }
+  $("gateBtn").onclick=async function(){
+    var c=$("gateCode").value.trim(); if(!c){ return; }
+    $("gateMsg").textContent="Проверяю…"; $("gateMsg").style.color="var(--muted)";
+    try{
+      var r=await fetch("/api/scripts",{headers:{"x-studio-code":c}});
+      if(r.status===401){ $("gateMsg").style.color="#b91c1c"; $("gateMsg").textContent="Неверный код."; return; }
+      if(!r.ok) throw new Error();
+      code=c; try{ localStorage.setItem(CODE_KEY,c); }catch(e){}
+      $("gateMsg").textContent=""; boot();
+    }catch(e){ $("gateMsg").style.color="#b91c1c"; $("gateMsg").textContent="Ошибка сети. Попробуйте ещё раз."; }
+  };
+  $("gateCode").addEventListener("keydown",function(e){ if(e.key==="Enter") $("gateBtn").click(); });
+  $("adminCodeBtn").onclick=async function(){
+    try{ var d=await fetch("/api/admin/studio-code",{credentials:"include"}).then(function(r){return r.ok?r.json():null;});
+      if(d&&d.code){ $("gateCode").value=d.code; $("gateMsg").style.color="var(--sage)"; $("gateMsg").textContent="Код подставлен. Нажмите «Войти»."; }
+      else { $("gateMsg").style.color="#b91c1c"; $("gateMsg").textContent="Открой из админки (нужна сессия админа)."; }
+    }catch(e){ $("gateMsg").textContent="Не удалось получить код."; }
+  };
+
+  // ── load + board ──
+  async function loadScripts(){ var d=await api("/api/scripts"); scripts=d.scripts||[]; renderBoard(); }
+  function renderTypeFilter(){
+    var el=$("typeFilter"); var chips='<button class="chip'+(filter.type===""?" on":"")+'" data-t="">Все</button>';
+    TYPES.forEach(function(t){ chips+='<button class="chip'+(filter.type===t.k?" on":"")+'" data-t="'+t.k+'">'+t.l+'</button>'; });
+    el.innerHTML=chips;
+    el.querySelectorAll("[data-t]").forEach(function(b){ b.onclick=function(){ filter.type=b.getAttribute("data-t"); renderTypeFilter(); renderBoard(); }; });
+  }
+  function renderBoard(){
+    var q=filter.q.toLowerCase();
+    var list=scripts.filter(function(s){
+      if(filter.type && s.type!==filter.type) return false;
+      if(q){ var hay=(s.title+" "+s.hook+" "+s.body+" "+s.rubric).toLowerCase(); if(hay.indexOf(q)===-1) return false; }
+      return true;
+    });
+    var el=$("board");
+    if(!list.length){ el.innerHTML='<div class="emptyall">Пока нет сценариев.<br>Нажми ＋ и создай первый ✨</div>'; return; }
+    var out="";
+    STATUS.forEach(function(st){
+      var inSt=list.filter(function(s){return (s.status||"idea")===st.k;}).sort(function(a,b){return (b.updatedAt||"").localeCompare(a.updatedAt||"");});
+      if(!inSt.length) return;
+      out+='<div class="col"><div class="col__h">'+st.e+' '+st.l+'<span class="cnt">'+inSt.length+'</span></div>';
+      inSt.forEach(function(s){
+        var typeL=(TYPES.find(function(t){return t.k===s.type;})||{}).l||s.type;
+        var rub=(RUBRICS.find(function(r){return r.k===s.rubric;})||{}).l; if(rub==="—") rub="";
+        out+='<div class="scard" data-id="'+s.id+'"><div class="scard__t">'+esc(s.title||"Без названия")+'</div>'
+          +'<div class="scard__m"><span class="badge badge--type">'+esc(typeL)+'</span>'
+          +(rub?'<span class="badge badge--rub">'+esc(rub)+'</span>':'')
+          +'<span class="badge badge--lang">'+(s.lang==="ro"?"RO":"RU")+'</span></div>'
+          +((s.hook||s.body)?'<div class="scard__p">'+esc((s.hook||s.body).slice(0,120))+'</div>':'')
+          +'</div>';
+      });
+      out+='</div>';
+    });
+    el.innerHTML=out;
+    el.querySelectorAll("[data-id]").forEach(function(c){ c.onclick=function(){ openEditor(scripts.find(function(s){return s.id===c.getAttribute("data-id");})); }; });
+  }
+  $("search").addEventListener("input",function(e){ filter.q=e.target.value; renderBoard(); });
+  $("refreshBtn").onclick=function(){ loadScripts().catch(function(){}); };
+  $("fab").onclick=function(){ openEditor(null); };
+
+  // ── editor ──
+  function selchips(elId,items,cur,onPick,extraClass){
+    var el=$(elId);
+    el.innerHTML=items.map(function(it){ return '<button class="selchip '+(extraClass||"")+(it.k===cur?" on":"")+'" data-k="'+it.k+'">'+esc(it.l)+'</button>'; }).join("");
+    el.querySelectorAll("[data-k]").forEach(function(b){ b.onclick=function(){ onPick(b.getAttribute("data-k")); }; });
+  }
+  var draft={};
+  function openEditor(s){
+    editing=s;
+    draft = s ? Object.assign({},s) : {type:"reel",status:"idea",rubric:"",lang:"ru",title:"",hook:"",body:"",cta:"",hashtags:"",author:""};
+    $("edTitle").textContent = s ? "Редактор" : "Новый сценарий";
+    $("edDelete").style.display = s ? "block" : "none";
+    $("fTitle").value=draft.title||""; $("fHook").value=draft.hook||""; $("fBody").value=draft.body||"";
+    $("fCta").value=draft.cta||""; $("fTags").value=draft.hashtags||""; $("fAuthor").value=draft.author||"";
+    renderSelectors(); $("aiPanel").style.display="none";
+    $("editor").style.display="block"; window.scrollTo(0,0);
+  }
+  function renderSelectors(){
+    selchips("fType",TYPES,draft.type,function(k){ draft.type=k; renderSelectors(); });
+    selchips("fStatus",STATUS.map(function(s){return {k:s.k,l:s.e+" "+s.l};}),draft.status,function(k){ draft.status=k; renderSelectors(); },"st");
+    selchips("fRubric",RUBRICS,draft.rubric,function(k){ applyRubric(k); },"");
+    selchips("fLang",[{k:"ru",l:"RU"},{k:"ro",l:"RO"}],draft.lang,function(k){ draft.lang=k; renderSelectors(); });
+  }
+  function applyRubric(k){
+    draft.rubric=k;
+    var r=RUBRICS.find(function(x){return x.k===k;});
+    if(r && r.hook && !$("fHook").value.trim()){ $("fHook").value=r.hook; }
+    if(r && r.body && !$("fBody").value.trim()){ $("fBody").value=r.body; }
+    renderSelectors();
+  }
+  $("edBack").onclick=function(){ $("editor").style.display="none"; };
+  function collect(){
+    return { title:$("fTitle").value.trim(), type:draft.type, status:draft.status, rubric:draft.rubric, lang:draft.lang,
+      hook:$("fHook").value.trim(), body:$("fBody").value, cta:$("fCta").value.trim(), hashtags:$("fTags").value.trim(), author:$("fAuthor").value.trim() };
+  }
+  $("edSave").onclick=async function(){
+    var b=collect(); if(!b.title){ b.title="Без названия"; }
+    this.disabled=true;
+    try{
+      if(editing){ await api("/api/scripts/"+editing.id,{method:"PATCH",body:JSON.stringify(b)}); }
+      else { await api("/api/scripts",{method:"POST",body:JSON.stringify(b)}); }
+      await loadScripts(); $("editor").style.display="none";
+    }catch(e){ alert("Не сохранилось: "+e.message); }
+    finally{ this.disabled=false; }
+  };
+  $("edDelete").onclick=async function(){
+    if(!editing) return; if(!confirm("Удалить сценарий?")) return;
+    try{ await api("/api/scripts/"+editing.id,{method:"DELETE"}); await loadScripts(); $("editor").style.display="none"; }
+    catch(e){ alert("Ошибка: "+e.message); }
+  };
+
+  // ── AI ──
+  document.querySelectorAll("[data-ai]").forEach(function(btn){
+    btn.onclick=async function(){ runAI(btn.getAttribute("data-ai"), btn); };
+  });
+  async function runAI(mode,btn){
+    var title=$("fTitle").value.trim(), body=$("fBody").value.trim();
+    if((mode==="ideas"||mode==="hooks"||mode==="script") && !title && !body){ alert("Впиши тему в «Название» — по ней сгенерирую."); return; }
+    if(mode==="translate" && !body){ alert("Нет текста для перевода."); return; }
+    var payload={mode:mode,topic:title,text:body,lang:draft.lang};
+    if(mode==="translate"){ payload.to = draft.lang==="ru"?"ro":"ru"; }
+    var old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    try{
+      var d=await api("/api/scripts-ai",{method:"POST",body:JSON.stringify(payload)});
+      showAI(mode,d.reply||"");
+    }catch(e){ alert("AI: "+e.message); }
+    finally{ btn.disabled=false; btn.innerHTML=old; }
+  }
+  function showAI(mode,reply){
+    var pan=$("aiPanel"); var titleMap={ideas:"Идеи — тапни, чтобы взять в название",hooks:"Хуки — тапни, чтобы вставить",script:"Сценарий",translate:"Перевод"};
+    var html='<div class="aipanel__h">'+titleMap[mode]+'<span class="aipanel__x" id="aiClose">✕</span></div>';
+    if(mode==="ideas"||mode==="hooks"){
+      var lines=reply.split("\n").map(function(l){return l.replace(/^\s*[\d\-•.\)]+\s*/,"").trim();}).filter(Boolean);
+      html+=lines.map(function(l){return '<div class="airow" data-line="'+esc(l).replace(/"/g,"&quot;")+'">'+esc(l)+'</div>';}).join("");
+    } else {
+      html+='<div class="aitext">'+esc(reply)+'</div><button class="aiins" id="aiInsert">'+(mode==="translate"?"Заменить текст переводом":"Вставить в «Сценарий»")+'</button>';
+    }
+    pan.innerHTML=html; pan.style.display="block";
+    $("aiClose").onclick=function(){ pan.style.display="none"; };
+    pan.querySelectorAll("[data-line]").forEach(function(row){
+      row.onclick=function(){ var v=row.getAttribute("data-line");
+        if(mode==="ideas"){ $("fTitle").value=v; } else { $("fHook").value=v; }
+        pan.style.display="none";
+      };
+    });
+    var ins=$("aiInsert"); if(ins) ins.onclick=function(){ $("fBody").value=reply; pan.style.display="none"; };
+  }
+
+  // ── PWA ──
+  var deferred=null, ib=$("installBtn");
+  var isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferred=e; if(!isStandalone) ib.style.display="block"; });
+  window.addEventListener("appinstalled",function(){ ib.style.display="none"; });
+  if(isIOS && !isStandalone) ib.style.display="block";
+  ib.onclick=function(){ if(deferred){ deferred.prompt(); deferred.userChoice.finally(function(){ deferred=null; ib.style.display="none"; }); } else { alert("iPhone: «Поделиться» ⬆️ → «На экран „Домой“»."); } };
+  if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("/studio-sw.js",{scope:"/studio"}).catch(function(){}); }); }
+
+  // ── boot ──
+  function boot(){
+    showApp(); renderTypeFilter();
+    loadScripts().catch(function(e){
+      if(String(e.message).indexOf("код")>=0 || String(e.message).indexOf("401")>=0){ code=""; try{localStorage.removeItem(CODE_KEY);}catch(x){} showGate(); }
+    });
+  }
+  if(code) boot(); else showGate();
+})();
+</script>
+</body>
+</html>
