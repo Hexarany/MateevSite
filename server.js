@@ -10162,6 +10162,7 @@ function createServer() {
         "base-uri 'self'",
         "object-src 'none'",
         "frame-ancestors 'self'",
+        "frame-src 'self' https://www.google.com https://maps.google.com",
         "form-action 'self'",
         "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdnjs.cloudflare.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
