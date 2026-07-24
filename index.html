@@ -923,7 +923,7 @@
     (function(){
       function syncLang(){
         var lang = (function(){ try { return localStorage.getItem('lang') === 'ro' ? 'ro' : 'ru'; } catch(e){ return 'ru'; } })();
-        document.querySelectorAll('a[href^="/registry"], a[href^="/graduates"]').forEach(function(a){
+        document.querySelectorAll('a[href^="/registry"], a[href^="/graduates"], a[href^="/oferta"], a[href^="/first-visit"]').forEach(function(a){
           var u = a.getAttribute('href').split('?')[0];
           a.setAttribute('href', lang === 'ro' ? (u + '?lang=ro') : u);
         });

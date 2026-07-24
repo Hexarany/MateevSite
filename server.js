@@ -7627,60 +7627,78 @@ function renderConfirmSuccessPage(booking, alreadyConfirmed) {
 </html>`;
 }
 
-function renderFirstVisitPage() {
+function renderFirstVisitPage(lang) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
   const sharedFonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
 
   const steps = [
     {
       num: "01",
-      title: "Запись и подтверждение",
-      text: "Выберите процедуру и удобное время на сайте. Подтверждение придёт на почту — там будет дата, время и адрес студии."
+      title: t("Запись и подтверждение", "Programarea și confirmarea"),
+      text: t("Выберите процедуру и удобное время на сайте. Подтверждение придёт на почту — там будет дата, время и адрес студии.",
+        "Alegeți procedura și ora potrivită pe site. Confirmarea va veni pe e-mail — cu data, ora și adresa studioului.")
     },
     {
       num: "02",
-      title: "Как подготовиться",
-      text: "Ничего особенного не нужно. Приходите в комфортной одежде. За 1-2 часа лучше не есть плотно. Если есть хронические заболевания или недавние травмы — сообщите об этом при записи или при встрече."
+      title: t("Как подготовиться", "Cum să vă pregătiți"),
+      text: t("Ничего особенного не нужно. Приходите в комфортной одежде. За 1-2 часа лучше не есть плотно. Если есть хронические заболевания или недавние травмы — сообщите об этом при записи или при встрече.",
+        "Nu e nevoie de nimic special. Veniți în haine comode. Cu 1-2 ore înainte e mai bine să nu mâncați copios. Dacă aveți boli cronice sau traume recente — anunțați la programare sau la întâlnire.")
     },
     {
       num: "03",
-      title: "Начало сеанса",
-      text: "В начале я спрошу о вашем самочувствии, зонах напряжения и целях визита. Это займёт 3-5 минут — важно понять запрос чтобы работа была точной и полезной, а не шаблонной."
+      title: t("Начало сеанса", "Începutul ședinței"),
+      text: t("В начале я спрошу о вашем самочувствии, зонах напряжения и целях визита. Это займёт 3-5 минут — важно понять запрос чтобы работа была точной и полезной, а не шаблонной.",
+        "La început vă voi întreba despre starea dumneavoastră, zonele de tensiune și scopul vizitei. Durează 3-5 minute — e important să înțeleg cererea, ca lucrul să fie precis și util, nu unul de șablon.")
     },
     {
       num: "04",
-      title: "Во время процедуры",
-      text: "Вы лежите на массажном столе в тепле, всё необходимое — в студии. Интенсивность давления подбирается по вашим ощущениям — говорите если что-то некомфортно. Работа идёт в тишине или с мягкой фоновой музыкой — как вам лучше."
+      title: t("Во время процедуры", "În timpul procedurii"),
+      text: t("Вы лежите на массажном столе в тепле, всё необходимое — в студии. Интенсивность давления подбирается по вашим ощущениям — говорите если что-то некомфортно. Работа идёт в тишине или с мягкой фоновой музыкой — как вам лучше.",
+        "Stați întins pe masa de masaj, la căldură, tot ce e necesar se află în studio. Intensitatea presiunii se ajustează după senzațiile dumneavoastră — spuneți dacă ceva e incomod. Lucrul are loc în liniște sau cu muzică lină de fundal — cum vă e mai bine.")
     },
     {
       num: "05",
-      title: "После сеанса",
-      text: "После процедуры не торопитесь вставать — дайте телу пару минут. В первые часы рекомендую пить больше воды. Лёгкая усталость или ощущение «прожитых мышц» — это нормально и проходит к следующему дню."
+      title: t("После сеанса", "După ședință"),
+      text: t("После процедуры не торопитесь вставать — дайте телу пару минут. В первые часы рекомендую пить больше воды. Лёгкая усталость или ощущение «прожитых мышц» — это нормально и проходит к следующему дню.",
+        "După procedură nu vă grăbiți să vă ridicați — oferiți corpului câteva minute. În primele ore vă recomand să beți mai multă apă. O oboseală ușoară sau senzația de «mușchi lucrați» — e normal și trece până a doua zi.")
     },
     {
       num: "06",
-      title: "Что дальше",
-      text: "Скажу честно сколько сеансов нужно именно вам и с каким интервалом. Если разовый визит — дам рекомендации что делать самостоятельно. Никаких лишних визитов — только то что реально нужно."
+      title: t("Что дальше", "Ce urmează"),
+      text: t("Скажу честно сколько сеансов нужно именно вам и с каким интервалом. Если разовый визит — дам рекомендации что делать самостоятельно. Никаких лишних визитов — только то что реально нужно.",
+        "Vă voi spune sincer câte ședințe vă trebuie anume dumneavoastră și la ce interval. Dacă e o vizită unică — vă dau recomandări ce să faceți de sine stătător. Fără vizite în plus — doar ceea ce chiar e nevoie.")
     }
   ];
 
   const faq = [
-    { q: "Нужно ли что-то брать с собой?", a: "Нет. Всё необходимое — полотенца, одноразовые материалы, масло — в студии." },
-    { q: "Можно ли перенести запись?", a: "Да. Сообщите заранее по телефону или в Telegram — подберём новое время." },
-    { q: "Как выбрать процедуру если не знаю что нужно?", a: "Выбирайте классический массаж или напишите мне — опишите где болит или что беспокоит, посоветую." },
-    { q: "Можно при беременности?", a: "Некоторые техники противопоказаны, особенно в первом триместре. Сообщите о беременности при записи — подберём безопасный формат." }
+    { q: t("Нужно ли что-то брать с собой?", "Trebuie să iau ceva cu mine?"),
+      a: t("Нет. Всё необходимое — полотенца, одноразовые материалы, масло — в студии.", "Nu. Tot ce e necesar — prosoape, materiale de unică folosință, ulei — se află în studio.") },
+    { q: t("Можно ли перенести запись?", "Pot reprograma?"),
+      a: t("Да. Сообщите заранее по телефону или в Telegram — подберём новое время.", "Da. Anunțați din timp prin telefon sau Telegram — vom găsi o oră nouă.") },
+    { q: t("Как выбрать процедуру если не знаю что нужно?", "Cum aleg procedura dacă nu știu ce îmi trebuie?"),
+      a: t("Выбирайте классический массаж или напишите мне — опишите где болит или что беспокоит, посоветую.", "Alegeți masajul clasic sau scrieți-mi — descrieți unde doare sau ce vă deranjează, vă voi sfătui.") },
+    { q: t("Можно при беременности?", "Se poate în timpul sarcinii?"),
+      a: t("Некоторые техники противопоказаны, особенно в первом триместре. Сообщите о беременности при записи — подберём безопасный формат.", "Unele tehnici sunt contraindicate, mai ales în primul trimestru. Anunțați despre sarcină la programare — vom alege un format sigur.") }
   ];
 
+  const pageTitle = t("Первый визит в Mateev Spa Studio — что нужно знать", "Prima vizită la Mateev Spa Studio — ce trebuie să știți");
+  const pageDesc = t("Как подготовиться к первому сеансу массажа, что взять с собой и что будет происходить. Всё что нужно знать перед визитом в Mateev Spa Studio.",
+    "Cum să vă pregătiți pentru prima ședință de masaj, ce să luați cu voi și ce se va întâmpla. Tot ce trebuie să știți înainte de vizita la Mateev Spa Studio.");
+
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${ro ? "ro" : "ru"}">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Первый визит в Mateev Spa Studio — что нужно знать</title>
-  <meta name="description" content="Как подготовиться к первому сеансу массажа, что взять с собой и что будет происходить. Всё что нужно знать перед визитом в Mateev Spa Studio.">
-  <link rel="canonical" href="${base}/first-visit">
-  <meta property="og:title" content="Первый визит — Mateev Spa Studio">
-  <meta property="og:description" content="Как подготовиться к первому сеансу, что будет происходить и что делать после. Простые ответы на частые вопросы.">
-  <meta property="og:url" content="${base}/first-visit">
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(pageDesc)}">
+  <link rel="canonical" href="${base}/first-visit${ro ? "?lang=ro" : ""}">
+  <link rel="alternate" hreflang="ru" href="${base}/first-visit">
+  <link rel="alternate" hreflang="ro" href="${base}/first-visit?lang=ro">
+  <meta property="og:title" content="${escapeHtml(pageTitle)}">
+  <meta property="og:description" content="${escapeHtml(pageDesc)}">
+  <meta property="og:url" content="${base}/first-visit${ro ? "?lang=ro" : ""}">
   <meta property="og:image" content="${base}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org",
@@ -7698,9 +7716,12 @@ function renderFirstVisitPage() {
     a{color:#6b8d6b;text-decoration:none}
     a:hover{text-decoration:underline}
     .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
-    .topbar__inner{max-width:800px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
-    .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__inner{max-width:800px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;gap:12px}
     .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .topbar__lang{display:flex;gap:2px;background:rgba(71,49,28,0.06);border-radius:999px;padding:3px}
+    .topbar__lang a{font-size:0.78rem;font-weight:700;color:#7d6d60;padding:5px 12px;border-radius:999px}
+    .topbar__lang a.on{background:#1a2e22;color:#fff}
+    .topbar__lang a:hover{text-decoration:none}
     .container{max-width:800px;margin:0 auto;padding:0 24px}
     .hero{padding:64px 0 48px}
     .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
@@ -7730,16 +7751,19 @@ function renderFirstVisitPage() {
 <body>
   <header class="topbar">
     <div class="topbar__inner">
-      <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/" class="topbar__back">← На главную</a>
+      <a href="/${ro ? "?lang=ro" : ""}" class="topbar__back">${t("← На главную", "← Acasă")}</a>
+      <div class="topbar__lang">
+        <a href="/first-visit" class="${ro ? "" : "on"}">RU</a>
+        <a href="/first-visit?lang=ro" class="${ro ? "on" : ""}">RO</a>
+      </div>
     </div>
   </header>
   <main>
     <div class="container">
       <div class="hero">
-        <p class="hero__kicker">Первый визит</p>
-        <h1 class="hero__title">Что нужно знать перед первым сеансом</h1>
-        <p class="hero__sub">Простые ответы на все вопросы — от записи до того что делать после процедуры.</p>
+        <p class="hero__kicker">${t("Первый визит", "Prima vizită")}</p>
+        <h1 class="hero__title">${t("Что нужно знать перед первым сеансом", "Ce trebuie să știți înainte de prima ședință")}</h1>
+        <p class="hero__sub">${t("Простые ответы на все вопросы — от записи до того что делать после процедуры.", "Răspunsuri simple la toate întrebările — de la programare până la ce faceți după procedură.")}</p>
       </div>
 
       <hr class="divider">
@@ -7758,7 +7782,7 @@ function renderFirstVisitPage() {
       <hr class="divider">
 
       <div class="faq">
-        <h2 class="faq__title">Частые вопросы</h2>
+        <h2 class="faq__title">${t("Частые вопросы", "Întrebări frecvente")}</h2>
         ${faq.map(f => `
           <div class="faq-item">
             <div class="faq-item__q">${escapeHtml(f.q)}</div>
@@ -7767,113 +7791,144 @@ function renderFirstVisitPage() {
       </div>
 
       <div class="cta">
-        <div class="cta__title">Готовы записаться?</div>
-        <p class="cta__sub">Онлайн-запись без звонков — выберите удобное время прямо сейчас</p>
-        <a href="${base}/#booking" class="cta-btn">Выбрать время →</a>
+        <div class="cta__title">${t("Готовы записаться?", "Gata de programare?")}</div>
+        <p class="cta__sub">${t("Онлайн-запись без звонков — выберите удобное время прямо сейчас", "Programare online fără apeluri — alegeți ora potrivită chiar acum")}</p>
+        <a href="${base}/#booking" class="cta-btn">${t("Выбрать время →", "Alege ora →")}</a>
       </div>
     </div>
   </main>
-  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · Кишинёв</p></footer>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · ${t("Кишинёв", "Chișinău")}</p></footer>
 </body>
 </html>`;
 }
 
-function renderOfferPage() {
+function renderOfferPage(lang) {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const ro = lang === "ro";
+  const t = (r, o) => (ro ? o : r);
   const sharedFonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
-  const updated = "24 июля 2026 г.";
+  const updated = t("24 июля 2026 г.", "24 iulie 2026");
+  const fvHref = ro ? `${base}/first-visit?lang=ro` : `${base}/first-visit`;
 
   const sections = [
     {
-      title: "1. Общие положения",
+      title: t("1. Общие положения", "1. Dispoziții generale"),
       body: [
-        "Настоящий документ является публичной офертой — официальным предложением студии массажа Mateev Spa Studio (далее — «Студия»), оказываемой компанией «Matievici Group» S.R.L., IDNO 1026023124373 (далее — «Исполнитель»), заключить договор на оказание услуг на изложенных ниже условиях.",
-        "Записываясь на сеанс, оплачивая услугу или приобретая подарочный сертификат, клиент (далее — «Клиент») подтверждает, что ознакомился с условиями оферты, согласен с ними и принимает их в полном объёме."
+        t("Настоящий документ является публичной офертой — официальным предложением студии массажа Mateev Spa Studio (далее — «Студия»), оказываемой компанией «Matievici Group» S.R.L., IDNO 1026023124373 (далее — «Исполнитель»), заключить договор на оказание услуг на изложенных ниже условиях.",
+          "Prezentul document reprezintă o ofertă publică — propunerea oficială a studioului de masaj Mateev Spa Studio (în continuare — «Studioul»), prestat de compania «Matievici Group» S.R.L., IDNO 1026023124373 (în continuare — «Prestatorul»), de a încheia un contract de prestare a serviciilor în condițiile expuse mai jos."),
+        t("Записываясь на сеанс, оплачивая услугу или приобретая подарочный сертификат, клиент (далее — «Клиент») подтверждает, что ознакомился с условиями оферты, согласен с ними и принимает их в полном объёме.",
+          "Prin efectuarea unei programări, achitarea serviciului sau procurarea unui certificat cadou, clientul (în continuare — «Clientul») confirmă că a luat cunoștință de condițiile ofertei, este de acord cu ele și le acceptă integral.")
       ]
     },
     {
-      title: "2. Предмет и характер услуг",
+      title: t("2. Предмет и характер услуг", "2. Obiectul și caracterul serviciilor"),
       body: [
-        "Исполнитель оказывает услуги оздоровительного и расслабляющего массажа, а также телесной терапии в помещении Студии по адресу: г. Кишинёв, бульвар Константин Негруцци, 7.",
-        "Услуги носят оздоровительно-релаксационный характер, направлены на снятие мышечного напряжения и общее восстановление. Они не являются медицинской услугой, не заменяют врачебную диагностику, лечение или назначения специалиста."
+        t("Исполнитель оказывает услуги оздоровительного и расслабляющего массажа, а также телесной терапии в помещении Студии по адресу: г. Кишинёв, бульвар Константин Негруцци, 7.",
+          "Prestatorul oferă servicii de masaj de întremare și relaxare, precum și terapie corporală, în incinta Studioului la adresa: mun. Chișinău, bulevardul Constantin Negruzzi, 7."),
+        t("Услуги носят оздоровительно-релаксационный характер, направлены на снятие мышечного напряжения и общее восстановление. Они не являются медицинской услугой, не заменяют врачебную диагностику, лечение или назначения специалиста.",
+          "Serviciile au un caracter de întremare și relaxare, fiind orientate spre eliminarea tensiunii musculare și refacerea generală. Ele nu constituie un serviciu medical și nu înlocuiesc diagnosticul, tratamentul sau recomandările unui specialist.")
       ]
     },
     {
-      title: "3. Запись и подтверждение",
+      title: t("3. Запись и подтверждение", "3. Programarea și confirmarea"),
       body: [
-        "Запись производится через сайт, по телефону или в мессенджерах (Telegram, WhatsApp, Viber). После записи на указанную почту приходит подтверждение с датой, временем и адресом.",
-        "Выбранное время резервируется за Клиентом. Просьба приходить за 5–10 минут до начала, чтобы спокойно подготовиться к сеансу."
+        t("Запись производится через сайт, по телефону или в мессенджерах (Telegram, WhatsApp, Viber). После записи на указанную почту приходит подтверждение с датой, временем и адресом.",
+          "Programarea se face prin intermediul site-ului, telefonic sau prin mesagerii (Telegram, WhatsApp, Viber). După programare, la adresa de e-mail indicată se trimite o confirmare cu data, ora și adresa."),
+        t("Выбранное время резервируется за Клиентом. Просьба приходить за 5–10 минут до начала, чтобы спокойно подготовиться к сеансу.",
+          "Ora aleasă este rezervată pentru Client. Vă rugăm să veniți cu 5–10 minute înainte de începere, pentru a vă pregăti în liniște pentru ședință.")
       ]
     },
     {
-      title: "4. Стоимость и оплата",
+      title: t("4. Стоимость и оплата", "4. Costul și plata"),
       body: [
-        "Актуальная стоимость услуг указана на сайте и действительна на момент записи. Исполнитель вправе изменять цены; уже подтверждённая запись оплачивается по цене, действовавшей на момент подтверждения.",
-        "Оплата производится в Студии наличными или переводом, либо иным согласованным способом. Оплата подарочным сертификатом — в пределах его номинала."
+        t("Актуальная стоимость услуг указана на сайте и действительна на момент записи. Исполнитель вправе изменять цены; уже подтверждённая запись оплачивается по цене, действовавшей на момент подтверждения.",
+          "Costul actual al serviciilor este indicat pe site și este valabil la momentul programării. Prestatorul are dreptul să modifice prețurile; o programare deja confirmată se achită la prețul valabil la momentul confirmării."),
+        t("Оплата производится в Студии наличными или переводом, либо иным согласованным способом. Оплата подарочным сертификатом — в пределах его номинала.",
+          "Plata se efectuează în Studio în numerar sau prin transfer, ori printr-o altă metodă convenită. Plata cu certificat cadou — în limita valorii nominale a acestuia.")
       ]
     },
     {
-      title: "5. Перенос и отмена записи",
+      title: t("5. Перенос и отмена записи", "5. Reprogramarea și anularea"),
       body: [
-        "Клиент вправе перенести или отменить запись, предупредив Исполнителя не позднее чем за 3 часа до начала сеанса — по телефону или в мессенджере.",
-        "При систематических неявках без предупреждения Исполнитель вправе предложить предварительную оплату следующей записи."
+        t("Клиент вправе перенести или отменить запись, предупредив Исполнителя не позднее чем за 3 часа до начала сеанса — по телефону или в мессенджере.",
+          "Clientul are dreptul să reprogrameze sau să anuleze programarea, anunțând Prestatorul cu cel puțin 3 ore înainte de începerea ședinței — telefonic sau prin mesagerie."),
+        t("При систематических неявках без предупреждения Исполнитель вправе предложить предварительную оплату следующей записи.",
+          "În cazul neprezentărilor sistematice fără anunț, Prestatorul are dreptul să propună achitarea în avans a următoarei programări.")
       ]
     },
     {
-      title: "6. Опоздание",
+      title: t("6. Опоздание", "6. Întârzierea"),
       body: [
-        "В случае опоздания сеанс проводится в пределах оставшегося зарезервированного времени и не продлевается за счёт следующего Клиента.",
-        "При опоздании более чем на 15 минут Исполнитель вправе предложить перенос записи на другое время."
+        t("В случае опоздания сеанс проводится в пределах оставшегося зарезервированного времени и не продлевается за счёт следующего Клиента.",
+          "În caz de întârziere, ședința se desfășoară în limita timpului rezervat rămas și nu se prelungește în detrimentul următorului Client."),
+        t("При опоздании более чем на 15 минут Исполнитель вправе предложить перенос записи на другое время.",
+          "La o întârziere de peste 15 minute, Prestatorul are dreptul să propună reprogramarea pentru o altă oră.")
       ]
     },
     {
-      title: "7. Здоровье и противопоказания",
+      title: t("7. Здоровье и противопоказания", "7. Sănătatea și contraindicațiile"),
       body: [
-        "Перед сеансом Клиент обязан сообщить о наличии заболеваний, недавних травм, обострений, беременности и иных состояниях, которые могут быть противопоказанием к массажу.",
-        "При наличии явных противопоказаний Исполнитель вправе отказать в проведении сеанса или скорректировать программу. Ответственность за достоверность сообщённой о здоровье информации несёт Клиент."
+        t("Перед сеансом Клиент обязан сообщить о наличии заболеваний, недавних травм, обострений, беременности и иных состояниях, которые могут быть противопоказанием к массажу.",
+          "Înainte de ședință, Clientul este obligat să comunice despre existența unor boli, traume recente, acutizări, sarcină și alte stări care pot constitui contraindicații pentru masaj."),
+        t("При наличии явных противопоказаний Исполнитель вправе отказать в проведении сеанса или скорректировать программу. Ответственность за достоверность сообщённой о здоровье информации несёт Клиент.",
+          "În prezența unor contraindicații evidente, Prestatorul are dreptul să refuze desfășurarea ședinței sau să ajusteze programul. Responsabilitatea pentru veridicitatea informației comunicate despre sănătate revine Clientului.")
       ]
     },
     {
-      title: "8. Подарочные сертификаты",
+      title: t("8. Подарочные сертификаты", "8. Certificatele cadou"),
       body: [
-        "Сертификат может быть оформлен на определённую услугу или сумму и активируется при оплате. Срок действия указывается на самом сертификате (как правило, от 6 до 12 месяцев с даты активации).",
-        "Сертификат не подлежит обмену на денежные средства. Неиспользованный после истечения срока сертификат считается недействительным."
+        t("Сертификат может быть оформлен на определённую услугу или сумму и активируется при оплате. Срок действия указывается на самом сертификате (как правило, от 6 до 12 месяцев с даты активации).",
+          "Certificatul poate fi emis pentru un anumit serviciu sau o anumită sumă și se activează la achitare. Termenul de valabilitate este indicat pe certificat (de regulă, de la 6 la 12 luni de la data activării)."),
+        t("Сертификат не подлежит обмену на денежные средства. Неиспользованный после истечения срока сертификат считается недействительным.",
+          "Certificatul nu se schimbă în bani. Certificatul neutilizat după expirarea termenului se consideră nevalabil.")
       ]
     },
     {
-      title: "9. Персональные данные и конфиденциальность",
+      title: t("9. Персональные данные и конфиденциальность", "9. Datele cu caracter personal și confidențialitatea"),
       body: [
-        "Персональные данные Клиента (имя, контакты, сведения о здоровье, сообщённые для подбора программы) обрабатываются исключительно для оказания услуг, записи и связи. Данные не передаются третьим лицам, кроме случаев, предусмотренных законом.",
-        `Подробнее об обработке данных и файлах cookie — на странице <a href="${base}/first-visit">«Первый визит»</a>.`
+        t("Персональные данные Клиента (имя, контакты, сведения о здоровье, сообщённые для подбора программы) обрабатываются исключительно для оказания услуг, записи и связи. Данные не передаются третьим лицам, кроме случаев, предусмотренных законом.",
+          "Datele cu caracter personal ale Clientului (numele, datele de contact, informațiile despre sănătate comunicate pentru selectarea programului) sunt prelucrate exclusiv pentru prestarea serviciilor, programare și comunicare. Datele nu se transmit terților, cu excepția cazurilor prevăzute de lege."),
+        t(`Подробнее об обработке данных и файлах cookie — на странице <a href="${fvHref}">«Первый визит»</a>.`,
+          `Mai multe despre prelucrarea datelor și fișierele cookie — pe pagina <a href="${fvHref}">«Prima vizită»</a>.`)
       ]
     },
     {
-      title: "10. Ответственность и форс-мажор",
+      title: t("10. Ответственность и форс-мажор", "10. Răspunderea și forța majoră"),
       body: [
-        "Исполнитель не несёт ответственности за последствия, наступившие вследствие сокрытия Клиентом противопоказаний или предоставления недостоверной информации о состоянии здоровья.",
-        "Стороны освобождаются от ответственности за неисполнение обязательств при обстоятельствах непреодолимой силы (форс-мажор)."
+        t("Исполнитель не несёт ответственности за последствия, наступившие вследствие сокрытия Клиентом противопоказаний или предоставления недостоверной информации о состоянии здоровья.",
+          "Prestatorul nu poartă răspundere pentru consecințele survenite ca urmare a ascunderii de către Client a contraindicațiilor sau a furnizării unor informații neveridice despre starea sănătății."),
+        t("Стороны освобождаются от ответственности за неисполнение обязательств при обстоятельствах непреодолимой силы (форс-мажор).",
+          "Părțile sunt exonerate de răspundere pentru neexecutarea obligațiilor în circumstanțe de forță majoră.")
       ]
     },
     {
-      title: "11. Реквизиты Исполнителя",
+      title: t("11. Реквизиты Исполнителя", "11. Datele Prestatorului"),
       body: [
         "«Matievici Group» S.R.L. · IDNO 1026023124373",
-        "Адрес студии: г. Кишинёв, бульвар Константин Негруцци, 7",
-        `Телефон: <a href="tel:+37369158475">+373 69 158 475</a> · E-mail: <a href="mailto:hello@mateevspa.md">hello@mateevspa.md</a>`
+        t("Адрес студии: г. Кишинёв, бульвар Константин Негруцци, 7",
+          "Adresa studioului: mun. Chișinău, bulevardul Constantin Negruzzi, 7"),
+        t(`Телефон: <a href="tel:+37369158475">+373 69 158 475</a> · E-mail: <a href="mailto:hello@mateevspa.md">hello@mateevspa.md</a>`,
+          `Telefon: <a href="tel:+37369158475">+373 69 158 475</a> · E-mail: <a href="mailto:hello@mateevspa.md">hello@mateevspa.md</a>`)
       ]
     }
   ];
 
+  const pageTitle = t("Публичная оферта и условия — Mateev Spa Studio", "Ofertă publică și condiții — Mateev Spa Studio");
+  const pageDesc = t("Условия оказания услуг Mateev Spa Studio: запись, оплата, перенос и отмена, подарочные сертификаты, конфиденциальность. Публичная оферта «Matievici Group» S.R.L.",
+    "Condițiile de prestare a serviciilor Mateev Spa Studio: programare, plată, reprogramare și anulare, certificate cadou, confidențialitate. Ofertă publică «Matievici Group» S.R.L.");
+
   return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="${ro ? "ro" : "ru"}">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Публичная оферта и условия — Mateev Spa Studio</title>
-  <meta name="description" content="Условия оказания услуг Mateev Spa Studio: запись, оплата, перенос и отмена, подарочные сертификаты, конфиденциальность. Публичная оферта «Matievici Group» S.R.L.">
-  <link rel="canonical" href="${base}/oferta">
-  <meta property="og:title" content="Публичная оферта и условия — Mateev Spa Studio">
-  <meta property="og:description" content="Условия записи, оплаты, переноса и отмены, сертификаты и конфиденциальность.">
-  <meta property="og:url" content="${base}/oferta">
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(pageDesc)}">
+  <link rel="canonical" href="${base}/oferta${ro ? "?lang=ro" : ""}">
+  <link rel="alternate" hreflang="ru" href="${base}/oferta">
+  <link rel="alternate" hreflang="ro" href="${base}/oferta?lang=ro">
+  <meta property="og:title" content="${escapeHtml(pageTitle)}">
+  <meta property="og:description" content="${escapeHtml(pageDesc)}">
+  <meta property="og:url" content="${base}/oferta${ro ? "?lang=ro" : ""}">
   <meta property="og:image" content="${base}/og-image.jpg">
   ${sharedFonts}
   <style>
@@ -7882,9 +7937,12 @@ function renderOfferPage() {
     a{color:#6b8d6b;text-decoration:none}
     a:hover{text-decoration:underline}
     .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
-    .topbar__inner{max-width:800px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
-    .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__inner{max-width:800px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;gap:12px}
     .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .topbar__lang{display:flex;gap:2px;background:rgba(71,49,28,0.06);border-radius:999px;padding:3px}
+    .topbar__lang a{font-size:0.78rem;font-weight:700;color:#7d6d60;padding:5px 12px;border-radius:999px}
+    .topbar__lang a.on{background:#1a2e22;color:#fff}
+    .topbar__lang a:hover{text-decoration:none}
     .container{max-width:800px;margin:0 auto;padding:0 24px}
     .hero{padding:64px 0 40px}
     .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
@@ -7907,16 +7965,19 @@ function renderOfferPage() {
 <body>
   <header class="topbar">
     <div class="topbar__inner">
-      <span class="topbar__brand">Mateev Spa Studio</span>
-      <a href="/" class="topbar__back">← На главную</a>
+      <a href="/${ro ? "?lang=ro" : ""}" class="topbar__back">${t("← На главную", "← Acasă")}</a>
+      <div class="topbar__lang">
+        <a href="/oferta" class="${ro ? "" : "on"}">RU</a>
+        <a href="/oferta?lang=ro" class="${ro ? "on" : ""}">RO</a>
+      </div>
     </div>
   </header>
   <main>
     <div class="container">
       <div class="hero">
-        <p class="hero__kicker">Публичная оферта</p>
-        <h1 class="hero__title">Условия оказания услуг</h1>
-        <p class="hero__sub">Простыми словами о том, как проходит запись, оплата, перенос и отмена, что важно знать о сертификатах и данных. Обновлено: ${escapeHtml(updated)}</p>
+        <p class="hero__kicker">${t("Публичная оферта", "Ofertă publică")}</p>
+        <h1 class="hero__title">${t("Условия оказания услуг", "Condițiile de prestare a serviciilor")}</h1>
+        <p class="hero__sub">${t("Простыми словами о том, как проходит запись, оплата, перенос и отмена, что важно знать о сертификатах и данных.", "Pe scurt despre cum au loc programarea, plata, reprogramarea și anularea, ce e important de știut despre certificate și date.")} ${t("Обновлено", "Actualizat")}: ${escapeHtml(updated)}</p>
       </div>
 
       <hr class="divider">
@@ -7930,13 +7991,13 @@ function renderOfferPage() {
       </div>
 
       <div class="cta">
-        <div class="cta__title">Остались вопросы?</div>
-        <p class="cta__sub">Напишите нам — ответим до записи, без обязательств</p>
-        <a href="${base}/#booking" class="cta-btn">Записаться →</a>
+        <div class="cta__title">${t("Остались вопросы?", "Aveți întrebări?")}</div>
+        <p class="cta__sub">${t("Напишите нам — ответим до записи, без обязательств", "Scrieți-ne — răspundem înainte de programare, fără obligații")}</p>
+        <a href="${base}/#booking" class="cta-btn">${t("Записаться →", "Programare →")}</a>
       </div>
     </div>
   </main>
-  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · «Matievici Group» S.R.L. · Кишинёв</p></footer>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · «Matievici Group» S.R.L. · ${t("Кишинёв", "Chișinău")}</p></footer>
 </body>
 </html>`;
 }
@@ -10450,14 +10511,16 @@ function createServer() {
       }
 
       if (urlObject.pathname === "/first-visit" || urlObject.pathname === "/first-visit/") {
-        const html = renderFirstVisitPage();
+        const lang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderFirstVisitPage(lang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" });
         response.end(html);
         return;
       }
 
       if (urlObject.pathname === "/oferta" || urlObject.pathname === "/oferta/") {
-        const html = renderOfferPage();
+        const lang = urlObject.searchParams.get("lang") === "ro" ? "ro" : "ru";
+        const html = renderOfferPage(lang);
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" });
         response.end(html);
         return;
