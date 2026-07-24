@@ -7778,6 +7778,169 @@ function renderFirstVisitPage() {
 </html>`;
 }
 
+function renderOfferPage() {
+  const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
+  const sharedFonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">`;
+  const updated = "24 июля 2026 г.";
+
+  const sections = [
+    {
+      title: "1. Общие положения",
+      body: [
+        "Настоящий документ является публичной офертой — официальным предложением студии массажа Mateev Spa Studio (далее — «Студия»), оказываемой компанией «Matievici Group» S.R.L., IDNO 1026023124373 (далее — «Исполнитель»), заключить договор на оказание услуг на изложенных ниже условиях.",
+        "Записываясь на сеанс, оплачивая услугу или приобретая подарочный сертификат, клиент (далее — «Клиент») подтверждает, что ознакомился с условиями оферты, согласен с ними и принимает их в полном объёме."
+      ]
+    },
+    {
+      title: "2. Предмет и характер услуг",
+      body: [
+        "Исполнитель оказывает услуги оздоровительного и расслабляющего массажа, а также телесной терапии в помещении Студии по адресу: г. Кишинёв, бульвар Константин Негруцци, 7.",
+        "Услуги носят оздоровительно-релаксационный характер, направлены на снятие мышечного напряжения и общее восстановление. Они не являются медицинской услугой, не заменяют врачебную диагностику, лечение или назначения специалиста."
+      ]
+    },
+    {
+      title: "3. Запись и подтверждение",
+      body: [
+        "Запись производится через сайт, по телефону или в мессенджерах (Telegram, WhatsApp, Viber). После записи на указанную почту приходит подтверждение с датой, временем и адресом.",
+        "Выбранное время резервируется за Клиентом. Просьба приходить за 5–10 минут до начала, чтобы спокойно подготовиться к сеансу."
+      ]
+    },
+    {
+      title: "4. Стоимость и оплата",
+      body: [
+        "Актуальная стоимость услуг указана на сайте и действительна на момент записи. Исполнитель вправе изменять цены; уже подтверждённая запись оплачивается по цене, действовавшей на момент подтверждения.",
+        "Оплата производится в Студии наличными или переводом, либо иным согласованным способом. Оплата подарочным сертификатом — в пределах его номинала."
+      ]
+    },
+    {
+      title: "5. Перенос и отмена записи",
+      body: [
+        "Клиент вправе перенести или отменить запись, предупредив Исполнителя не позднее чем за 3 часа до начала сеанса — по телефону или в мессенджере.",
+        "При систематических неявках без предупреждения Исполнитель вправе предложить предварительную оплату следующей записи."
+      ]
+    },
+    {
+      title: "6. Опоздание",
+      body: [
+        "В случае опоздания сеанс проводится в пределах оставшегося зарезервированного времени и не продлевается за счёт следующего Клиента.",
+        "При опоздании более чем на 15 минут Исполнитель вправе предложить перенос записи на другое время."
+      ]
+    },
+    {
+      title: "7. Здоровье и противопоказания",
+      body: [
+        "Перед сеансом Клиент обязан сообщить о наличии заболеваний, недавних травм, обострений, беременности и иных состояниях, которые могут быть противопоказанием к массажу.",
+        "При наличии явных противопоказаний Исполнитель вправе отказать в проведении сеанса или скорректировать программу. Ответственность за достоверность сообщённой о здоровье информации несёт Клиент."
+      ]
+    },
+    {
+      title: "8. Подарочные сертификаты",
+      body: [
+        "Сертификат может быть оформлен на определённую услугу или сумму и активируется при оплате. Срок действия указывается на самом сертификате (как правило, от 6 до 12 месяцев с даты активации).",
+        "Сертификат не подлежит обмену на денежные средства. Неиспользованный после истечения срока сертификат считается недействительным."
+      ]
+    },
+    {
+      title: "9. Персональные данные и конфиденциальность",
+      body: [
+        "Персональные данные Клиента (имя, контакты, сведения о здоровье, сообщённые для подбора программы) обрабатываются исключительно для оказания услуг, записи и связи. Данные не передаются третьим лицам, кроме случаев, предусмотренных законом.",
+        `Подробнее об обработке данных и файлах cookie — на странице <a href="${base}/first-visit">«Первый визит»</a>.`
+      ]
+    },
+    {
+      title: "10. Ответственность и форс-мажор",
+      body: [
+        "Исполнитель не несёт ответственности за последствия, наступившие вследствие сокрытия Клиентом противопоказаний или предоставления недостоверной информации о состоянии здоровья.",
+        "Стороны освобождаются от ответственности за неисполнение обязательств при обстоятельствах непреодолимой силы (форс-мажор)."
+      ]
+    },
+    {
+      title: "11. Реквизиты Исполнителя",
+      body: [
+        "«Matievici Group» S.R.L. · IDNO 1026023124373",
+        "Адрес студии: г. Кишинёв, бульвар Константин Негруцци, 7",
+        `Телефон: <a href="tel:+37369158475">+373 69 158 475</a> · E-mail: <a href="mailto:hello@mateevspa.md">hello@mateevspa.md</a>`
+      ]
+    }
+  ];
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Публичная оферта и условия — Mateev Spa Studio</title>
+  <meta name="description" content="Условия оказания услуг Mateev Spa Studio: запись, оплата, перенос и отмена, подарочные сертификаты, конфиденциальность. Публичная оферта «Matievici Group» S.R.L.">
+  <link rel="canonical" href="${base}/oferta">
+  <meta property="og:title" content="Публичная оферта и условия — Mateev Spa Studio">
+  <meta property="og:description" content="Условия записи, оплаты, переноса и отмены, сертификаты и конфиденциальность.">
+  <meta property="og:url" content="${base}/oferta">
+  <meta property="og:image" content="${base}/og-image.jpg">
+  ${sharedFonts}
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:#f7f0e6;color:#241c17;line-height:1.7}
+    a{color:#6b8d6b;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .topbar{background:rgba(250,242,233,0.95);border-bottom:1px solid rgba(71,49,28,0.08);padding:16px 0;position:sticky;top:0;z-index:10}
+    .topbar__inner{max-width:800px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .topbar__brand{font-weight:700;font-size:0.9rem;color:#241c17}
+    .topbar__back{font-size:0.85rem;color:#6b8d6b;font-weight:600}
+    .container{max-width:800px;margin:0 auto;padding:0 24px}
+    .hero{padding:64px 0 40px}
+    .hero__kicker{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
+    .hero__title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:12px;line-height:1.2}
+    .hero__sub{color:#7d6d60;font-size:0.95rem;max-width:600px}
+    .divider{border:none;border-top:1px solid rgba(71,49,28,0.1);margin:0}
+    .sections{padding:40px 0 24px;display:grid;gap:34px}
+    .sec__title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:#1a2e22;margin-bottom:12px;line-height:1.25}
+    .sec__p{color:#3a2e26;font-size:0.95rem;line-height:1.8;margin-bottom:10px}
+    .sec__p:last-child{margin-bottom:0}
+    .cta{background:#1a2e22;border-radius:24px;padding:44px;text-align:center;margin:24px 0 64px}
+    .cta__title{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:#fff;margin-bottom:8px}
+    .cta__sub{color:rgba(255,255,255,0.6);margin-bottom:28px}
+    .cta-btn{display:inline-block;padding:14px 36px;background:#b36d2c;color:#fff;border-radius:12px;font-weight:700;font-size:1rem}
+    .cta-btn:hover{background:#9a5c22;text-decoration:none}
+    footer{padding:24px 0;border-top:1px solid rgba(71,49,28,0.08);text-align:center;font-size:0.8rem;color:#7d6d60}
+    @media(max-width:600px){.cta{padding:32px 20px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <span class="topbar__brand">Mateev Spa Studio</span>
+      <a href="/" class="topbar__back">← На главную</a>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="hero">
+        <p class="hero__kicker">Публичная оферта</p>
+        <h1 class="hero__title">Условия оказания услуг</h1>
+        <p class="hero__sub">Простыми словами о том, как проходит запись, оплата, перенос и отмена, что важно знать о сертификатах и данных. Обновлено: ${escapeHtml(updated)}</p>
+      </div>
+
+      <hr class="divider">
+
+      <div class="sections">
+        ${sections.map(s => `
+          <div class="sec">
+            <h2 class="sec__title">${escapeHtml(s.title)}</h2>
+            ${s.body.map(p => `<p class="sec__p">${p}</p>`).join("")}
+          </div>`).join("")}
+      </div>
+
+      <div class="cta">
+        <div class="cta__title">Остались вопросы?</div>
+        <p class="cta__sub">Напишите нам — ответим до записи, без обязательств</p>
+        <a href="${base}/#booking" class="cta-btn">Записаться →</a>
+      </div>
+    </div>
+  </main>
+  <footer><p>© ${new Date().getFullYear()} Mateev Spa Studio · «Matievici Group» S.R.L. · Кишинёв</p></footer>
+</body>
+</html>`;
+}
+
 function renderIntakePage() {
   const base = (process.env.SITE_URL || "https://mateevmassage.com").replace(/\/$/, "");
   const goalsOptions = [
@@ -10293,6 +10456,13 @@ function createServer() {
         return;
       }
 
+      if (urlObject.pathname === "/oferta" || urlObject.pathname === "/oferta/") {
+        const html = renderOfferPage();
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+        response.end(html);
+        return;
+      }
+
       if (urlObject.pathname === "/intake" || urlObject.pathname === "/intake/") {
         const html = renderIntakePage();
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
@@ -10518,6 +10688,7 @@ function createServer() {
   <url><loc>${base}/uslugi</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
   ${SEO_LANDINGS.map((p) => `<url><loc>${base}/uslugi/${p.slug}</loc><lastmod>${now}</lastmod><priority>0.75</priority></url>`).join("\n  ")}
   <url><loc>${base}/first-visit</loc><lastmod>${now}</lastmod><priority>0.8</priority></url>
+  <url><loc>${base}/oferta</loc><lastmod>${now}</lastmod><priority>0.3</priority></url>
 ${teamUrls}
 ${cityUrls}
 ${blogUrls}
