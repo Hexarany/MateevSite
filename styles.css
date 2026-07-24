@@ -1522,7 +1522,95 @@ p {
 .footer {
   position: relative;
   z-index: 1;
-  padding: 42px 0 58px;
+  margin-top: 72px;
+  padding: 60px 0 34px;
+  background: #14261d;
+  color: rgba(247, 240, 230, 0.82);
+  border-top: 3px solid var(--brand);
+}
+
+/* Тёмный футер: перекрываем цвета детей под тёмную подложку */
+.footer .footer__eyebrow {
+  color: #d89b5a;
+}
+
+.footer .footer__title {
+  color: #f7f0e6;
+}
+
+.footer .footer__copy {
+  color: rgba(247, 240, 230, 0.66);
+}
+
+.footer .footer__nav a {
+  color: rgba(247, 240, 230, 0.72);
+}
+
+.footer .footer__nav a:hover {
+  color: #f7f0e6;
+}
+
+.footer .footer-contact {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(247, 240, 230, 0.12);
+}
+
+.footer .footer-contact strong {
+  color: rgba(247, 240, 230, 0.52);
+}
+
+.footer .footer-contact span {
+  color: #f7f0e6;
+}
+
+.footer .social-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(247, 240, 230, 0.14);
+  color: rgba(247, 240, 230, 0.78);
+}
+
+.footer .social-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #f7f0e6;
+}
+
+/* Нижняя строка подвала: © + юр-данные + ссылки */
+.footer__legal {
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(247, 240, 230, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 26px;
+  flex-wrap: wrap;
+}
+
+.footer__legal p {
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: rgba(247, 240, 230, 0.5);
+  margin: 0;
+}
+
+.footer__legal-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer__legal-links a {
+  font-size: 0.76rem;
+  color: rgba(247, 240, 230, 0.62);
+  transition: color 0.15s;
+}
+
+.footer__legal-links a:hover {
+  color: #f7f0e6;
+}
+
+.footer__legal-links span {
+  color: rgba(247, 240, 230, 0.28);
 }
 
 .messenger-btns {
