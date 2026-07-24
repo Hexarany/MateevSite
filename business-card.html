@@ -111,67 +111,76 @@ hr { border: none; border-top: 1px solid #1f1f1f; }
   .pb-right{ display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex-shrink: 0; }
   .pb-qr  { width: 19mm; height: 19mm; display: block; image-rendering: pixelated; }
 }
+[data-ro] { display: none; }
+html[lang="ro"] [data-ru] { display: none; }
+html[lang="ro"] [data-ro] { display: inline; }
+.langsw { display: inline-flex; border: 1px solid #2e2e2e; border-radius: 4px; overflow: hidden; }
+.langsw button { border: none; background: #1a1a1a; padding: 5px 10px; font-family: 'Instrument Sans',sans-serif; font-size: 10px; font-weight: 600; letter-spacing: .06em; color: #666; cursor: pointer; }
+.langsw button.on { background: #1c1610; color: #c49e5a; }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-  <h1>MateevSpa<span>Редактор визиток</span></h1>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+    <h1>MateevSpa<span><span data-ru>Редактор визиток</span><span data-ro>Editor cărți de vizită</span></span></h1>
+    <div class="langsw" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
+  </div>
   <hr>
   <div>
-    <div class="lbl">Тема</div>
+    <div class="lbl"><span data-ru>Тема</span><span data-ro>Temă</span></div>
     <div class="btn-row">
-      <button class="btn on" onclick="setTheme('classic',this)">Контраст</button>
-      <button class="btn"    onclick="setTheme('noir',this)">Ноир</button>
-      <button class="btn"    onclick="setTheme('blanc',this)">Бланк</button>
+      <button class="btn on" onclick="setTheme('classic',this)"><span data-ru>Контраст</span><span data-ro>Contrast</span></button>
+      <button class="btn"    onclick="setTheme('noir',this)">Noir</button>
+      <button class="btn"    onclick="setTheme('blanc',this)">Blanc</button>
     </div>
   </div>
   <hr>
   <div>
-    <div class="lbl">Лицевая</div>
-    <label class="field">Слоган
+    <div class="lbl"><span data-ru>Лицевая</span><span data-ro>Fața</span></div>
+    <label class="field"><span data-ru>Слоган</span><span data-ro>Slogan</span>
       <input type="text" id="inp-tagline" value="RESTORE · RENEW · RADIATE" oninput="sync()">
     </label>
   </div>
   <hr>
   <div>
-    <div class="lbl">Обратная</div>
+    <div class="lbl"><span data-ru>Обратная</span><span data-ro>Verso</span></div>
     <div style="display:flex;flex-direction:column;gap:7px;">
-      <label class="field">Имя <input type="text" id="inp-name" value="Denis Matievici" oninput="sync()"></label>
-      <label class="field">Должность <input type="text" id="inp-pos" value="Massage Therapist &amp; Educator" oninput="sync()"></label>
-      <label class="field">Специализации <input type="text" id="inp-svc" value="Massage · Body Care · Aesthetics" oninput="sync()"></label>
-      <label class="field">Телефон <input type="text" id="inp-phone" value="+373 69 158 475" oninput="sync()"></label>
-      <label class="field" style="opacity:.45;" title="В QR-коде"><s>Instagram</s> — в QR <input type="text" id="inp-ig" value="" style="display:none"></label>
-      <label class="field" style="opacity:.45;" title="В QR-коде"><s>Сайт</s> — в QR <input type="text" id="inp-site" value="" style="display:none"></label>
-      <label class="field">QR — ссылка <input type="url" id="inp-qr" value="https://mateevmassage.com/card" oninput="updateQR()"></label>
-      <label class="field">Подпись QR <input type="text" id="inp-qrlbl" value="Визитка" oninput="sync()"></label>
+      <label class="field"><span data-ru>Имя</span><span data-ro>Nume</span> <input type="text" id="inp-name" value="Denis Matievici" oninput="sync()"></label>
+      <label class="field"><span data-ru>Должность</span><span data-ro>Funcție</span> <input type="text" id="inp-pos" value="Massage Therapist &amp; Educator" oninput="sync()"></label>
+      <label class="field"><span data-ru>Специализации</span><span data-ro>Specializări</span> <input type="text" id="inp-svc" value="Massage · Body Care · Aesthetics" oninput="sync()"></label>
+      <label class="field"><span data-ru>Телефон</span><span data-ro>Telefon</span> <input type="text" id="inp-phone" value="+373 69 158 475" oninput="sync()"></label>
+      <label class="field" style="opacity:.45;" title="В QR-коде"><s>Instagram</s> <span data-ru>— в QR</span><span data-ro>— în QR</span> <input type="text" id="inp-ig" value="" style="display:none"></label>
+      <label class="field" style="opacity:.45;" title="В QR-коде"><s><span data-ru>Сайт</span><span data-ro>Site</span></s> <span data-ru>— в QR</span><span data-ro>— în QR</span> <input type="text" id="inp-site" value="" style="display:none"></label>
+      <label class="field"><span data-ru>QR — ссылка</span><span data-ro>QR — link</span> <input type="url" id="inp-qr" value="https://mateevmassage.com/card" oninput="updateQR()"></label>
+      <label class="field"><span data-ru>Подпись QR</span><span data-ro>Etichetă QR</span> <input type="text" id="inp-qrlbl" value="Визитка" oninput="sync()"></label>
     </div>
   </div>
   <hr>
   <div>
-    <div class="lbl">Параметры печати</div>
+    <div class="lbl"><span data-ru>Параметры печати</span><span data-ro>Parametri de printare</span></div>
     <div style="display:flex;flex-direction:column;gap:9px;">
       <div class="toggle-row">
-        <span>Скруглённые углы</span>
+        <span><span data-ru>Скруглённые углы</span><span data-ro>Colțuri rotunjite</span></span>
         <label class="toggle"><input type="checkbox" id="tog-radius" onchange="toggleRadius(this.checked)"><span class="tslider"></span></label>
       </div>
       <div>
-        <div class="lbl" style="margin-bottom:4px;">Карточек на листе</div>
+        <div class="lbl" style="margin-bottom:4px;"><span data-ru>Карточек на листе</span><span data-ro>Cărți pe foaie</span></div>
         <div class="btn-row">
-          <button class="btn"    onclick="setCount(6,this)">6 шт</button>
-          <button class="btn"    onclick="setCount(8,this)">8 шт</button>
-          <button class="btn on" onclick="setCount(10,this)">10 шт</button>
+          <button class="btn"    onclick="setCount(6,this)">6 <span data-ru>шт</span><span data-ro>buc</span></button>
+          <button class="btn"    onclick="setCount(8,this)">8 <span data-ru>шт</span><span data-ro>buc</span></button>
+          <button class="btn on" onclick="setCount(10,this)">10 <span data-ru>шт</span><span data-ro>buc</span></button>
         </div>
       </div>
     </div>
   </div>
   <hr>
-  <button id="btn-print" onclick="window.print()">🖨 Распечатать (A4)</button>
+  <button id="btn-print" onclick="window.print()">🖨 <span data-ru>Распечатать (A4)</span><span data-ro>Printează (A4)</span></button>
 </div>
 
 <div id="preview-area">
   <div>
-    <div class="prev-lbl">Лицевая сторона</div>
+    <div class="prev-lbl"><span data-ru>Лицевая сторона</span><span data-ro>Fața</span></div>
     <div class="cshadow">
       <div class="card-front" id="prev-front">
         <div class="front-bg" id="pv-front-bg"></div>
@@ -184,7 +193,7 @@ hr { border: none; border-top: 1px solid #1f1f1f; }
   </div>
 
   <div>
-    <div class="prev-lbl">Обратная сторона</div>
+    <div class="prev-lbl"><span data-ru>Обратная сторона</span><span data-ro>Verso</span></div>
     <div class="cshadow">
       <div class="card-back" id="prev-back">
         <div class="top-bar" id="pv-topbar"></div>
@@ -210,6 +219,16 @@ hr { border: none; border-top: 1px solid #1f1f1f; }
 <div class="print-pages" id="print-pages"></div>
 
 <script>
+/* Язык интерфейса редактора */
+(function(){
+  var RO = (function(){ try { return localStorage.getItem("lang") === "ro"; } catch(e){ return false; } })();
+  document.documentElement.lang = RO ? "ro" : "ru";
+  document.querySelectorAll("#lang button").forEach(function(b){
+    b.classList.toggle("on", (b.getAttribute("data-l") === "ro") === RO);
+    b.onclick = function(){ try { localStorage.setItem("lang", b.getAttribute("data-l")); } catch(e){} location.reload(); };
+  });
+})();
+
 const LOGO = 'https://mateevmassage.com/mateev_logo.png';
 let cardCount = 10;
 let currentTheme = 'classic';

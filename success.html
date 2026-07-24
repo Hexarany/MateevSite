@@ -10,17 +10,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    [data-ro]{display:none}
+    html[lang="ro"] [data-ru]{display:none}
+    html[lang="ro"] [data-ro]{display:inline}
+    .lang{display:inline-flex;border:1px solid rgba(68,50,36,0.15);border-radius:9px;overflow:hidden}
+    .lang button{border:none;background:transparent;padding:6px 12px;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer}
+    .lang button.on{background:#1a2e22;color:#fff}
+  </style>
 </head>
 <body>
   <div class="ambient ambient--left"></div>
   <div class="ambient ambient--right"></div>
 
   <header class="topbar">
-    <div class="container topbar__inner">
+    <div class="container topbar__inner" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
       <a href="/" class="brand">
-        <span class="brand__eyebrow">Студия массажа в Кишиневе</span>
+        <span class="brand__eyebrow"><span data-ru>Студия массажа в Кишиневе</span><span data-ro>Studio de masaj în Chișinău</span></span>
         <span class="brand__name">Mateev Spa Studio</span>
       </a>
+      <div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
     </div>
   </header>
 
@@ -34,10 +43,10 @@
             <circle cx="24" cy="24" r="18" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
             <path d="M15 24.5L21 30.5L33 18" stroke="#a8d5b5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <p style="margin:0; font-size:0.78rem; font-weight:700; letter-spacing:0.26em; text-transform:uppercase; color:rgba(255,250,244,0.6);">Запись подтверждена</p>
+          <p style="margin:0; font-size:0.78rem; font-weight:700; letter-spacing:0.26em; text-transform:uppercase; color:rgba(255,250,244,0.6);"><span data-ru>Запись подтверждена</span><span data-ro>Programare confirmată</span></p>
         </div>
-        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,5vw,4rem); font-weight:600; margin:0 0 16px; line-height:1.05; color:#fff;">Ждём вас в студии</h1>
-        <p style="margin:0; color:rgba(255,250,244,0.75); font-size:1.05rem; line-height:1.65; max-width:52ch;">Детали записи отправлены на ваш email. Если планы изменятся — вы можете отменить визит по ссылке ниже.</p>
+        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,5vw,4rem); font-weight:600; margin:0 0 16px; line-height:1.05; color:#fff;"><span data-ru>Ждём вас в студии</span><span data-ro>Vă așteptăm în studio</span></h1>
+        <p style="margin:0; color:rgba(255,250,244,0.75); font-size:1.05rem; line-height:1.65; max-width:52ch;"><span data-ru>Детали записи отправлены на ваш email. Если планы изменятся — вы можете отменить визит по ссылке ниже.</span><span data-ro>Detaliile programării au fost trimise pe e-mailul dumneavoastră. Dacă planurile se schimbă — puteți anula vizita prin linkul de mai jos.</span></p>
       </div>
     </section>
 
@@ -49,22 +58,22 @@
           <!-- Details -->
           <div>
             <div class="card" style="padding:28px;">
-              <p class="section-kicker">Детали визита</p>
+              <p class="section-kicker"><span data-ru>Детали визита</span><span data-ro>Detaliile vizitei</span></p>
               <div class="summary-list" id="bookingDetails"></div>
             </div>
 
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
-              <a id="repeatBookingLink" href="/#booking" class="button button--secondary">Записаться снова</a>
-              <a href="/" class="button button--ghost">На главную</a>
-              <a href="#" class="button button--ghost" id="cancelLink">Отменить запись</a>
+              <a id="repeatBookingLink" href="/#booking" class="button button--secondary"><span data-ru>Записаться снова</span><span data-ro>Programează din nou</span></a>
+              <a href="/" class="button button--ghost"><span data-ru>На главную</span><span data-ro>Acasă</span></a>
+              <a href="#" class="button button--ghost" id="cancelLink"><span data-ru>Отменить запись</span><span data-ro>Anulează programarea</span></a>
             </div>
 
             <div style="margin-top:20px;padding:16px 20px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,193,7,0.25);border-radius:14px;">
-              <p style="font-size:0.82rem;font-weight:600;color:var(--forest);margin-bottom:8px;">Были у нас раньше?</p>
-              <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Если вам понравилось — пара слов в Google помогает другим найти студию.</p>
+              <p style="font-size:0.82rem;font-weight:600;color:var(--forest);margin-bottom:8px;"><span data-ru>Были у нас раньше?</span><span data-ro>Ați fost la noi mai devreme?</span></p>
+              <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5;"><span data-ru>Если вам понравилось — пара слов в Google помогает другим найти студию.</span><span data-ro>Dacă v-a plăcut — câteva cuvinte pe Google îi ajută pe alții să găsească studioul.</span></p>
               <a href="https://g.page/r/Cbye495fXWm7EBM/review" target="_blank" rel="noopener"
                  style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:#fff;border:1px solid rgba(68,50,36,0.15);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--forest);text-decoration:none;">
-                ⭐ Оставить отзыв в Google
+                <span data-ru>⭐ Оставить отзыв в Google</span><span data-ro>⭐ Lăsați o recenzie pe Google</span>
               </a>
             </div>
           </div>
@@ -72,19 +81,19 @@
           <!-- What's next + contacts -->
           <div style="display:grid; gap:16px;">
             <div class="card" style="padding:24px;">
-              <p class="section-kicker">Что дальше</p>
+              <p class="section-kicker"><span data-ru>Что дальше</span><span data-ro>Ce urmează</span></p>
               <div style="display:grid; gap:14px; margin-top:4px;">
                 <div style="display:flex; gap:12px; align-items:flex-start;">
                   <span style="width:28px; height:28px; border-radius:50%; background:rgba(179,109,44,0.12); border:1px solid rgba(179,109,44,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; font-weight:800; color:var(--brand);">1</span>
-                  <div><strong style="display:block; font-size:0.9rem;">Проверьте email</strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Мы отправили подтверждение с деталями записи.</span></div>
+                  <div><strong style="display:block; font-size:0.9rem;"><span data-ru>Проверьте email</span><span data-ro>Verificați e-mailul</span></strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;"><span data-ru>Мы отправили подтверждение с деталями записи.</span><span data-ro>Am trimis confirmarea cu detaliile programării.</span></span></div>
                 </div>
                 <div style="display:flex; gap:12px; align-items:flex-start;">
                   <span style="width:28px; height:28px; border-radius:50%; background:rgba(179,109,44,0.12); border:1px solid rgba(179,109,44,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; font-weight:800; color:var(--brand);">2</span>
-                  <div><strong style="display:block; font-size:0.9rem;">Приходите в студию</strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Всё необходимое у нас есть. Брать ничего не нужно.</span></div>
+                  <div><strong style="display:block; font-size:0.9rem;"><span data-ru>Приходите в студию</span><span data-ro>Veniți în studio</span></strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;"><span data-ru>Всё необходимое у нас есть. Брать ничего не нужно.</span><span data-ro>Avem tot ce e necesar. Nu trebuie să luați nimic.</span></span></div>
                 </div>
                 <div style="display:flex; gap:12px; align-items:flex-start;">
                   <span style="width:28px; height:28px; border-radius:50%; background:rgba(179,109,44,0.12); border:1px solid rgba(179,109,44,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; font-weight:800; color:var(--brand);">3</span>
-                  <div><strong style="display:block; font-size:0.9rem;">Если нужно перенести</strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Предупредите заранее по телефону или Telegram.</span></div>
+                  <div><strong style="display:block; font-size:0.9rem;"><span data-ru>Если нужно перенести</span><span data-ro>Dacă trebuie reprogramat</span></strong><span style="color:var(--muted); font-size:0.85rem; line-height:1.5;"><span data-ru>Предупредите заранее по телефону или Telegram.</span><span data-ro>Anunțați din timp prin telefon sau Telegram.</span></span></div>
                 </div>
               </div>
             </div>
@@ -106,6 +115,19 @@
   </style>
 
   <script>
+    /* Язык */
+    const RO = (function(){ try { return localStorage.getItem("lang") === "ro"; } catch(e){ return false; } })();
+    document.documentElement.lang = RO ? "ro" : "ru";
+    (function(){
+      document.querySelectorAll("#lang button").forEach(function(b){
+        b.classList.toggle("on", (b.getAttribute("data-l") === "ro") === RO);
+        b.onclick = function(){
+          try { localStorage.setItem("lang", b.getAttribute("data-l")); } catch(e){}
+          location.reload();
+        };
+      });
+    })();
+
     const p = new URLSearchParams(location.search);
     const ref          = p.get("ref") || "";
     const service      = p.get("service") || "";
@@ -124,18 +146,24 @@
     function formatDate(str) {
       if (!str) return "";
       const [y, m, d] = str.split("-");
-      const months = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+      const monthsRu = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+      const monthsRo = ["ianuarie","februarie","martie","aprilie","mai","iunie","iulie","august","septembrie","octombrie","noiembrie","decembrie"];
+      const months = RO ? monthsRo : monthsRu;
       return parseInt(d) + " " + months[parseInt(m)-1] + " " + y;
     }
 
+    const L = RO
+      ? { ref:"Nr. programării", service:"Procedura", specialist:"Specialist", date:"Data", time:"Ora", price:"Cost", client:"Client", contacts:"Contacte", address:"Adresă", phone:"Telefon", hours:"Program" }
+      : { ref:"Номер записи", service:"Процедура", specialist:"Специалист", date:"Дата", time:"Время", price:"Стоимость", client:"Клиент", contacts:"Контакты", address:"Адрес", phone:"Телефон", hours:"График" };
+
     const rows = [
-      { label: "Номер записи", value: ref },
-      service    && { label: "Процедура",  value: service },
-      specialist && { label: "Специалист", value: specialist },
-      date       && { label: "Дата",       value: formatDate(date) },
-      time       && { label: "Время",      value: time },
-      price      && { label: "Стоимость",  value: price },
-      name       && { label: "Клиент",     value: name },
+      { label: L.ref, value: ref },
+      service    && { label: L.service,    value: service },
+      specialist && { label: L.specialist, value: specialist },
+      date       && { label: L.date,       value: formatDate(date) },
+      time       && { label: L.time,       value: time },
+      price      && { label: L.price,      value: price },
+      name       && { label: L.client,     value: name },
     ].filter(Boolean);
 
     document.getElementById("bookingDetails").innerHTML = rows
@@ -144,17 +172,16 @@
 
     fetch("/api/bootstrap").then(r => r.json()).then(data => {
       const b = data?.site?.brand || {};
-      const ui = data?.site?.ui || {};
       document.getElementById("contactCard").innerHTML =
-        '<p class="section-kicker" style="margin-bottom:12px;">Контакты</p>' +
+        '<p class="section-kicker" style="margin-bottom:12px;">'+L.contacts+'</p>' +
         '<div style="display:grid;gap:10px;">' +
-        (b.address ? '<div style="font-size:0.875rem;"><span style="display:block;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">Адрес</span>' + b.city + ', ' + b.address + '</div>' : '') +
-        (b.phone   ? '<div style="font-size:0.875rem;"><span style="display:block;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">Телефон</span>' + b.phone + '</div>' : '') +
-        (b.hours   ? '<div style="font-size:0.875rem;"><span style="display:block;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">График</span>' + b.hours + '</div>' : '') +
+        (b.address ? '<div style="font-size:0.875rem;"><span style="display:block;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">'+L.address+'</span>' + b.city + ', ' + b.address + '</div>' : '') +
+        (b.phone   ? '<div style="font-size:0.875rem;"><span style="display:block;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">'+L.phone+'</span>' + b.phone + '</div>' : '') +
+        (b.hours   ? '<div style="font-size:0.875rem;"><span style="display:block;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">'+L.hours+'</span>' + b.hours + '</div>' : '') +
         '</div>';
     }).catch(() => {
       document.getElementById("contactCard").innerHTML =
-        '<p class="section-kicker" style="margin-bottom:12px;">Контакты</p>' +
+        '<p class="section-kicker" style="margin-bottom:12px;">'+L.contacts+'</p>' +
         '<p style="color:var(--muted);font-size:0.875rem;">бул. Штефан чел Маре, 145, Кишинев</p>';
     });
 

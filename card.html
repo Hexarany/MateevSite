@@ -106,18 +106,26 @@
     /* ─── Footer ─── */
     .card-footer { margin-top: 28px; text-align: center; font-size: 0.7rem; color: rgba(255,255,255,.2); letter-spacing: 0.08em; text-transform: uppercase; }
     .card-footer a { color: rgba(255,255,255,.3); text-decoration: none; }
+
+    [data-ro] { display: none; }
+    html[lang="ro"] [data-ru] { display: none; }
+    html[lang="ro"] [data-ro] { display: inline; }
+    .lang { position: absolute; top: 16px; right: 16px; display: inline-flex; border: 1px solid rgba(255,255,255,.2); border-radius: 9px; overflow: hidden; }
+    .lang button { border: none; background: rgba(255,255,255,.06); padding: 5px 11px; font-family: 'Manrope', sans-serif; font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.55); cursor: pointer; }
+    .lang button.on { background: var(--accent); color: #fff; }
   </style>
 </head>
 <body>
 <div class="page">
 
-  <div class="card-header">
+  <div class="card-header" style="position:relative;">
+    <div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
     <div class="avatar-wrap">
       <img src="/denis.jpg" alt="Denis Matievici">
     </div>
     <h1 class="card-name">Denis Matievici</h1>
     <p class="card-title">Massage Therapist &amp; Educator</p>
-    <p class="card-bio">Более 10 лет в практическом массаже. Работаю с болью, напряжением и восстановлением тела. Веду обучение и авторские программы для специалистов.</p>
+    <p class="card-bio"><span data-ru>Более 10 лет в практическом массаже. Работаю с болью, напряжением и восстановлением тела. Веду обучение и авторские программы для специалистов.</span><span data-ro>Peste 10 ani în masaj practic. Lucrez cu durerea, tensiunea și refacerea corpului. Predau și dezvolt programe de autor pentru specialiști.</span></p>
   </div>
 
   <div class="card-body">
@@ -125,22 +133,22 @@
     <div class="stats">
       <div class="stat">
         <span class="stat__num">10+</span>
-        <span class="stat__lbl">Лет опыта</span>
+        <span class="stat__lbl"><span data-ru>Лет опыта</span><span data-ro>Ani experiență</span></span>
       </div>
       <div class="stat">
         <span class="stat__num">3 093</span>
-        <span class="stat__lbl">Подписчиков</span>
+        <span class="stat__lbl"><span data-ru>Подписчиков</span><span data-ro>Abonați</span></span>
       </div>
       <div class="stat">
         <span class="stat__num">107</span>
-        <span class="stat__lbl">Публикаций</span>
+        <span class="stat__lbl"><span data-ru>Публикаций</span><span data-ro>Publicații</span></span>
       </div>
     </div>
 
     <div class="actions">
       <a class="action-btn action-btn--call" href="tel:+37369158475">
         <div class="action-btn__icon">📞</div>
-        <span class="action-btn__label">Позвонить</span>
+        <span class="action-btn__label"><span data-ru>Позвонить</span><span data-ro>Sună</span></span>
       </a>
       <a class="action-btn action-btn--wa" href="https://wa.me/37369158475" target="_blank" rel="noopener">
         <div class="action-btn__icon">💬</div>
@@ -152,13 +160,13 @@
       </a>
       <a class="action-btn action-btn--book" href="/?src=card#booking">
         <div class="action-btn__icon">📅</div>
-        <span class="action-btn__label">Записаться</span>
+        <span class="action-btn__label"><span data-ru>Записаться</span><span data-ro>Programare</span></span>
       </a>
     </div>
 
     <button class="save-btn" onclick="saveContact()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Сохранить контакт
+      <span data-ru>Сохранить контакт</span><span data-ro>Salvează contactul</span>
     </button>
 
     <div class="info-rows">
@@ -187,12 +195,22 @@
   </div>
 
   <div class="card-footer">
-    <a href="/">mateevmassage.com</a> · Кишинёв, Молдова
+    <a href="/">mateevmassage.com</a> · <span data-ru>Кишинёв, Молдова</span><span data-ro>Chișinău, Moldova</span>
   </div>
 
 </div>
 
 <script>
+/* Язык */
+(function(){
+  var RO = (function(){ try { return localStorage.getItem("lang") === "ro"; } catch(e){ return false; } })();
+  document.documentElement.lang = RO ? "ro" : "ru";
+  document.querySelectorAll("#lang button").forEach(function(b){
+    b.classList.toggle("on", (b.getAttribute("data-l") === "ro") === RO);
+    b.onclick = function(){ try { localStorage.setItem("lang", b.getAttribute("data-l")); } catch(e){} location.reload(); };
+  });
+})();
+
 function saveContact() {
   const vcard = [
     "BEGIN:VCARD", "VERSION:3.0",

@@ -12,9 +12,15 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{--forest:#1a2e22;--sage:#6b8d6b;--sand:#f7f0e6;--warm:#e8ddd0;--gold:#b36d2c;--muted:#7d6d60;--ink:#241c17}
   body{font-family:'Manrope',sans-serif;background:#efe7db;color:var(--ink);padding:24px 16px 60px;line-height:1.5}
-  .head{max-width:960px;margin:0 auto 20px}
+  .head{max-width:960px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .head h1{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--forest);font-weight:600}
   .head p{color:var(--muted);font-size:.9rem;margin-top:4px}
+  .lang{display:inline-flex;border:1px solid var(--warm);border-radius:9px;overflow:hidden;flex-shrink:0}
+  .lang button{border:none;background:#fff;padding:6px 12px;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer}
+  .lang button.on{background:var(--forest);color:#fff}
+  [data-ro]{display:none}
+  html[lang="ro"] [data-ru]{display:none}
+  html[lang="ro"] [data-ro]{display:inline}
   .wrap{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
   @media(max-width:760px){.wrap{grid-template-columns:1fr}}
   .card{background:#fff;border:1px solid rgba(71,49,28,.12);border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(36,28,23,.07)}
@@ -70,46 +76,49 @@
 </head>
 <body>
 <div class="head">
-  <h1>🔗 Ссылки каналов и открытки</h1>
-  <p>Сделай ссылку с меткой для любого канала (Instagram, блогер, кафе, реклама) — и увидишь, сколько записей он приносит. Плюс печатная QR-открытка для партнёров.</p>
+  <div>
+    <h1><span data-ru>🔗 Ссылки каналов и открытки</span><span data-ro>🔗 Linkuri de canale și felicitări</span></h1>
+    <p><span data-ru>Сделай ссылку с меткой для любого канала (Instagram, блогер, кафе, реклама) — и увидишь, сколько записей он приносит. Плюс печатная QR-открытка для партнёров.</span><span data-ro>Creează un link cu etichetă pentru orice canal (Instagram, blogger, cafenea, publicitate) — și vezi câte programări aduce. Plus o felicitare QR printabilă pentru parteneri.</span></p>
+  </div>
+  <div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
 </div>
 
 <div class="wrap">
   <!-- Controls -->
   <div class="card">
-    <h2>Настрой ссылку</h2>
-    <label>Канал</label>
+    <h2><span data-ru>Настрой ссылку</span><span data-ro>Configurează linkul</span></h2>
+    <label><span data-ru>Канал</span><span data-ro>Canal</span></label>
     <select id="channel">
       <option value="instagram">📸 Instagram</option>
       <option value="google">🔎 Google</option>
-      <option value="ads">🎯 Реклама (таргет)</option>
-      <option value="blogger">🌟 Блогер</option>
-      <option value="cafe">☕ Кафе-партнёр</option>
-      <option value="fitness">🏋️ Фитнес-партнёр</option>
-      <option value="salon">💇 Салон-партнёр</option>
-      <option value="qr">🔳 QR-открытка</option>
-      <option value="custom">✏️ Своя метка</option>
+      <option value="ads" data-ru="🎯 Реклама (таргет)" data-ro="🎯 Publicitate (targetare)">🎯 Реклама (таргет)</option>
+      <option value="blogger" data-ru="🌟 Блогер" data-ro="🌟 Blogger">🌟 Блогер</option>
+      <option value="cafe" data-ru="☕ Кафе-партнёр" data-ro="☕ Cafenea-partener">☕ Кафе-партнёр</option>
+      <option value="fitness" data-ru="🏋️ Фитнес-партнёр" data-ro="🏋️ Fitness-partener">🏋️ Фитнес-партнёр</option>
+      <option value="salon" data-ru="💇 Салон-партнёр" data-ro="💇 Salon-partener">💇 Салон-партнёр</option>
+      <option value="qr" data-ru="🔳 QR-открытка" data-ro="🔳 Felicitare QR">🔳 QR-открытка</option>
+      <option value="custom" data-ru="✏️ Своя метка" data-ro="✏️ Etichetă proprie">✏️ Своя метка</option>
     </select>
 
     <div id="nameWrap" style="display:none">
-      <label id="nameLabel">Название / имя</label>
+      <label id="nameLabel"><span data-ru>Название / имя</span><span data-ro>Denumire / nume</span></label>
       <input id="name" placeholder="напр. Ирина, Кафе Central">
     </div>
 
-    <label>Оффер на открытке</label>
+    <label><span data-ru>Оффер на открытке</span><span data-ro>Oferta pe felicitare</span></label>
     <input id="offer" value="−15% на первый визит">
 
-    <label>Готовая ссылка</label>
+    <label><span data-ru>Готовая ссылка</span><span data-ro>Link gata</span></label>
     <div class="linkbox">
       <input id="url" readonly>
-      <button class="btn btn--dark" id="copyBtn">Копировать</button>
+      <button class="btn btn--dark" id="copyBtn"><span data-ru>Копировать</span><span data-ro>Copiază</span></button>
     </div>
     <div class="tag" id="tagView"></div>
-    <div class="hint">Метка: клиент запишется по этой ссылке — запись придёт с пометкой канала.</div>
+    <div class="hint"><span data-ru>Метка: клиент запишется по этой ссылке — запись придёт с пометкой канала.</span><span data-ro>Etichetă: clientul se programează prin acest link — programarea vine cu marcajul canalului.</span></div>
 
     <div class="actions">
-      <a class="btn btn--wa" id="waBtn" target="_blank" rel="noopener">💬 Отправить в WhatsApp</a>
-      <button class="btn btn--gold" id="printBtn">🖨 Печать открытки (A6)</button>
+      <a class="btn btn--wa" id="waBtn" target="_blank" rel="noopener"><span data-ru>💬 Отправить в WhatsApp</span><span data-ro>💬 Trimite pe WhatsApp</span></a>
+      <button class="btn btn--gold" id="printBtn"><span data-ru>🖨 Печать открытки (A6)</span><span data-ro>🖨 Printează felicitarea (A6)</span></button>
     </div>
 
     <div id="stats"></div>
@@ -117,28 +126,57 @@
 
   <!-- Preview -->
   <div class="card">
-    <h2>Открытка</h2>
+    <h2><span data-ru>Открытка</span><span data-ro>Felicitare</span></h2>
     <div class="pc-wrap">
       <div class="postcard" id="postcard">
         <div class="pc-kick">Spa &amp; Massage · Chișinău</div>
         <div class="pc-brand">Mateev Spa Studio</div>
         <div class="pc-offer" id="pcOffer">−15% на первый визит<small>по QR — запись за минуту</small></div>
         <div class="pc-qr" id="pcQr"></div>
-        <div class="pc-scan">📱 Наведи камеру на QR</div>
+        <div class="pc-scan"><span data-ru>📱 Наведи камеру на QR</span><span data-ro>📱 Îndreaptă camera spre QR</span></div>
         <div class="pc-foot">mateevmassage.com · +373 69 158 475</div>
       </div>
     </div>
-    <div class="hint" style="text-align:center;margin-top:12px">Печать — только открытка, на A6 (или распечатай на A4 и обрежь).</div>
+    <div class="hint" style="text-align:center;margin-top:12px"><span data-ru>Печать — только открытка, на A6 (или распечатай на A4 и обрежь).</span><span data-ro>Printare — doar felicitarea, pe A6 (sau printează pe A4 și decupează).</span></div>
   </div>
 </div>
 
 <script src="/vendor/qrcode.min.js"></script>
 <script>
 (function(){
+  var RO = (function(){ try { return localStorage.getItem("lang") === "ro"; } catch(e){ return false; } })();
+  document.documentElement.lang = RO ? "ro" : "ru";
+  document.querySelectorAll("#lang button").forEach(function(b){
+    b.classList.toggle("on", (b.getAttribute("data-l") === "ro") === RO);
+    b.onclick = function(){ try { localStorage.setItem("lang", b.getAttribute("data-l")); } catch(e){} location.reload(); };
+  });
+
+  var L = RO ? {
+    offerDefault:"−15% la prima vizită", smallOffer:"prin QR — programare într-un minut",
+    copied:"✓ Copiat", copy:"Copiază", waText:"Programează-te la masaj — ",
+    namePh:"ex. Irina, Cafe Central",
+    statsTitle:"📊 Programări pe canale", statsEmptyTitle:"Statistică",
+    statsEmpty:"Încă nu sunt programări cu etichete. Începe să distribui linkuri — și aici vor apărea cifrele.",
+    totalNote:function(a,b){ return "Total cu etichete: "+a+" din "+b+" programări."; },
+    thChannel:"Canal", thBookings:"Programări", thDone:"Finalizate"
+  } : {
+    offerDefault:"−15% на первый визит", smallOffer:"по QR — запись за минуту",
+    copied:"✓ Скопировано", copy:"Копировать", waText:"Запишись на массаж — ",
+    namePh:"напр. Ирина, Кафе Central",
+    statsTitle:"📊 Записи по каналам", statsEmptyTitle:"Статистика",
+    statsEmpty:"Пока нет записей с метками. Начни раздавать ссылки — и здесь появятся цифры.",
+    totalNote:function(a,b){ return "Всего с метками: "+a+" из "+b+" записей."; },
+    thChannel:"Канал", thBookings:"Записей", thDone:"Завершено"
+  };
+
   var base = location.origin;
   var NEEDS_NAME = { blogger:1, cafe:1, fitness:1, salon:1, custom:1 };
   var $ = function(id){ return document.getElementById(id); };
   var qr = null;
+
+  $("name").placeholder = L.namePh;
+  // локализованный дефолт оффера (если поле не трогали)
+  if ($("offer").value === "−15% на первый визит" && RO) $("offer").value = L.offerDefault;
 
   function slug(s){ return String(s||"").toLowerCase().trim().replace(/\s+/g,"-").replace(/[^\wа-яё\-]/gi,"").replace(/\-+/g,"-").replace(/^\-|\-$/g,""); }
   function tag(){
@@ -164,9 +202,9 @@
     var link = url();
     $("url").value = link;
     $("tagView").textContent = "src = " + tag();
-    var offer = $("offer").value || "−15% на первый визит";
-    $("pcOffer").innerHTML = offer.replace(/</g,"&lt;") + '<small>по QR — запись за минуту</small>';
-    $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent("Запишись на массаж — " + offer + ": " + link);
+    var offer = $("offer").value || L.offerDefault;
+    $("pcOffer").innerHTML = offer.replace(/</g,"&lt;") + '<small>' + L.smallOffer + '</small>';
+    $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent(L.waText + offer + ": " + link);
     renderQR(link);
   }
 
@@ -175,7 +213,7 @@
   $("offer").addEventListener("input", refresh);
   $("copyBtn").addEventListener("click", function(){
     var i=$("url"); i.select();
-    navigator.clipboard.writeText(i.value).then(function(){ var b=$("copyBtn"); b.textContent="✓ Скопировано"; setTimeout(function(){b.textContent="Копировать";},1500); }).catch(function(){ prompt("Скопируйте ссылку:", i.value); });
+    navigator.clipboard.writeText(i.value).then(function(){ var b=$("copyBtn"); b.textContent=L.copied; setTimeout(function(){b.textContent=L.copy;},1500); }).catch(function(){ prompt(L.copy, i.value); });
   });
   $("printBtn").addEventListener("click", function(){ window.print(); });
 
@@ -183,13 +221,13 @@
   fetch("/api/admin/sources", { credentials:"include" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
     if (!d || !d.sources) return;
     var el = $("stats");
-    if (!d.sources.length){ el.innerHTML = '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:#b36d2c;margin:18px 0 8px">Статистика</h2><div class="statnote">Пока нет записей с метками. Начни раздавать ссылки — и здесь появятся цифры.</div>'; return; }
+    if (!d.sources.length){ el.innerHTML = '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:#b36d2c;margin:18px 0 8px">'+L.statsEmptyTitle+'</h2><div class="statnote">'+L.statsEmpty+'</div>'; return; }
     var rows = d.sources.map(function(s){
       return '<tr><td>'+s.label+'</td><td class="num">'+s.total+'</td><td class="num">'+s.completed+'</td><td class="num">'+(s.revenue||0)+'</td></tr>';
     }).join("");
-    el.innerHTML = '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:#b36d2c;margin:18px 0 8px">📊 Записи по каналам</h2>'+
-      '<div class="statnote">Всего с метками: '+d.totals.taggedBookings+' из '+d.totals.allBookings+' записей.</div>'+
-      '<table><thead><tr><th>Канал</th><th class="num">Записей</th><th class="num">Завершено</th><th class="num">MDL</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    el.innerHTML = '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:#b36d2c;margin:18px 0 8px">'+L.statsTitle+'</h2>'+
+      '<div class="statnote">'+L.totalNote(d.totals.taggedBookings, d.totals.allBookings)+'</div>'+
+      '<table><thead><tr><th>'+L.thChannel+'</th><th class="num">'+L.thBookings+'</th><th class="num">'+L.thDone+'</th><th class="num">MDL</th></tr></thead><tbody>'+rows+'</tbody></table>';
   }).catch(function(){});
 
   refresh();

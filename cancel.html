@@ -13,6 +13,14 @@
     rel="stylesheet"
   >
   <link rel="stylesheet" href="styles.css">
+  <style>
+    [data-ro]{display:none}
+    html[lang="ro"] [data-ru]{display:none}
+    html[lang="ro"] [data-ro]{display:inline}
+    .lang{display:inline-flex;border:1px solid rgba(68,50,36,0.15);border-radius:9px;overflow:hidden}
+    .lang button{border:none;background:transparent;padding:6px 12px;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer}
+    .lang button.on{background:#1a2e22;color:#fff}
+  </style>
 </head>
 <body>
   <div class="ambient ambient--left"></div>
@@ -21,10 +29,13 @@
   <header class="topbar">
     <div class="container topbar__inner">
       <a href="/" class="brand">
-        <span class="brand__eyebrow">Студия массажа в Кишиневе</span>
+        <span class="brand__eyebrow"><span data-ru>Студия массажа в Кишиневе</span><span data-ro>Studio de masaj în Chișinău</span></span>
         <span class="brand__name">Mateev Spa Studio</span>
       </a>
-      <a href="/#booking" class="button button--ghost" style="font-size:0.875rem">Записаться снова</a>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="lang" id="lang"><button data-l="ru" class="on">RU</button><button data-l="ro">RO</button></div>
+        <a href="/#booking" class="button button--ghost" style="font-size:0.875rem"><span data-ru>Записаться снова</span><span data-ro>Programează din nou</span></a>
+      </div>
     </div>
   </header>
 
@@ -33,17 +44,17 @@
       <div class="container" style="max-width: 480px; margin: 0 auto; padding: 48px 0;">
 
         <div id="formView">
-          <p class="section-kicker">Отмена визита</p>
+          <p class="section-kicker"><span data-ru>Отмена визита</span><span data-ro>Anularea vizitei</span></p>
           <h1 style="font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; margin:0 0 12px; color:var(--ink);">
-            Отменить запись
+            <span data-ru>Отменить запись</span><span data-ro>Anulați programarea</span>
           </h1>
           <p style="color:var(--muted); margin:0 0 32px; line-height:1.6;">
-            Введите номер записи из подтверждения и телефон, указанный при бронировании.
+            <span data-ru>Введите номер записи из подтверждения и телефон, указанный при бронировании.</span><span data-ro>Introduceți numărul programării din confirmare și telefonul indicat la rezervare.</span>
           </p>
 
           <form id="cancelForm" style="display:flex; flex-direction:column; gap:16px;">
             <label class="field">
-              <span>Номер записи</span>
+              <span><span data-ru>Номер записи</span><span data-ro>Nr. programării</span></span>
               <input
                 type="text"
                 id="referenceInput"
@@ -54,7 +65,7 @@
             </label>
 
             <label class="field">
-              <span>Телефон</span>
+              <span><span data-ru>Телефон</span><span data-ro>Telefon</span></span>
               <input
                 type="tel"
                 id="phoneInput"
@@ -67,9 +78,9 @@
 
             <div style="display:flex; gap:12px; margin-top:8px;">
               <button type="submit" class="button button--secondary" id="submitBtn" style="flex:1;">
-                Отменить визит
+                <span data-ru>Отменить визит</span><span data-ro>Anulează vizita</span>
               </button>
-              <a href="/" class="button button--ghost">На главную</a>
+              <a href="/" class="button button--ghost"><span data-ru>На главную</span><span data-ro>Acasă</span></a>
             </div>
           </form>
         </div>
@@ -77,10 +88,10 @@
         <div id="successView" hidden style="text-align:center; padding:40px 0;">
           <div style="font-size:2.5rem; margin-bottom:16px;">✓</div>
           <h2 style="font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:600; margin:0 0 12px; color:var(--ink);">
-            Запись отменена
+            <span data-ru>Запись отменена</span><span data-ro>Programare anulată</span>
           </h2>
           <p id="successRef" style="color:var(--muted); margin:0 0 32px; line-height:1.6;"></p>
-          <a href="/#booking" class="button button--secondary">Записаться снова</a>
+          <a href="/#booking" class="button button--secondary"><span data-ru>Записаться снова</span><span data-ro>Programează din nou</span></a>
         </div>
 
       </div>
@@ -88,6 +99,21 @@
   </main>
 
   <script>
+    /* Язык */
+    const RO = (function(){ try { return localStorage.getItem("lang") === "ro"; } catch(e){ return false; } })();
+    document.documentElement.lang = RO ? "ro" : "ru";
+    document.querySelectorAll("#lang button").forEach(function(b){
+      b.classList.toggle("on", (b.getAttribute("data-l") === "ro") === RO);
+      b.onclick = function(){
+        try { localStorage.setItem("lang", b.getAttribute("data-l")); } catch(e){}
+        location.reload();
+      };
+    });
+
+    const L = RO
+      ? { fill:"Completați ambele câmpuri.", cancelling:"Anulăm…", fail:"Nu s-a putut anula programarea.", conn:"Eroare de conexiune. Încercați din nou.", submit:"Anulează vizita", done:(r)=>`Programarea ${r} a fost anulată. Vă așteptăm cu drag din nou.` }
+      : { fill:"Заполните оба поля.", cancelling:"Отменяем…", fail:"Не удалось отменить запись.", conn:"Ошибка соединения. Попробуйте ещё раз.", submit:"Отменить визит", done:(r)=>`Запись ${r} успешно отменена. Будем рады видеть вас снова.` };
+
     const form = document.getElementById("cancelForm");
     const submitBtn = document.getElementById("submitBtn");
     const formError = document.getElementById("formError");
@@ -109,12 +135,12 @@
       const phone = document.getElementById("phoneInput").value.trim();
 
       if (!reference || !phone) {
-        showError("Заполните оба поля.");
+        showError(L.fill);
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Отменяем…";
+      submitBtn.textContent = L.cancelling;
 
       try {
         const res = await fetch("/api/cancel", {
@@ -126,20 +152,19 @@
         const data = await res.json();
 
         if (!res.ok) {
-          showError(data.message || "Не удалось отменить запись.");
+          showError(data.message || L.fail);
           return;
         }
 
         formView.hidden = true;
         successView.hidden = false;
-        successRef.textContent =
-          `Запись ${data.reference} успешно отменена. Будем рады видеть вас снова.`;
+        successRef.textContent = L.done(data.reference);
 
       } catch {
-        showError("Ошибка соединения. Попробуйте ещё раз.");
+        showError(L.conn);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Отменить визит";
+        submitBtn.textContent = L.submit;
       }
     });
 

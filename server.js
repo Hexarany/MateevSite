@@ -9058,6 +9058,10 @@ function renderGraduatesPage(diplomas, lang = "ru") {
   .topbar__inner{max-width:900px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
   .topbar__brand{font-weight:700;font-size:.9rem;color:#241c17}
   .topbar__back{font-size:.85rem;color:#6b8d6b;font-weight:600;text-decoration:none}
+  .topbar__right{display:flex;align-items:center;gap:12px}
+  .topbar__lang{display:flex;gap:2px;background:rgba(71,49,28,.06);border-radius:999px;padding:3px}
+  .topbar__lang a{font-size:.78rem;font-weight:700;color:#7d6d60;padding:5px 12px;border-radius:999px;text-decoration:none}
+  .topbar__lang a.on{background:#1a2e22;color:#fff}
   .wrap{max-width:900px;margin:0 auto;padding:48px 24px 80px}
   .kicker{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b36d2c;margin-bottom:12px}
   h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3rem);font-weight:600;color:#1a2e22;margin-bottom:10px;line-height:1.15}
@@ -9101,7 +9105,7 @@ function renderGraduatesPage(diplomas, lang = "ru") {
 </style>
 </head>
 <body>
-  <header class="topbar"><div class="topbar__inner"><span class="topbar__brand">Mateev Spa Studio · ${t("Школа массажа", "Școala de masaj")}</span><a href="${base}/" class="topbar__back">← ${t("На главную", "Acasă")}</a></div></header>
+  <header class="topbar"><div class="topbar__inner"><span class="topbar__brand">Mateev Spa Studio · ${t("Школа массажа", "Școala de masaj")}</span><div class="topbar__right"><div class="topbar__lang"><a href="/registry" class="${ro ? "" : "on"}">RU</a><a href="/registry?lang=ro" class="${ro ? "on" : ""}">RO</a></div><a href="${base}/${ro ? "?lang=ro" : ""}" class="topbar__back">← ${t("На главную", "Acasă")}</a></div></div></header>
   <main class="wrap">
     <p class="kicker">${t("Официальный реестр", "Registrul oficial")}</p>
     <h1>${t("Реестр сертифицированных мастеров", "Registrul maeștrilor certificați")}</h1>
